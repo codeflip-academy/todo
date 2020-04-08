@@ -60,6 +60,7 @@ namespace Todo.WebAPI.ApplicationServices
             var list = await _listRepository.FindTodoListIdByIdAsync(listId);
 
             list.SetCompleted(items);
+            await _todoListItemRepository.SaveChangesAsync();
         }
     }
 }

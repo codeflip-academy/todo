@@ -7,7 +7,7 @@ namespace Todo.Infrastructure.Email
 {
     public class DebuggerWindowOutputEmailService : IEmailService
     {
-        public Task SendEmailAsync(Email email)
+        public Task SendEmailAsync(EmailModel email)
         {
             var timestamp = DateTime.Now;
             Debug.WriteLine($"Time Sent: {timestamp}\nTo: {email.To}\nFrom: {email.From}\nSubject: {email.Subject}\nContent: {email.Body}");

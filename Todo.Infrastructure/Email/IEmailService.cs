@@ -6,6 +6,6 @@ namespace Todo.Infrastructure.Email
 {
     public interface IEmailService
     {
-        Task SendEmailAsync(Email email);
+        Task SendEmailAsync(EmailModel email);
     }
 }

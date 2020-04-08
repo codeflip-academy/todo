@@ -42,5 +42,10 @@ namespace TodoWebAPI.Data
         {
             return await _context.TodoListItems.Where(x => x.ListId == listId).ToListAsync();
         }
+
+        public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+        {
+            return await _context.SaveChangesAsync(cancellationToken);
+        }
     }
 }

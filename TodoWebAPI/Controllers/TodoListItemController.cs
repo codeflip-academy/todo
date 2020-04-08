@@ -83,7 +83,6 @@ namespace TodoWebAPI.Controllers
         {
             await _todoListItemApplicationService.MarkTodoListItemAsCompletedAsync(todoId, completed);
 
-            await _todoDatabaseContext.SaveChangesAsync();
 
             return Ok();
         }

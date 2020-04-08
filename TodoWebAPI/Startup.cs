@@ -18,6 +18,7 @@ using Todo.Infrastructure.EFRepositories;
 using Todo.Infrastructure.Email;
 using TodoWebAPI.Data;
 using Todo.WebAPI.ApplicationServices;
+using Todo.Infrastructure.ServiceBus;
 
 namespace TodoWebAPI
 {
@@ -56,6 +57,7 @@ namespace TodoWebAPI
             services.AddScoped<TodoListApplicationService>();
             services.AddScoped<TodoListItemApplicationService>();
             services.AddScoped<AccountsApplicationService>();
+            services.AddScoped<IServiceBusEmail, ServiceBusEmail>();
             services.AddControllers();
             services.AddMediatR(typeof(Startup).GetTypeInfo().Assembly);
         }

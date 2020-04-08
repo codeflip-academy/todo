@@ -78,6 +78,8 @@ namespace Todo.WebAPI.ApplicationServices
             {
                 item.SetNotCompleted();
             }
+
+            await _listItemRepository.SaveChangesAsync();
         }
     }
 }

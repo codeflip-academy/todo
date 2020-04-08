@@ -9,7 +9,7 @@ namespace Todo.Infrastructure.Email
 {
     public class SendGridEmailService : IEmailService
     {
-        public async Task SendEmailAsync(Email email)
+        public async Task SendEmailAsync(EmailModel email)
         {
             var apiKey = Environment.GetEnvironmentVariable("SendGridApiKey");
             var client = new SendGridClient(apiKey);

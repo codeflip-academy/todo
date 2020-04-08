@@ -8,22 +8,28 @@ using System.Threading.Tasks;
 using Todo.Domain.DomainEvents;
 using Todo.Domain.Repositories;
 using Todo.Infrastructure.Email;
+using Todo.Infrastructure.ServiceBus;
 
 namespace TodoWebAPI.DomainEventHandlers
 {
-    public class SendEmailWhenListIsCompletedDomainEventHandler : INotificationHandler<TodoListCompletedStateChanged>
+    public class SendEmail : INotificationHandler<TodoListCompletedStateChanged>
     {
         private readonly IAccountRepository _accountRepository;
         private readonly ITodoListRepository _todoListRepository;
         private readonly IEmailService _emailService;
         private readonly IConfiguration _config;
+        private readonly IServiceBusEmail _serviceBusEmail;
 
-        public SendEmailWhenListIsCompletedDomainEventHandler(IAccountRepository accountRepository, ITodoListRepository todoListRepository, IEmailService emailService, IConfiguration config)
+        public SendEmail(IAccountRepository accountRepository, 
+            ITodoListRepository todoListRepository,
+            IEmailService emailService,
+            IConfiguration config, IServiceBusEmail serviceBusEmail)
         {
             _accountRepository = accountRepository;
             _todoListRepository = todoListRepository;
             _emailService = emailService;
             _config = config;
+            _serviceBusEmail = serviceBusEmail;
         }
         public async Task Handle(TodoListCompletedStateChanged notification, CancellationToken cancellationToken)
         {
@@ -33,7 +39,7 @@ namespace TodoWebAPI.DomainEventHandlers
             {
                 var account = await _accountRepository.FindAccountByIdAsync(list.AccountId);
 
-                var email = new Email()
+                var email = new EmailModel()
                 {
                     To = account.Email,
                     From = _config.GetSection("Emails")["Notifications"],
@@ -41,7 +47,7 @@ namespace TodoWebAPI.DomainEventHandlers
                     Body = $"List {list.ListTitle} is finished! Nice work!"
                 };
 
-                await _emailService.SendEmailAsync(email);
+                _serviceBusEmail.SendServiceBusEmail(email);
             }
         }
     }

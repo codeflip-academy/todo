@@ -7,11 +7,11 @@ using Todo.WebAPI.ApplicationServices;
 
 namespace TodoWebAPI.DomainEventHandlers
 {
-    public class MarkListAsCompletedDomainEventHandler : INotificationHandler<TodoListItemCompleted>
+    public class MarkListAsCompleted : INotificationHandler<TodoListItemCompleted>
     {
         private readonly TodoListApplicationService _todoListApplicationService;
 
-        public MarkListAsCompletedDomainEventHandler(TodoListApplicationService todoListService)
+        public MarkListAsCompleted(TodoListApplicationService todoListService)
         {
             _todoListApplicationService = todoListService;
         }

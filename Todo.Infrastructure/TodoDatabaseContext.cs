@@ -33,6 +33,8 @@ namespace Todo.Infrastructure
 
         public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         {
+            var saveChanges = await base.SaveChangesAsync(cancellationToken);
+
             var domainEntities = ChangeTracker
                 .Entries<Entity>()
                 .Where(x => x.Entity.DomainEvents.Count > 0).ToList();
@@ -46,10 +48,9 @@ namespace Todo.Infrastructure
             foreach (var domainEvent in domainEvents)
                 await _mediator.Publish(domainEvent);
 
-            return await base.SaveChangesAsync(cancellationToken);
+            return saveChanges;
         }
-
-
+        
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<Account>(entity =>
