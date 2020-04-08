@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace Todo.Domain.Repositories
 {
-    public interface ITodoListRepository
+    public interface ITodoListRepository : IUnitOfWork
     {
         Task AddTodoListAsync(TodoList list);
         Task<List<TodoList>> FindTodoListsByAccountIdAsync(int accountId, int pageSize);
