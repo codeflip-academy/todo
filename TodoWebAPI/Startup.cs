@@ -51,14 +51,7 @@ namespace TodoWebAPI
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            if (_env.IsDevelopment())
-            {
-                services.AddSingleton<IEmailService, DebuggerWindowOutputEmailService>();
-            }
-            else
-            {
-                services.AddSingleton<IEmailService, SendGridEmailService>();
-            }
+            services.AddSingleton<IEmailService, SendGridEmailService>();
 
             services.AddApplicationInsightsTelemetry();
             services.AddApplicationInsightsTelemetryWorkerService();
