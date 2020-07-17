@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 using Todo.Domain.DomainEvents;
 using Todo.Domain.Repositories;
 using Todo.Infrastructure.Email;
-using TodoWebAPI.ServiceBusRabbitmq;
+using TodoWebAPI.ServiceBus;
 
 namespace TodoWebAPI.DomainEventHandlers
 {
@@ -32,22 +32,25 @@ namespace TodoWebAPI.DomainEventHandlers
         public async Task Handle(TodoListCompletedStateChanged notification, CancellationToken cancellationToken)
         {
             var list = notification.List;
-
             var emails = await _dapper.GetEmailsFromAccountsByListIdAsync(list.Id);
+
+            var messages = new List<Email>();
 
             if (list.Completed)
             {
                 foreach (var userEmail in emails)
                 {
-                    var email = new Email()
-                    {
-                        To = userEmail,
-                        From = _config.GetSection("Emails")["Notifications"],
-                        Subject = $"You finished a list!",
-                        Body = $"List {list.ListTitle} is finished! Nice work!"
-                    };
-                    _serviceBusEmail.SendServiceBusEmail(email, list);
+                    messages.Add(
+                        new Email()
+                        {
+                            To = userEmail,
+                            From = _config.GetSection("Emails")["Notifications"],
+                            Subject = $"You completed a list!",
+                            Body = $"{list.ListTitle} is completed! Nice work!"
+                        });
                 }
+
+                _serviceBusEmail.SendServiceBusEmail(messages);
             }
         }
     }
