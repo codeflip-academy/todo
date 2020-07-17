@@ -1,0 +1,11 @@
+USE [ToDo]
+
+GO
+
+Create Table [AccountsLists](
+    ID UNIQUEIDENTIFIER PRIMARY KEY,
+    AccountID UNIQUEIDENTIFIER,
+    ListID UNIQUEIDENTIFIER,
+    Role TINYINT NOT NULL,
+    FOREIGN KEY (AccountID) REFERENCES Accounts (ID),
+)

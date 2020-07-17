@@ -15,7 +15,6 @@ using Todo.Infrastructure.EFRepositories;
 using Todo.Infrastructure.Email;
 using TodoWebAPI.Data;
 using TodoWebAPI.CronJob;
-using TodoWebAPI.ServiceBusRabbitmq;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Authentication;
@@ -32,7 +31,7 @@ using Dapper;
 using TodoWebAPI.TypeHandlers;
 using TodoWebAPI.SignalR;
 using Microsoft.AspNetCore.SignalR;
-using TodoWebAPI.ServiceBusAzure;
+using TodoWebAPI.ServiceBus;
 
 namespace TodoWebAPI
 {
@@ -82,7 +81,7 @@ namespace TodoWebAPI
             services.AddScoped<ISequentialIdGenerator, SequentialIdGenerator>();
             services.AddControllers();
             services.AddMediatR(typeof(Startup).GetTypeInfo().Assembly);
-            services.AddHostedService<RecieveServiceBus>();
+            services.AddSingleton<IServiceBusConsumer, ServiceBusConsumer>();
 
             services.AddCronJob<DueDateJob>(c =>
             {
@@ -193,6 +192,9 @@ namespace TodoWebAPI
                 endpoints.MapControllers();
                 endpoints.MapHub<NotificationHub>("/notifications");
             });
+
+            var bus = app.ApplicationServices.GetService<IServiceBusConsumer>();
+            bus.RegisterOnMessageHandlerAndReceiveMessages();
         }
     }
 }

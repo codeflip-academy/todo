@@ -1,4 +1,4 @@
-﻿using MediatR;
+using MediatR;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -8,8 +8,7 @@ namespace Todo.Domain
 {
     public class InvitationSent : INotification
     {
-        public Guid SenderAccountId { get; set; }
-        public TodoList List { get; set; }
-        public string Email { get; set; }
+        public Guid ListId { get; set; }
+        public Guid InviteeAccountId { get; set; }
     }
 }

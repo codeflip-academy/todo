@@ -38,7 +38,7 @@ namespace TodoWebAPI.UserStories.SendInvitation
             var accountPlan = await _accountPlanRepository.FindAccountPlanByAccountIdAsync(request.SenderAccountId);
             var plan = await _planRepository.FindPlanByIdAsync(accountPlan.PlanId);
             var list = await _todoListRepository.FindTodoListIdByIdAsync(request.ListId);
-            var accountsLists = await _accountsListsRepository.FindAccountsListsByAccountIdAsync(request.SenderAccountId);
+            var accountsLists = await _accountsListsRepository.FindAccountsListsByAccountIdAsync(request.SenderAccountId, request.ListId);
             var accountPlanAuthorization = new AccountPlanAuthorizationValidator(accountPlan, plan);
 
             if (accountsLists.UserIsOwner(request.SenderAccountId))
@@ -46,14 +46,26 @@ namespace TodoWebAPI.UserStories.SendInvitation
                 if (accountPlanAuthorization.CanAddContributor(list))
                 {
                     var invitee = await _accountRepository.FindAccountByEmailAsync(request.InviteeEmail);
+                    var inviteeAccountsListsLeft = await _accountsListsRepository.FindAccountsListsLeftByAccountIdAsync(invitee.Id, request.ListId);
+                    var inviteeAccountsListsDeclined = await _accountsListsRepository.FindAccountsListsDeclinedByAccountIdAsync(invitee.Id, request.ListId);
 
                     if (list.DoesContributorExist(invitee.Email))
                         return false;
 
-                    await _todoListRepository.AddRowToAccountListsAsync(invitee.Id, request.ListId);
-                    list.StoreContributor(request.InviteeEmail, request.SenderAccountId);
-                    await _todoListRepository.SaveChangesAsync();
+                    if (inviteeAccountsListsDeclined != null)
+                    {
+                        inviteeAccountsListsDeclined.MakeInvited();
+                    }
+                    else if (inviteeAccountsListsLeft != null)
+                    {
+                        inviteeAccountsListsLeft.MakeInvited();
+                    }
+                    else
+                    {
+                        await _accountsListsRepository.AddAccountsListsInvitedAsync(invitee.Id, request.ListId);
+                    }
 
+                    await _todoListRepository.SaveChangesAsync();
                     return true;
                 }
             }

@@ -9,7 +9,7 @@ using Todo.Domain.Repositories;
 
 namespace TodoWebAPI.InfrastructureEventHandlers
 {
-    public class StoreContributorInList : INotificationHandler<InvitationSent>
+    public class StoreContributorInList : INotificationHandler<InvitationAccepted>
     {
         private readonly ITodoListRepository _todoList;
 
@@ -17,7 +17,7 @@ namespace TodoWebAPI.InfrastructureEventHandlers
         {
             _todoList = todoList;
         }
-        public async Task Handle(InvitationSent notification, CancellationToken cancellationToken)
+        public async Task Handle(InvitationAccepted notification, CancellationToken cancellationToken)
         {
             notification.List.AddContributor(notification.Email);
 

@@ -10,6 +10,7 @@ using TodoWebAPI.Extentions;
 using TodoWebAPI.UserStories.SendInvitation;
 using Todo.Domain;
 using Todo.Domain.Repositories;
+using TodoWebAPI.UserStories;
 
 namespace TodoWebAPI.Controllers
 {
@@ -185,6 +186,77 @@ namespace TodoWebAPI.Controllers
                 return Ok();
 
             return BadRequest();
+        }
+
+        [HttpPost("api/lists/{listId}/accept")]
+        public async Task<IActionResult> AcceptInvitation(Guid listId)
+        {
+            var accountPlan = await _accountPlanRepository.FindAccountPlanByAccountIdAsync(User.ReadClaimAsGuidValue("urn:codefliptodo:accountid"));
+            var plan = await _planRepository.FindPlanByIdAsync(accountPlan.PlanId);
+            var accountId = User.ReadClaimAsGuidValue("urn:codefliptodo:accountid");
+            var accountPlanAuthorization = new AccountPlanAuthorizationValidator(accountPlan, plan);
+
+            var command = new AcceptInvitaion()
+            {
+                AccountId = accountId,
+                ListId = listId
+            };
+
+            if (!accountPlanAuthorization.CanCreateList())
+                return BadRequest("Reached maximum number of lists allowed on your plan.");
+
+            var response = await _mediator.Send(command);
+
+            return Ok();
+        }
+
+        [HttpPost("api/lists/{listId}/decline")]
+        public async Task<IActionResult> DeclineInvitation(Guid listId)
+        {
+            var accountId = User.ReadClaimAsGuidValue("urn:codefliptodo:accountid");
+
+            var command = new DeclineInvitation()
+            {
+                AccountId = accountId,
+                ListId = listId
+            };
+
+            await _mediator.Send(command);
+
+            return Ok();
+        }
+
+        [HttpPost("api/lists/{listId}/removeSelf")]
+        public async Task<IActionResult> RemoveSelfFromlist(Guid listId)
+        {
+            var accountId = User.ReadClaimAsGuidValue("urn:codefliptodo:accountid");
+
+            var command = new RemoveSelfFromList()
+            {
+                AccountId = accountId,
+                ListId = listId,
+            };
+
+            await _mediator.Send(command);
+
+            return Ok();
+        }
+
+        [HttpPost("api/lists/{listId}/email/removeContributor")]
+        public async Task<IActionResult> RemoveContributorFromList(Guid listId, string email)
+        {
+            var accountId = User.ReadClaimAsGuidValue("urn:codefliptodo:accountid");
+
+            var command = new RemoveContributorFromList
+            {
+                AccountId = accountId,
+                ListId = listId,
+                Email = email
+            };
+
+            await _mediator.Send(command);
+
+            return Ok();
         }
     }
 }

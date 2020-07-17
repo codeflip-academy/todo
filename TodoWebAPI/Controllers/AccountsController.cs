@@ -60,6 +60,17 @@ namespace TodoWebAPI.Controllers
         }
 
         [Authorize]
+        [HttpGet("api/accounts/contributors")]
+        public async Task<IActionResult> GetContributors()
+        {
+            var accountId = Guid.Parse(User.FindFirst(c => c.Type == "urn:codefliptodo:accountid").Value);
+            var dapper = new DapperQuery(_config);
+            var contributors = await dapper.GetContributorsAsync(accountId);
+
+            return Ok(contributors);
+        }
+
+        [Authorize]
         [HttpDelete("api/accounts")]
         public async Task<IActionResult> DeleteAccountAsync()
         {

@@ -8,5 +8,5 @@ Invoke-Sqlcmd -InputFile TodoListItems.sql
 Invoke-Sqlcmd -InputFile TodoListLayouts.sql
 Invoke-Sqlcmd -InputFile SubItems.sql
 Invoke-Sqlcmd -InputFile SubItemLayouts.sql
-Invoke-Sqlcmd -InputFile AccountLists.sql
+Invoke-Sqlcmd -InputFile AccountsLists.sql
 Invoke-Sqlcmd -InputFile AccountsPlans.sql

@@ -25,6 +25,24 @@ const todoLists = {
         },
         updateLoadingState(state, { loadingState }) {
             state.loading = loadingState;
+        },
+        changeUserRoleByListId(state, { listId, role }) {
+            const index = state.todoLists.findIndex(x => x.id === listId);
+            state.todoLists[index].role = role;
+        },
+        addTodoList(state, { list }) {
+            state.todoLists.push(list);
+        },
+        removeTodoList(state, { listId }) {
+            const index = state.todoLists.findIndex(x => x.id === listId);
+            state.todoLists.splice(index, 1);
+        },
+        updateAccountContributors(state, { contributors }) {
+            state.contributors = contributors;
+        },
+        updateListContributors(state, { list }) {
+            const index = state.todoLists.findIndex(x => x.id === list.id);
+            state.todoLists[index].contributors = list.contributors;
         }
     },
     actions: {
@@ -36,7 +54,7 @@ const todoLists = {
                     method: 'GET',
                     url: 'api/lists'
                 });
-            
+
             context.commit('updateTodoLists', response.data);
             context.commit('updateLoadingState', { loadingState: false });
         },
@@ -50,12 +68,19 @@ const todoLists = {
                         'content-type': 'application/json'
                     }
                 })
-                .then(() => {
-                    context.dispatch('loadTodoLists');
-                })
-                .finally(() => {
-                    resolve();
-                });
+                    .then(() => {
+                        context.dispatch('loadTodoLists');
+                    })
+                    .catch(() => {
+                        this.$bvToast.toast(`Error`, {
+                            title: "You can't create another list",
+                            autoHideDelay: 5000,
+                            variant: 'danger'
+                        })
+                    })
+                    .finally(() => {
+                        resolve();
+                    });
             });
         },
         deleteTodoList(context, payload) {
@@ -64,12 +89,12 @@ const todoLists = {
                     method: 'DELETE',
                     url: `api/lists/${payload.listId}`,
                 })
-                .then(() => {
-                    context.dispatch('loadTodoLists');
-                })
-                .finally(() => {
-                    resolve();
-                });
+                    .then(() => {
+                        context.dispatch('loadTodoLists');
+                    })
+                    .finally(() => {
+                        resolve();
+                    });
             });
         },
         inviteContributorToList(context, { listId, email }) {
@@ -82,9 +107,9 @@ const todoLists = {
                         'content-type': 'application/json'
                     }
                 })
-                .finally(() => {
-                    resolve();
-                });
+                    .finally(() => {
+                        resolve();
+                    });
             });
         },
         async updateListTitle(context, { listId, listTitle }) {
@@ -97,6 +122,61 @@ const todoLists = {
                 }
             });
         },
+        async acceptInvitation(context, { listId }) {
+            try {
+                await axios({
+                    method: 'POST',
+                    url: `api/lists/${listId}/accept`
+                });
+
+                context.commit('changeUserRoleByListId', { listId, role: 2 });
+            }
+            catch (error) {
+                console.log(error);
+            }
+        },
+        async declineInvitation(context, { listId }) {
+            try {
+                await axios({
+                    method: 'POST',
+                    url: `api/lists/${listId}/decline`
+                });
+
+                context.commit('removeTodoList', { listId });
+            }
+            catch (error) {
+                console.log(error);
+            }
+        },
+        async leaveTodoList(context, { listId }) {
+            try {
+                await axios({
+                    method: 'POST',
+                    url: `api/lists/${listId}/removeself`
+                });
+
+                context.commit('removeTodoList', { listId });
+            }
+            catch (error) {
+                console.log(error);
+            }
+        },
+        async refreshContributors(context, { list }) {
+            try {
+                const response = await axios({
+                    method: 'GET',
+                    url: `api/accounts/contributors`,
+                });
+
+                const contributors = response.data;
+
+                context.commit('updateAccountContributors', { contributors });
+                context.commit('updateListContributors', { list });
+            }
+            catch (error) {
+                console.log(error);
+            }
+        }
     },
     getters: {
         todoLists(state) {
@@ -112,7 +192,7 @@ const todoLists = {
             let title = state.todoLists.find(list => list.id === todoListId).listTitle;
             return title;
         },
-        getLoadingState (state) {
+        getLoadingState(state) {
             return state.loading;
         }
     }

@@ -61,7 +61,7 @@ namespace Todo.Domain
 
         public void StoreContributor(string email, Guid senderAccountId)
         {
-            DomainEvents.Add(new InvitationSent { List = this, Email = email, SenderAccountId = senderAccountId });
+            DomainEvents.Add(new InvitationAccepted { List = this, Email = email, SenderAccountId = senderAccountId });
         }
 
         public bool DoesContributorExist(string inviteeEmail)
