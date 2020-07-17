@@ -71,6 +71,13 @@ const todoLists = {
                     .then(() => {
                         context.dispatch('loadTodoLists');
                     })
+                    .catch(() => {
+                        this.$bvToast.toast(`Error`, {
+                            title: "You can't create another list",
+                            autoHideDelay: 5000,
+                            variant: 'danger'
+                        })
+                    })
                     .finally(() => {
                         resolve();
                     });
