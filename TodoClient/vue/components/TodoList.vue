@@ -2,39 +2,39 @@
   <div class="todo-list-wrapper">
     <div class="todo-list">
       <h1
-        class="todo-list-title mb-4"
+        class="todo-list-title mb-2"
         @click="showTitleEditor"
         v-if="!editingTitle"
       >{{ list.listTitle }}</h1>
 
+      <b-form class="list-title-editor" v-if="editingTitle" @submit.prevent="updateListTitle">
+        <b-form-group>
+          <b-form-input
+            ref="listTitleInput"
+            v-model="form.title"
+            id="title"
+            maxlength="50"
+            required
+          ></b-form-input>
+        </b-form-group>
+
+        <b-button variant="success" type="submit" class="mb-3">Save</b-button>
+      </b-form>
+
+      <Contributors
+        class="mb-4"
+        :todoListContributors="list.contributors"
+        :accountContributors="contributors"
+      ></Contributors>
+
       <b-row>
-        <b-col md="8" class="mb-3">
-          <b-form class="list-title-editor" v-if="editingTitle" @submit.prevent="updateListTitle">
-            <b-form-group>
-              <b-form-input
-                ref="listTitleInput"
-                v-model="form.title"
-                id="title"
-                maxlength="50"
-                required
-              ></b-form-input>
-            </b-form-group>
-
-            <b-button variant="success" type="submit" class="mb-3">Save</b-button>
-          </b-form>
-
+        <b-col class="mb-3" :class="{ 'col-md-8': list.role == 3 }">
           <TodoListItems :listId="todoListId" :todoListItems="items"></TodoListItems>
 
           <AddTodoListItemForm class="mt-3" :todoListId="todoListId"></AddTodoListItemForm>
         </b-col>
 
-        <b-col md="4">
-          <Contributors
-            class="mb-3"
-            :todoListContributors="list.contributors"
-            :accountContributors="contributors"
-          ></Contributors>
-
+        <b-col md="4" v-if="list.role == 3">
           <InviteContributorsForm :listId="this.todoListId"></InviteContributorsForm>
         </b-col>
       </b-row>

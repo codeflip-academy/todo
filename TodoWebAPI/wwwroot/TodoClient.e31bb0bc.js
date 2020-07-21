@@ -38973,68 +38973,75 @@ exports.default = _default;
           ? _c(
               "h1",
               {
-                staticClass: "todo-list-title mb-4",
+                staticClass: "todo-list-title mb-2",
                 on: { click: _vm.showTitleEditor }
               },
               [_vm._v(_vm._s(_vm.list.listTitle))]
             )
           : _vm._e(),
         _vm._v(" "),
+        _vm.editingTitle
+          ? _c(
+              "b-form",
+              {
+                staticClass: "list-title-editor",
+                on: {
+                  submit: function($event) {
+                    $event.preventDefault()
+                    return _vm.updateListTitle($event)
+                  }
+                }
+              },
+              [
+                _c(
+                  "b-form-group",
+                  [
+                    _c("b-form-input", {
+                      ref: "listTitleInput",
+                      attrs: { id: "title", maxlength: "50", required: "" },
+                      model: {
+                        value: _vm.form.title,
+                        callback: function($$v) {
+                          _vm.$set(_vm.form, "title", $$v)
+                        },
+                        expression: "form.title"
+                      }
+                    })
+                  ],
+                  1
+                ),
+                _vm._v(" "),
+                _c(
+                  "b-button",
+                  {
+                    staticClass: "mb-3",
+                    attrs: { variant: "success", type: "submit" }
+                  },
+                  [_vm._v("Save")]
+                )
+              ],
+              1
+            )
+          : _vm._e(),
+        _vm._v(" "),
+        _c("Contributors", {
+          staticClass: "mb-4",
+          attrs: {
+            todoListContributors: _vm.list.contributors,
+            accountContributors: _vm.contributors
+          }
+        }),
+        _vm._v(" "),
         _c(
           "b-row",
           [
             _c(
               "b-col",
-              { staticClass: "mb-3", attrs: { md: "8" } },
+              {
+                staticClass: "mb-3",
+                class: { "col-md-8": _vm.list.role == 3 }
+              },
               [
-                _vm.editingTitle
-                  ? _c(
-                      "b-form",
-                      {
-                        staticClass: "list-title-editor",
-                        on: {
-                          submit: function($event) {
-                            $event.preventDefault()
-                            return _vm.updateListTitle($event)
-                          }
-                        }
-                      },
-                      [
-                        _c(
-                          "b-form-group",
-                          [
-                            _c("b-form-input", {
-                              ref: "listTitleInput",
-                              attrs: {
-                                id: "title",
-                                maxlength: "50",
-                                required: ""
-                              },
-                              model: {
-                                value: _vm.form.title,
-                                callback: function($$v) {
-                                  _vm.$set(_vm.form, "title", $$v)
-                                },
-                                expression: "form.title"
-                              }
-                            })
-                          ],
-                          1
-                        ),
-                        _vm._v(" "),
-                        _c(
-                          "b-button",
-                          {
-                            staticClass: "mb-3",
-                            attrs: { variant: "success", type: "submit" }
-                          },
-                          [_vm._v("Save")]
-                        )
-                      ],
-                      1
-                    )
-                  : _vm._e(),
-                _vm._v(" "),
                 _c("TodoListItems", {
                   attrs: { listId: _vm.todoListId, todoListItems: _vm.items }
                 }),
@@ -39047,24 +39054,18 @@ exports.default = _default;
               1
             ),
             _vm._v(" "),
-            _c(
-              "b-col",
-              { attrs: { md: "4" } },
-              [
-                _c("Contributors", {
-                  staticClass: "mb-3",
-                  attrs: {
-                    todoListContributors: _vm.list.contributors,
-                    accountContributors: _vm.contributors
-                  }
-                }),
-                _vm._v(" "),
-                _c("InviteContributorsForm", {
-                  attrs: { listId: this.todoListId }
-                })
-              ],
-              1
-            )
+            _vm.list.role == 3
+              ? _c(
+                  "b-col",
+                  { attrs: { md: "4" } },
+                  [
+                    _c("InviteContributorsForm", {
+                      attrs: { listId: this.todoListId }
+                    })
+                  ],
+                  1
+                )
+              : _vm._e()
           ],
           1
         )
@@ -88942,7 +88943,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "65154" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "62668" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};
