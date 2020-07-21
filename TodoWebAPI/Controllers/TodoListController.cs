@@ -89,6 +89,7 @@ namespace TodoWebAPI.Controllers
             var userEmail = User.FindFirst(c => c.Type == "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress").Value;
 
             updatedList.ListId = listId;
+            updatedList.Email = userEmail;
 
             var list = await _dapperQuery.GetListAsync(listId);
 
@@ -96,7 +97,11 @@ namespace TodoWebAPI.Controllers
 
             if (todoListAuthorizationValidator.IsUserAuthorized())
             {
-                await _mediator.Send(updatedList);
+                var mediator = await _mediator.Send(updatedList);
+                if(mediator == null)
+                {
+                    return BadRequest("Can't rename list because you're not an owner.");
+                }
                 return Ok();
             }
 
