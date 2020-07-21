@@ -48,6 +48,10 @@ namespace TodoWebAPI.UserStories.SendInvitation
                     var invitee = await _accountRepository.FindAccountByEmailAsync(request.InviteeEmail);
                     var inviteeAccountsListsLeft = await _accountsListsRepository.FindAccountsListsLeftByAccountIdAsync(invitee.Id, request.ListId);
                     var inviteeAccountsListsDeclined = await _accountsListsRepository.FindAccountsListsDeclinedByAccountIdAsync(invitee.Id, request.ListId);
+                    var inviteeAccountsLists = await _accountsListsRepository.FindAccountsListsByAccountIdAsync(invitee.Id, request.ListId);
+
+                    if(inviteeAccountsLists != null && inviteeAccountsLists.UserIsAlreadyInvited(invitee.Id))
+                        return false;
 
                     if (list.DoesContributorExist(invitee.Email))
                         return false;

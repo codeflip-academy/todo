@@ -14,6 +14,14 @@ namespace Todo.Infrastructure
         public Guid ListId { get; set; }
         public byte Role { get; protected set; }
         public bool UserIsOwner(Guid accountId) => AccountId == accountId && Role == Roles.Owner;
+        public bool UserIsAlreadyInvited(Guid accountId)
+        {
+            if(Role == Roles.Invited)
+            {
+                return true;
+            }
+            return false;
+        }
         private protected AccountsLists() { }
     }
 
