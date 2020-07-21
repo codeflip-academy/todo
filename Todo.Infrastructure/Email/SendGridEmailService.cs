@@ -1,4 +1,5 @@
-﻿using SendGrid;
+﻿using Microsoft.Extensions.Logging;
+using SendGrid;
 using SendGrid.Helpers.Mail;
 using System;
 using System.Collections.Generic;
@@ -9,6 +10,12 @@ namespace Todo.Infrastructure.Email
 {
     public class SendGridEmailService : IEmailService
     {
+        private readonly ILogger<SendGridEmailService> _logger;
+
+        public SendGridEmailService(ILogger<SendGridEmailService> logger)
+        {
+            _logger = logger;
+        }
         public async Task SendEmailAsync(Email email)
         {
             var apiKey = Environment.GetEnvironmentVariable("SendGridApiKey");
@@ -18,7 +25,16 @@ namespace Todo.Infrastructure.Email
             var to = new EmailAddress(email.To);
             var plainTextContent = email.Body;
             var msg = MailHelper.CreateSingleEmail(from, to, subject, plainTextContent, null);
-            var response = await client.SendEmailAsync(msg);
+            try
+            {
+                _logger.LogTrace("sending email to send grid");
+                var response = await client.SendEmailAsync(msg);
+            }
+            catch(Exception ex)
+            {
+                _logger.LogError(ex, "Unable to send email to send grid");
+            }
+            
         }
     }
 }
