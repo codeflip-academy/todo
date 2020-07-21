@@ -186,7 +186,7 @@ namespace TodoWebAPI
                 endpoints.MapHub<NotificationHub>("/notifications");
             });
 
-            var bus = app.ApplicationServices.GetService<IServiceBusConsumer>();
+            var bus = app.ApplicationServices.GetRequiredService<IServiceBusConsumer>();
             bus.RegisterOnMessageHandlerAndReceiveMessages();
         }
     }

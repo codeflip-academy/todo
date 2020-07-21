@@ -31,6 +31,8 @@ namespace TodoWebAPI.ServiceBus
 
         public void RegisterOnMessageHandlerAndReceiveMessages()
         {
+            _logger.LogTrace("Registering service bus");
+            
             var messageHandlerOptions = new MessageHandlerOptions(ExceptionReceivedHandler)
             {
                 MaxConcurrentCalls = 3,
