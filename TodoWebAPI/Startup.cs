@@ -66,7 +66,7 @@ namespace TodoWebAPI
             services.AddScoped<IAccountRepository, EFAccountRepository>();
             services.AddScoped<IAccountPlanRepository, EFAccountPlanRepository>();
             services.AddScoped<IPlanRepository, EFPlanRepository>();
-            services.AddScoped<IServiceBusEmail, ServiceBusEmail>();
+            services.AddScoped<IEmailQueue, AzureServiceBusEmailQueue>();
             services.AddScoped<ISubItemRepository, EFSubItemRepository>();
             services.AddScoped<ISubItemLayoutRepository, EFSubItemLayout>();
             services.AddSingleton<DapperQuery>();

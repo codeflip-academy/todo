@@ -49,7 +49,7 @@ namespace TodoWebAPI.CronJob
 
                     foreach(var contributor in contributors)
                     {
-                        var email = new Email()
+                        var email = new EmailMessage()
                         {
                             To = contributor,
                             From = _configuration.GetSection("Emails")["Notifications"],

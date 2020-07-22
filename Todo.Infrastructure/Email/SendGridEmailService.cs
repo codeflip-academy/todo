@@ -4,6 +4,7 @@ using SendGrid.Helpers.Mail;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Threading.Tasks;
 
 namespace Todo.Infrastructure.Email
@@ -16,7 +17,7 @@ namespace Todo.Infrastructure.Email
         {
             _logger = logger;
         }
-        public async Task SendEmailAsync(Email email)
+        public async Task SendEmailAsync(EmailMessage email)
         {
             var apiKey = Environment.GetEnvironmentVariable("SendGridApiKey");
             var client = new SendGridClient(apiKey);
@@ -29,12 +30,19 @@ namespace Todo.Infrastructure.Email
             {
                 _logger.LogInformation("sending email to send grid.");
                 var response = await client.SendEmailAsync(msg);
-                var content = await response.Body.ReadAsStringAsync();
-                _logger.LogInformation("received response from sendgrid api:" + content);
+
+                if (response.StatusCode != HttpStatusCode.OK)
+                {
+                    var content = await response.Body.ReadAsStringAsync();
+                    _logger.LogError("Error when calling sendgrid api: " + content);
+                }
+
+                _logger.LogInformation("email sent to sendgrid.");
             }
+
             catch(Exception ex)
             {
-                _logger.LogError(ex, "Unable to send email to send grid");
+                _logger.LogError(ex, "Error when calling sendgrid api.");
             }
             
         }

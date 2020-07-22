@@ -2,6 +2,7 @@
 using Microsoft.Azure.ServiceBus;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -17,31 +18,33 @@ namespace TodoWebAPI.DomainEventHandlers
 {
     public class SendEmailWhenListIsCompletedDomainEventHandler : INotificationHandler<TodoListCompletedStateChanged>
     {
-        private readonly IServiceBusEmail _serviceBusEmail;
-        private readonly IEmailService _emailService;
+        private readonly IEmailQueue _emailQueue;
         private readonly IConfiguration _config;
         private readonly DapperQuery _dapper;
+        private readonly ILogger _logger;
 
-        public SendEmailWhenListIsCompletedDomainEventHandler(IEmailService emailService, IConfiguration config, DapperQuery dapper, IServiceBusEmail serviceBusEmail)
+        public SendEmailWhenListIsCompletedDomainEventHandler(IConfiguration config, DapperQuery dapper, IEmailQueue emailQueue, ILogger<SendEmailWhenListIsCompletedDomainEventHandler> logger)
         {
-            _emailService = emailService;
             _config = config;
             _dapper = dapper;
-            _serviceBusEmail = serviceBusEmail;
+            _emailQueue = emailQueue;
+            _logger = logger;
         }
         public async Task Handle(TodoListCompletedStateChanged notification, CancellationToken cancellationToken)
         {
+            _logger.LogInformation($"Handling {notification.List.Id} completed state changed. Completed = '{notification.List.Completed}'.");
+
             var list = notification.List;
             var emails = await _dapper.GetEmailsFromAccountsByListIdAsync(list.Id);
 
-            var messages = new List<Email>();
+            var messages = new List<EmailMessage>();
 
             if (list.Completed)
             {
                 foreach (var userEmail in emails)
                 {
                     messages.Add(
-                        new Email()
+                        new EmailMessage()
                         {
                             To = userEmail,
                             From = _config.GetSection("Emails")["Notifications"],
@@ -50,7 +53,9 @@ namespace TodoWebAPI.DomainEventHandlers
                         });
                 }
 
-                _serviceBusEmail.SendServiceBusEmail(messages);
+                _logger.LogInformation($"Sending email notification for completed list {list.Id}.");
+
+                await _emailQueue.QueueEmailAsync(messages);
             }
         }
     }

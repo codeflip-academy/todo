@@ -45,7 +45,7 @@ namespace TodoWebAPI.ServiceBus
         private async Task ProcessMessagesAsync(Message message, CancellationToken token)
         {
             _logger.LogInformation($"Service Bus Consumer: received message '{message.MessageId}'. Sending email.");
-            var email = JsonConvert.DeserializeObject<Email>(Encoding.UTF8.GetString(message.Body));
+            var email = JsonConvert.DeserializeObject<EmailMessage>(Encoding.UTF8.GetString(message.Body));
 
             await _emailService.SendEmailAsync(email);
 

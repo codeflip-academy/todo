@@ -7,44 +7,44 @@ using Todo.Domain;
 using System.Collections.Generic;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using System.Threading.Tasks;
 
 namespace TodoWebAPI.ServiceBus
 {
-    public class ServiceBusEmail : IServiceBusEmail
+    public class AzureServiceBusEmailQueue : IEmailQueue
     {
         const string QueueName = "notifications";
-        private readonly IConfiguration _configuration;
         private readonly ILogger _logger;
-        private QueueClient _queueClient;
+        private readonly QueueClient _queueClient;
 
-        public ServiceBusEmail(IConfiguration configuration, ILoggerFactory loggerFactory)
+        public AzureServiceBusEmailQueue(IConfiguration configuration, ILogger<AzureServiceBusEmailQueue> logger)
         {
-            _configuration = configuration;
-            _logger = loggerFactory.CreateLogger<ServiceBusEmail>();
-        }
-
-        public async void SendServiceBusEmail(List<Email> emails)
-        {
-            var connectionString = _configuration.GetSection("ConnectionStrings")["AzureServiceBus"];
+            var connectionString = configuration.GetSection("ConnectionStrings")["AzureServiceBus"];
             _queueClient = new QueueClient(connectionString, QueueName);
 
+            _logger = logger;
+        }
+
+        public async Task QueueEmailAsync(List<EmailMessage> emails)
+        {
             try
             {
+                var messages = new List<Message>();
+
                 foreach (var email in emails)
                 {
                     var messageBody = JsonConvert.SerializeObject(email);
                     var message = new Message(Encoding.UTF8.GetBytes(messageBody));
 
-                    await _queueClient.SendAsync(message);
+                    messages.Add(message);
                 }
+
+                await _queueClient.SendAsync(messages);
             }
+
             catch (Exception ex)
             {
                 _logger.LogError(ex.Message);
-            }
-            finally
-            {
-                await _queueClient.CloseAsync();
             }
         }
     }
