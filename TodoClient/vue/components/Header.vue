@@ -3,8 +3,15 @@
     <b-navbar-brand>Todo</b-navbar-brand>
 
     <div class="user-info ml-auto" v-if="user.id">
-      <b-button class="ml-auto mr-2" @click="logout">Logout</b-button>
-      <b-avatar :src="user.pictureUrl"></b-avatar>
+      <b-dropdown class="account-dropdown" right>
+        <template v-slot:button-content>
+          <b-avatar :src="user.pictureUrl"></b-avatar>
+        </template>
+        <b-dropdown-item to="/lists">My Lists</b-dropdown-item>
+        <b-dropdown-divider></b-dropdown-divider>
+        <b-dropdown-item to="/settings">Settings</b-dropdown-item>
+        <b-dropdown-item @click="logout">Sign Out</b-dropdown-item>
+      </b-dropdown>
     </div>
   </b-navbar>
 </template>
@@ -13,14 +20,15 @@
 import axios from "axios";
 export default {
   name: "Header",
+  data() {
+    return {
+      user: {}
+    };
+  },
   async created() {
     await this.checkAuthState();
     await this.getPlan();
-  },
-  computed: {
-    user() {
-      return this.$store.getters.user;
-    }
+    this.user = this.$store.getters.user;
   },
   methods: {
     async checkAuthState() {
@@ -44,6 +52,7 @@ export default {
       await this.$store.dispatch("getPlan");
     },
     logout() {
+      this.user = {};
       axios({
         method: "GET",
         url: "api/accounts/logout"
@@ -57,6 +66,23 @@ export default {
 
 <style lang="scss">
 #navbar {
-  z-index: auto;
+  z-index: 50;
+}
+
+.account-dropdown {
+  .btn {
+    padding: 0;
+    background: transparent !important;
+    border: none !important;
+
+    &:focus {
+      outline: none;
+      border: none;
+    }
+
+    &::after {
+      display: none;
+    }
+  }
 }
 </style>

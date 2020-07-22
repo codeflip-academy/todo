@@ -87,4 +87,8 @@ h1 {
 .modal-footer {
   display: none !important;
 }
+
+#confetti-canvas {
+  z-index: 100;
+}
 </style>
