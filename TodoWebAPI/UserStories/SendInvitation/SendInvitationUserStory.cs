@@ -38,7 +38,7 @@ namespace TodoWebAPI.UserStories.SendInvitation
             var accountPlan = await _accountPlanRepository.FindAccountPlanByAccountIdAsync(request.SenderAccountId);
             var plan = await _planRepository.FindPlanByIdAsync(accountPlan.PlanId);
             var list = await _todoListRepository.FindTodoListIdByIdAsync(request.ListId);
-            var accountsLists = await _accountsListsRepository.FindAccountsListsByAccountIdAsync(request.SenderAccountId, request.ListId);
+            var accountsLists = await _accountsListsRepository.FindAccountsListsByAccountIdAndListIdAsync(request.SenderAccountId, request.ListId);
             var accountPlanAuthorization = new AccountPlanAuthorizationValidator(accountPlan, plan);
 
             if (accountsLists.UserIsOwner(request.SenderAccountId))
@@ -48,7 +48,7 @@ namespace TodoWebAPI.UserStories.SendInvitation
                     var invitee = await _accountRepository.FindAccountByEmailAsync(request.InviteeEmail);
                     var inviteeAccountsListsLeft = await _accountsListsRepository.FindAccountsListsLeftByAccountIdAsync(invitee.Id, request.ListId);
                     var inviteeAccountsListsDeclined = await _accountsListsRepository.FindAccountsListsDeclinedByAccountIdAsync(invitee.Id, request.ListId);
-                    var inviteeAccountsLists = await _accountsListsRepository.FindAccountsListsByAccountIdAsync(invitee.Id, request.ListId);
+                    var inviteeAccountsLists = await _accountsListsRepository.FindAccountsListsByAccountIdAndListIdAsync(invitee.Id, request.ListId);
 
                     if(inviteeAccountsLists != null && inviteeAccountsLists.UserIsAlreadyInvited(invitee.Id))
                         return false;

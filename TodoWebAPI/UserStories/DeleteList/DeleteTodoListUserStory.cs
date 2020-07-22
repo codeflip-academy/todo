@@ -29,7 +29,7 @@ namespace TodoWebAPI.UserStories
         }
         protected override async Task Handle(DeleteList request, CancellationToken cancellationToken)
         {
-            var accountLists = await _accountsListsRepository.FindAccountsListsByAccountIdAsync(request.AccountId, request.ListId);
+            var accountLists = await _accountsListsRepository.FindAccountsListsByAccountIdAndListIdAsync(request.AccountId, request.ListId);
 
             if(accountLists.UserIsOwner(request.AccountId))
             {
