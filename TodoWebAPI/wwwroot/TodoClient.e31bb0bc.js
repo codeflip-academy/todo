@@ -23559,10 +23559,6 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 //
 //
 //
-//
-//
-//
-//
 var _default = {
   name: "Home",
 
@@ -23570,6 +23566,12 @@ var _default = {
     return {};
   },
 
+  computed: {
+    user() {
+      return this.$store.getters.user;
+    }
+
+  },
   components: {
     TodoLists: _TodoLists.default,
     AddTodoListForm: _AddTodoListForm.default
@@ -23588,17 +23590,19 @@ exports.default = _default;
   var _vm = this
   var _h = _vm.$createElement
   var _c = _vm._self._c || _h
-  return _c(
-    "b-container",
-    [
-      _c("h1", { staticClass: "mb-4" }, [_vm._v("My Lists")]),
-      _vm._v(" "),
-      _c("TodoLists"),
-      _vm._v(" "),
-      _c("AddTodoListForm")
-    ],
-    1
-  )
+  return _vm.user.email
+    ? _c(
+        "b-container",
+        [
+          _c("h1", { staticClass: "mb-4" }, [_vm._v("My Lists")]),
+          _vm._v(" "),
+          _c("TodoLists"),
+          _vm._v(" "),
+          _c("AddTodoListForm")
+        ],
+        1
+      )
+    : _vm._e()
 }
 var staticRenderFns = []
 render._withStripped = true
@@ -88957,7 +88961,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "62668" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "54664" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};
