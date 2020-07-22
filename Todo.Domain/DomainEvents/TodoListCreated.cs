@@ -8,5 +8,6 @@ namespace Todo.Domain.DomainEvents
     public class TodoListCreated : INotification
     {
         public TodoList List { get; set; }
+        public Guid AccountId {get; set;}
     }
 }

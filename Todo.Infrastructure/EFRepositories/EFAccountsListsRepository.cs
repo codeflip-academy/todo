@@ -6,6 +6,7 @@ using System.Threading;
 using Todo.Domain.Repositories;
 using Todo.Infrastructure.Guids;
 using Todo.Domain;
+using System.Collections.Generic;
 
 namespace Todo.Infrastructure.EFRepositories
 {
@@ -34,11 +35,16 @@ namespace Todo.Infrastructure.EFRepositories
             return Task.CompletedTask;
         }
 
-        public async Task<AccountsLists> FindAccountsListsByAccountIdAsync(Guid accountId, Guid listId)
+        public async Task<AccountsLists> FindAccountsListsByAccountIdAndListIdAsync(Guid accountId, Guid listId)
         {
             return await _context.AccountsLists
                 .Where(a => a.AccountId == accountId && a.ListId == listId)
                 .FirstOrDefaultAsync();
+        }
+
+        public async Task<List<AccountsLists>> FindAccountsListsByAccountIdAsync(Guid accountId)
+        {
+            return await _context.AccountsLists.Where(x => x.AccountId == accountId).ToListAsync();
         }
 
         public async Task<RoleContributor> FindAccountsListsContributorByAccountIdAsync(Guid accountId, Guid listId)

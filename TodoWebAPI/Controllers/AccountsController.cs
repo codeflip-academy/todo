@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Todo.Infrastructure;
 using TodoWebAPI.UserStories.DeleteAccount;
+using TodoWebAPI.UserStories.RoleChanges;
 
 namespace TodoWebAPI.Controllers
 {
@@ -97,6 +98,23 @@ namespace TodoWebAPI.Controllers
             var dapper = new DapperQuery(_config);
 
             return Ok(await dapper.GetPlanByAccountIdAsync(accountId));
+        }
+
+        [Authorize]
+        [HttpPut("api/accounts/role")]
+        public async Task<IActionResult> ChangeRoleAysnc([FromBody] RoleChange roleChanged)
+        {
+            var accountId = Guid.Parse(User.FindFirst(c => c.Type == "urn:codefliptodo:accountid").Value);
+
+            roleChanged.AcountId = accountId;
+
+            var mediator = await _mediator.Send(roleChanged);
+
+            if(mediator == null)
+            {
+                return BadRequest();
+            }
+            return Ok();
         }
     }
 }

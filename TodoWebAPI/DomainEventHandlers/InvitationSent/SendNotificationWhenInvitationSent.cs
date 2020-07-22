@@ -36,7 +36,7 @@ namespace TodoWebAPI.DomainEventHandlers.Invitation
         {
             var list = await _todoListRepository.FindTodoListIdByIdAsync(notification.ListId);
             var invitee = await _accountRepository.FindAccountByIdAsync(notification.InviteeAccountId);
-            var accountsLists = await _accountsListsRepository.FindAccountsListsByAccountIdAsync(invitee.Id, list.Id);
+            var accountsLists = await _accountsListsRepository.FindAccountsListsByAccountIdAndListIdAsync(invitee.Id, list.Id);
 
             var listModel = new TodoListModel()
             {

@@ -14,7 +14,9 @@ export default {
     Header
   },
   async beforeCreate() {
-    await this.$store.dispatch("loadTodoLists");
+    try {
+      await this.$store.dispatch("loadTodoLists");
+    } catch (error) {}
   },
   mounted() {
     this.$store.state.connection
@@ -86,5 +88,9 @@ h1 {
 
 .modal-footer {
   display: none !important;
+}
+
+#confetti-canvas {
+  z-index: 100;
 }
 </style>

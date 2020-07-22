@@ -20,6 +20,7 @@ namespace Todo.DomainEventHandlers
         {
             var accountPlan = new AccountPlan()
             {
+                Id = _accountPlanRepository.NextId(),
                 AccountId = notification.AccountId,
                 PlanId = notification.PlanId
             };

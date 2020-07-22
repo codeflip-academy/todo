@@ -26,7 +26,7 @@ namespace TodoWebAPI.UserStories
         public async Task<TodoList> Handle(UpdateList request, CancellationToken cancellationToken)
         {
             var account = await _accountRepository.FindAccountByEmailAsync(request.Email);
-            var accountsLists = await _accountListsRepository.FindAccountsListsByAccountIdAsync(account.Id, request.ListId);
+            var accountsLists = await _accountListsRepository.FindAccountsListsByAccountIdAndListIdAsync(account.Id, request.ListId);
             var todoList = await _repository.FindTodoListIdByIdAsync(request.ListId);
 
             if(accountsLists.UserIsOwner(account.Id))

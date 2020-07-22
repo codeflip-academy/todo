@@ -19,6 +19,7 @@
   border-radius: 100px;
 }
 .todo-list-preview[data-v-2d7314] {
+  z-index: 0;
   margin-bottom: 24px;
 }
 .todo-list-preview .todo-list-preview-contributors[data-v-2d7314] {
@@ -124,7 +125,20 @@ h3[data-v-3f1240] {
   font-weight: bold;
 }
 #navbar {
-  z-index: auto;
+  z-index: 50;
+}
+
+.account-dropdown .btn {
+  padding: 0;
+  background: transparent !important;
+  border: none !important;
+}
+.account-dropdown .btn:focus {
+  outline: none;
+  border: none;
+}
+.account-dropdown .btn::after {
+  display: none;
 }
 * {
   box-sizing: border-box;
@@ -148,6 +162,10 @@ h1 {
 
 .modal-footer {
   display: none !important;
+}
+
+#confetti-canvas {
+  z-index: 100;
 }
 /*!
  * Bootstrap v4.5.0 (https://getbootstrap.com/)

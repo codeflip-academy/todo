@@ -19003,7 +19003,40 @@ const user = {
     }
 
   },
-  actions: {},
+  actions: {
+    async changePlan(context, {
+      planName
+    }) {
+      try {
+        await (0, _axios.default)({
+          method: 'PUT',
+          url: '/api/accounts/role',
+          data: JSON.stringify({
+            plan: planName
+          }),
+          headers: {
+            'content-type': 'application/json'
+          }
+        });
+        await context.dispatch('getPlan');
+      } catch (error) {
+        throw error;
+      }
+    },
+
+    async getPlan(context) {
+      try {
+        const response = await (0, _axios.default)({
+          method: "GET",
+          url: "api/accounts/plan"
+        });
+        context.commit('setPlanData', response.data);
+      } catch (error) {
+        throw error;
+      }
+    }
+
+  },
   getters: {
     user(state) {
       return state.user;
@@ -19011,6 +19044,10 @@ const user = {
 
     plan(state) {
       return state.plan;
+    },
+
+    planName(state) {
+      return state.plan.name;
     }
 
   }
@@ -19129,12 +19166,6 @@ const todoLists = {
           }
         }).then(() => {
           context.dispatch('loadTodoLists');
-        }).catch(() => {
-          this.$bvToast.toast("Error", {
-            title: "You can't create another list",
-            autoHideDelay: 5000,
-            variant: 'danger'
-          });
         }).finally(() => {
           resolve();
         });
@@ -39315,7 +39346,154 @@ render._withStripped = true
         
       }
     })();
-},{"axios":"node_modules/axios/index.js","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"modules/router.js":[function(require,module,exports) {
+},{"axios":"node_modules/axios/index.js","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/views/Settings.vue":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = void 0;
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+var _default = {
+  name: "Settings",
+
+  data() {
+    return {
+      plans: ["Free", "Basic", "Premium"],
+      canChangePlan: null,
+      plan: {},
+      errorMessage: ""
+    };
+  },
+
+  computed: {
+    planName: {
+      get() {
+        return this.$store.getters.planName;
+      },
+
+      async set(value) {
+        try {
+          await this.$store.dispatch("changePlan", {
+            planName: value
+          });
+          this.canChangePlan = null;
+        } catch {
+          this.canChangePlan = false;
+          this.plan = this.$store.getters.plan;
+          this.errorMessage = "Unable to change your plan to ".concat(value, ". You have too many lists.");
+        }
+      }
+
+    }
+  }
+};
+exports.default = _default;
+        var $a8fd0e = exports.default || module.exports;
+      
+      if (typeof $a8fd0e === 'function') {
+        $a8fd0e = $a8fd0e.options;
+      }
+    
+        /* template */
+        Object.assign($a8fd0e, (function () {
+          var render = function() {
+  var _vm = this
+  var _h = _vm.$createElement
+  var _c = _vm._self._c || _h
+  return _c(
+    "section",
+    { attrs: { id: "settings-page" } },
+    [
+      _c("b-container", [
+        _c("h1", [_vm._v("Settings")]),
+        _vm._v(" "),
+        _c("hr", { staticClass: "mb-4" }),
+        _vm._v(" "),
+        _c(
+          "section",
+          { attrs: { id: "settings-subscription" } },
+          [
+            _c("h2", { staticClass: "text-muted mb-3" }, [
+              _vm._v("Change Plan")
+            ]),
+            _vm._v(" "),
+            _c(
+              "b-form-group",
+              [
+                _c("b-form-select", {
+                  attrs: { state: _vm.canChangePlan, options: _vm.plans },
+                  model: {
+                    value: _vm.planName,
+                    callback: function($$v) {
+                      _vm.planName = $$v
+                    },
+                    expression: "planName"
+                  }
+                })
+              ],
+              1
+            ),
+            _vm._v(" "),
+            _vm.canChangePlan === false
+              ? _c("p", { staticClass: "text-danger text-sm" }, [
+                  _vm._v(_vm._s(_vm.errorMessage))
+                ])
+              : _vm._e()
+          ],
+          1
+        )
+      ])
+    ],
+    1
+  )
+}
+var staticRenderFns = []
+render._withStripped = true
+
+          return {
+            render: render,
+            staticRenderFns: staticRenderFns,
+            _compiled: true,
+            _scopeId: null,
+            functional: undefined
+          };
+        })());
+      
+    /* hot reload */
+    (function () {
+      if (module.hot) {
+        var api = require('vue-hot-reload-api');
+        api.install(require('vue'));
+        if (api.compatible) {
+          module.hot.accept();
+          if (!module.hot.data) {
+            api.createRecord('$a8fd0e', $a8fd0e);
+          } else {
+            api.reload('$a8fd0e', $a8fd0e);
+          }
+        }
+
+        
+      }
+    })();
+},{"vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"modules/router.js":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -39329,11 +39507,15 @@ var _vueRouter = _interopRequireDefault(require("vue-router"));
 
 var _axios = _interopRequireDefault(require("axios"));
 
-var _Home = _interopRequireDefault(require(".././vue/views/Home.vue"));
+var _store = _interopRequireDefault(require("./store"));
 
-var _TodoListView = _interopRequireDefault(require(".././vue/views/TodoListView.vue"));
+var _Home = _interopRequireDefault(require(".././vue/views/Home"));
 
-var _Login = _interopRequireDefault(require(".././vue/views/Login.vue"));
+var _TodoListView = _interopRequireDefault(require(".././vue/views/TodoListView"));
+
+var _Login = _interopRequireDefault(require(".././vue/views/Login"));
+
+var _Settings = _interopRequireDefault(require("../vue/views/Settings"));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -39357,11 +39539,40 @@ const router = new _vueRouter.default({
     path: '/lists/:todoListId',
     component: _TodoListView.default,
     props: true
+  }, {
+    path: '/settings',
+    component: _Settings.default
   }]
+});
+
+async function isAuthenticated() {
+  let authenticated = false;
+
+  try {
+    await (0, _axios.default)({
+      method: "GET",
+      url: "api/accounts/login"
+    });
+    authenticated = true;
+  } finally {
+    return authenticated;
+  }
+}
+
+router.beforeEach(async (to, from, next) => {
+  let authenticated = await isAuthenticated();
+
+  if (!authenticated && to.name !== 'Login') {
+    next({
+      name: 'Login'
+    });
+  } else {
+    next();
+  }
 });
 var _default = router;
 exports.default = _default;
-},{"vue":"node_modules/vue/dist/vue.runtime.esm.js","vue-router":"node_modules/vue-router/dist/vue-router.esm.js","axios":"node_modules/axios/index.js",".././vue/views/Home.vue":"vue/views/Home.vue",".././vue/views/TodoListView.vue":"vue/views/TodoListView.vue",".././vue/views/Login.vue":"vue/views/Login.vue"}],"vue/components/Header.vue":[function(require,module,exports) {
+},{"vue":"node_modules/vue/dist/vue.runtime.esm.js","vue-router":"node_modules/vue-router/dist/vue-router.esm.js","axios":"node_modules/axios/index.js","./store":"modules/store.js",".././vue/views/Home":"vue/views/Home.vue",".././vue/views/TodoListView":"vue/views/TodoListView.vue",".././vue/views/Login":"vue/views/Login.vue","../vue/views/Settings":"vue/views/Settings.vue"}],"vue/components/Header.vue":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -39384,52 +39595,47 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
 var _default = {
   name: "Header",
 
+  data() {
+    return {
+      user: {}
+    };
+  },
+
   async created() {
-    await this.checkAuthState();
-    await this.getPlan();
+    try {
+      await this.checkAuthState();
+      await this.getPlan();
+      this.user = this.$store.getters.user;
+    } catch (error) {}
   },
 
-  computed: {
-    user() {
-      return this.$store.getters.user;
-    }
-
-  },
   methods: {
     async checkAuthState() {
       try {
-        await (0, _axios.default)({
-          method: "GET",
-          url: "api/accounts/login"
-        });
         const user = await (0, _axios.default)({
           method: "GET",
           url: "api/accounts"
         });
         this.$store.commit("setUserData", user.data);
-      } catch {
-        if (this.$router.name !== "Login") {
-          this.$router.push("/login");
-        }
-      }
+      } catch (error) {}
     },
 
     async getPlan() {
-      try {
-        const plan = await (0, _axios.default)({
-          method: "GET",
-          url: "api/accounts/plan"
-        });
-        this.$store.commit("setPlanData", plan.data);
-      } catch (error) {
-        console.log("she didn't work " + error);
-      }
+      await this.$store.dispatch("getPlan");
     },
 
     logout() {
+      this.user = {};
       (0, _axios.default)({
         method: "GET",
         url: "api/accounts/logout"
@@ -39468,12 +39674,47 @@ exports.default = _default;
             { staticClass: "user-info ml-auto" },
             [
               _c(
-                "b-button",
-                { staticClass: "ml-auto mr-2", on: { click: _vm.logout } },
-                [_vm._v("Logout")]
-              ),
-              _vm._v(" "),
-              _c("b-avatar", { attrs: { src: _vm.user.pictureUrl } })
+                "b-dropdown",
+                {
+                  staticClass: "account-dropdown",
+                  attrs: { right: "" },
+                  scopedSlots: _vm._u(
+                    [
+                      {
+                        key: "button-content",
+                        fn: function() {
+                          return [
+                            _c("b-avatar", {
+                              attrs: { src: _vm.user.pictureUrl }
+                            })
+                          ]
+                        },
+                        proxy: true
+                      }
+                    ],
+                    null,
+                    false,
+                    2889888370
+                  )
+                },
+                [
+                  _vm._v(" "),
+                  _c("b-dropdown-item", { attrs: { to: "/lists" } }, [
+                    _vm._v("My Lists")
+                  ]),
+                  _vm._v(" "),
+                  _c("b-dropdown-divider"),
+                  _vm._v(" "),
+                  _c("b-dropdown-item", { attrs: { to: "/settings" } }, [
+                    _vm._v("Settings")
+                  ]),
+                  _vm._v(" "),
+                  _c("b-dropdown-item", { on: { click: _vm.logout } }, [
+                    _vm._v("Sign Out")
+                  ])
+                ],
+                1
+              )
             ],
             1
           )
@@ -39541,7 +39782,9 @@ var _default = {
   },
 
   async beforeCreate() {
-    await this.$store.dispatch("loadTodoLists");
+    try {
+      await this.$store.dispatch("loadTodoLists");
+    } catch (error) {}
   },
 
   mounted() {
@@ -88961,7 +89204,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "54664" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "56234" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};
