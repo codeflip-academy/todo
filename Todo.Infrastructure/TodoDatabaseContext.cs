@@ -196,7 +196,15 @@ namespace Todo.Infrastructure
             modelBuilder.Entity<AccountPlan>(entity =>
             {
                 entity
-                    .HasKey(k => new { k.AccountId, k.PlanId });
+                    .HasKey(e => e.Id);
+
+                entity
+                    .Property(e => e.AccountId)
+                    .HasColumnName("AccountID");
+
+                entity
+                    .Property(e => e.PlanId)
+                    .HasColumnName("PlanID");
 
                 entity
                     .Property(e => e.ListCount)

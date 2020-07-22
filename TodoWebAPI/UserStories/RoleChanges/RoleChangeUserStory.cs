@@ -35,7 +35,7 @@ namespace TodoWebAPI.UserStories.RoleChanges
             var accountsLists = await _accountsLists.FindAccountsListsByAccountIdAsync(request.AcountId);
             var listCount = accountPlan.ListCount;
 
-            if(request.Plan == "Free")
+            if (request.Plan == "Free")
             {
                 if(accountPlan.IsNewPlanLessThanCurrentPlan(PlanTiers.Free) == true)
                 {
@@ -52,7 +52,7 @@ namespace TodoWebAPI.UserStories.RoleChanges
                 }
                 accountPlan.PlanId = PlanTiers.Free;
             }
-            else if(request.Plan == "Basic")
+            else if (request.Plan == "Basic")
             {
                 if(accountPlan.IsNewPlanLessThanCurrentPlan(PlanTiers.Basic) == true)
                 {
@@ -69,13 +69,12 @@ namespace TodoWebAPI.UserStories.RoleChanges
                 }
                 accountPlan.PlanId = PlanTiers.Basic;
             }
-            else if(request.Plan == "Premium")
+            else if (request.Plan == "Premium")
             {
                 accountPlan.PlanId = PlanTiers.Premium;
             }
 
-            _accountRepository.UpdateAccountPlan(account);
-            await _accountRepository.SaveChangesAsync();
+            await _accountPlan.SaveChangesAsync();
         }
     }
 }

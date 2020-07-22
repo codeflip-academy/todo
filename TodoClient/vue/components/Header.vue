@@ -41,15 +41,7 @@ export default {
       }
     },
     async getPlan() {
-      try {
-        const plan = await axios({
-          method: "GET",
-          url: "api/accounts/plan"
-        });
-        this.$store.commit("setPlanData", plan.data);
-      } catch (error) {
-        console.log("she didn't work " + error);
-      }
+      await this.$store.dispatch("getPlan");
     },
     logout() {
       axios({
