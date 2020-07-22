@@ -39369,12 +39369,16 @@ exports.default = void 0;
 //
 //
 //
+//
 var _default = {
   name: "Settings",
 
   data() {
     return {
-      plans: ["Free", "Basic", "Premium"]
+      plans: ["Free", "Basic", "Premium"],
+      canChangePlan: null,
+      plan: {},
+      errorMessage: ""
     };
   },
 
@@ -39384,10 +39388,17 @@ var _default = {
         return this.$store.getters.planName;
       },
 
-      set(value) {
-        this.$store.dispatch("changePlan", {
-          planName: value
-        });
+      async set(value) {
+        try {
+          await this.$store.dispatch("changePlan", {
+            planName: value
+          });
+          this.canChangePlan = null;
+        } catch {
+          this.canChangePlan = false;
+          this.plan = this.$store.getters.plan;
+          this.errorMessage = "Unable to change your plan to ".concat(value, ". You have too many lists.");
+        }
       }
 
     }
@@ -39427,7 +39438,7 @@ exports.default = _default;
               "b-form-group",
               [
                 _c("b-form-select", {
-                  attrs: { options: _vm.plans },
+                  attrs: { state: _vm.canChangePlan, options: _vm.plans },
                   model: {
                     value: _vm.planName,
                     callback: function($$v) {
@@ -39438,7 +39449,13 @@ exports.default = _default;
                 })
               ],
               1
-            )
+            ),
+            _vm._v(" "),
+            _vm.canChangePlan === false
+              ? _c("p", { staticClass: "text-danger text-sm" }, [
+                  _vm._v(_vm._s(_vm.errorMessage))
+                ])
+              : _vm._e()
           ],
           1
         )
@@ -89187,7 +89204,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "60013" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "56234" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};
