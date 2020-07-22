@@ -10,5 +10,6 @@ namespace Todo.Domain
     {
         public Guid ListId { get; set; }
         public Guid InviteeAccountId { get; set; }
+        public Guid AccountId {get; set;}
     }
 }

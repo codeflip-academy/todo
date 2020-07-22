@@ -8,5 +8,6 @@ namespace Todo.Domain.DomainEvents
     public class EditSubItem : INotification
     {
         public SubItem SubItem { get; set; }
+        public Guid AccountId {get; set;}
     }
 }
