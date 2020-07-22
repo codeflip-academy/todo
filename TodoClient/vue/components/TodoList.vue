@@ -29,8 +29,7 @@
 
       <b-row>
         <b-col class="mb-3" :class="{ 'col-md-8': list.role == 3 }">
-          <TodoListItems :listId="todoListId" :todoListItems="items"></TodoListItems>
-
+          <TodoListItems :listId="todoListId" :todoListItems="items" v-if="items.length > 0"></TodoListItems>
           <AddTodoListItemForm class="mt-3" :todoListId="todoListId"></AddTodoListItemForm>
         </b-col>
 
@@ -49,7 +48,9 @@ import TodoListItems from "./TodoListItems";
 import Contributors from "./Contributors";
 import InviteContributorsForm from "./InviteContributorsForm";
 import VueConfetti from "vue-confetti";
+
 Vue.use(VueConfetti);
+
 export default {
   name: "TodoList",
   props: ["todoListId"],
@@ -66,6 +67,7 @@ export default {
     await this.$store.dispatch("loadItemsByListId", {
       todoListId: this.todoListId
     });
+
     this.items = this.getItems();
   },
   destroyed() {
