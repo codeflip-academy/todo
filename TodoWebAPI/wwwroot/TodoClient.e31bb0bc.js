@@ -39277,8 +39277,11 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 //
 //
 //
+//
+//
+//
 var _default = {
-  name: 'Login',
+  name: "Login",
 
   data() {
     return {};
@@ -39287,8 +39290,8 @@ var _default = {
   methods: {
     logout() {
       (0, _axios.default)({
-        method: 'GET',
-        url: '/api/accounts/logout'
+        method: "GET",
+        url: "/api/accounts/logout"
       });
     }
 
@@ -39307,15 +39310,29 @@ exports.default = _default;
   var _vm = this
   var _h = _vm.$createElement
   var _c = _vm._self._c || _h
-  return _c(
-    "b-container",
-    [
-      _c("b-button", { attrs: { href: "/api/accounts/login" } }, [
-        _vm._v("Login")
-      ])
-    ],
-    1
-  )
+  return _c("b-container", [
+    _c(
+      "section",
+      { attrs: { id: "login" } },
+      [
+        _c("h1", { staticClass: "title mb-5" }, [_vm._v("Todo")]),
+        _vm._v(" "),
+        _c("p", { staticClass: "subtitle text-muted mb-4" }, [
+          _vm._v("Welcome. Please sign in to access or create your account.")
+        ]),
+        _vm._v(" "),
+        _c(
+          "b-button",
+          {
+            staticClass: "btn-dark btn-lg",
+            attrs: { href: "/api/accounts/login" }
+          },
+          [_vm._v("Sign in with GitHub")]
+        )
+      ],
+      1
+    )
+  ])
 }
 var staticRenderFns = []
 render._withStripped = true
@@ -39344,9 +39361,13 @@ render._withStripped = true
         }
 
         
+        var reloadCSS = require('_css_loader');
+        module.hot.dispose(reloadCSS);
+        module.hot.accept(reloadCSS);
+      
       }
     })();
-},{"axios":"node_modules/axios/index.js","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/views/Settings.vue":[function(require,module,exports) {
+},{"axios":"node_modules/axios/index.js","_css_loader":"node_modules/parcel-bundler/src/builtins/css-loader.js","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/views/Settings.vue":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -39844,7 +39865,11 @@ exports.default = _default;
   return _c(
     "div",
     { staticClass: "mt-4", attrs: { id: "content" } },
-    [_c("Header"), _vm._v(" "), _c("RouterView")],
+    [
+      this.$route.name !== "Login" ? _c("Header") : _vm._e(),
+      _vm._v(" "),
+      _c("RouterView")
+    ],
     1
   )
 }
@@ -89204,7 +89229,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "56234" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "50734" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};

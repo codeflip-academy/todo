@@ -124,6 +124,16 @@ h3[data-v-3f1240] {
   font-family: "Nunito", sans-serif;
   font-weight: bold;
 }
+#login .title {
+  font-size: 60px;
+}
+#login .subtitle {
+  font-size: 30px;
+  font-weight: bold;
+  font-family: "Nunito", sans-serif;
+  max-width: 420px;
+  line-height: 1.2;
+}
 #navbar {
   z-index: 50;
 }
