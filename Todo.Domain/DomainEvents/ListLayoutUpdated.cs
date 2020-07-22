@@ -10,5 +10,6 @@ namespace Todo.Domain.DomainEvents
         public Guid ListId { get; set; }
         public Guid ItemId { get; set; }
         public int Position { get; set; }
+        public Guid AccountId {get; set;}
     }
 }

@@ -8,5 +8,6 @@ namespace Todo.Domain.DomainEvents
     public class TodoListCompletedStateChanged : INotification
     {
         public TodoList List { get; set; }
+        public Guid AccountId {get; set;}
     }
 }
