@@ -12,6 +12,5 @@ namespace Todo.Domain.Repositories
         Task<Account> FindAccountByIdAsync(Guid id);
         Task<Account> FindAccountByEmailAsync(string email);
         Task RemoveAccountAsync(Guid accountId);
-        void UpdateAccountPlan(Account account);
     }
 }

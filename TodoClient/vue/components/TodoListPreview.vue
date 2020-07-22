@@ -76,6 +76,7 @@ export default {
 
 <style lang="scss" scoped>
 .todo-list-preview {
+  z-index: 0;
   margin-bottom: 24px;
 
   .todo-list-preview-contributors {

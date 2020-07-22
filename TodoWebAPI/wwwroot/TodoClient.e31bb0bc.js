@@ -39550,20 +39550,28 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
 var _default = {
   name: "Header",
+
+  data() {
+    return {
+      user: {}
+    };
+  },
 
   async created() {
     await this.checkAuthState();
     await this.getPlan();
+    this.user = this.$store.getters.user;
   },
 
-  computed: {
-    user() {
-      return this.$store.getters.user;
-    }
-
-  },
   methods: {
     async checkAuthState() {
       try {
@@ -39588,6 +39596,7 @@ var _default = {
     },
 
     logout() {
+      this.user = {};
       (0, _axios.default)({
         method: "GET",
         url: "api/accounts/logout"
@@ -39626,12 +39635,47 @@ exports.default = _default;
             { staticClass: "user-info ml-auto" },
             [
               _c(
-                "b-button",
-                { staticClass: "ml-auto mr-2", on: { click: _vm.logout } },
-                [_vm._v("Logout")]
-              ),
-              _vm._v(" "),
-              _c("b-avatar", { attrs: { src: _vm.user.pictureUrl } })
+                "b-dropdown",
+                {
+                  staticClass: "account-dropdown",
+                  attrs: { right: "" },
+                  scopedSlots: _vm._u(
+                    [
+                      {
+                        key: "button-content",
+                        fn: function() {
+                          return [
+                            _c("b-avatar", {
+                              attrs: { src: _vm.user.pictureUrl }
+                            })
+                          ]
+                        },
+                        proxy: true
+                      }
+                    ],
+                    null,
+                    false,
+                    2889888370
+                  )
+                },
+                [
+                  _vm._v(" "),
+                  _c("b-dropdown-item", { attrs: { to: "/lists" } }, [
+                    _vm._v("My Lists")
+                  ]),
+                  _vm._v(" "),
+                  _c("b-dropdown-divider"),
+                  _vm._v(" "),
+                  _c("b-dropdown-item", { attrs: { to: "/settings" } }, [
+                    _vm._v("Settings")
+                  ]),
+                  _vm._v(" "),
+                  _c("b-dropdown-item", { on: { click: _vm.logout } }, [
+                    _vm._v("Sign Out")
+                  ])
+                ],
+                1
+              )
             ],
             1
           )
@@ -89119,7 +89163,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "62636" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "60013" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};
