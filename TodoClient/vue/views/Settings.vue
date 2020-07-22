@@ -7,7 +7,7 @@
       <section id="settings-subscription">
         <h2 class="text-muted mb-3">Change Plan</h2>
         <b-form-group>
-          <b-form-select v-model="plan.name" :options="plans"></b-form-select>
+          <b-form-select v-model="planName" :options="plans"></b-form-select>
         </b-form-group>
       </section>
     </b-container>
@@ -23,9 +23,9 @@ export default {
     };
   },
   computed: {
-    plan: {
+    planName: {
       get() {
-        return this.$store.getters.plan;
+        return this.$store.getters.planName;
       },
       set(value) {
         this.$store.dispatch("changePlan", { planName: value });

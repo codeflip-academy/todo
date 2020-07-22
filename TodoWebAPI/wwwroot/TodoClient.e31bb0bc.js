@@ -19018,7 +19018,7 @@ const user = {
             'content-type': 'application/json'
           }
         });
-        context.dispatch('getPlan');
+        await context.dispatch('getPlan');
       } catch (error) {
         throw error;
       }
@@ -19044,6 +19044,10 @@ const user = {
 
     plan(state) {
       return state.plan;
+    },
+
+    planName(state) {
+      return state.plan.name;
     }
 
   }
@@ -39375,9 +39379,9 @@ var _default = {
   },
 
   computed: {
-    plan: {
+    planName: {
       get() {
-        return this.$store.getters.plan;
+        return this.$store.getters.planName;
       },
 
       set(value) {
@@ -39425,11 +39429,11 @@ exports.default = _default;
                 _c("b-form-select", {
                   attrs: { options: _vm.plans },
                   model: {
-                    value: _vm.plan.name,
+                    value: _vm.planName,
                     callback: function($$v) {
-                      _vm.$set(_vm.plan, "name", $$v)
+                      _vm.planName = $$v
                     },
-                    expression: "plan.name"
+                    expression: "planName"
                   }
                 })
               ],

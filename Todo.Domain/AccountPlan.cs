@@ -9,6 +9,7 @@ namespace Todo.Domain
 {
     public class AccountPlan : Entity
     {
+        public Guid Id { get; set; }
         public Guid AccountId { get; set; }
         public int PlanId { get; set; }
         public int ListCount { get; private set; }

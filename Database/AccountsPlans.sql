@@ -4,11 +4,12 @@ GO
 
 CREATE TABLE [AccountsPlans]
 (
+    ID UNIQUEIDENTIFIER NOT NULL,
     AccountID UNIQUEIDENTIFIER NOT NULL,
     PlanID INT NOT NULL,
     ListCount INT NOT NULL,
-    PRIMARY KEY (AccountID, PlanID),
     FOREIGN KEY (AccountID) REFERENCES Accounts (ID),
+    FOREIGN KEY (PlanID) REFERENCES Plans (ID)
 )
 
 GO

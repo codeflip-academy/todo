@@ -9,34 +9,30 @@ namespace TodoWebAPI.UserStories.RoleChanges
 {
     public class RoleChangeUserStory : AsyncRequestHandler<RoleChange>
     {
-        private readonly IAccountRepository _accountRepository;
-        private readonly IPlanRepository _plan;
+        private readonly IAccountPlanRepository _accountPlanRepository;
 
-        public RoleChangeUserStory(IAccountRepository accountRepository, IPlanRepository plan)
+        public RoleChangeUserStory(IAccountPlanRepository accountPlanRepository)
         {
-            _accountRepository = accountRepository;
-            _plan = plan;
+            _accountPlanRepository = accountPlanRepository;
         }
         protected override async Task Handle(RoleChange request, CancellationToken cancellationToken)
         {
-            var account =  await _accountRepository.FindAccountByIdAsync(request.AcountId);
-            var plan = await _plan.FindPlanByIdAsync(account.PlanId);
+            var accountPlan = await _accountPlanRepository.FindAccountPlanByAccountIdAsync(request.AcountId);
 
-            if(request.Plan == "Free")
+            if (request.Plan == "Free")
             {
-                account.PlanId = PlanTiers.Free;
+                accountPlan.PlanId = PlanTiers.Free;
             }
-            else if(request.Plan == "Basic")
+            else if (request.Plan == "Basic")
             {
-                account.PlanId = PlanTiers.Basic;
+                accountPlan.PlanId = PlanTiers.Basic;
             }
-            else if(request.Plan == "Premium")
+            else if (request.Plan == "Premium")
             {
-                account.PlanId = PlanTiers.Premium;
+                accountPlan.PlanId = PlanTiers.Premium;
             }
 
-            _accountRepository.UpdateAccountPlan(account);
-            await _accountRepository.SaveChangesAsync();
+            await _accountPlanRepository.SaveChangesAsync();
         }
     }
 }

@@ -25,7 +25,7 @@ const user = {
                     }
                 });
 
-                context.dispatch('getPlan');
+                await context.dispatch('getPlan');
             }
             catch (error) {
                 throw error;
@@ -51,7 +51,10 @@ const user = {
         },
         plan(state) {
             return state.plan;
-        }
+        },
+        planName(state) {
+            return state.plan.name;
+        },
     }
 }
 
