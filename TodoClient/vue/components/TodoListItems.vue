@@ -2,6 +2,7 @@
   <b-list-group class="todo-list-items">
     <b-list-group-item v-if="todoListItems.length < 1">Add an item to get started.</b-list-group-item>
 
+    <transition-group name="fadeLeft">
     <Draggable v-model="layout" @end="updateLayout" handle=".item-handle">
       <TodoListItem
         v-for="position in layout"

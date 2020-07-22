@@ -38524,6 +38524,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 //
 //
 //
+//
 var _default = {
   name: "TodoListItems",
   props: ["listId", "todoListItems"],
@@ -38603,29 +38604,36 @@ exports.default = _default;
         : _vm._e(),
       _vm._v(" "),
       _c(
-        "Draggable",
-        {
-          attrs: { handle: ".item-handle" },
-          on: { end: _vm.updateLayout },
-          model: {
-            value: _vm.layout,
-            callback: function($$v) {
-              _vm.layout = $$v
+        "transition-group",
+        { attrs: { name: "fadeLeft" } },
+        [
+          _c(
+            "Draggable",
+            {
+              attrs: { handle: ".item-handle" },
+              on: { end: _vm.updateLayout },
+              model: {
+                value: _vm.layout,
+                callback: function($$v) {
+                  _vm.layout = $$v
+                },
+                expression: "layout"
+              }
             },
-            expression: "layout"
-          }
-        },
-        _vm._l(_vm.layout, function(position) {
-          return _c("TodoListItem", {
-            key: position,
-            staticClass: "todo-list-item",
-            attrs: {
-              todoListItem: _vm.todoListItems.find(function(x) {
-                return x.id === position
+            _vm._l(_vm.layout, function(position) {
+              return _c("TodoListItem", {
+                key: position,
+                staticClass: "todo-list-item",
+                attrs: {
+                  todoListItem: _vm.todoListItems.find(function(x) {
+                    return x.id === position
+                  })
+                }
               })
-            }
-          })
-        }),
+            }),
+            1
+          )
+        ],
         1
       )
     ],
@@ -39277,8 +39285,11 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 //
 //
 //
+//
+//
+//
 var _default = {
-  name: 'Login',
+  name: "Login",
 
   data() {
     return {};
@@ -39287,8 +39298,8 @@ var _default = {
   methods: {
     logout() {
       (0, _axios.default)({
-        method: 'GET',
-        url: '/api/accounts/logout'
+        method: "GET",
+        url: "/api/accounts/logout"
       });
     }
 
@@ -39307,15 +39318,32 @@ exports.default = _default;
   var _vm = this
   var _h = _vm.$createElement
   var _c = _vm._self._c || _h
-  return _c(
-    "b-container",
-    [
-      _c("b-button", { attrs: { href: "/api/accounts/login" } }, [
-        _vm._v("Login")
-      ])
-    ],
-    1
-  )
+  return _c("b-container", [
+    _c(
+      "section",
+      {
+        staticClass: "animate__animated animate__fadeIn animate__fast",
+        attrs: { id: "login" }
+      },
+      [
+        _c("h1", { staticClass: "title mb-5" }, [_vm._v("Todo")]),
+        _vm._v(" "),
+        _c("p", { staticClass: "subtitle text-muted mb-4" }, [
+          _vm._v("Welcome. Please sign in to access or create your account.")
+        ]),
+        _vm._v(" "),
+        _c(
+          "b-button",
+          {
+            staticClass: "btn-dark btn-lg",
+            attrs: { href: "/api/accounts/login" }
+          },
+          [_vm._v("Sign in with GitHub")]
+        )
+      ],
+      1
+    )
+  ])
 }
 var staticRenderFns = []
 render._withStripped = true
@@ -39344,9 +39372,13 @@ render._withStripped = true
         }
 
         
+        var reloadCSS = require('_css_loader');
+        module.hot.dispose(reloadCSS);
+        module.hot.accept(reloadCSS);
+      
       }
     })();
-},{"axios":"node_modules/axios/index.js","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/views/Settings.vue":[function(require,module,exports) {
+},{"axios":"node_modules/axios/index.js","_css_loader":"node_modules/parcel-bundler/src/builtins/css-loader.js","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/views/Settings.vue":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -39602,6 +39634,13 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
 var _default = {
   name: "Header",
 
@@ -39659,69 +39698,76 @@ exports.default = _default;
   var _vm = this
   var _h = _vm.$createElement
   var _c = _vm._self._c || _h
-  return _c(
-    "b-navbar",
-    {
-      staticClass: "fixed-top",
-      attrs: { toggleable: "sm", type: "light", variant: "light", id: "navbar" }
-    },
-    [
-      _c("b-navbar-brand", [_vm._v("Todo")]),
-      _vm._v(" "),
-      _vm.user.id
-        ? _c(
-            "div",
-            { staticClass: "user-info ml-auto" },
-            [
-              _c(
-                "b-dropdown",
-                {
-                  staticClass: "account-dropdown",
-                  attrs: { right: "" },
-                  scopedSlots: _vm._u(
-                    [
-                      {
-                        key: "button-content",
-                        fn: function() {
-                          return [
-                            _c("b-avatar", {
-                              attrs: { src: _vm.user.pictureUrl }
-                            })
-                          ]
-                        },
-                        proxy: true
-                      }
-                    ],
-                    null,
-                    false,
-                    2889888370
-                  )
-                },
+  return _vm.user.email
+    ? _c(
+        "b-navbar",
+        {
+          staticClass: "fixed-top",
+          attrs: {
+            toggleable: "sm",
+            type: "light",
+            variant: "light",
+            id: "navbar"
+          }
+        },
+        [
+          _c("b-navbar-brand", [_vm._v("Todo")]),
+          _vm._v(" "),
+          _vm.user.id
+            ? _c(
+                "div",
+                { staticClass: "user-info ml-auto" },
                 [
-                  _vm._v(" "),
-                  _c("b-dropdown-item", { attrs: { to: "/lists" } }, [
-                    _vm._v("My Lists")
-                  ]),
-                  _vm._v(" "),
-                  _c("b-dropdown-divider"),
-                  _vm._v(" "),
-                  _c("b-dropdown-item", { attrs: { to: "/settings" } }, [
-                    _vm._v("Settings")
-                  ]),
-                  _vm._v(" "),
-                  _c("b-dropdown-item", { on: { click: _vm.logout } }, [
-                    _vm._v("Sign Out")
-                  ])
+                  _c(
+                    "b-dropdown",
+                    {
+                      staticClass: "account-dropdown",
+                      attrs: { right: "" },
+                      scopedSlots: _vm._u(
+                        [
+                          {
+                            key: "button-content",
+                            fn: function() {
+                              return [
+                                _c("b-avatar", {
+                                  attrs: { src: _vm.user.pictureUrl }
+                                })
+                              ]
+                            },
+                            proxy: true
+                          }
+                        ],
+                        null,
+                        false,
+                        2889888370
+                      )
+                    },
+                    [
+                      _vm._v(" "),
+                      _c("b-dropdown-item", { attrs: { to: "/lists" } }, [
+                        _vm._v("My Lists")
+                      ]),
+                      _vm._v(" "),
+                      _c("b-dropdown-divider"),
+                      _vm._v(" "),
+                      _c("b-dropdown-item", { attrs: { to: "/settings" } }, [
+                        _vm._v("Settings")
+                      ]),
+                      _vm._v(" "),
+                      _c("b-dropdown-item", { on: { click: _vm.logout } }, [
+                        _vm._v("Sign Out")
+                      ])
+                    ],
+                    1
+                  )
                 ],
                 1
               )
-            ],
-            1
-          )
-        : _vm._e()
-    ],
-    1
-  )
+            : _vm._e()
+        ],
+        1
+      )
+    : _vm._e()
 }
 var staticRenderFns = []
 render._withStripped = true
@@ -89155,7 +89201,12 @@ _vue.default.use(_bootstrapVue.CardPlugin);
 _vue.default.use(_bootstrapVue.BootstrapVue);
 
 _vue.default.use(_bootstrapVue.BootstrapVueIcons);
-},{"vue":"node_modules/vue/dist/vue.runtime.esm.js","bootstrap-vue":"node_modules/bootstrap-vue/esm/index.js","bootstrap/dist/css/bootstrap.min.css":"node_modules/bootstrap/dist/css/bootstrap.min.css","bootstrap-vue/dist/bootstrap-vue.css":"node_modules/bootstrap-vue/dist/bootstrap-vue.css"}],"index.js":[function(require,module,exports) {
+},{"vue":"node_modules/vue/dist/vue.runtime.esm.js","bootstrap-vue":"node_modules/bootstrap-vue/esm/index.js","bootstrap/dist/css/bootstrap.min.css":"node_modules/bootstrap/dist/css/bootstrap.min.css","bootstrap-vue/dist/bootstrap-vue.css":"node_modules/bootstrap-vue/dist/bootstrap-vue.css"}],"node_modules/animate.css/animate.css":[function(require,module,exports) {
+var reloadCSS = require('_css_loader');
+
+module.hot.dispose(reloadCSS);
+module.hot.accept(reloadCSS);
+},{"_css_loader":"node_modules/parcel-bundler/src/builtins/css-loader.js"}],"index.js":[function(require,module,exports) {
 "use strict";
 
 var _vue = _interopRequireDefault(require("vue"));
@@ -89168,6 +89219,8 @@ var _App = _interopRequireDefault(require("./vue/App.vue"));
 
 require("./modules/bootstrap");
 
+require("animate.css/animate.css");
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 new _vue.default({
@@ -89176,7 +89229,7 @@ new _vue.default({
   router: _router.default,
   render: h => h(_App.default)
 });
-},{"vue":"node_modules/vue/dist/vue.runtime.esm.js","./modules/store":"modules/store.js","./modules/router":"modules/router.js","./vue/App.vue":"vue/App.vue","./modules/bootstrap":"modules/bootstrap.js"}],"node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
+},{"vue":"node_modules/vue/dist/vue.runtime.esm.js","./modules/store":"modules/store.js","./modules/router":"modules/router.js","./vue/App.vue":"vue/App.vue","./modules/bootstrap":"modules/bootstrap.js","animate.css/animate.css":"node_modules/animate.css/animate.css"}],"node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
 var global = arguments[3];
 var OVERLAY_ID = '__parcel__error__overlay__';
 var OldModule = module.bundle.Module;
@@ -89204,7 +89257,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "56234" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "62053" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};
