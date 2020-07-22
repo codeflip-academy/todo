@@ -25,7 +25,8 @@ namespace TodoWebAPI.UserStories.RoleChanges
             {
                 if(accountPlan.IsNewPlanLessThanCurrentPlan(PlanTiers.Free) == true)
                 {
-                    return null;
+                    if(accountPlan.ListCount > PlanTiers.FreeMaxLists)
+                        return null;
                 }
                 accountPlan.PlanId = PlanTiers.Free;
             }
@@ -33,7 +34,8 @@ namespace TodoWebAPI.UserStories.RoleChanges
             {
                 if(accountPlan.IsNewPlanLessThanCurrentPlan(PlanTiers.Basic) == true)
                 {
-                   return null;
+                    if(accountPlan.ListCount > PlanTiers.BasisMaxLists)
+                         return null;
                 }
                 accountPlan.PlanId = PlanTiers.Basic;
             }
