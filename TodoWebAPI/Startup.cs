@@ -66,7 +66,6 @@ namespace TodoWebAPI
             services.AddScoped<IAccountRepository, EFAccountRepository>();
             services.AddScoped<IAccountPlanRepository, EFAccountPlanRepository>();
             services.AddScoped<IPlanRepository, EFPlanRepository>();
-            services.AddScoped<IEmailQueue, AzureServiceBusEmailQueue>();
             services.AddScoped<ISubItemRepository, EFSubItemRepository>();
             services.AddScoped<ISubItemLayoutRepository, EFSubItemLayout>();
             services.AddSingleton<DapperQuery>();
@@ -74,7 +73,9 @@ namespace TodoWebAPI
             services.AddScoped<ISequentialIdGenerator, SequentialIdGenerator>();
             services.AddControllers();
             services.AddMediatR(typeof(Startup).GetTypeInfo().Assembly);
+
             services.AddSingleton<IServiceBusConsumer, ServiceBusConsumer>();
+            services.AddSingleton<IEmailQueue, AzureServiceBusEmailQueue>();
 
             services.AddCronJob<DueDateJob>(c =>
             {
