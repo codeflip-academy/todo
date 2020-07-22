@@ -26,27 +26,21 @@ export default {
     };
   },
   async created() {
-    await this.checkAuthState();
-    await this.getPlan();
-    this.user = this.$store.getters.user;
+    try {
+      await this.checkAuthState();
+      await this.getPlan();
+      this.user = this.$store.getters.user;
+    } catch (error) {}
   },
   methods: {
     async checkAuthState() {
       try {
-        await axios({
-          method: "GET",
-          url: "api/accounts/login"
-        });
         const user = await axios({
           method: "GET",
           url: "api/accounts"
         });
         this.$store.commit("setUserData", user.data);
-      } catch {
-        if (this.$router.name !== "Login") {
-          this.$router.push("/login");
-        }
-      }
+      } catch (error) {}
     },
     async getPlan() {
       await this.$store.dispatch("getPlan");

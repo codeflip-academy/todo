@@ -39490,13 +39490,15 @@ var _vueRouter = _interopRequireDefault(require("vue-router"));
 
 var _axios = _interopRequireDefault(require("axios"));
 
+var _store = _interopRequireDefault(require("./store"));
+
 var _Home = _interopRequireDefault(require(".././vue/views/Home"));
 
 var _TodoListView = _interopRequireDefault(require(".././vue/views/TodoListView"));
 
 var _Login = _interopRequireDefault(require(".././vue/views/Login"));
 
-var _Settings = _interopRequireDefault(require("../vue/views/Settings.vue"));
+var _Settings = _interopRequireDefault(require("../vue/views/Settings"));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -39525,9 +39527,35 @@ const router = new _vueRouter.default({
     component: _Settings.default
   }]
 });
+
+async function isAuthenticated() {
+  let authenticated = false;
+
+  try {
+    await (0, _axios.default)({
+      method: "GET",
+      url: "api/accounts/login"
+    });
+    authenticated = true;
+  } finally {
+    return authenticated;
+  }
+}
+
+router.beforeEach(async (to, from, next) => {
+  let authenticated = await isAuthenticated();
+
+  if (!authenticated && to.name !== 'Login') {
+    next({
+      name: 'Login'
+    });
+  } else {
+    next();
+  }
+});
 var _default = router;
 exports.default = _default;
-},{"vue":"node_modules/vue/dist/vue.runtime.esm.js","vue-router":"node_modules/vue-router/dist/vue-router.esm.js","axios":"node_modules/axios/index.js",".././vue/views/Home":"vue/views/Home.vue",".././vue/views/TodoListView":"vue/views/TodoListView.vue",".././vue/views/Login":"vue/views/Login.vue","../vue/views/Settings.vue":"vue/views/Settings.vue"}],"vue/components/Header.vue":[function(require,module,exports) {
+},{"vue":"node_modules/vue/dist/vue.runtime.esm.js","vue-router":"node_modules/vue-router/dist/vue-router.esm.js","axios":"node_modules/axios/index.js","./store":"modules/store.js",".././vue/views/Home":"vue/views/Home.vue",".././vue/views/TodoListView":"vue/views/TodoListView.vue",".././vue/views/Login":"vue/views/Login.vue","../vue/views/Settings":"vue/views/Settings.vue"}],"vue/components/Header.vue":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -39567,28 +39595,22 @@ var _default = {
   },
 
   async created() {
-    await this.checkAuthState();
-    await this.getPlan();
-    this.user = this.$store.getters.user;
+    try {
+      await this.checkAuthState();
+      await this.getPlan();
+      this.user = this.$store.getters.user;
+    } catch (error) {}
   },
 
   methods: {
     async checkAuthState() {
       try {
-        await (0, _axios.default)({
-          method: "GET",
-          url: "api/accounts/login"
-        });
         const user = await (0, _axios.default)({
           method: "GET",
           url: "api/accounts"
         });
         this.$store.commit("setUserData", user.data);
-      } catch {
-        if (this.$router.name !== "Login") {
-          this.$router.push("/login");
-        }
-      }
+      } catch (error) {}
     },
 
     async getPlan() {
@@ -39743,7 +39765,9 @@ var _default = {
   },
 
   async beforeCreate() {
-    await this.$store.dispatch("loadTodoLists");
+    try {
+      await this.$store.dispatch("loadTodoLists");
+    } catch (error) {}
   },
 
   mounted() {
