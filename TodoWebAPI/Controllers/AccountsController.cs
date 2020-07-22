@@ -108,8 +108,12 @@ namespace TodoWebAPI.Controllers
 
             roleChanged.AcountId = accountId;
 
-            await _mediator.Send(roleChanged);
+            var mediator = await _mediator.Send(roleChanged);
 
+            if(mediator == null)
+            {
+                return BadRequest();
+            }
             return Ok();
         }
     }
