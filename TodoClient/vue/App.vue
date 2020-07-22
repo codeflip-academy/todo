@@ -14,7 +14,9 @@ export default {
     Header
   },
   async beforeCreate() {
-    await this.$store.dispatch("loadTodoLists");
+    try {
+      await this.$store.dispatch("loadTodoLists");
+    } catch (error) {}
   },
   mounted() {
     this.$store.state.connection
