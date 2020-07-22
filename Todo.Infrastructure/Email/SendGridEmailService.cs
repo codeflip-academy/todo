@@ -27,10 +27,10 @@ namespace Todo.Infrastructure.Email
             var msg = MailHelper.CreateSingleEmail(from, to, subject, plainTextContent, null);
             try
             {
-                _logger.LogTrace("sending email to send grid.");
+                _logger.LogInformation("sending email to send grid.");
                 var response = await client.SendEmailAsync(msg);
                 var content = await response.Body.ReadAsStringAsync();
-                _logger.LogTrace("received response from sendgrid api:" + content);
+                _logger.LogInformation("received response from sendgrid api:" + content);
             }
             catch(Exception ex)
             {
