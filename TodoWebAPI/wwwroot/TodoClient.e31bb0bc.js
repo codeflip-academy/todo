@@ -19344,6 +19344,12 @@ const todoLists = {
         listId: payload.todoListId,
         items: response.data
       });
+      response.data.forEach(async item => {
+        await context.dispatch("loadSubItems", {
+          listId: item.listId,
+          todoItemId: item.id
+        });
+      });
     },
 
     addItem(context, payload) {
@@ -19471,7 +19477,12 @@ const subItems = {
       _vue.default.set(state.subItems[subItem.listItemId], index, subItem);
     },
 
-    removeSubItem() {},
+    trashSubItem(state, {
+      subItem
+    }) {
+      const index = state.subItems[subItem.listItemId].findIndex(i => i.id == subItem.id);
+      state.subItems[subItem.listItemId].splice(index, 1);
+    },
 
     updateSubItemCompletedState(state, {
       subItem
@@ -19584,11 +19595,18 @@ const subItems = {
       return state.subItems[itemId];
     },
     getSubItemCompletedState: state => (itemId, subItemId) => {
-      return state.subItems[itemId].find(i => i.id === subItemId).completed;
+      var _state$subItems$itemI;
+
+      return (_state$subItems$itemI = state.subItems[itemId]) === null || _state$subItems$itemI === void 0 ? void 0 : _state$subItems$itemI.find(i => i.id === subItemId).completed;
     },
     subItemCountByItemId: state => itemId => {
       return state.subItems[itemId].length;
+    },
+
+    getSubItemsLoadingState(state) {
+      return state.loadingSubItems;
     }
+
   }
 };
 var _default = subItems;
@@ -37176,21 +37194,8 @@ exports.default = void 0;
 //
 //
 //
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
 var _default = {
-  props: ['listId', 'subItem'],
+  props: ["listId", "subItem"],
   computed: {
     completedState: {
       get() {
@@ -37198,7 +37203,7 @@ var _default = {
       },
 
       set(value) {
-        this.$store.dispatch('toggleSubItemCompletedState', {
+        this.$store.dispatch("toggleSubItemCompletedState", {
           listId: this.listId,
           todoItemId: this.subItem.listItemId,
           subItemId: this.subItem.id,
@@ -37228,7 +37233,7 @@ var _default = {
     },
 
     async updateSubItem() {
-      await this.$store.dispatch('updateSubItem', {
+      await this.$store.dispatch("updateSubItem", {
         listId: this.listId,
         todoItemId: this.subItem.listItemId,
         subItemId: this.subItem.id,
@@ -37238,10 +37243,16 @@ var _default = {
     },
 
     async deleteSubItem() {
-      await this.$store.dispatch('trashSubItem', {
+      this.$store.commit("trashSubItem", {
+        subItem: this.subItem
+      });
+      await this.$store.dispatch("trashSubItem", {
         listId: this.listId,
         todoItemId: this.subItem.listItemId,
         subItemId: this.subItem.id
+      });
+      await this.$store.dispatch("loadItemsByListId", {
+        todoListId: this.listId
       });
     }
 
@@ -37296,7 +37307,7 @@ exports.default = _default;
         ? _c(
             "div",
             { staticClass: "sub-item-name", on: { click: _vm.focusForm } },
-            [_vm._v("\n        " + _vm._s(_vm.subItem.name) + "\n    ")]
+            [_vm._v(_vm._s(_vm.subItem.name))]
           )
         : _vm._e(),
       _vm._v(" "),
@@ -37311,7 +37322,7 @@ exports.default = _default;
                   attrs: { size: "sm", variant: "danger" },
                   on: { click: _vm.deleteSubItem }
                 },
-                [_vm._v("\n            Delete\n        ")]
+                [_vm._v("Delete")]
               )
             ],
             1
@@ -37356,7 +37367,7 @@ exports.default = _default;
                   staticClass: "mr-1",
                   attrs: { size: "sm", variant: "success", type: "submit" }
                 },
-                [_vm._v("\n            Save\n        ")]
+                [_vm._v("Save")]
               ),
               _vm._v(" "),
               _c(
@@ -37369,7 +37380,7 @@ exports.default = _default;
                     }
                   }
                 },
-                [_vm._v("\n            Cancel\n        ")]
+                [_vm._v("Cancel")]
               )
             ],
             1
@@ -38232,28 +38243,32 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 var _default = {
-  name: 'TodoListItem',
-  props: ['todoListItem'],
+  name: "TodoListItem",
+  props: ["todoListItem"],
 
   data() {
     return {
-      subItemCount: 0
+      subItems: this.$store.getters.getSubItemsByItemId(this.todoListItem.id)
     };
   },
 
   components: {
     EditTodoItemForm: _EditTodoItemForm.default
   },
-
-  async created() {
-    await this.$store.dispatch('loadSubItems', {
-      listId: this.todoListItem.listId,
-      todoItemId: this.todoListItem.id
-    });
-    this.subItemCount = this.$store.getters.subItemCountByItemId(this.todoListItem.id);
-  },
-
   computed: {
     itemCompletedState: {
       get() {
@@ -38261,7 +38276,7 @@ var _default = {
       },
 
       set(value) {
-        this.$store.dispatch('toggleItemCompletedState', {
+        this.$store.dispatch("toggleItemCompletedState", {
           listId: this.todoListItem.listId,
           itemId: this.todoListItem.id,
           completed: value
@@ -38272,7 +38287,7 @@ var _default = {
   },
   filters: {
     formatDate: function (value) {
-      return (0, _moment.default)(value).format('MM/D/YYYY');
+      return (0, _moment.default)(value).format("MM/D/YYYY");
     },
     truncate: function (text, length, suffix) {
       return text.substring(0, length) + suffix;
@@ -38307,7 +38322,7 @@ exports.default = _default;
       _vm._v(" "),
       _c("b-form-checkbox", {
         staticClass: "todo-item-checkbox",
-        attrs: { disabled: _vm.subItemCount > 0 },
+        attrs: { disabled: _vm.subItems && _vm.subItems.length > 0 },
         model: {
           value: _vm.itemCompletedState,
           callback: function($$v) {
@@ -38336,7 +38351,9 @@ exports.default = _default;
               [
                 _c("b-icon-calendar"),
                 _vm._v(
-                  " " + _vm._s(_vm._f("formatDate")(_vm.todoListItem.dueDate))
+                  "\n      " +
+                    _vm._s(_vm._f("formatDate")(_vm.todoListItem.dueDate)) +
+                    "\n    "
                 )
               ],
               1
@@ -38350,10 +38367,11 @@ exports.default = _default;
               [
                 _c("b-icon-text-left"),
                 _vm._v(
-                  " " +
+                  "\n      " +
                     _vm._s(
                       _vm._f("truncate")(_vm.todoListItem.notes, 30, "...")
-                    )
+                    ) +
+                    "\n    "
                 )
               ],
               1
@@ -38471,15 +38489,9 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 //
 //
 //
-//
-//
-//
-//
-//
-//
 var _default = {
-  name: 'TodoListItems',
-  props: ['listId', 'todoListItems'],
+  name: "TodoListItems",
+  props: ["listId", "todoListItems"],
 
   data() {
     return {
@@ -38499,7 +38511,7 @@ var _default = {
   methods: {
     getLayout() {
       (0, _axios.default)({
-        method: 'GET',
+        method: "GET",
         url: "api/lists/".concat(this.listId, "/layout")
       }).then(response => {
         this.layout = response.data;
@@ -38508,16 +38520,16 @@ var _default = {
 
     updateLayout(e) {
       let position = e.newIndex;
-      let itemId = e.item.getAttribute('data-id');
+      let itemId = e.item.getAttribute("data-id");
       (0, _axios.default)({
-        method: 'PUT',
+        method: "PUT",
         url: "api/lists/".concat(this.listId, "/layout"),
         data: JSON.stringify({
           itemId,
           position
         }),
         headers: {
-          'content-type': 'application/json'
+          "content-type": "application/json"
         }
       });
     },
@@ -38552,9 +38564,7 @@ exports.default = _default;
     { staticClass: "todo-list-items" },
     [
       _vm.todoListItems.length < 1
-        ? _c("b-list-group-item", [
-            _vm._v("\n        Add an item to get started.\n    ")
-          ])
+        ? _c("b-list-group-item", [_vm._v("Add an item to get started.")])
         : _vm._e(),
       _vm._v(" "),
       _c(
@@ -38864,7 +38874,6 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 //
 //
 //
-//
 _vue.default.use(_vueConfetti.default);
 
 var _default = {
@@ -39042,9 +39051,14 @@ exports.default = _default;
                 class: { "col-md-8": _vm.list.role == 3 }
               },
               [
-                _c("TodoListItems", {
-                  attrs: { listId: _vm.todoListId, todoListItems: _vm.items }
-                }),
+                _vm.items.length > 0
+                  ? _c("TodoListItems", {
+                      attrs: {
+                        listId: _vm.todoListId,
+                        todoListItems: _vm.items
+                      }
+                    })
+                  : _vm._e(),
                 _vm._v(" "),
                 _c("AddTodoListItemForm", {
                   staticClass: "mt-3",

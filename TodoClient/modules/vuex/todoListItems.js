@@ -29,6 +29,13 @@ const todoLists = {
             });
 
             context.commit('setItems', { listId: payload.todoListId, items: response.data });
+
+            response.data.forEach(async item => {
+                await context.dispatch("loadSubItems", {
+                    listId: item.listId,
+                    todoItemId: item.id
+                });
+            });
         },
         addItem(context, payload) {
             return new Promise((resolve, reject) => {
@@ -40,12 +47,12 @@ const todoLists = {
                         'content-type': 'application/json'
                     }
                 })
-                .then((response) => {
+                    .then((response) => {
 
-                })
-                .finally(() => {
-                    resolve();
-                });
+                    })
+                    .finally(() => {
+                        resolve();
+                    });
             });
         },
         toggleItemCompletedState(context, { listId, itemId, completed }) {
@@ -58,9 +65,9 @@ const todoLists = {
                         'content-type': 'application/json'
                     }
                 })
-                .finally(() => {
-                    resolve();
-                });
+                    .finally(() => {
+                        resolve();
+                    });
             });
         },
         updateItem(context, { item }) {
@@ -77,9 +84,9 @@ const todoLists = {
                         'content-type': 'application/json'
                     }
                 })
-                .finally(() => {
-                    resolve();
-                });
+                    .finally(() => {
+                        resolve();
+                    });
             });
         },
         deleteItem(context, { item }) {
@@ -88,9 +95,9 @@ const todoLists = {
                     method: 'DELETE',
                     url: `api/lists/${item.listId}/todos/${item.id}`
                 })
-                .finally(() => {
-                    resolve();
-                });
+                    .finally(() => {
+                        resolve();
+                    });
             });
         }
     },

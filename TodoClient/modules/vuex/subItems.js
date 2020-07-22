@@ -3,7 +3,7 @@ import axios from 'axios';
 
 const subItems = {
     state: () => ({
-        subItems: {}
+        subItems: {},
     }),
     mutations: {
         setSubItems(state, { todoItemId, subItems }) {
@@ -16,8 +16,9 @@ const subItems = {
             const index = state.subItems[subItem.listItemId].findIndex(i => i.id == subItem.id);
             Vue.set(state.subItems[subItem.listItemId], index, subItem);
         },
-        removeSubItem() {
-
+        trashSubItem(state, { subItem }) {
+            const index = state.subItems[subItem.listItemId].findIndex(i => i.id == subItem.id);
+            state.subItems[subItem.listItemId].splice(index, 1);
         },
         updateSubItemCompletedState(state, { subItem }) {
             const index = state.subItems[subItem.listItemId].findIndex(i => i.id == subItem.id);
@@ -34,7 +35,7 @@ const subItems = {
 
                 context.commit('setSubItems', { todoItemId: todoItemId, subItems: response.data });
             }
-            catch(error) {
+            catch (error) {
                 console.log(error);
             }
         },
@@ -47,7 +48,7 @@ const subItems = {
                     data: JSON.stringify({ name })
                 });
             }
-            catch(error) {
+            catch (error) {
                 console.log(error);
             }
         },
@@ -60,7 +61,7 @@ const subItems = {
                     data: JSON.stringify({ name })
                 })
             }
-            catch(error) {
+            catch (error) {
                 console.log(error);
             }
         },
@@ -71,7 +72,7 @@ const subItems = {
                     url: `api/lists/${listId}/todos/${todoItemId}/subitems/${subItemId}`,
                 });
             }
-            catch(error) {
+            catch (error) {
                 console.log(error);
             }
         },
@@ -86,7 +87,7 @@ const subItems = {
                     data: completed
                 });
             }
-            catch(error) {
+            catch (error) {
                 console.log(error);
             }
         }
@@ -96,10 +97,13 @@ const subItems = {
             return state.subItems[itemId];
         },
         getSubItemCompletedState: (state) => (itemId, subItemId) => {
-            return state.subItems[itemId].find(i => i.id === subItemId).completed;
+            return state.subItems[itemId]?.find(i => i.id === subItemId).completed;
         },
         subItemCountByItemId: (state) => (itemId) => {
             return state.subItems[itemId].length;
+        },
+        getSubItemsLoadingState(state) {
+            return state.loadingSubItems;
         }
     }
 }
