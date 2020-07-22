@@ -1,6 +1,6 @@
 <template>
   <div id="content" class="mt-4">
-    <Header v-if="this.$route.name !== 'Login'"></Header>
+    <Header></Header>
     <RouterView></RouterView>
   </div>
 </template>

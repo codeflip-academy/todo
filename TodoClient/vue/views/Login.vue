@@ -1,6 +1,6 @@
 <template>
   <b-container>
-    <section id="login">
+    <section id="login" class="animate__animated animate__fadeIn animate__fast">
       <h1 class="title mb-5">Todo</h1>
       <p class="subtitle text-muted mb-4">Welcome. Please sign in to access or create your account.</p>
       <b-button class="btn-dark btn-lg" href="/api/accounts/login">Sign in with GitHub</b-button>

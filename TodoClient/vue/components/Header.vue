@@ -1,5 +1,12 @@
 <template>
-  <b-navbar toggleable="sm" type="light" variant="light" class="fixed-top" id="navbar">
+  <b-navbar
+    v-if="user.email"
+    toggleable="sm"
+    type="light"
+    variant="light"
+    class="fixed-top"
+    id="navbar"
+  >
     <b-navbar-brand>Todo</b-navbar-brand>
 
     <div class="user-info ml-auto" v-if="user.id">
@@ -22,7 +29,7 @@ export default {
   name: "Header",
   data() {
     return {
-      user: {}
+      user: {},
     };
   },
   async created() {
@@ -37,7 +44,7 @@ export default {
       try {
         const user = await axios({
           method: "GET",
-          url: "api/accounts"
+          url: "api/accounts",
         });
         this.$store.commit("setUserData", user.data);
       } catch (error) {}
@@ -49,12 +56,12 @@ export default {
       this.user = {};
       axios({
         method: "GET",
-        url: "api/accounts/logout"
+        url: "api/accounts/logout",
       }).then(() => {
         this.$router.push("/login");
       });
-    }
-  }
+    },
+  },
 };
 </script>
 

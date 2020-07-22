@@ -51,11 +51,11 @@ export default {
   props: ["todoListItem"],
   data() {
     return {
-      subItems: this.$store.getters.getSubItemsByItemId(this.todoListItem.id)
+      subItems: this.$store.getters.getSubItemsByItemId(this.todoListItem.id),
     };
   },
   components: {
-    EditTodoItemForm
+    EditTodoItemForm,
   },
   computed: {
     itemCompletedState: {
@@ -69,19 +69,19 @@ export default {
         this.$store.dispatch("toggleItemCompletedState", {
           listId: this.todoListItem.listId,
           itemId: this.todoListItem.id,
-          completed: value
+          completed: value,
         });
-      }
-    }
+      },
+    },
   },
   filters: {
-    formatDate: function(value) {
+    formatDate: function (value) {
       return moment(value).format("MM/D/YYYY");
     },
-    truncate: function(text, length, suffix) {
+    truncate: function (text, length, suffix) {
       return text.substring(0, length) + suffix;
-    }
-  }
+    },
+  },
 };
 </script>
 
