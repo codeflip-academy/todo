@@ -9,6 +9,7 @@ namespace Todo.Domain
     public class TodoListLayout : Entity
     {
         public Guid Id { get; set; }
+        public Guid AccountId {get; set;}
         public Guid ListId { get; set; }
         public List<Guid> Layout { get; set; } = new List<Guid>();
         public void UpdateLayout(Guid todoListItemId,  int todoListItemPosition, Guid listId)
@@ -22,8 +23,7 @@ namespace Todo.Domain
             }
             else
             {
-                DomainEvents.Add(new ListLayoutUpdated { Position = todoListItemPosition, ItemId = todoListItemId, ListId = listId });
-
+                DomainEvents.Add(new ListLayoutUpdated { Position = todoListItemPosition, ItemId = todoListItemId, ListId = listId, AccountId = AccountId });
             }
         }
 

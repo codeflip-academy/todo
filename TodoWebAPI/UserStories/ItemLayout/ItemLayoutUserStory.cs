@@ -20,6 +20,8 @@ namespace TodoWebAPI.UserStories.ItemLayout
         {
             var layout = await _subItemLayout.FindLayoutByListItemIdAsync(request.ItemId);
 
+            layout.AccountId = request.AccountId;
+
             layout.UpdateLayout(request.SubItemId, request.Position, request.ItemId);
 
             _subItemLayout.Update(layout);

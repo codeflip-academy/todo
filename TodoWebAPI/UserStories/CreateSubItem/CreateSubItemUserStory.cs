@@ -25,6 +25,8 @@ namespace TodoWebAPI.UserStories.CreateSubItem
             var item = await _listItems.FindToDoListItemByIdAsync(request.ListItemId);
             var subItem = item.CreateSubItem(request.Name);
 
+            subItem.AccountId = request.AccountId;
+
             subItem.Id = _subItems.NextId();
 
             _subItems.Add(subItem);

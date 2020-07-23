@@ -99,6 +99,9 @@ namespace Todo.Infrastructure
                     .HasConversion(
                         v => JsonConvert.SerializeObject(v),
                         v => JsonConvert.DeserializeObject<List<string>>(v));
+                entity
+                    .Property(e => e.AccountId)
+                    .HasColumnType("AccountID");
             });
 
             modelBuilder.Entity<TodoListItem>(entity =>
@@ -125,6 +128,10 @@ namespace Todo.Infrastructure
                 entity
                     .Property(e => e.DueDate)
                     .HasColumnType("datetime");
+                entity
+                    .Property(e => e.AccountId)
+                    .HasColumnType("AccountID");
+
             });
 
             modelBuilder.Entity<TodoListLayout>(entity =>
@@ -144,6 +151,9 @@ namespace Todo.Infrastructure
                         v => JsonConvert.SerializeObject(v),
                         v => JsonConvert.DeserializeObject<List<Guid>>(v)
                     );
+                entity
+                    .Property(e => e.AccountId)
+                    .HasColumnType("AccountID");
             });
 
             modelBuilder.Entity<SubItemLayout>(entity =>
@@ -161,6 +171,9 @@ namespace Todo.Infrastructure
                         v => JsonConvert.SerializeObject(v),
                         v => JsonConvert.DeserializeObject<List<Guid>>(v)
                     );
+                entity
+                    .Property(e => e.AccountId)
+                    .HasColumnType("AccountID");
             });
 
             modelBuilder.Entity<SubItem>(entity =>
@@ -182,6 +195,9 @@ namespace Todo.Infrastructure
                 entity
                     .Property(e => e.Completed)
                     .HasColumnName("Completed");
+                entity
+                    .Property(e => e.AccountId)
+                    .HasColumnType("AccountID");
             });
 
             modelBuilder.Entity<AccountsLists>()

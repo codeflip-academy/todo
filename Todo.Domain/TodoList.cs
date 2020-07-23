@@ -17,10 +17,11 @@ namespace Todo.Domain
         {
             ListTitle = title;
 
-            DomainEvents.Add(new TodoListCreated { List = this });
+            DomainEvents.Add(new TodoListCreated { List = this, AccountId = AccountId });
         }
 
         public Guid Id { get; set; }
+        public Guid AccountId {get; set;}
         public string ListTitle { get; set; }
         public bool Completed { get; private set; }
         public List<string> Contributors { get; private set; } = new List<string>();
@@ -36,7 +37,7 @@ namespace Todo.Domain
                 DueDate = dueDate
             };
 
-            DomainEvents.Add(new TodoListItemCreated { Item = todoItem, List = this });
+            DomainEvents.Add(new TodoListItemCreated { Item = todoItem, List = this, AccountId = AccountId });
 
             return todoItem;
         }
@@ -50,18 +51,18 @@ namespace Todo.Domain
             if (Completed && !itemsCompleted)
             {
                 Completed = false;
-                DomainEvents.Add(new TodoListCompletedStateChanged { List = this });
+                DomainEvents.Add(new TodoListCompletedStateChanged { List = this, AccountId = AccountId });
             }
             else if (!Completed && itemsCompleted)
             {
                 Completed = true;
-                DomainEvents.Add(new TodoListCompletedStateChanged { List = this });
+                DomainEvents.Add(new TodoListCompletedStateChanged { List = this, AccountId = AccountId });
             }
         }
 
         public void StoreContributor(string email, Guid senderAccountId)
         {
-            DomainEvents.Add(new InvitationAccepted { List = this, Email = email, SenderAccountId = senderAccountId });
+            DomainEvents.Add(new InvitationAccepted { List = this, Email = email, SenderAccountId = senderAccountId, AccountId = AccountId });
         }
 
         public bool DoesContributorExist(string inviteeEmail)
@@ -77,7 +78,7 @@ namespace Todo.Domain
         }
         public void UpdateListName()
         {
-            DomainEvents.Add(new ListNameUpdated { List = this });
+            DomainEvents.Add(new ListNameUpdated { List = this, AccountId = AccountId });
         }
 
         public int GetContributorCountExcludingOwner()

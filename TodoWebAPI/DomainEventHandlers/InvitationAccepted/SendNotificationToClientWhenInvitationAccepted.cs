@@ -6,21 +6,29 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Todo.Domain;
+using Todo.Domain.Repositories;
 using TodoWebAPI.SignalR;
+using Todo.Infrastructure;
 
 namespace TodoWebAPI.DomainEventHandlers.Invitation
 {
     public class SendNotificationToClientWhenInvitationAccepted : INotificationHandler<InvitationAccepted>
     {
         private readonly IHubContext<NotificationHub> _hubContext;
+        private readonly IAccountRepository _account;
 
-        public SendNotificationToClientWhenInvitationAccepted(IHubContext<NotificationHub> hubContext)
+        public SendNotificationToClientWhenInvitationAccepted(IHubContext<NotificationHub> hubContext, IAccountRepository account)
         {
             _hubContext = hubContext;
+            _account = account;
         }
-        public Task Handle(InvitationAccepted notification, CancellationToken cancellationToken)
+        public async Task Handle(InvitationAccepted notification, CancellationToken cancellationToken)
         {
-            return _hubContext.Clients.Users(notification.List.Contributors).SendAsync("InvitationAccepted", notification.List);
+            var account = await _account.FindAccountByIdAsync(notification.AccountId);
+
+            var contribuutorsExceptYou = RemoveSelfFromContributorSignalRHelper.RemoveContributor(notification.List, account);
+
+            await _hubContext.Clients.Users(contribuutorsExceptYou).SendAsync("InvitationAccepted", notification.List);
         }
     }
 }

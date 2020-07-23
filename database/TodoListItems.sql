@@ -4,6 +4,7 @@ GO
 
 CREATE TABLE [TodoListItems](
     [ID] UNIQUEIDENTIFIER PRIMARY KEY,
+    [AccountID] UNIQUEIDENTIFIER,
     [Notes] VARCHAR(200),
     [Completed] BIT NOT NULL DEFAULT(0),
     [Name] VARCHAR(50),

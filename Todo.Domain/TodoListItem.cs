@@ -10,6 +10,7 @@ namespace Todo.Domain
     {
         public Guid Id { get; set; }
         public string Notes { get; set; }
+        public Guid AccountId {get; set;}
         public bool Completed { get; protected set; }
         public string Name { get; set; }
         public Guid? ListId { get; set; }
@@ -24,12 +25,12 @@ namespace Todo.Domain
             if (Completed && !itemsCompleted)
             {
                 Completed = false;
-                DomainEvents.Add(new TodoListItemCompletedStateChanged { Item = this });
+                DomainEvents.Add(new TodoListItemCompletedStateChanged { Item = this, AccountId = AccountId });
             }
             else if (!Completed && itemsCompleted)
             {
                 Completed = true;
-                DomainEvents.Add(new TodoListItemCompletedStateChanged { Item = this });
+                DomainEvents.Add(new TodoListItemCompletedStateChanged { Item = this, AccountId = AccountId });
             }
         }
 
@@ -63,7 +64,7 @@ namespace Todo.Domain
               Name = name,
             };
 
-            DomainEvents.Add(new SubItemCreated { SubItem = item });
+            DomainEvents.Add(new SubItemCreated { SubItem = item, AccountId = AccountId });
 
             return item;
         }
@@ -73,7 +74,7 @@ namespace Todo.Domain
             var listId = this.ListId;
             this.ListId = null;
 
-            DomainEvents.Add(new ItemMovedToTrash { ListId = listId, Item = this });
+            DomainEvents.Add(new ItemMovedToTrash { ListId = listId, Item = this, AccountId = AccountId });
         }
 
         private void CheckIfListItemIsTrashed()
@@ -83,7 +84,7 @@ namespace Todo.Domain
         }
         public void EditItem(TodoListItem item)
         {
-            DomainEvents.Add(new ItemChanged { Item = item });
+            DomainEvents.Add(new ItemChanged { Item = item, AccountId = AccountId });
         }
     }
 }
