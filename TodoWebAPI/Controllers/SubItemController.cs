@@ -45,7 +45,7 @@ namespace TodoWebAPI.Controllers
 
             var todoListAuthorizationValidator = new TodoListAuthorizationValidator(list.Contributors, userEmail);
 
-            if(todoListAuthorizationValidator.IsUserAuthorized())
+            if (todoListAuthorizationValidator.IsUserAuthorized())
             {
                 var subItems = await _dapperQuery.GetSubItems(todoItemId);
 
@@ -64,7 +64,7 @@ namespace TodoWebAPI.Controllers
 
             var todoListAuthorizationValidator = new TodoListAuthorizationValidator(list.Contributors, userEmail);
 
-            if(todoListAuthorizationValidator.IsUserAuthorized())
+            if (todoListAuthorizationValidator.IsUserAuthorized())
             {
                 createSubItem.AccountId = User.ReadClaimAsGuidValue("urn:codefliptodo:accountid");
                 createSubItem.ListId = listId;
@@ -86,7 +86,7 @@ namespace TodoWebAPI.Controllers
 
             var todoListAuthorizationValidator = new TodoListAuthorizationValidator(list.Contributors, userEmail);
 
-            if(todoListAuthorizationValidator.IsUserAuthorized())
+            if (todoListAuthorizationValidator.IsUserAuthorized())
             {
                 var accountId = User.ReadClaimAsGuidValue("urn:codefliptodo:accountid");
 
@@ -97,7 +97,7 @@ namespace TodoWebAPI.Controllers
                     Completed = completed
                 };
                 await _mediator.Send(subItemCompleted);
-                return Ok();    
+                return Ok();
             }
 
             return Forbid();
@@ -112,7 +112,7 @@ namespace TodoWebAPI.Controllers
 
             var todoListAuthorizationValidator = new TodoListAuthorizationValidator(list.Contributors, userEmail);
 
-            if(todoListAuthorizationValidator.IsUserAuthorized())
+            if (todoListAuthorizationValidator.IsUserAuthorized())
             {
                 var accountId = User.ReadClaimAsGuidValue("urn:codefliptodo:accountid");
 
@@ -136,7 +136,7 @@ namespace TodoWebAPI.Controllers
 
             var todoListAuthorizationValidator = new TodoListAuthorizationValidator(list.Contributors, userEmail);
 
-            if(todoListAuthorizationValidator.IsUserAuthorized())
+            if (todoListAuthorizationValidator.IsUserAuthorized())
             {
                 var accountId = User.ReadClaimAsGuidValue("urn:codefliptodo:accountid");
 

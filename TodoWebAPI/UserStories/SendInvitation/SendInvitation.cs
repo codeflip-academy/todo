@@ -6,10 +6,11 @@ using System.Threading.Tasks;
 
 namespace TodoWebAPI.UserStories.SendInvitation
 {
-    public class SendInvitation : IRequest
+    public class SendInvitation : IRequest<bool>
     {
-        public string ListId { get; set; }
-        public string Email { get; set; }
-        public Guid AccountId { get; set; }
+        public Guid SenderAccountId { get; set; }
+        public string SenderEmail { get; set; }
+        public string InviteeEmail { get; set; }
+        public Guid ListId { get; set; }
     }
 }

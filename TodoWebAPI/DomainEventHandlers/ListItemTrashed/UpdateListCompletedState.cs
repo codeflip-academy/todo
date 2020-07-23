@@ -21,8 +21,8 @@ namespace TodoWebAPI.DomainEventHandlers.ListItemTrashed
         }
         public async Task Handle(ItemMovedToTrash notification, CancellationToken cancellationToken)
         {
-            var items = await _itemRepository.FindAllTodoListItemsByListIdAsync(notification.Item.ListId.GetValueOrDefault());
-            var list = await _listRepository.FindTodoListIdByIdAsync(notification.Item.ListId.GetValueOrDefault());
+            var items = await _itemRepository.FindAllTodoListItemsByListIdAsync(notification.ListId.GetValueOrDefault());
+            var list = await _listRepository.FindTodoListIdByIdAsync(notification.ListId.GetValueOrDefault());
 
             list.SetCompleted(items);
 

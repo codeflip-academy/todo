@@ -31,5 +31,5 @@ jobs:
       with:
         app-name: 'codefliptodo'
         slot-name: 'production'
-        publish-profile: ${{ secrets.AzureAppService_PublishProfile_8b38a794be2c4851a4d6e88e85f90964 }}
+        publish-profile: ${{ secrets.AzureAppService_PublishProfile_03cea90d77f84e9eb03b89b8e68c6326 }}
         package: ${{env.DOTNET_ROOT}}/myapp 

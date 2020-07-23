@@ -11,6 +11,7 @@ namespace TodoWebAPI.UserStories.CreateItem
     public class CreateItem : IRequest<TodoListItem>
     {
         public Guid AccountId { get; set; }
+        public string Email { get; set; }
         public Guid ListId { get; set; }
         [StringLength(200)]
         public string Notes { get; set; }

@@ -35,7 +35,14 @@ namespace Todo.Infrastructure
         public virtual DbSet<TodoListLayout> TodoListLayouts { get; set; }
         public virtual DbSet<SubItem> SubItems { get; set; }
         public virtual DbSet<SubItemLayout> SubItemLayouts { get; set; }
-        public virtual DbSet<AccountLists> AccountLists { get; set; }
+        public virtual DbSet<AccountPlan> AccountsPlans { get; set; }
+        public virtual DbSet<AccountsLists> AccountsLists { get; set; }
+        public virtual DbSet<RoleInvited> AccountsListsInvited { get; set; }
+        public virtual DbSet<RoleDecline> AccountsListsDeclined { get; set; }
+        public virtual DbSet<RoleContributor> AccountsListsContributor { get; set; }
+        public virtual DbSet<RoleOwner> AccountsListsOwner { get; set; }
+        public virtual DbSet<RoleLeft> AccountsListsLeft { get; set; }
+        public virtual DbSet<Plan> Plans { get; set; }
 
         public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         {
@@ -70,11 +77,13 @@ namespace Todo.Infrastructure
                     .Property(e => e.FullName)
                     .HasMaxLength(50)
                     .IsUnicode(false);
+
                 entity
-                    .Property(e => e.Contributors).HasColumnName("Contributors")
-                    .HasConversion(
-                        v => JsonConvert.SerializeObject(v),
-                        v => JsonConvert.DeserializeObject<List<string>>(v));
+                    .Property(e => e.PlanId)
+                    .HasColumnName("PlanID");
+                entity
+                    .Property(e => e.PaymentId)
+                    .HasColumnName("PaymentID");
             });
 
             modelBuilder.Entity<TodoList>(entity =>
@@ -178,12 +187,58 @@ namespace Todo.Infrastructure
                     .HasColumnName("Completed");
             });
 
-            modelBuilder.Entity<AccountLists>(entity =>
+            modelBuilder.Entity<AccountsLists>()
+                .ToTable("AccountsLists")
+                .HasDiscriminator<byte>("Role")
+                .HasValue<RoleOwner>(Roles.Owner)
+                .HasValue<RoleContributor>(Roles.Contributer)
+                .HasValue<RoleInvited>(Roles.Invited)
+                .HasValue<RoleDecline>(Roles.Declined)
+                .HasValue<RoleLeft>(Roles.Left);
+
+            modelBuilder.Entity<AccountPlan>(entity =>
             {
                 entity
-                    .HasKey(o => new { o.AccountId, o.ListId });
+                    .HasKey(e => e.Id);
+
                 entity
-                    .Property(e => e.Role).HasColumnName("Role");
+                    .Property(e => e.AccountId)
+                    .HasColumnName("AccountID");
+
+                entity
+                    .Property(e => e.PlanId)
+                    .HasColumnName("PlanID");
+
+                entity
+                    .Property(e => e.ListCount)
+                    .HasColumnName("ListCount");
+            });
+
+            modelBuilder.Entity<Plan>(entity =>
+            {
+                entity
+                    .Property(e => e.Id)
+                    .HasColumnName("ID");
+
+                entity
+                    .Property(e => e.Name)
+                    .HasColumnName("Name");
+
+                entity
+                    .Property(e => e.MaxContributors)
+                    .HasColumnName("MaxContributors");
+
+                entity
+                    .Property(e => e.MaxLists)
+                    .HasColumnName("MaxLists");
+
+                entity
+                    .Property(e => e.CanNotifyViaEmail)
+                    .HasColumnName("CanNotifyViaEmail");
+
+                entity
+                    .Property(e => e.CanAddDueDates)
+                    .HasColumnName("CanAddDueDates");
             });
         }
     }

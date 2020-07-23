@@ -13,5 +13,6 @@ namespace TodoWebAPI.Models
         public string Street { get; set; }
         public decimal Price { get; set; }
         public string PaymentMethodNonce { get; set; }
+        public string PlanName { get; set; }
     }
 }

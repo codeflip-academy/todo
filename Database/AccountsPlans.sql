@@ -1,0 +1,15 @@
+USE [Todo]
+
+GO
+
+CREATE TABLE [AccountsPlans]
+(
+    ID UNIQUEIDENTIFIER NOT NULL,
+    AccountID UNIQUEIDENTIFIER NOT NULL,
+    PlanID INT NOT NULL,
+    ListCount INT NOT NULL,
+    FOREIGN KEY (AccountID) REFERENCES Accounts (ID),
+    FOREIGN KEY (PlanID) REFERENCES Plans (ID)
+)
+
+GO

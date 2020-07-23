@@ -10,5 +10,6 @@ namespace Todo.Infrastructure
         public readonly static byte Declined = 1;
         public readonly static byte Contributer = 2;
         public readonly static byte Owner = 3;
+        public readonly static byte Left = 4;
     }
 }

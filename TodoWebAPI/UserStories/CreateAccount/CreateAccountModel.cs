@@ -1,7 +1,7 @@
 ﻿using MediatR;
 using System;
 using System.ComponentModel.DataAnnotations;
-using Todo.Infrastructure;
+using Todo.Domain;
 
 namespace TodoWebAPI.Models
 {
@@ -15,5 +15,6 @@ namespace TodoWebAPI.Models
         [Required(ErrorMessage = "Email Required")]
         [EmailAddress]
         public string Email { get; set; }
+        public string PaymentId {get; set;}
     }
 }

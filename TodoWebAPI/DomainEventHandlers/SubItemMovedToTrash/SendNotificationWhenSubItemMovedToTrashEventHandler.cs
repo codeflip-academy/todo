@@ -28,7 +28,7 @@ namespace TodoWebAPI.DomainEventHandlers
             var item = await _todoListItemRepository.FindToDoListItemByIdAsync(notification.ItemId.GetValueOrDefault());
             var list = await _todoListRepository.FindTodoListIdByIdAsync(item.ListId.GetValueOrDefault());
 
-            await _hubContext.Clients.Users(list.Contributors).SendAsync("SubItemTrashed", notification.SubItem);
+            await _hubContext.Clients.Users(list.Contributors).SendAsync("SubItemTrashed", notification.ItemId, notification.SubItem);
         }
     }
 }

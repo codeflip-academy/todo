@@ -9,6 +9,7 @@ using Dapper.Transaction;
 using TodoWebAPI.Models;
 using System.Collections.Generic;
 using System.Linq;
+using Todo.Infrastructure;
 
 namespace TodoWebAPI
 {
@@ -40,23 +41,14 @@ namespace TodoWebAPI
             {
                 await connection.OpenAsync();
 
-                using(var transaction = await connection.BeginTransactionAsync())
-                {
-                    var contributorEmails = await transaction.QueryFirstOrDefaultAsync<List<string>>(@"
-                        SELECT Contributors From Accounts WHERE ID = @accountId",
-                        new { accountId });
+                var contributorsResult = await connection.QueryAsync<AccountContributorsPresentation>(@"
+                    select distinct a.FullName, a.PictureUrl, a.Email
+                    from AccountsLists al
+                    INNER JOIN (select ListID from AccountsLists where AccountID = @accountId)
+                    al2 ON al.ListID = al2.ListID
+                    inner join Accounts a on a.ID = al.AccountID", new { accountId = accountId });
 
-                    if(contributorEmails == null)
-                        return null;
-
-                    var contributorsQueryResult = await transaction.QueryAsync<AccountContributorsPresentation>(@"
-                        SELECT FullName, PictureUrl, Email From Accounts WHERE Email IN @contributorEmails",
-                        new { contributorEmails = contributorEmails.ToArray() });
-
-                    contributors = contributorsQueryResult.ToDictionary(kvp => kvp.Email, kvp => kvp);
-
-                    transaction.Commit();
-                }
+                contributors = contributorsResult.ToDictionary(kvp => kvp.Email, kvp => kvp);
 
                 return contributors;
             }
@@ -69,7 +61,7 @@ namespace TodoWebAPI
                 await connection.OpenAsync();
 
                 var result = await connection.QueryAsync<TodoListItemModel>("SELECT * From TodoListItems WHERE ListID = @listId", new { listId = listId });
-                
+
                 return result.ToList();
             }
         }
@@ -84,13 +76,28 @@ namespace TodoWebAPI
             }
         }
 
+        public async Task<PlanPresentation> GetPlanByAccountIdAsync(Guid accountId)
+        {
+            using (var connection = new SqlConnection(_connectionString))
+            {
+                await connection.OpenAsync();
+                var result = await connection.QueryAsync<PlanPresentation>("Select Name, MaxContributors, MaxContributors, MaxLists, CanAddDueDates From Plans Where ID = (Select PlanID From AccountsPlans Where AccountID = @accountId)", new { accountId = accountId });
+                return result.FirstOrDefault();
+            }
+        }
+
         public async Task<List<TodoListModel>> GetListsAsync(Guid accountId)
         {
             using (var connection = new SqlConnection(_connectionString))
             {
                 await connection.OpenAsync();
 
-                var result = await connection.QueryAsync<TodoListModel>("SELECT * FROM TodoLists as t INNER JOIN AccountLists as a ON t.ID = a.ListID WHERE a.AccountID = @accountId", new { accountId = accountId });
+                var result = await connection.QueryAsync<TodoListModel>(@"
+                    SELECT t.ID, t.ListTitle, a.AccountID, t.Completed, t.Contributors, a.Role
+                    FROM TodoLists as t INNER JOIN AccountsLists as a
+                    ON t.ID = a.ListID WHERE a.AccountID = @accountId
+                    AND NOT (a.Role = @left OR a.Role = @declined)",
+                    new { accountId = accountId, left = Roles.Left, declined = Roles.Declined });
 
                 return result.ToList();
             }
@@ -116,15 +123,15 @@ namespace TodoWebAPI
             }
         }
 
-        public async Task<Dictionary<string, SubItemModel>> GetSubItems(Guid listItemId)
+        public async Task<List<SubItemModel>> GetSubItems(Guid listItemId)
         {
             using (var connection = new SqlConnection(_connectionString))
             {
                 await connection.OpenAsync();
 
                 var result = await connection.QueryAsync<SubItemModel>("SELECT * FROM SubItems WHERE ListItemID = @listItemId", new { listItemId = listItemId });
-                
-                return result.ToDictionary(kvp => kvp.Id.ToString(), kvp => kvp);
+
+                return result.ToList();
             }
         }
 
@@ -145,7 +152,7 @@ namespace TodoWebAPI
             {
                 await connection.OpenAsync();
 
-                var result = await connection.QueryAsync<string>("SELECT Email FROM Accounts as a INNER JOIN AccountLists as l ON a.ID = l.AccountID and l.ListID = @listId", new { listId = listId });
+                var result = await connection.QueryAsync<string>("SELECT Email FROM Accounts as a INNER JOIN AccountsLists as l ON a.ID = l.AccountID and l.ListID = @listId", new { listId = listId });
                 return result.ToList();
             }
         }
@@ -156,7 +163,7 @@ namespace TodoWebAPI
             {
                 await connection.OpenAsync();
 
-                var result = await connection.QueryAsync<Guid>("SELECT ID FROM Accounts WHERE Email = @email", new { email = email});
+                var result = await connection.QueryAsync<Guid>("SELECT ID FROM Accounts WHERE Email = @email", new { email = email });
                 return result.FirstOrDefault();
             }
         }

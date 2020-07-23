@@ -25,11 +25,12 @@ namespace Todo.Domain
         public bool Completed { get; private set; }
         public List<string> Contributors { get; private set; } = new List<string>();
 
-        public TodoListItem CreateListItem(Guid listId, string name, string notes, DateTime? dueDate)
+        public TodoListItem CreateListItem(Guid id, string name, string notes, DateTime? dueDate)
         {
             var todoItem = new TodoListItem()
             {
-                ListId = listId,
+                ListId = this.Id,
+                Id = id,
                 Name = name,
                 Notes = notes,
                 DueDate = dueDate
@@ -49,21 +50,26 @@ namespace Todo.Domain
             if (Completed && !itemsCompleted)
             {
                 Completed = false;
-                DomainEvents.Add(new TodoListCompletedStateChanged { List = this});
-            } 
-            else if(!Completed && itemsCompleted)
+                DomainEvents.Add(new TodoListCompletedStateChanged { List = this });
+            }
+            else if (!Completed && itemsCompleted)
             {
                 Completed = true;
                 DomainEvents.Add(new TodoListCompletedStateChanged { List = this });
             }
         }
 
-        public void StoreColaborator(string email, Guid accountId)
+        public void StoreContributor(string email, Guid senderAccountId)
         {
-            DomainEvents.Add(new InvitationSent { List = this, Email = email, AccountId =  accountId});
+            DomainEvents.Add(new InvitationAccepted { List = this, Email = email, SenderAccountId = senderAccountId });
         }
 
-        public void AddCollaborator(string email)
+        public bool DoesContributorExist(string inviteeEmail)
+        {
+            return this.Contributors.Exists(c => c == inviteeEmail);
+        }
+
+        public void AddContributor(string email)
         {
             if (email == null)
                 return;
@@ -73,6 +79,10 @@ namespace Todo.Domain
         {
             DomainEvents.Add(new ListNameUpdated { List = this });
         }
+
+        public int GetContributorCountExcludingOwner()
+        {
+            return Contributors.Count - 1;
+        }
     }
 }
- 

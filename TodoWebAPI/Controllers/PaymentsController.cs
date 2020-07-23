@@ -8,18 +8,23 @@ using Microsoft.AspNetCore.Mvc;
 using Braintree;
 using TodoWebAPI.Models;
 using Microsoft.Extensions.Configuration;
-
+using Microsoft.AspNetCore.Authorization;
+using MediatR;
+using TodoWebAPI.UserStories.RoleChanges;
 
 namespace TodoWebAPI.Controllers
 {
+    [Authorize]
     [ApiController, Route("api/[controller]"), Produces("application/json")]
     public class PaymentsController : ControllerBase
     {
         private readonly IBraintreeConfiguration _braintreeConfiguration;
+        private readonly IMediator _mediator;
 
-        public PaymentsController(IBraintreeConfiguration braintreeConfiguration)
+        public PaymentsController(IBraintreeConfiguration braintreeConfiguration, IMediator mediator)
         {
             _braintreeConfiguration = braintreeConfiguration;
+            _mediator = mediator;
         }
 
         public static readonly TransactionStatus[] transactionSuccessStatuses =
@@ -54,12 +59,9 @@ namespace TodoWebAPI.Controllers
             };
             
             Result<Customer> customerResult = await gateway.Customer.CreateAsync(customerRequest);
-
             bool success = customerResult.IsSuccess();
-
             Customer customer = customerResult.Target;
             string customerId = customer.Id;
-
             string cardToken = customer.PaymentMethods[0].Token;
 
             var request = new SubscriptionRequest
@@ -71,7 +73,20 @@ namespace TodoWebAPI.Controllers
 
             var result = await gateway.Subscription.CreateAsync(request);
 
-            return result.IsSuccess();
+            if (result.IsSuccess())
+            {
+                var plan = new RoleChange()
+                {
+                    Plan = "Basic",
+                    AcountId = Guid.Parse(User.FindFirst(c => c.Type == "urn:codefliptodo:accountid").Value)
+                };
+
+                await _mediator.Send(plan);
+
+                return true;
+            }
+
+            return false;
         }
     }
 }

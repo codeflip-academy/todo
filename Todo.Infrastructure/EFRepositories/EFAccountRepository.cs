@@ -3,8 +3,9 @@ using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using System.Linq;
 using System.Threading;
-using Todo.Infrastructure.Repositories;
 using Todo.Infrastructure.Guids;
+using Todo.Domain.Repositories;
+using Todo.Domain;
 
 namespace Todo.Infrastructure.EFRepositories
 {
@@ -44,6 +45,11 @@ namespace Todo.Infrastructure.EFRepositories
         public Guid NextId()
         {
             return _idGenerator.NextId();
+        }
+
+        public void UpdateAccountPlan(Account account)
+        {
+            _context.Accounts.Update(account);
         }
 
         public void UpdateContributorsAsync(Account account)

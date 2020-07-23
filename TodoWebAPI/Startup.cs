@@ -15,7 +15,6 @@ using Todo.Infrastructure.EFRepositories;
 using Todo.Infrastructure.Email;
 using TodoWebAPI.Data;
 using TodoWebAPI.CronJob;
-using TodoWebAPI.ServiceBusRabbitmq;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Authentication;
@@ -27,14 +26,13 @@ using System.Text.Json;
 using Octokit;
 using Octokit.Internal;
 using TodoWebAPI.Models;
-using Todo.Infrastructure.Repositories;
 using Todo.Infrastructure.Guids;
 using Dapper;
 using TodoWebAPI.TypeHandlers;
 using TodoWebAPI.SignalR;
 using Microsoft.AspNetCore.SignalR;
-using TodoWebAPI.ServiceBusAzure;
 using TodoWebAPI.BraintreeService;
+using TodoWebAPI.ServiceBus;
 
 namespace TodoWebAPI
 {
@@ -54,25 +52,21 @@ namespace TodoWebAPI
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            if (_env.IsDevelopment())
-            {
-                services.AddSingleton<IEmailService, DebuggerWindowOutputEmailService>();
-            }
-            else
-            {
-                services.AddSingleton<IEmailService, SendGridEmailService>();
-            }
-           
-            services.AddRazorPages();
+            services.AddSingleton<IEmailService, SendGridEmailService>();
+
+            services.AddApplicationInsightsTelemetry();
+            services.AddApplicationInsightsTelemetryWorkerService();
 
             services.AddDbContext<TodoDatabaseContext>(
                 options => options.UseSqlServer(Configuration.GetConnectionString("Development"))
             );
             services.AddScoped<ITodoListRepository, EFTodoListRepository>();
+            services.AddScoped<IAccountsListsRepository, EFAccountsListsRepository>();
             services.AddScoped<ITodoListLayoutRepository, EFTodoListLayoutRepository>();
             services.AddScoped<ITodoListItemRepository, EFTodoListItemRepository>();
             services.AddScoped<IAccountRepository, EFAccountRepository>();
-            services.AddScoped<IServiceBusEmail, ServiceBusEmail>();
+            services.AddScoped<IAccountPlanRepository, EFAccountPlanRepository>();
+            services.AddScoped<IPlanRepository, EFPlanRepository>();
             services.AddScoped<ISubItemRepository, EFSubItemRepository>();
             services.AddScoped<ISubItemLayoutRepository, EFSubItemLayout>();
             services.AddSingleton<DapperQuery>();
@@ -80,15 +74,16 @@ namespace TodoWebAPI
             services.AddScoped<ISequentialIdGenerator, SequentialIdGenerator>();
             services.AddControllers();
             services.AddMediatR(typeof(Startup).GetTypeInfo().Assembly);
-            services.AddHostedService<RecieveServiceBus>();
             services.AddScoped<IBraintreeConfiguration, BraintreeConfiguration>();
+            services.AddSingleton<IServiceBusConsumer, ServiceBusConsumer>();
+            services.AddSingleton<IEmailQueue, AzureServiceBusEmailQueue>();
 
             services.AddCronJob<DueDateJob>(c =>
             {
                 c.TimeZoneInfo = TimeZoneInfo.Local;
                 c.CronExpression = @"00 12 * * *";
             });
-            
+
 
             services.AddSignalR();
 
@@ -192,6 +187,9 @@ namespace TodoWebAPI
                 endpoints.MapControllers();
                 endpoints.MapHub<NotificationHub>("/notifications");
             });
+
+            var bus = app.ApplicationServices.GetRequiredService<IServiceBusConsumer>();
+            bus.RegisterOnMessageHandlerAndReceiveMessages();
         }
     }
 }

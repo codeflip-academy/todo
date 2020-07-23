@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Todo.Infrastructure;
 using TodoWebAPI.UserStories.DeleteAccount;
+using TodoWebAPI.UserStories.RoleChanges;
 
 namespace TodoWebAPI.Controllers
 {
@@ -60,6 +61,17 @@ namespace TodoWebAPI.Controllers
         }
 
         [Authorize]
+        [HttpGet("api/accounts/contributors")]
+        public async Task<IActionResult> GetContributors()
+        {
+            var accountId = Guid.Parse(User.FindFirst(c => c.Type == "urn:codefliptodo:accountid").Value);
+            var dapper = new DapperQuery(_config);
+            var contributors = await dapper.GetContributorsAsync(accountId);
+
+            return Ok(contributors);
+        }
+
+        [Authorize]
         [HttpDelete("api/accounts")]
         public async Task<IActionResult> DeleteAccountAsync()
         {
@@ -75,6 +87,34 @@ namespace TodoWebAPI.Controllers
             await _todoDatabaseContext.SaveChangesAsync();
 
             return Ok("account deleted!");
+        }
+
+        [Authorize]
+        [HttpGet("api/accounts/plan")]
+        public async Task<IActionResult> GetPlanAsync()
+        {
+            var accountId = Guid.Parse(User.FindFirst(c => c.Type == "urn:codefliptodo:accountid").Value);
+
+            var dapper = new DapperQuery(_config);
+
+            return Ok(await dapper.GetPlanByAccountIdAsync(accountId));
+        }
+
+        [Authorize]
+        [HttpPut("api/accounts/role")]
+        public async Task<IActionResult> ChangeRoleAysnc([FromBody] RoleChange roleChanged)
+        {
+            var accountId = Guid.Parse(User.FindFirst(c => c.Type == "urn:codefliptodo:accountid").Value);
+
+            roleChanged.AcountId = accountId;
+
+            var mediator = await _mediator.Send(roleChanged);
+
+            if(mediator == null)
+            {
+                return BadRequest();
+            }
+            return Ok();
         }
     }
 }

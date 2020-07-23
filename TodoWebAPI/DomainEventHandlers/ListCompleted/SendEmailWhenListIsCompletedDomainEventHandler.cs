@@ -2,6 +2,7 @@
 using Microsoft.Azure.ServiceBus;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,44 +12,50 @@ using System.Threading.Tasks;
 using Todo.Domain.DomainEvents;
 using Todo.Domain.Repositories;
 using Todo.Infrastructure.Email;
-using Todo.Infrastructure.Repositories;
-using TodoWebAPI.ServiceBusRabbitmq;
+using TodoWebAPI.ServiceBus;
 
 namespace TodoWebAPI.DomainEventHandlers
 {
     public class SendEmailWhenListIsCompletedDomainEventHandler : INotificationHandler<TodoListCompletedStateChanged>
     {
-        private readonly IServiceBusEmail _serviceBusEmail;
-        private readonly IEmailService _emailService;
+        private readonly IEmailQueue _emailQueue;
         private readonly IConfiguration _config;
         private readonly DapperQuery _dapper;
+        private readonly ILogger _logger;
 
-        public SendEmailWhenListIsCompletedDomainEventHandler(IEmailService emailService, IConfiguration config, DapperQuery dapper, IServiceBusEmail serviceBusEmail)
+        public SendEmailWhenListIsCompletedDomainEventHandler(IConfiguration config, DapperQuery dapper, IEmailQueue emailQueue, ILogger<SendEmailWhenListIsCompletedDomainEventHandler> logger)
         {
-            _emailService = emailService;
             _config = config;
             _dapper = dapper;
-            _serviceBusEmail = serviceBusEmail;
+            _emailQueue = emailQueue;
+            _logger = logger;
         }
         public async Task Handle(TodoListCompletedStateChanged notification, CancellationToken cancellationToken)
         {
-            var list = notification.List;
+            _logger.LogInformation($"Handling {notification.List.Id} completed state changed. Completed = '{notification.List.Completed}'.");
 
+            var list = notification.List;
             var emails = await _dapper.GetEmailsFromAccountsByListIdAsync(list.Id);
+
+            var messages = new List<EmailMessage>();
 
             if (list.Completed)
             {
                 foreach (var userEmail in emails)
                 {
-                    var email = new Email()
-                    {
-                        To = userEmail,
-                        From = _config.GetSection("Emails")["Notifications"],
-                        Subject = $"You finished a list!",
-                        Body = $"List {list.ListTitle} is finished! Nice work!"
-                    };
-                    _serviceBusEmail.SendServiceBusEmail(email, list);
+                    messages.Add(
+                        new EmailMessage()
+                        {
+                            To = userEmail,
+                            From = _config.GetSection("Emails")["Notifications"],
+                            Subject = $"You completed a list!",
+                            Body = $"{list.ListTitle} is completed! Nice work!"
+                        });
                 }
+
+                _logger.LogInformation($"Sending email notification for completed list {list.Id}.");
+
+                await _emailQueue.QueueEmailAsync(messages);
             }
         }
     }
