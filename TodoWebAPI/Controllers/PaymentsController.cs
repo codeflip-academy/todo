@@ -11,6 +11,9 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.AspNetCore.Authorization;
 using MediatR;
 using TodoWebAPI.UserStories.RoleChanges;
+using Todo.Domain.Repositories;
+using Todo.Infrastructure.PaymentMethods;
+using Todo.Infrastructure;
 
 namespace TodoWebAPI.Controllers
 {
@@ -20,11 +23,20 @@ namespace TodoWebAPI.Controllers
     {
         private readonly IBraintreeConfiguration _braintreeConfiguration;
         private readonly IMediator _mediator;
+        private readonly IAccountRepository _accountRepository;
+        private readonly IPaymentMethodRepository _paymentMethod;
 
-        public PaymentsController(IBraintreeConfiguration braintreeConfiguration, IMediator mediator)
+        public PaymentsController(
+            IBraintreeConfiguration braintreeConfiguration,
+            IMediator mediator,
+            IAccountRepository accountRepository,
+            IPaymentMethodRepository paymentMethod 
+            )
         {
             _braintreeConfiguration = braintreeConfiguration;
             _mediator = mediator;
+            _accountRepository = accountRepository;
+            _paymentMethod = paymentMethod;
         }
 
         public static readonly TransactionStatus[] transactionSuccessStatuses =
@@ -46,47 +58,43 @@ namespace TodoWebAPI.Controllers
             return clientToken;
         }
 
-        [HttpPost, Route("Checkout")]
-        public async Task<bool> Checkout(VmCheckout model)
+        [HttpPost]
+        public async Task<bool> AddPaymentMethod([FromBody] AddPaymentMethodModel addPaymentModel)
         {
+            var accountId = Guid.Parse(User.FindFirst(c => c.Type == "urn:codefliptodo:accountid").Value);
+            var account = await _accountRepository.FindAccountByIdAsync(accountId);
+
             var gateway = _braintreeConfiguration.GetGateway();
 
-            var customerRequest = new CustomerRequest
+            var paymentMethod = await _paymentMethod.FindByAccountIdAsync(accountId);
+
+            if(paymentMethod != null)
             {
-                FirstName = model.FirstName,
-                LastName = model.LastName,
-                PaymentMethodNonce = model.PaymentMethodNonce
-            };
-            
-            Result<Customer> customerResult = await gateway.Customer.CreateAsync(customerRequest);
-            bool success = customerResult.IsSuccess();
-            Customer customer = customerResult.Target;
-            string customerId = customer.Id;
-            string cardToken = customer.PaymentMethods[0].Token;
-
-            var request = new SubscriptionRequest
-            {
-                PaymentMethodToken = cardToken,
-                PaymentMethodNonce = model.PaymentMethodNonce,
-                PlanId = "2",
-            };
-
-            var result = await gateway.Subscription.CreateAsync(request);
-
-            if (result.IsSuccess())
-            {
-                var plan = new RoleChange()
-                {
-                    Plan = "Basic",
-                    AcountId = Guid.Parse(User.FindFirst(c => c.Type == "urn:codefliptodo:accountid").Value)
-                };
-
-                await _mediator.Send(plan);
-
-                return true;
+                return false;
             }
+            
+            Customer customer = await gateway.Customer.FindAsync(account.PaymentId);
 
-            return false;
+            var request = new PaymentMethodRequest()
+            {
+                CustomerId = customer.Id,
+                PaymentMethodNonce = addPaymentModel.PaymentMethodNonce,
+                Token = Guid.NewGuid().ToString()
+            };
+
+            Result<PaymentMethod> result = await gateway.PaymentMethod.CreateAsync(request);
+
+            var payment = new Payment()
+            {
+                AccountId = accountId,
+                TokenId = request.Token
+            };
+
+            _paymentMethod.Add(payment);
+
+            await _paymentMethod.SaveChangesAsync();
+
+            return result.IsSuccess();
         }
     }
 }

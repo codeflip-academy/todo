@@ -1,12 +1,6 @@
 import axios from 'axios';
 
-let cartModel = {  
-    FirstName: "Trenton",  
-    LastName: "Hicks",  
-    Email: "trentonmhicks@gmail.com",  
-    Street: "Some St. 1234",  
-    Price: 50
-}
+let data = {};
 
 axios({
     method: 'GET',
@@ -21,26 +15,28 @@ axios({
     }, (createErr, instance) => {
         button.addEventListener('click', function () {
         instance.requestPaymentMethod(function (err, payload) {
-            if (err) {  
+            if (err) {
                 console.log('Error', err);  
                 return;
             }
 
-            cartModel.PaymentMethodNonce = payload.nonce;
-            checkout();
+            data.paymentMethodNonce = payload.nonce;
+            addPaymentMethod();
         });
         });
     });
 });
 
-function checkout() {
+function addPaymentMethod() {
     axios({  
         method: 'POST',
-        url: '/api/Payments/Checkout',  
-        data: cartModel
+        url: '/api/payments/',
+        data: JSON.stringify(data),
+        headers: {
+            'content-type': 'application/json'
+        }
     })
     .then((response) => {
         let paymentResult = response.data;
-        console.log(paymentResult);
     });
 }

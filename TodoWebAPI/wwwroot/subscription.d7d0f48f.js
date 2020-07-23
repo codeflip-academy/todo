@@ -1887,13 +1887,7 @@ var _axios = _interopRequireDefault(require("axios"));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-let cartModel = {
-  FirstName: "Trenton",
-  LastName: "Hicks",
-  Email: "trentonmhicks@gmail.com",
-  Street: "Some St. 1234",
-  Price: 50
-};
+let data = {};
 (0, _axios.default)({
   method: 'GET',
   url: '/api/Payments/GenerateToken'
@@ -1911,21 +1905,23 @@ let cartModel = {
           return;
         }
 
-        cartModel.PaymentMethodNonce = payload.nonce;
-        checkout();
+        data.paymentMethodNonce = payload.nonce;
+        addPaymentMethod();
       });
     });
   });
 });
 
-function checkout() {
+function addPaymentMethod() {
   (0, _axios.default)({
     method: 'POST',
-    url: '/api/Payments/Checkout',
-    data: cartModel
+    url: '/api/payments/',
+    data: JSON.stringify(data),
+    headers: {
+      'content-type': 'application/json'
+    }
   }).then(response => {
     let paymentResult = response.data;
-    console.log(paymentResult);
   });
 }
 },{"axios":"node_modules/axios/index.js"}],"node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
@@ -1956,7 +1952,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "51554" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "56242" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};

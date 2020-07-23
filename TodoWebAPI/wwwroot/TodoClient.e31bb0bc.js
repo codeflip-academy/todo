@@ -39517,7 +39517,7 @@ render._withStripped = true
         
       }
     })();
-},{"vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/views/Subscription.vue":[function(require,module,exports) {
+},{"vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/views/Billing.vue":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -39537,17 +39537,17 @@ exports.default = void 0;
 //
 //
 var _default = {
-  name: 'Subscription'
+  name: 'Billing'
 };
 exports.default = _default;
-        var $5df0b7 = exports.default || module.exports;
+        var $2a9a1c = exports.default || module.exports;
       
-      if (typeof $5df0b7 === 'function') {
-        $5df0b7 = $5df0b7.options;
+      if (typeof $2a9a1c === 'function') {
+        $2a9a1c = $2a9a1c.options;
       }
     
         /* template */
-        Object.assign($5df0b7, (function () {
+        Object.assign($2a9a1c, (function () {
           var render = function() {
   var _vm = this
   var _h = _vm.$createElement
@@ -39561,7 +39561,7 @@ var staticRenderFns = [
     var _c = _vm._self._c || _h
     return _c("section", { attrs: { id: "subscription" } }, [
       _c("div", { staticClass: "container" }, [
-        _c("h1", [_vm._v("Subscription")]),
+        _c("h1", [_vm._v("Billing")]),
         _vm._v(" "),
         _c("div", { attrs: { id: "dropin-container" } }),
         _vm._v(" "),
@@ -39591,9 +39591,9 @@ render._withStripped = true
         if (api.compatible) {
           module.hot.accept();
           if (!module.hot.data) {
-            api.createRecord('$5df0b7', $5df0b7);
+            api.createRecord('$2a9a1c', $2a9a1c);
           } else {
-            api.reload('$5df0b7', $5df0b7);
+            api.reload('$2a9a1c', $2a9a1c);
           }
         }
 
@@ -39624,7 +39624,7 @@ var _Login = _interopRequireDefault(require(".././vue/views/Login"));
 
 var _Settings = _interopRequireDefault(require("../vue/views/Settings"));
 
-var _Subscription = _interopRequireDefault(require("../vue/views/Subscription"));
+var _Billing = _interopRequireDefault(require("../vue/views/Billing"));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -39652,8 +39652,8 @@ const router = new _vueRouter.default({
     path: '/settings',
     component: _Settings.default
   }, {
-    path: '/subscription',
-    component: _Subscription.default
+    path: '/billing',
+    component: _Billing.default
   }]
 });
 
@@ -39684,7 +39684,7 @@ router.beforeEach(async (to, from, next) => {
 });
 var _default = router;
 exports.default = _default;
-},{"vue":"node_modules/vue/dist/vue.runtime.esm.js","vue-router":"node_modules/vue-router/dist/vue-router.esm.js","axios":"node_modules/axios/index.js","./store":"modules/store.js",".././vue/views/Home":"vue/views/Home.vue",".././vue/views/TodoListView":"vue/views/TodoListView.vue",".././vue/views/Login":"vue/views/Login.vue","../vue/views/Settings":"vue/views/Settings.vue","../vue/views/Subscription":"vue/views/Subscription.vue"}],"vue/components/Header.vue":[function(require,module,exports) {
+},{"vue":"node_modules/vue/dist/vue.runtime.esm.js","vue-router":"node_modules/vue-router/dist/vue-router.esm.js","axios":"node_modules/axios/index.js","./store":"modules/store.js",".././vue/views/Home":"vue/views/Home.vue",".././vue/views/TodoListView":"vue/views/TodoListView.vue",".././vue/views/Login":"vue/views/Login.vue","../vue/views/Settings":"vue/views/Settings.vue","../vue/views/Billing":"vue/views/Billing.vue"}],"vue/components/Header.vue":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -89337,7 +89337,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "51554" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "56242" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};

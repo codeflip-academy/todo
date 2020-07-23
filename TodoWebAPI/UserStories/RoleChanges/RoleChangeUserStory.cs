@@ -19,7 +19,7 @@ namespace TodoWebAPI.UserStories.RoleChanges
 
         public async Task<AccountPlan> Handle(RoleChange request, CancellationToken cancellationToken)
         {
-             var accountPlan = await _accountPlan.FindAccountPlanByAccountIdAsync(request.AcountId);
+             var accountPlan = await _accountPlan.FindAccountPlanByAccountIdAsync(request.AccountId);
 
             if (request.Plan == "Free")
             {
