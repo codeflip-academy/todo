@@ -38524,7 +38524,6 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 //
 //
 //
-//
 var _default = {
   name: "TodoListItems",
   props: ["listId", "todoListItems"],
@@ -38604,36 +38603,29 @@ exports.default = _default;
         : _vm._e(),
       _vm._v(" "),
       _c(
-        "transition-group",
-        { attrs: { name: "fadeLeft" } },
-        [
-          _c(
-            "Draggable",
-            {
-              attrs: { handle: ".item-handle" },
-              on: { end: _vm.updateLayout },
-              model: {
-                value: _vm.layout,
-                callback: function($$v) {
-                  _vm.layout = $$v
-                },
-                expression: "layout"
-              }
+        "Draggable",
+        {
+          attrs: { handle: ".item-handle" },
+          on: { end: _vm.updateLayout },
+          model: {
+            value: _vm.layout,
+            callback: function($$v) {
+              _vm.layout = $$v
             },
-            _vm._l(_vm.layout, function(position) {
-              return _c("TodoListItem", {
-                key: position,
-                staticClass: "todo-list-item",
-                attrs: {
-                  todoListItem: _vm.todoListItems.find(function(x) {
-                    return x.id === position
-                  })
-                }
+            expression: "layout"
+          }
+        },
+        _vm._l(_vm.layout, function(position) {
+          return _c("TodoListItem", {
+            key: position,
+            staticClass: "todo-list-item",
+            attrs: {
+              todoListItem: _vm.todoListItems.find(function(x) {
+                return x.id === position
               })
-            }),
-            1
-          )
-        ],
+            }
+          })
+        }),
         1
       )
     ],
@@ -89257,7 +89249,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "62053" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "50440" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};
