@@ -46676,8 +46676,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 //
 //
 //
-//
-const client = require("braintree-web/client");
+const braintree = require("braintree-web/client");
 
 const hostedFields = require("braintree-web/hosted-fields");
 
@@ -46687,48 +46686,69 @@ var _default = {
   data() {
     return {
       clientToken: "",
-      clientInstance: null
+      brainTreeClient: null,
+      hostedFieldsClient: null,
+      paymentMethodNonce: null,
+      allowFormSubmissions: false
     };
   },
 
   async created() {
-    this.clientToken = await this.getClientToken();
-    this.clientInstance = client.create({
-      authorization: this.clientToken
-    }, this.createCheckoutForm());
+    await this.generateClientToken();
+    await this.createBrainTreeClient();
+    await this.createHostedFieldsClient();
+    this.allowFormSubmissions = true;
   },
 
   methods: {
-    async getClientToken() {
+    async generateClientToken() {
       const response = await (0, _axios.default)({
         method: "GET",
         url: "/api/Payments/GenerateToken"
       });
-      return response.data;
+      this.clientToken = response.data;
     },
 
-    createCheckoutForm() {
-      hostedFields.create({
-        client: this.clientInstance,
+    async createBrainTreeClient() {
+      this.brainTreeClient = await braintree.create({
+        authorization: this.clientToken
+      });
+    },
+
+    async createHostedFieldsClient() {
+      this.hostedFieldsClient = await hostedFields.create({
+        client: this.brainTreeClient,
         authorization: this.clientToken,
         fields: {
           number: {
             selector: "#cc-number",
             placeholder: "4111 1111 1111 1111"
           },
-          cvv: {
-            selector: "#cc-cvv",
-            placeholder: "123"
-          },
+          // cvv: {
+          //   selector: "#cc-cvv",
+          //   placeholder: "123",
+          // },
           expirationDate: {
             selector: "#cc-expiration",
             placeholder: "MM / YY"
-          },
-          postalCode: {
-            selector: "#cc-postal-code",
-            placeholder: "11111"
-          }
+          } // postalCode: {
+          //   selector: "#cc-postal-code",
+          //   placeholder: "11111",
+          // },
+
         }
+      });
+    },
+
+    async submitPaymentMethod() {
+      await this.hostedFieldsClient.tokenize((err, payload) => {
+        if (err) {
+          console.log(err);
+          return;
+        }
+
+        this.paymentMethodNonce = payload.nonce;
+        console.log(payload.nonce);
       });
     }
 
@@ -46755,6 +46775,14 @@ exports.default = _default;
   var _c = _vm._self._c || _h
   return _c(
     "b-form",
+    {
+      on: {
+        submit: function($event) {
+          $event.preventDefault()
+          return _vm.submitPaymentMethod($event)
+        }
+      }
+    },
     [
       _c(
         "b-card",
@@ -46803,65 +46831,18 @@ exports.default = _default;
           ),
           _vm._v(" "),
           _c(
-            "b-row",
-            [
-              _c(
-                "b-col",
-                [
-                  _c(
-                    "b-form-group",
-                    { attrs: { label: "CVV", for: "cc-cvv" } },
-                    [
-                      _c("div", {
-                        staticClass: "form-control",
-                        attrs: { id: "cc-cvv" }
-                      })
-                    ]
-                  )
-                ],
-                1
-              ),
-              _vm._v(" "),
-              _c(
-                "b-col",
-                [
-                  _c(
-                    "b-form-group",
-                    { attrs: { label: "Postal Code", for: "cc-postal-code" } },
-                    [
-                      _c("div", {
-                        staticClass: "form-control",
-                        attrs: { id: "cc-postal-code" }
-                      })
-                    ]
-                  )
-                ],
-                1
-              )
-            ],
-            1
-          ),
-          _vm._v(" "),
-          _c(
             "div",
             [
               _c(
                 "b-button",
-                { attrs: { type: "submit", variant: "success" } },
-                [_vm._v("Submit")]
-              ),
-              _vm._v(" "),
-              _c(
-                "b-button",
                 {
-                  attrs: { variant: "secondary" },
-                  on: {
-                    click: function($event) {
-                      return _vm.$emit("cancelUpdate")
-                    }
+                  attrs: {
+                    type: "submit",
+                    variant: "success",
+                    disabled: !_vm.allowFormSubmissions
                   }
                 },
-                [_vm._v("Cancel")]
+                [_vm._v("Submit")]
               )
             ],
             1
@@ -47160,7 +47141,7 @@ var _default = {
     return {
       plan: {},
       errorMessage: "",
-      paymentMethod: "...",
+      paymentMethod: "",
       updatingPaymentInfo: false
     };
   },

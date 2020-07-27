@@ -22,7 +22,7 @@ export default {
     return {
       plan: {},
       errorMessage: "",
-      paymentMethod: "...",
+      paymentMethod: "",
       updatingPaymentInfo: false,
     };
   },
