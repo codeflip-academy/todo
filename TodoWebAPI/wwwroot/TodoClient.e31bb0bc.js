@@ -46688,7 +46688,6 @@ var _default = {
       clientToken: "",
       brainTreeClient: null,
       hostedFieldsClient: null,
-      paymentMethodNonce: null,
       allowFormSubmissions: false
     };
   },
@@ -46741,14 +46740,22 @@ var _default = {
     },
 
     async submitPaymentMethod() {
-      await this.hostedFieldsClient.tokenize((err, payload) => {
+      await this.hostedFieldsClient.tokenize(async (err, payload) => {
         if (err) {
           console.log(err);
           return;
         }
 
-        this.paymentMethodNonce = payload.nonce;
-        console.log(payload.nonce);
+        await (0, _axios.default)({
+          method: "POST",
+          url: "/api/payments/",
+          data: JSON.stringify({
+            paymentMethodNonce: payload.nonce
+          }),
+          headers: {
+            "content-type": "application/json"
+          }
+        });
       });
     }
 
