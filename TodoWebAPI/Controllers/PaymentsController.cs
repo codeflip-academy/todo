@@ -14,6 +14,7 @@ using TodoWebAPI.UserStories.RoleChanges;
 using Todo.Domain.Repositories;
 using Todo.Infrastructure.PaymentMethods;
 using Todo.Infrastructure;
+using TodoWebAPI.UserStories.DeletePaymentMethod;
 
 namespace TodoWebAPI.Controllers
 {
@@ -50,12 +51,41 @@ namespace TodoWebAPI.Controllers
             TransactionStatus.SUBMITTED_FOR_SETTLEMENT
         };
 
-        [HttpGet, Route("GenerateToken")]
+        [HttpGet, Route("generatetoken")]
         public object GenerateToken()
         {
             var gateway = _braintreeConfiguration.GetGateway();
             var clientToken = gateway.ClientToken.Generate();
             return clientToken;
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetPaymentMethod()
+        {
+            var accountId = Guid.Parse(User.FindFirst(c => c.Type == "urn:codefliptodo:accountid").Value);
+            var account = await _accountRepository.FindAccountByIdAsync(accountId);
+
+            var gateway = _braintreeConfiguration.GetGateway();
+
+            var dbPaymentMethod = await _paymentMethod.FindByAccountIdAsync(accountId);
+
+
+            if (dbPaymentMethod != null)
+            {
+                CreditCard paymentMethod = null;
+                paymentMethod = (CreditCard) await gateway.PaymentMethod.FindAsync(dbPaymentMethod.TokenId);
+
+                var cardInfo = new CardInfoModel()
+                {
+                    CardType = paymentMethod.CardType.ToString(),
+                    ExpirationDate = paymentMethod.ExpirationDate,
+                    LastFourDigits = paymentMethod.LastFour
+                };
+
+                return Ok(cardInfo);
+            }
+
+            return Ok();
         }
 
         [HttpPost]
@@ -70,7 +100,11 @@ namespace TodoWebAPI.Controllers
 
             if(paymentMethod != null)
             {
-                return false;
+                var deletePayment = new DeletePaymentMethod
+                {
+                    Method = paymentMethod
+                };
+                await _mediator.Send(deletePayment);
             }
             
             Customer customer = await gateway.Customer.FindAsync(account.PaymentId);

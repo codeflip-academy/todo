@@ -9,6 +9,7 @@ namespace Todo.Infrastructure.PaymentMethods
         void Add(Payment paymentMethod);
         Task<Payment> FindByTokenIdAsync(string Id);
         Task<Payment> FindByAccountIdAsync(Guid Id);
+        void Remove(Payment payment);
 
         
     }

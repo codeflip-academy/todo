@@ -44,6 +44,11 @@ namespace Todo.Infrastructure.EFRepositories
             throw new NotImplementedException();
         }
 
+        public void Remove(Payment payment)
+        {
+            _context.PaymentMethods.Remove(payment);
+        }
+
         public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         {
              return await _context.SaveChangesAsync();
