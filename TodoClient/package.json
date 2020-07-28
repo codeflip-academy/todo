@@ -29,6 +29,7 @@
     "@microsoft/signalr": "^3.1.4",
     "@types/jquery": "^3.3.38",
     "animate.css": "^4.1.0",
+    "ax": "^0.2.2",
     "axios": "^0.19.2",
     "bootstrap": "^4.5.0",
     "bootstrap-vue": "^2.15.0",

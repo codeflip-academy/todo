@@ -39385,6 +39385,7 @@ exports.default = void 0;
 //
 var _default = {
   name: "PaymentMethod",
+  props: ["paymentMethod"],
   methods: {
     updatePaymentInfo() {
       this.$emit("updatePaymentInfo");
@@ -39407,7 +39408,15 @@ exports.default = _default;
   var _c = _vm._self._c || _h
   return _c(
     "b-card",
-    { attrs: { title: "Visa ••••4422", "sub-title": "Expires 10/21" } },
+    {
+      attrs: {
+        title:
+          _vm.paymentMethod.cardType +
+          " ••••" +
+          _vm.paymentMethod.lastFourDigits,
+        "sub-title": "Expires on: " + _vm.paymentMethod.expirationDate
+      }
+    },
     [
       _c(
         "b-link",
@@ -46676,6 +46685,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 //
 //
 //
+//
 const braintree = require("braintree-web/client");
 
 const hostedFields = require("braintree-web/hosted-fields");
@@ -46756,6 +46766,7 @@ var _default = {
             "content-type": "application/json"
           }
         });
+        this.$emit("formSubmitted");
       });
     }
 
@@ -46850,6 +46861,19 @@ exports.default = _default;
                   }
                 },
                 [_vm._v("Submit")]
+              ),
+              _vm._v(" "),
+              _c(
+                "b-button",
+                {
+                  attrs: { variant: "secondary" },
+                  on: {
+                    click: function($event) {
+                      return _vm.$emit("formCancelled")
+                    }
+                  }
+                },
+                [_vm._v("Cancel")]
               )
             ],
             1
@@ -47120,6 +47144,8 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.default = void 0;
 
+var _axios = _interopRequireDefault(require("axios"));
+
 var _PaymentMethod = _interopRequireDefault(require("../components/PaymentMethod"));
 
 var _CheckoutForm = _interopRequireDefault(require("../components/CheckoutForm"));
@@ -47141,6 +47167,9 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 //
 //
 //
+//
+//
+//
 var _default = {
   name: "SettingsBilling",
 
@@ -47148,11 +47177,29 @@ var _default = {
     return {
       plan: {},
       errorMessage: "",
-      paymentMethod: "",
+      paymentMethod: {},
       updatingPaymentInfo: false
     };
   },
 
+  async created() {
+    await this.getPaymentMethod();
+  },
+
+  methods: {
+    async getPaymentMethod() {
+      try {
+        const response = await (0, _axios.default)({
+          method: 'GET',
+          url: 'api/payments'
+        });
+        this.paymentMethod = response.data;
+      } catch (err) {
+        console.log(err);
+      }
+    }
+
+  },
   components: {
     PaymentMethod: _PaymentMethod.default,
     CheckoutForm: _CheckoutForm.default,
@@ -47176,9 +47223,10 @@ exports.default = _default;
     "section",
     { attrs: { id: "settings-plan" } },
     [
-      _vm.paymentMethod && !_vm.updatingPaymentInfo
+      _vm.paymentMethod.cardType && !_vm.updatingPaymentInfo
         ? _c("PaymentMethod", {
             staticClass: "mb-3",
+            attrs: { paymentMethod: _vm.paymentMethod },
             on: {
               updatePaymentInfo: function($event) {
                 _vm.updatingPaymentInfo = true
@@ -47188,7 +47236,11 @@ exports.default = _default;
         : _c("CheckoutForm", {
             staticClass: "mb-3",
             on: {
-              cancelUpdate: function($event) {
+              formSubmitted: function($event) {
+                _vm.getPaymentMethod()
+                _vm.updatingPaymentInfo = false
+              },
+              formCancelled: function($event) {
                 _vm.updatingPaymentInfo = false
               }
             }
@@ -47228,7 +47280,7 @@ render._withStripped = true
         
       }
     })();
-},{"../components/PaymentMethod":"vue/components/PaymentMethod.vue","../components/CheckoutForm":"vue/components/CheckoutForm.vue","../components/ChangePlan":"vue/components/ChangePlan.vue","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/views/Settings.vue":[function(require,module,exports) {
+},{"axios":"node_modules/axios/index.js","../components/PaymentMethod":"vue/components/PaymentMethod.vue","../components/CheckoutForm":"vue/components/CheckoutForm.vue","../components/ChangePlan":"vue/components/ChangePlan.vue","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/views/Settings.vue":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {

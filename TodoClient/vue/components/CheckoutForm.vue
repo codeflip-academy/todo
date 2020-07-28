@@ -27,6 +27,7 @@
       </b-row>-->
       <div>
         <b-button type="submit" variant="success" :disabled="!allowFormSubmissions">Submit</b-button>
+        <b-button variant="secondary" @click="$emit('formCancelled');">Cancel</b-button>
       </div>
     </b-card>
   </b-form>
@@ -106,6 +107,8 @@ export default {
             "content-type": "application/json",
           },
         });
+
+        this.$emit("formSubmitted");
       });
     },
   },
