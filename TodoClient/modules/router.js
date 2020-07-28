@@ -17,7 +17,7 @@ const router = new VueRouter({
     { path: '/', component: Home, name: 'Home' },
     { path: '/lists', component: Home, name: 'My Lists' },
     { path: '/lists/:todoListId', component: TodoListView, props: true },
-    { path: '/settings', component: Settings }
+    { path: '/settings', component: Settings },
   ],
 });
 

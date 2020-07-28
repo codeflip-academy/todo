@@ -25,5 +25,6 @@ namespace Todo.Domain
         public string PictureUrl { get; set; }
         public string Email { get; set; }
         public int PlanId { get; set; }
+        public string PaymentId {get; set;}
     }
 }

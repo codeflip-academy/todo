@@ -7,6 +7,6 @@ namespace TodoWebAPI.UserStories.RoleChanges
     public class RoleChange : IRequest<AccountPlan>
     {
         public string Plan {get; set;}
-        public Guid AcountId {get; set;}
+        public Guid AccountId {get; set;}
     }
 }

@@ -43,6 +43,8 @@ namespace Todo.Infrastructure
         public virtual DbSet<RoleOwner> AccountsListsOwner { get; set; }
         public virtual DbSet<RoleLeft> AccountsListsLeft { get; set; }
         public virtual DbSet<Plan> Plans { get; set; }
+        public virtual DbSet<Payment> PaymentMethods { get; set; }
+        
 
         public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         {
@@ -81,6 +83,9 @@ namespace Todo.Infrastructure
                 entity
                     .Property(e => e.PlanId)
                     .HasColumnName("PlanID");
+                entity
+                    .Property(e => e.PaymentId)
+                    .HasColumnName("PaymentID");
             });
 
             modelBuilder.Entity<TodoList>(entity =>
@@ -236,6 +241,16 @@ namespace Todo.Infrastructure
                 entity
                     .Property(e => e.CanAddDueDates)
                     .HasColumnName("CanAddDueDates");
+            });
+
+             modelBuilder.Entity<Payment>(entity =>
+            {
+                entity
+                    .HasKey(e => e.TokenId);
+
+                entity
+                    .Property(e => e.AccountId)
+                    .HasColumnName("AccountID");
             });
         }
     }
