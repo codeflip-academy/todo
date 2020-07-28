@@ -4,7 +4,6 @@ GO
 
 Create TABLE [TodoListLayouts](
     ID UNIQUEIDENTIFIER PRIMARY KEY,
-    AccountID UNIQUEIDENTIFIER,
     ListId UNIQUEIDENTIFIER,
     Layout VARCHAR(max) NOT NULL,
     FOREIGN KEY (ListId)

@@ -59,7 +59,7 @@ namespace Todo.Infrastructure
         public void MakeLeft()
         {
             base.Role = Roles.Left;
-            DomainEvents.Add(new ContributorLeft() { ListId = this.ListId, AccountId = AccountId });
+            DomainEvents.Add(new ContributorLeft() { ListId = this.ListId});
         }
     }
 

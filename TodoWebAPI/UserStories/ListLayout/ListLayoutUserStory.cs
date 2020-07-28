@@ -20,8 +20,6 @@ namespace TodoWebAPI.UserStories.ListLayout
         {
             var todoListLayout = await _todoListLayout.FindLayoutByListIdAsync(request.ListId);
 
-            todoListLayout.AccountId = request.AccountId;
-
             todoListLayout.UpdateLayout(request.ItemId, request.Position, request.ListId);
 
             _todoListLayout.Update(todoListLayout);

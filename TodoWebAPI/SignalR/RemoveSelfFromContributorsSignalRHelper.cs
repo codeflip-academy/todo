@@ -6,15 +6,10 @@ namespace Todo.Infrastructure
 {
     public static class RemoveSelfFromContributorSignalRHelper
     {
-        public static List<string> RemoveContributor(TodoList list, Account account)
+        public static List<string> RemoveContributor(TodoList list, string accountEmail)
         {
-            foreach(var contributor in list.Contributors)
-            {
-                if(contributor == account.Email)
-                {
-                    list.Contributors.Remove(contributor);
-                }
-            }
+            list.RemoveContribuor(accountEmail);
+
             return list.Contributors;
         }
     }

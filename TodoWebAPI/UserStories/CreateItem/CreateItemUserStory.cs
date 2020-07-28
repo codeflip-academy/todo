@@ -50,8 +50,6 @@ namespace TodoWebAPI.UserStories.CreateItem
 
                 var todoItem = list.CreateListItem(id, request.Name, request.Notes, dueDate);
 
-                todoItem.AccountId = request.AccountId;
-
                 await _todoListItemRepository.AddTodoListItemAsync(todoItem);
 
                 await _todoListItemRepository.SaveChangesAsync();

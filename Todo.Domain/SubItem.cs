@@ -8,7 +8,6 @@ namespace Todo.Domain
     public class SubItem : Entity
     {
         public Guid Id { get; set; }
-        public Guid AccountId {get; set;}
         public Guid? ListItemId { get; set; }
         public bool Completed { get; protected set; }
         public string Name { get; set; }
@@ -21,7 +20,7 @@ namespace Todo.Domain
                 return;
 
             Completed = true;
-            DomainEvents.Add(new SubItemCompletedStateChanged { SubItem = this, AccountId = AccountId });
+            DomainEvents.Add(new SubItemCompletedStateChanged { SubItem = this });
         }
 
         public void SetNotCompleted()
@@ -40,7 +39,7 @@ namespace Todo.Domain
             var itemId = this.ListItemId;
             this.ListItemId = null;
 
-            DomainEvents.Add(new SubItemMovedToTrash { ItemId = itemId, SubItem = this, AccountId = AccountId });
+            DomainEvents.Add(new SubItemMovedToTrash { ItemId = itemId, SubItem = this });
         }
 
         private void CheckIfSubItemIsTrashed()
@@ -50,7 +49,7 @@ namespace Todo.Domain
         }
         public void EditSubItem(SubItem subItem)
         {
-            DomainEvents.Add(new EditSubItem { SubItem = subItem, AccountId = AccountId });
+            DomainEvents.Add(new EditSubItem { SubItem = subItem });
         }
     }
 }

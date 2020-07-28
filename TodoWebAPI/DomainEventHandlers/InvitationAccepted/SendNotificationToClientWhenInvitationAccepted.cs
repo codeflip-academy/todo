@@ -9,6 +9,7 @@ using Todo.Domain;
 using Todo.Domain.Repositories;
 using TodoWebAPI.SignalR;
 using Todo.Infrastructure;
+using Microsoft.AspNetCore.Http;
 
 namespace TodoWebAPI.DomainEventHandlers.Invitation
 {
@@ -16,19 +17,19 @@ namespace TodoWebAPI.DomainEventHandlers.Invitation
     {
         private readonly IHubContext<NotificationHub> _hubContext;
         private readonly IAccountRepository _account;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
-        public SendNotificationToClientWhenInvitationAccepted(IHubContext<NotificationHub> hubContext, IAccountRepository account)
+        public SendNotificationToClientWhenInvitationAccepted(IHubContext<NotificationHub> hubContext, IAccountRepository account, IHttpContextAccessor httpContextAccessor)
         {
             _hubContext = hubContext;
             _account = account;
+            _httpContextAccessor = httpContextAccessor;
         }
         public async Task Handle(InvitationAccepted notification, CancellationToken cancellationToken)
         {
-            var account = await _account.FindAccountByIdAsync(notification.AccountId);
+            var contributorExceptYou = RemoveSelfFromContributorSignalRHelper.RemoveContributor(notification.List, _httpContextAccessor.HttpContext.User.FindFirst(c => c.Type == "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress").Value);
 
-            var contribuutorsExceptYou = RemoveSelfFromContributorSignalRHelper.RemoveContributor(notification.List, account);
-
-            await _hubContext.Clients.Users(contribuutorsExceptYou).SendAsync("InvitationAccepted", notification.List);
+            await _hubContext.Clients.Users(contributorExceptYou).SendAsync("InvitationAccepted", notification.List);
         }
     }
 }
