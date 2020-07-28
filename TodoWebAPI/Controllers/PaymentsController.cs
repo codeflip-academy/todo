@@ -14,6 +14,7 @@ using TodoWebAPI.UserStories.RoleChanges;
 using Todo.Domain.Repositories;
 using Todo.Infrastructure.PaymentMethods;
 using Todo.Infrastructure;
+using TodoWebAPI.UserStories.DeletePaymentMethod;
 
 namespace TodoWebAPI.Controllers
 {
@@ -70,7 +71,11 @@ namespace TodoWebAPI.Controllers
 
             if(paymentMethod != null)
             {
-                return false;
+                var deletePayment = new DeletePaymentMethod
+                {
+                    Method = paymentMethod
+                };
+                await _mediator.Send(deletePayment);
             }
             
             Customer customer = await gateway.Customer.FindAsync(account.PaymentId);
