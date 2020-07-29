@@ -8,34 +8,34 @@ using Todo.Infrastructure;
 
 namespace TodoWebAPI.UserStories.RoleChanges
 {
-    public class RoleChangeUserStory : IRequestHandler<RoleChange, AccountPlan>
+    public class PlanChangeUserStory : IRequestHandler<PlanChange, bool>
     {
         private readonly IAccountPlanRepository _accountPlan;
 
-        public RoleChangeUserStory(IAccountPlanRepository accountPlan)
+        public PlanChangeUserStory(IAccountPlanRepository accountPlan)
         {
             _accountPlan = accountPlan;
         }
 
-        public async Task<AccountPlan> Handle(RoleChange request, CancellationToken cancellationToken)
+        public async Task<bool> Handle(PlanChange request, CancellationToken cancellationToken)
         {
-             var accountPlan = await _accountPlan.FindAccountPlanByAccountIdAsync(request.AccountId);
+            var accountPlan = await _accountPlan.FindAccountPlanByAccountIdAsync(request.AccountId);
 
             if (request.Plan == "Free")
             {
-                if(accountPlan.IsNewPlanLessThanCurrentPlan(PlanTiers.Free) == true)
+                if (accountPlan.IsNewPlanLessThanCurrentPlan(PlanTiers.Free) == true)
                 {
-                    if(accountPlan.ListCount > PlanTiers.FreeMaxLists)
-                        return null;
+                    if (accountPlan.ListCount > PlanTiers.FreeMaxLists)
+                        return false;
                 }
                 accountPlan.PlanId = PlanTiers.Free;
             }
             else if (request.Plan == "Basic")
             {
-                if(accountPlan.IsNewPlanLessThanCurrentPlan(PlanTiers.Basic) == true)
+                if (accountPlan.IsNewPlanLessThanCurrentPlan(PlanTiers.Basic) == true)
                 {
-                    if(accountPlan.ListCount > PlanTiers.BasisMaxLists)
-                         return null;
+                    if (accountPlan.ListCount > PlanTiers.BasisMaxLists)
+                        return false;
                 }
                 accountPlan.PlanId = PlanTiers.Basic;
             }
@@ -46,7 +46,7 @@ namespace TodoWebAPI.UserStories.RoleChanges
 
             await _accountPlan.SaveChangesAsync();
 
-            return accountPlan;
+            return true;
         }
     }
 }

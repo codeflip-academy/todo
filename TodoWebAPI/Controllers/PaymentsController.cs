@@ -145,13 +145,40 @@ namespace TodoWebAPI.Controllers
 
                 if (response == true)
                 {
-                    var planChange = new RoleChange
+                    var planChange = new PlanChange
                     {
                         AccountId = accountId,
                         Plan = createSubscriptionModel.PlanName
                     };
                     await _mediator.Send(planChange);
 
+                    return Ok();
+                }
+            }
+            return BadRequest();
+        }
+
+        [HttpPost, Route("downgrade")]
+        public async Task<IActionResult> DowngradePaymentSubscription([FromBody] DowngradePaymentSubscription downgradePayment)
+        {
+            var accountId = Guid.Parse(User.FindFirst(c => c.Type == "urn:codefliptodo:accountid").Value);
+            var account = await _accountRepository.FindAccountByIdAsync(accountId);
+
+            downgradePayment.AccountId = accountId;
+
+            var planChange = new PlanChange
+            {
+                AccountId = accountId,
+                Plan = downgradePayment.Plan
+            };
+
+            var response = await _mediator.Send(planChange);
+
+            if (response == true)
+            {
+                var brainTreeResponse = await _mediator.Send(downgradePayment);
+                if (brainTreeResponse == true)
+                {
                     return Ok();
                 }
             }
