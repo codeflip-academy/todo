@@ -132,8 +132,8 @@ namespace TodoWebAPI.Controllers
             return result.IsSuccess();
         }
 
-        [HttpPost("subscription")]
-        public async Task<IActionResult> CreatePaymentSubscription([FromBody] string plan)
+        [HttpPost, Route("subscription")]
+        public async Task<IActionResult> CreatePaymentSubscription([FromBody] CreateSubscriptionModel createSubscriptionModel)
         {
             var accountId = Guid.Parse(User.FindFirst(c => c.Type == "urn:codefliptodo:accountid").Value);
             var account = await _accountRepository.FindAccountByIdAsync(accountId);
@@ -142,14 +142,12 @@ namespace TodoWebAPI.Controllers
 
             var paymentMethod = await _paymentMethod.FindByAccountIdAsync(accountId);
 
-            
-
             if(paymentMethod != null)
             {
                 var subscription = new CreateSubscription
                 {
                     AccountId = accountId,
-                    Plan = plan
+                    Plan = createSubscriptionModel.PlanName
                 };
 
                 var response = await _mediator.Send(subscription);
@@ -159,7 +157,7 @@ namespace TodoWebAPI.Controllers
                     var planChange = new RoleChange
                     {
                         AccountId = accountId,
-                        Plan = plan
+                        Plan = createSubscriptionModel.PlanName
                     };
                     await _mediator.Send(planChange);
 

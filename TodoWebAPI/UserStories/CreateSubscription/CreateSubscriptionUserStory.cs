@@ -21,35 +21,35 @@ namespace TodoWebAPI.UserStories
 
         public async Task<bool> Handle(CreateSubscription request, CancellationToken cancellationToken)
         {
-              var gateway = _braintreeConfiguration.GetGateway();
+            var gateway = _braintreeConfiguration.GetGateway();
 
             var paymentMethod = await _paymentMethod.FindByAccountIdAsync(request.AccountId);
 
-             var intPlan = "";
-                if(request.Plan == "Free")
-                {
-                    intPlan = "1";
-                }
-                else if(request.Plan == "Basic")
-                {
-                    intPlan = "2";
-                }
-                else if(request.Plan == "Premium")
-                {
-                    intPlan = "3";
-                }
+            var intPlan = "";
+            if (request.Plan == "Free")
+            {
+                intPlan = "1";
+            }
+            else if (request.Plan == "Basic")
+            {
+                intPlan = "2";
+            }
+            else if (request.Plan == "Premium")
+            {
+                intPlan = "3";
+            }
 
-                var re = new SubscriptionRequest
-                {
-                    PaymentMethodToken = paymentMethod.TokenId,
-                    PlanId = intPlan
-                };
+            var re = new SubscriptionRequest
+            {
+                PaymentMethodToken = paymentMethod.TokenId,
+                PlanId = intPlan
+            };
 
-                Result<Subscription> result = gateway.Subscription.Create(re);
-                if(result.IsSuccess())
-                    return true;
+            Result<Subscription> result = gateway.Subscription.Create(re);
+            if (result.IsSuccess())
+                return true;
 
-                return false;
+            return false;
         }
     }
 }
