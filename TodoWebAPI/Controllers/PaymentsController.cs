@@ -15,6 +15,7 @@ using Todo.Domain.Repositories;
 using Todo.Infrastructure.PaymentMethods;
 using Todo.Infrastructure;
 using TodoWebAPI.UserStories.DeletePaymentMethod;
+using TodoWebAPI.UserStories;
 
 namespace TodoWebAPI.Controllers
 {
@@ -129,6 +130,43 @@ namespace TodoWebAPI.Controllers
             await _paymentMethod.SaveChangesAsync();
 
             return result.IsSuccess();
+        }
+
+        [HttpPost("subscription")]
+        public async Task<IActionResult> CreatePaymentSubscription([FromBody] string plan)
+        {
+            var accountId = Guid.Parse(User.FindFirst(c => c.Type == "urn:codefliptodo:accountid").Value);
+            var account = await _accountRepository.FindAccountByIdAsync(accountId);
+
+            var gateway = _braintreeConfiguration.GetGateway();
+
+            var paymentMethod = await _paymentMethod.FindByAccountIdAsync(accountId);
+
+            
+
+            if(paymentMethod != null)
+            {
+                var subscription = new CreateSubscription
+                {
+                    AccountId = accountId,
+                    Plan = plan
+                };
+
+                var response = await _mediator.Send(subscription);
+
+                if(response == true)
+                {
+                    var planChange = new RoleChange
+                    {
+                        AccountId = accountId,
+                        Plan = plan
+                    };
+                    await _mediator.Send(planChange);
+
+                    return Ok();
+                }
+            }
+            return BadRequest();
         }
     }
 }
