@@ -13,7 +13,11 @@
           </p>
         </b-col>
         <b-col class="text-right">
-          <b-button variant="success" size="sm" :disabled="selectedPlan === currentPlan">Choose plan</b-button>
+          <b-button
+            variant="success"
+            size="sm"
+            :disabled="selectedPlan === currentPlan"
+            @click="changePlan">Choose plan</b-button>
         </b-col>
       </b-row>
     </template>
@@ -35,6 +39,7 @@
 </template>
 
 <script>
+import axios from "axios";
 export default {
   name: "ChangePlan",
   data() {
@@ -42,6 +47,20 @@ export default {
       plans: ["Free", "Basic", "Premium"],
       selectedPlan: "Free",
     };
+  },
+  methods: {
+    async changePlan(){
+      const response = await axios({
+        method: "POST",
+        url: "api/payments/subscription",
+        data: JSON.stringify({
+          planName: this.selectedPlan
+        }),
+        headers: {
+          "content-type": "application/json"
+        }
+      });
+    }
   },
   computed: {
     currentPlan() {
