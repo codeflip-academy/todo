@@ -25,24 +25,12 @@ namespace TodoWebAPI.UserStories
 
             var paymentMethod = await _paymentMethod.FindByAccountIdAsync(request.AccountId);
 
-            var intPlan = "";
-            if (request.Plan == "Free")
-            {
-                intPlan = "1";
-            }
-            else if (request.Plan == "Basic")
-            {
-                intPlan = "2";
-            }
-            else if (request.Plan == "Premium")
-            {
-                intPlan = "3";
-            }
+            var brainType = CreateSubscriptionHelper.ConvertPlanToBrainTreeType(request.Plan);
 
             var re = new SubscriptionRequest
             {
                 PaymentMethodToken = paymentMethod.TokenId,
-                PlanId = intPlan
+                PlanId = brainType
             };
 
             Result<Subscription> result = gateway.Subscription.Create(re);
