@@ -65,21 +65,20 @@ namespace TodoWebAPI.Controllers
         {
             var accountId = Guid.Parse(User.FindFirst(c => c.Type == "urn:codefliptodo:accountid").Value);
             var gateway = _braintreeConfiguration.GetGateway();
-            var dbPaymentMethod = await _paymentMethod.FindByAccountIdAsync(accountId);
+            var paymentMethod = await _paymentMethod.FindByAccountIdAsync(accountId);
 
-            if (dbPaymentMethod != null)
+            if (paymentMethod != null)
             {
-                CreditCard paymentMethod = null;
-                paymentMethod = (CreditCard)await gateway.PaymentMethod.FindAsync(dbPaymentMethod.TokenId);
+                CreditCard creditCard = (CreditCard)await gateway.PaymentMethod.FindAsync(paymentMethod.TokenId);
 
-                var cardInfo = new CardInfoModel()
+                var creditCardInfo = new CardInfoModel()
                 {
-                    CardType = paymentMethod.CardType.ToString(),
-                    ExpirationDate = paymentMethod.ExpirationDate,
-                    LastFourDigits = paymentMethod.LastFour
+                    CardType = creditCard.CardType.ToString(),
+                    ExpirationDate = creditCard.ExpirationDate,
+                    LastFourDigits = creditCard.LastFour
                 };
 
-                return Ok(cardInfo);
+                return Ok(creditCardInfo);
             }
 
             return Ok();
