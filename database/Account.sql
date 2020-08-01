@@ -8,6 +8,7 @@ Create Table [Accounts](
     [PictureUrl] VARCHAR(255),
 	[Email] VARCHAR(50) NOT NULL,
     [PlanID] INT NOT NULL,
+    [PaymentID] VARCHAR(9) NOT NULL,
     FOREIGN KEY ([PlanID]) REFERENCES Plans([ID])
 )
 

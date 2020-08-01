@@ -1,0 +1,11 @@
+USE [ToDo]
+
+GO
+
+CREATE TABLE [PaymentMethods](
+    TokenID VARCHAR(50) PRIMARY KEY,
+    AccountID UNIQUEIDENTIFIER NOT NULL,
+    FOREIGN KEY (AccountID) REFERENCES Accounts (ID)
+)
+
+GO

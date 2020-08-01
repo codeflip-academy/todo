@@ -106,7 +106,7 @@ namespace TodoWebAPI.Controllers
         {
             var accountId = Guid.Parse(User.FindFirst(c => c.Type == "urn:codefliptodo:accountid").Value);
 
-            roleChanged.AcountId = accountId;
+            roleChanged.AccountId = accountId;
 
             var mediator = await _mediator.Send(roleChanged);
 

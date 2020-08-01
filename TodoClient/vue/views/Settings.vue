@@ -1,47 +1,44 @@
 <template>
   <section id="settings-page">
     <b-container>
-      <h1>Settings</h1>
-      <hr class="mb-4" />
-
-      <section id="settings-subscription">
-        <h2 class="text-muted mb-3">Change Plan</h2>
-        <b-form-group>
-          <b-form-select :state="canChangePlan" v-model="planName" :options="plans"></b-form-select>
-        </b-form-group>
-        <p class="text-danger text-sm" v-if="canChangePlan === false">{{ errorMessage }}</p>
-      </section>
+      <b-tabs pills vertical nav-wrapper-class="w-25">
+        <b-tab title="Account">
+          <h2>Account</h2>
+        </b-tab>
+        <b-tab title="Billing" active>
+          <h2>Billing</h2>
+          <SettingsBilling></SettingsBilling>
+        </b-tab>
+      </b-tabs>
     </b-container>
   </section>
 </template>
 
 <script>
+import SettingsBilling from "../components/SettingsBilling";
+
 export default {
   name: "Settings",
-  data() {
-    return {
-      plans: ["Free", "Basic", "Premium"],
-      canChangePlan: null,
-      plan: {},
-      errorMessage: "",
-    };
-  },
-  computed: {
-    planName: {
-      get() {
-        return this.$store.getters.planName;
-      },
-      async set(value) {
-        try {
-          await this.$store.dispatch("changePlan", { planName: value });
-          this.canChangePlan = null;
-        } catch {
-          this.canChangePlan = false;
-          this.plan = this.$store.getters.plan;
-          this.errorMessage = `Unable to change your plan to ${value}. You have too many lists.`;
-        }
-      },
-    },
+  components: {
+    SettingsBilling,
   },
 };
 </script>
+
+<style lang="scss">
+#settings-page {
+  .nav-link {
+    margin-bottom: 10px;
+  }
+
+  h2 {
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+    border-bottom: solid 1px #ddd;
+  }
+
+  .tab-content {
+    padding-left: 30px;
+  }
+}
+</style>

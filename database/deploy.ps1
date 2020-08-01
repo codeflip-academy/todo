@@ -10,3 +10,4 @@ Invoke-Sqlcmd -InputFile SubItems.sql
 Invoke-Sqlcmd -InputFile SubItemLayouts.sql
 Invoke-Sqlcmd -InputFile AccountsLists.sql
 Invoke-Sqlcmd -InputFile AccountsPlans.sql
+Invoke-Sqlcmd -InputFile PaymentMethods.sql
