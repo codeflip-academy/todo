@@ -19155,21 +19155,16 @@ const todoLists = {
       });
     },
 
-    addTodoList(context, payload) {
-      return new Promise((resolve, reject) => {
-        (0, _axios.default)({
-          method: 'POST',
-          url: 'api/lists',
-          data: JSON.stringify(payload),
-          headers: {
-            'content-type': 'application/json'
-          }
-        }).then(() => {
-          context.dispatch('loadTodoLists');
-        }).finally(() => {
-          resolve();
-        });
+    async addTodoList(context, payload) {
+      await (0, _axios.default)({
+        method: 'POST',
+        url: 'api/lists',
+        data: JSON.stringify(payload),
+        headers: {
+          'content-type': 'application/json'
+        }
       });
+      await context.dispatch('loadTodoLists');
     },
 
     deleteTodoList(context, payload) {
@@ -23421,16 +23416,13 @@ exports.default = void 0;
 //
 //
 //
-//
-//
-//
 var _default = {
-  name: 'AddTodoListForm',
+  name: "AddTodoListForm",
 
   data() {
     return {
       form: {
-        listTitle: ''
+        listTitle: ""
       }
     };
   },
@@ -23446,14 +23438,13 @@ var _default = {
       this.$refs.listTitle.focus();
     },
 
-    addTodoList() {
-      this.$store.dispatch('addTodoList', {
+    async addTodoList() {
+      await this.$store.dispatch("addTodoList", {
         listTitle: this.form.listTitle,
         email: this.user.email
-      }).then(() => {
-        this.form.listTitle = '';
       });
-      this.$bvModal.hide('modal-add-todo-list');
+      this.form.listTitle = "";
+      this.$bvModal.hide("modal-add-todo-list");
     }
 
   }
