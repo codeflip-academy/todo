@@ -106,6 +106,7 @@ const todoLists = {
             });
         },
         async updateListTitle(context, { listId, listTitle }) {
+            context.commit('updateListTitle', { listId, listTitle });
             await axios({
                 method: 'PUT',
                 url: `api/lists/${listId}`,

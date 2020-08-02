@@ -59,13 +59,13 @@ export default {
       items: [],
       editingTitle: false,
       form: {
-        title: ""
-      }
+        title: "",
+      },
     };
   },
   async created() {
     await this.$store.dispatch("loadItemsByListId", {
-      todoListId: this.todoListId
+      todoListId: this.todoListId,
     });
 
     this.items = this.getItems();
@@ -82,29 +82,29 @@ export default {
     },
     allItemsCompleted() {
       return (
-        this.items.every(item => item.completed === true) &&
+        this.items.every((item) => item.completed === true) &&
         this.items.length > 0
       );
-    }
+    },
   },
   watch: {
-    allItemsCompleted: function() {
+    allItemsCompleted: function () {
       if (this.allItemsCompleted) {
         this.$confetti.start({
           particles: [{ type: "rect" }],
           particlesPerFrame: 0.5,
-          dropRate: 8
+          dropRate: 8,
         });
       } else {
         this.$confetti.stop();
       }
-    }
+    },
   },
   components: {
     AddTodoListItemForm,
     TodoListItems,
     Contributors,
-    InviteContributorsForm
+    InviteContributorsForm,
   },
   methods: {
     getItems() {
@@ -121,10 +121,10 @@ export default {
       this.editingTitle = false;
       await this.$store.dispatch("updateListTitle", {
         listId: this.todoListId,
-        listTitle: this.form.title
+        listTitle: this.form.title,
       });
       this.form.title = "";
-    }
-  }
+    },
+  },
 };
 </script>
