@@ -2,7 +2,7 @@ using System;
 
 namespace TodoWebAPI.UserStories
 {
-    public static class CreateSubscriptionHelper
+    public static class SubscriptionHelper
     {
         public static string ConvertPlanToBrainTreeType(string stringPlan)
         {

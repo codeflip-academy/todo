@@ -11,20 +11,22 @@ using TodoWebAPI.UserStories.RoleChanges;
 
 namespace TodoWebAPI.UserStories
 {
-    public class DowngradePaymentSubscriptionUserStory : IRequestHandler<DowngradePaymentSubscription, bool>
+    public class ChangePaymentSubscriptionUserStory : IRequestHandler<ChangePaymentSubscription, bool>
     {
         private readonly IBraintreeConfiguration _braintreeConfiguration;
         private readonly IPaymentMethodRepository _paymentMethod;
         private readonly IAccountRepository _account;
 
-        public DowngradePaymentSubscriptionUserStory(IBraintreeConfiguration braintreeConfiguration, IPaymentMethodRepository paymentMethod, IAccountRepository account)
+        public ChangePaymentSubscriptionUserStory(IBraintreeConfiguration braintreeConfiguration,
+         IPaymentMethodRepository paymentMethod,
+          IAccountRepository account)
         {
             _braintreeConfiguration = braintreeConfiguration;
             _paymentMethod = paymentMethod;
             _account = account;
         }
 
-        public async Task<bool> Handle(DowngradePaymentSubscription request, CancellationToken cancellationToken)
+        public async Task<bool> Handle(ChangePaymentSubscription request, CancellationToken cancellationToken)
         {
             var gateway = _braintreeConfiguration.GetGateway();
             var paymentMethod = await _paymentMethod.FindByAccountIdAsync(request.AccountId);
@@ -32,7 +34,7 @@ namespace TodoWebAPI.UserStories
 
             if (paymentMethod != null)
             {
-                var brainPlanValue = CreateSubscriptionHelper.ConvertPlanToBrainTreeType(request.Plan);
+                var brainPlanValue = SubscriptionHelper.ConvertPlanToBrainTreeType(request.Plan);
 
                 Subscription subscription = gateway.Subscription.Find(account.SubscriptionId);
 

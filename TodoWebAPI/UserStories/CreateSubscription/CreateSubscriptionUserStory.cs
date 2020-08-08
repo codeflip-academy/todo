@@ -28,7 +28,7 @@ namespace TodoWebAPI.UserStories
 
             var paymentMethod = await _paymentMethod.FindByAccountIdAsync(request.AccountId);
 
-            var brainType = CreateSubscriptionHelper.ConvertPlanToBrainTreeType(request.Plan);
+            var brainType = SubscriptionHelper.ConvertPlanToBrainTreeType(request.Plan);
 
             var re = new SubscriptionRequest
             {
