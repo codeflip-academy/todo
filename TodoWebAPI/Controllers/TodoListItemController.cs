@@ -59,7 +59,7 @@ namespace TodoWebAPI.Controllers
 
             var todoItem = await _mediator.Send(command);
 
-            return Ok();
+            return Ok(todoItem);
         }
 
         [HttpGet("api/lists/{listId}/todos")]
