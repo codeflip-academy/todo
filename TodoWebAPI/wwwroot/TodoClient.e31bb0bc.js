@@ -19555,7 +19555,7 @@ const subItems = {
       name
     }) {
       try {
-        await (0, _axios.default)({
+        const response = await (0, _axios.default)({
           method: 'POST',
           url: "api/lists/".concat(listId, "/todos/").concat(todoItemId, "/subitems"),
           headers: {
@@ -19564,6 +19564,9 @@ const subItems = {
           data: JSON.stringify({
             name
           })
+        });
+        context.commit('addSubItem', {
+          subItem: response.data
         });
       } catch (error) {
         console.log(error);
@@ -37487,10 +37490,8 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 //
 //
 //
-//
-//
 var _default = {
-  props: ['todoListItem'],
+  props: ["todoListItem"],
   components: {
     Draggable: _vuedraggable.default,
     SubItem: _SubItem.default
@@ -37517,7 +37518,7 @@ var _default = {
     async getLayout() {
       try {
         const response = await (0, _axios.default)({
-          method: 'GET',
+          method: "GET",
           url: "api/lists/".concat(this.todoListItem.listId, "/todos/").concat(this.todoListItem.id, "/layout")
         });
         this.layout = response.data.layout;
@@ -37527,15 +37528,15 @@ var _default = {
     },
 
     async updateSubItemPosition(event) {
-      const subItemId = event.item.getAttribute('data-id');
+      const subItemId = event.item.getAttribute("data-id");
       const position = event.newIndex;
 
       try {
         await (0, _axios.default)({
-          method: 'PUT',
+          method: "PUT",
           url: "api/lists/".concat(this.todoListItem.listId, "/todos/").concat(this.todoListItem.id, "/layout"),
           headers: {
-            'content-type': 'application/json'
+            "content-type": "application/json"
           },
           data: JSON.stringify({
             subItemId,
@@ -37557,6 +37558,11 @@ var _default = {
       return this.$store.getters.getSubItemsByItemId(this.todoListItem.id);
     }
 
+  },
+  watch: {
+    items: async function () {
+      await this.getLayout();
+    }
   }
 };
 exports.default = _default;

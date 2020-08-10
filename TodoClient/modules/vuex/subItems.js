@@ -41,12 +41,14 @@ const subItems = {
         },
         async addSubItem(context, { listId, todoItemId, name }) {
             try {
-                await axios({
+                const response = await axios({
                     method: 'POST',
                     url: `api/lists/${listId}/todos/${todoItemId}/subitems`,
                     headers: { 'content-type': 'application/json' },
                     data: JSON.stringify({ name })
                 });
+
+                context.commit('addSubItem', { subItem: response.data });
             }
             catch (error) {
                 console.log(error);
