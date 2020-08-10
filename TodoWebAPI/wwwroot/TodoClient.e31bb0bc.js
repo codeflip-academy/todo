@@ -19427,24 +19427,23 @@ const todoLists = {
       });
     },
 
-    updateItem(context, {
+    async updateItem(context, {
       item
     }) {
-      return new Promise((resolve, reject) => {
-        (0, _axios.default)({
-          method: 'PUT',
-          url: "api/lists/".concat(item.listId, "/todos/").concat(item.id),
-          data: JSON.stringify({
-            name: item.name,
-            notes: item.notes,
-            dueDate: item.dueDate
-          }),
-          headers: {
-            'content-type': 'application/json'
-          }
-        }).finally(() => {
-          resolve();
-        });
+      context.commit('updateItem', {
+        item
+      });
+      await (0, _axios.default)({
+        method: 'PUT',
+        url: "api/lists/".concat(item.listId, "/todos/").concat(item.id),
+        data: JSON.stringify({
+          name: item.name,
+          notes: item.notes,
+          dueDate: item.dueDate
+        }),
+        headers: {
+          'content-type': 'application/json'
+        }
       });
     },
 

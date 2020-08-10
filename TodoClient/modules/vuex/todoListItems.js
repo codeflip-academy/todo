@@ -72,23 +72,20 @@ const todoLists = {
                     });
             });
         },
-        updateItem(context, { item }) {
-            return new Promise((resolve, reject) => {
-                axios({
-                    method: 'PUT',
-                    url: `api/lists/${item.listId}/todos/${item.id}`,
-                    data: JSON.stringify({
-                        name: item.name,
-                        notes: item.notes,
-                        dueDate: item.dueDate
-                    }),
-                    headers: {
-                        'content-type': 'application/json'
-                    }
-                })
-                    .finally(() => {
-                        resolve();
-                    });
+        async updateItem(context, { item }) {
+            context.commit('updateItem', { item });
+
+            await axios({
+                method: 'PUT',
+                url: `api/lists/${item.listId}/todos/${item.id}`,
+                data: JSON.stringify({
+                    name: item.name,
+                    notes: item.notes,
+                    dueDate: item.dueDate
+                }),
+                headers: {
+                    'content-type': 'application/json'
+                }
             });
         },
         async deleteItem(context, { item }) {
