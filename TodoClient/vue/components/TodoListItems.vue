@@ -65,6 +65,11 @@ export default {
       }
     },
   },
+  watch: {
+    todoListItems: function () {
+      this.refreshLayout(this.listId);
+    },
+  },
   components: {
     Draggable,
     TodoListItem,

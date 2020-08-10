@@ -7,7 +7,7 @@ const todoLists = {
     }),
     mutations: {
         setItems(state, { listId, items }) {
-            state.items[listId] = items;
+            Vue.set(state.items, listId, items);
         },
         addItem(state, { listId, item }) {
             state.items[listId].unshift(item);
@@ -37,22 +37,20 @@ const todoLists = {
                 });
             });
         },
-        addItem(context, payload) {
-            return new Promise((resolve, reject) => {
-                axios({
-                    method: 'POST',
-                    url: `api/lists/${payload.listId}/todos`,
-                    data: JSON.stringify(payload),
-                    headers: {
-                        'content-type': 'application/json'
-                    }
-                })
-                    .then((response) => {
+        async addItem(context, item) {
+            const response = await axios({
+                method: 'POST',
+                url: `api/lists/${item.listId}/todos`,
+                data: JSON.stringify(item),
+                headers: {
+                    'content-type': 'application/json'
+                }
+            });
 
-                    })
-                    .finally(() => {
-                        resolve();
-                    });
+            const itemAdded = response.data;
+            context.commit('addItem', {
+                listId: itemAdded.listId,
+                item: itemAdded
             });
         },
         toggleItemCompletedState(context, { listId, itemId, completed }) {

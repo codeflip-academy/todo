@@ -19338,7 +19338,7 @@ const todoLists = {
       listId,
       items
     }) {
-      state.items[listId] = items;
+      _vue.default.set(state.items, listId, items);
     },
 
     addItem(state, {
@@ -19382,18 +19382,19 @@ const todoLists = {
       });
     },
 
-    addItem(context, payload) {
-      return new Promise((resolve, reject) => {
-        (0, _axios.default)({
-          method: 'POST',
-          url: "api/lists/".concat(payload.listId, "/todos"),
-          data: JSON.stringify(payload),
-          headers: {
-            'content-type': 'application/json'
-          }
-        }).then(response => {}).finally(() => {
-          resolve();
-        });
+    async addItem(context, item) {
+      const response = await (0, _axios.default)({
+        method: 'POST',
+        url: "api/lists/".concat(item.listId, "/todos"),
+        data: JSON.stringify(item),
+        headers: {
+          'content-type': 'application/json'
+        }
+      });
+      const itemAdded = response.data;
+      context.commit('addItem', {
+        listId: itemAdded.listId,
+        item: itemAdded
       });
     },
 
@@ -23693,12 +23694,9 @@ exports.default = void 0;
 //
 //
 //
-//
-//
-//
 var _default = {
-  name: 'AddTodoListItemForm',
-  props: ['todoListId'],
+  name: "AddTodoListItemForm",
+  props: ["todoListId"],
 
   data() {
     return {
@@ -23722,13 +23720,12 @@ var _default = {
       this.$refs.title.focus();
     },
 
-    addItem() {
-      this.$store.dispatch('addItem', this.form).then(() => {
-        this.form.name = null;
-        this.form.notes = null;
-        this.form.dueDate = null;
-        this.$bvModal.hide('modal-add-todo-list-item');
-      });
+    async addItem() {
+      await this.$store.dispatch("addItem", this.form);
+      this.form.name = null;
+      this.form.notes = null;
+      this.form.dueDate = null;
+      this.$bvModal.hide("modal-add-todo-list-item");
     }
 
   }
@@ -38570,6 +38567,11 @@ var _default = {
       }
     }
 
+  },
+  watch: {
+    todoListItems: function () {
+      this.refreshLayout(this.listId);
+    }
   },
   components: {
     Draggable: _vuedraggable.default,
@@ -97147,7 +97149,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "65406" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "59308" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};
