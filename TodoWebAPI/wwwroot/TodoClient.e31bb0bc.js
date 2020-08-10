@@ -19348,6 +19348,14 @@ const todoLists = {
       state.items[listId].unshift(item);
     },
 
+    deleteItem(state, {
+      listId,
+      itemId
+    }) {
+      const index = state.items[listId].findIndex(i => i.itemId === itemId);
+      state.items[listId].splice(index, 1);
+    },
+
     updateItemCompletedState(state, {
       item
     }) {
@@ -19440,16 +19448,16 @@ const todoLists = {
       });
     },
 
-    deleteItem(context, {
+    async deleteItem(context, {
       item
     }) {
-      return new Promise((resolve, reject) => {
-        (0, _axios.default)({
-          method: 'DELETE',
-          url: "api/lists/".concat(item.listId, "/todos/").concat(item.id)
-        }).finally(() => {
-          resolve();
-        });
+      await (0, _axios.default)({
+        method: 'DELETE',
+        url: "api/lists/".concat(item.listId, "/todos/").concat(item.id)
+      });
+      context.commit('deleteItem', {
+        listId: item.listId,
+        itemId: item.id
       });
     }
 

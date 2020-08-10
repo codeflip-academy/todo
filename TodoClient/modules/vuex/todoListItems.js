@@ -12,6 +12,10 @@ const todoLists = {
         addItem(state, { listId, item }) {
             state.items[listId].unshift(item);
         },
+        deleteItem(state, { listId, itemId }) {
+            const index = state.items[listId].findIndex(i => i.itemId === itemId);
+            state.items[listId].splice(index, 1);
+        },
         updateItemCompletedState(state, { item }) {
             let index = state.items[item.listId].findIndex(i => i.id === item.id);
             state.items[item.listId][index].completed = item.completed;
@@ -87,17 +91,14 @@ const todoLists = {
                     });
             });
         },
-        deleteItem(context, { item }) {
-            return new Promise((resolve, reject) => {
-                axios({
-                    method: 'DELETE',
-                    url: `api/lists/${item.listId}/todos/${item.id}`
-                })
-                    .finally(() => {
-                        resolve();
-                    });
+        async deleteItem(context, { item }) {
+            await axios({
+                method: 'DELETE',
+                url: `api/lists/${item.listId}/todos/${item.id}`
             });
-        }
+
+            context.commit('deleteItem', { listId: item.listId, itemId: item.id });
+        },
     },
     getters: {
         getItemsByListId: (state) => (listId) => {
