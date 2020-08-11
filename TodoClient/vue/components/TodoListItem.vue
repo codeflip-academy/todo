@@ -66,10 +66,10 @@ export default {
         );
       },
       set(value) {
+        this.todoListItem.completed = value;
+
         this.$store.dispatch("toggleItemCompletedState", {
-          listId: this.todoListItem.listId,
-          itemId: this.todoListItem.id,
-          completed: value,
+          item: this.todoListItem,
         });
       },
     },

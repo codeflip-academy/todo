@@ -19407,23 +19407,20 @@ const todoLists = {
     },
 
     toggleItemCompletedState(context, {
-      listId,
-      itemId,
-      completed
+      item
     }) {
-      return new Promise((resolve, reject) => {
-        (0, _axios.default)({
-          method: 'PUT',
-          url: "api/lists/".concat(listId, "/todos/").concat(itemId, "/completed"),
-          data: JSON.stringify({
-            completed
-          }),
-          headers: {
-            'content-type': 'application/json'
-          }
-        }).finally(() => {
-          resolve();
-        });
+      (0, _axios.default)({
+        method: 'PUT',
+        url: "api/lists/".concat(item.listId, "/todos/").concat(item.id, "/completed"),
+        data: JSON.stringify({
+          completed: item.completed
+        }),
+        headers: {
+          'content-type': 'application/json'
+        }
+      });
+      context.commit('updateItemCompletedState', {
+        item
       });
     },
 
@@ -38321,10 +38318,9 @@ var _default = {
       },
 
       set(value) {
+        this.todoListItem.completed = value;
         this.$store.dispatch("toggleItemCompletedState", {
-          listId: this.todoListItem.listId,
-          itemId: this.todoListItem.id,
-          completed: value
+          item: this.todoListItem
         });
       }
 

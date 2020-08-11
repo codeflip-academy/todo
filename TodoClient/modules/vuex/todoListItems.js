@@ -57,20 +57,17 @@ const todoLists = {
                 item: itemAdded
             });
         },
-        toggleItemCompletedState(context, { listId, itemId, completed }) {
-            return new Promise((resolve, reject) => {
-                axios({
-                    method: 'PUT',
-                    url: `api/lists/${listId}/todos/${itemId}/completed`,
-                    data: JSON.stringify({ completed }),
-                    headers: {
-                        'content-type': 'application/json'
-                    }
-                })
-                    .finally(() => {
-                        resolve();
-                    });
+        toggleItemCompletedState(context, { item }) {
+            axios({
+                method: 'PUT',
+                url: `api/lists/${item.listId}/todos/${item.id}/completed`,
+                data: JSON.stringify({ completed: item.completed }),
+                headers: {
+                    'content-type': 'application/json'
+                }
             });
+
+            context.commit('updateItemCompletedState', { item })
         },
         async updateItem(context, { item }) {
             context.commit('updateItem', { item });
