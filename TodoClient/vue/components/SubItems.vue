@@ -28,13 +28,18 @@ export default {
     await this.getLayout();
   },
   mounted() {
-    this.$store.state.connection.on(
-      "ItemLayoutUpdated",
-      async (itemId) => await this.refreshSubItemLayout(itemId)
+    this.$store.state.connection.on("ItemLayoutUpdated", (itemId) =>
+      this.refreshSubItemLayout(itemId)
     );
     this.$store.state.connection.on(
       "SubItemTrashed",
-      async (itemId, subItem) => await this.refreshSubItemLayout(itemId)
+      async (todoItemId, subItem) => {
+        this.$store.commit("trashSubItem", {
+          todoItemId,
+          subItemId: subItem.id,
+        });
+        this.refreshSubItemLayout(itemId);
+      }
     );
   },
   data() {

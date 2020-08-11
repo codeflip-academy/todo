@@ -48,18 +48,18 @@ export default {
           listId: this.listId,
           todoItemId: this.subItem.listItemId,
           subItemId: this.subItem.id,
-          completed: value
+          completed: value,
         });
-      }
-    }
+      },
+    },
   },
   data() {
     return {
       editingSubItem: false,
       itemCompletedState: false,
       form: {
-        name: this.subItem.name
-      }
+        name: this.subItem.name,
+      },
     };
   },
   methods: {
@@ -75,25 +75,19 @@ export default {
         listId: this.listId,
         todoItemId: this.subItem.listItemId,
         subItemId: this.subItem.id,
-        name: this.form.name
+        name: this.form.name,
       });
 
       this.editingSubItem = false;
     },
     async deleteSubItem() {
-      this.$store.commit("trashSubItem", { subItem: this.subItem });
-
       await this.$store.dispatch("trashSubItem", {
         listId: this.listId,
         todoItemId: this.subItem.listItemId,
-        subItemId: this.subItem.id
+        subItemId: this.subItem.id,
       });
-
-      await this.$store.dispatch("loadItemsByListId", {
-        todoListId: this.listId
-      });
-    }
-  }
+    },
+  },
 };
 </script>
 

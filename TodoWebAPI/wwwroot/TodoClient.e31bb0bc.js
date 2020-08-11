@@ -19516,10 +19516,11 @@ const subItems = {
     },
 
     trashSubItem(state, {
-      subItem
+      todoItemId,
+      subItemId
     }) {
-      const index = state.subItems[subItem.listItemId].findIndex(i => i.id == subItem.id);
-      state.subItems[subItem.listItemId].splice(index, 1);
+      const index = state.subItems[todoItemId].findIndex(i => i.id == subItemId);
+      state.subItems[todoItemId].splice(index, 1);
     },
 
     updateSubItemCompletedState(state, {
@@ -19604,6 +19605,10 @@ const subItems = {
         await (0, _axios.default)({
           method: 'DELETE',
           url: "api/lists/".concat(listId, "/todos/").concat(todoItemId, "/subitems/").concat(subItemId)
+        });
+        context.commit('trashSubItem', {
+          todoItemId,
+          subItemId
         });
       } catch (error) {
         console.log(error);
@@ -37280,16 +37285,10 @@ var _default = {
     },
 
     async deleteSubItem() {
-      this.$store.commit("trashSubItem", {
-        subItem: this.subItem
-      });
       await this.$store.dispatch("trashSubItem", {
         listId: this.listId,
         todoItemId: this.subItem.listItemId,
         subItemId: this.subItem.id
-      });
-      await this.$store.dispatch("loadItemsByListId", {
-        todoListId: this.listId
       });
     }
 
@@ -37503,8 +37502,14 @@ var _default = {
   },
 
   mounted() {
-    this.$store.state.connection.on("ItemLayoutUpdated", async itemId => await this.refreshSubItemLayout(itemId));
-    this.$store.state.connection.on("SubItemTrashed", async (itemId, subItem) => await this.refreshSubItemLayout(itemId));
+    this.$store.state.connection.on("ItemLayoutUpdated", itemId => this.refreshSubItemLayout(itemId));
+    this.$store.state.connection.on("SubItemTrashed", async (todoItemId, subItem) => {
+      this.$store.commit("trashSubItem", {
+        todoItemId,
+        subItemId: subItem.id
+      });
+      this.refreshSubItemLayout(itemId);
+    });
   },
 
   data() {
@@ -97162,7 +97167,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "59308" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "58929" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};

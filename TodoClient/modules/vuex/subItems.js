@@ -16,9 +16,9 @@ const subItems = {
             const index = state.subItems[subItem.listItemId].findIndex(i => i.id == subItem.id);
             Vue.set(state.subItems[subItem.listItemId], index, subItem);
         },
-        trashSubItem(state, { subItem }) {
-            const index = state.subItems[subItem.listItemId].findIndex(i => i.id == subItem.id);
-            state.subItems[subItem.listItemId].splice(index, 1);
+        trashSubItem(state, { todoItemId, subItemId }) {
+            const index = state.subItems[todoItemId].findIndex(i => i.id == subItemId);
+            state.subItems[todoItemId].splice(index, 1);
         },
         updateSubItemCompletedState(state, { subItem }) {
             const index = state.subItems[subItem.listItemId].findIndex(i => i.id == subItem.id);
@@ -73,6 +73,8 @@ const subItems = {
                     method: 'DELETE',
                     url: `api/lists/${listId}/todos/${todoItemId}/subitems/${subItemId}`,
                 });
+
+                context.commit('trashSubItem', { todoItemId, subItemId });
             }
             catch (error) {
                 console.log(error);
