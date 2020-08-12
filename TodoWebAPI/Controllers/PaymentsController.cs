@@ -208,6 +208,10 @@ namespace TodoWebAPI.Controllers
                         return Ok();
                     }
                 }
+                else
+                {
+                    return Forbid();
+                }
             }
 
             return BadRequest();
