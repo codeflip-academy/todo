@@ -58,23 +58,16 @@ const todoLists = {
             context.commit('updateTodoLists', response.data);
             context.commit('updateLoadingState', { loadingState: false });
         },
-        addTodoList(context, payload) {
-            return new Promise((resolve, reject) => {
-                axios({
-                    method: 'POST',
-                    url: 'api/lists',
-                    data: JSON.stringify(payload),
-                    headers: {
-                        'content-type': 'application/json'
-                    }
-                })
-                    .then(() => {
-                        context.dispatch('loadTodoLists');
-                    })
-                    .finally(() => {
-                        resolve();
-                    });
-            });
+        async addTodoList(context, payload) {
+            await axios({
+                method: 'POST',
+                url: 'api/lists',
+                data: JSON.stringify(payload),
+                headers: {
+                    'content-type': 'application/json'
+                }
+            })
+            await context.dispatch('loadTodoLists');
         },
         deleteTodoList(context, payload) {
             return new Promise((resolve, reject) => {
@@ -106,6 +99,7 @@ const todoLists = {
             });
         },
         async updateListTitle(context, { listId, listTitle }) {
+            context.commit('updateListTitle', { listId, listTitle });
             await axios({
                 method: 'PUT',
                 url: `api/lists/${listId}`,

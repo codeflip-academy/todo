@@ -1,7 +1,5 @@
 <template>
   <b-list-group class="todo-list-items">
-    <b-list-group-item v-if="todoListItems.length < 1">Add an item to get started.</b-list-group-item>
-
     <Draggable v-model="layout" @end="updateLayout" handle=".item-handle">
       <TodoListItem
         v-for="position in layout"
@@ -26,8 +24,8 @@ export default {
       layout: [],
     };
   },
-  created() {
-    this.getLayout();
+  async created() {
+    await this.getLayout();
   },
   mounted() {
     this.$store.state.connection.on("ListLayoutChanged", (listId) =>
@@ -38,13 +36,13 @@ export default {
     );
   },
   methods: {
-    getLayout() {
-      axios({
+    async getLayout() {
+      const response = await axios({
         method: "GET",
         url: `api/lists/${this.listId}/layout`,
-      }).then((response) => {
-        this.layout = response.data;
       });
+
+      this.layout = response.data;
     },
     updateLayout(e) {
       let position = e.newIndex;
@@ -63,6 +61,11 @@ export default {
       if (this.listId === listId) {
         this.getLayout();
       }
+    },
+  },
+  watch: {
+    todoListItems: function () {
+      this.refreshLayout(this.listId);
     },
   },
   components: {

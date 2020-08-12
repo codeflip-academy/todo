@@ -1,4 +1,5 @@
 ﻿using MediatR;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.SignalR;
 using System;
 using System.Collections.Generic;
@@ -6,6 +7,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Todo.Domain.DomainEvents;
+using Todo.Infrastructure;
 using TodoWebAPI.SignalR;
 
 namespace TodoWebAPI.DomainEventHandlers.ListEdited
@@ -13,14 +15,18 @@ namespace TodoWebAPI.DomainEventHandlers.ListEdited
     public class SendNotificationToClientWhenListNameIsEdited : INotificationHandler<ListNameUpdated>
     {
         private readonly IHubContext<NotificationHub> _hubContext;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
-        public SendNotificationToClientWhenListNameIsEdited(IHubContext<NotificationHub> hubContext)
+        public SendNotificationToClientWhenListNameIsEdited(IHubContext<NotificationHub> hubContext, IHttpContextAccessor httpContextAccessor)
         {
             _hubContext = hubContext;
+            _httpContextAccessor = httpContextAccessor;
         }
         public Task Handle(ListNameUpdated notification, CancellationToken cancellationToken)
         {
-            return _hubContext.Clients.Users(notification.List.Contributors).SendAsync("ListNameUpdated", notification.List.Id, notification.List.ListTitle);
+            var contributorExceptYou = RemoveSelfFromContributorSignalRHelper.RemoveContributor(notification.List, _httpContextAccessor.HttpContext.User.FindFirst(c => c.Type == "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress").Value);
+
+            return _hubContext.Clients.Users(contributorExceptYou).SendAsync("ListNameUpdated", notification.List.Id, notification.List.ListTitle);
         }
     }
 }

@@ -23,7 +23,6 @@ namespace Todo.Domain
             else
             {
                 DomainEvents.Add(new ListLayoutUpdated { Position = todoListItemPosition, ItemId = todoListItemId, ListId = listId });
-
             }
         }
 

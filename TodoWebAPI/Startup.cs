@@ -76,6 +76,7 @@ namespace TodoWebAPI
             services.AddScoped<ISequentialIdGenerator, SequentialIdGenerator>();
             services.AddControllers();
             services.AddMediatR(typeof(Startup).GetTypeInfo().Assembly);
+            services.AddHttpContextAccessor();
             services.AddScoped<IBraintreeConfiguration, BraintreeConfiguration>();
             services.AddSingleton<IServiceBusConsumer, ServiceBusConsumer>();
             services.AddSingleton<IEmailQueue, AzureServiceBusEmailQueue>();
