@@ -26,8 +26,15 @@
         ></b-form-input>
       </b-form-group>
 
-      <b-button size="sm" class="mr-1" variant="success" type="submit">Save</b-button>
-      <b-button size="sm" variant="secondary" @click="editingSubItem = false;">Cancel</b-button>
+      <div class="d-flex justify-content-end">
+        <b-button size="sm" variant="success" type="submit" class="flex-grow-0 mr-1">Save</b-button>
+        <b-button
+          size="sm"
+          variant="secondary"
+          class="flex-grow-0"
+          @click="editingSubItem = false;"
+        >Cancel</b-button>
+      </div>
     </b-form>
   </b-list-group-item>
 </template>
@@ -70,11 +77,11 @@ export default {
       });
     },
     async updateSubItem() {
+      this.subItem.name = this.form.name;
+
       await this.$store.dispatch("updateSubItem", {
         listId: this.listId,
-        todoItemId: this.subItem.listItemId,
-        subItemId: this.subItem.id,
-        name: this.form.name,
+        subItem: this.subItem,
       });
 
       this.editingSubItem = false;

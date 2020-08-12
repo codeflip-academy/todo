@@ -19575,19 +19575,21 @@ const subItems = {
 
     async updateSubItem(context, {
       listId,
-      todoItemId,
-      subItemId,
-      name
+      subItem
     }) {
       try {
+        context.commit('updateSubItem', {
+          listId,
+          subItem
+        });
         await (0, _axios.default)({
           method: 'PUT',
-          url: "api/lists/".concat(listId, "/todos/").concat(todoItemId, "/subitems/").concat(subItemId),
+          url: "api/lists/".concat(listId, "/todos/").concat(subItem.listItemId, "/subitems/").concat(subItem.id),
           headers: {
             'content-type': 'application/json'
           },
           data: JSON.stringify({
-            name
+            name: subItem.name
           })
         });
       } catch (error) {
@@ -37241,6 +37243,13 @@ exports.default = void 0;
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
 var _default = {
   props: ["listId", "subItem"],
   computed: {
@@ -37279,11 +37288,10 @@ var _default = {
     },
 
     async updateSubItem() {
+      this.subItem.name = this.form.name;
       await this.$store.dispatch("updateSubItem", {
         listId: this.listId,
-        todoItemId: this.subItem.listItemId,
-        subItemId: this.subItem.id,
-        name: this.form.name
+        subItem: this.subItem
       });
       this.editingSubItem = false;
     },
@@ -37402,25 +37410,33 @@ exports.default = _default;
               ),
               _vm._v(" "),
               _c(
-                "b-button",
-                {
-                  staticClass: "mr-1",
-                  attrs: { size: "sm", variant: "success", type: "submit" }
-                },
-                [_vm._v("Save")]
-              ),
-              _vm._v(" "),
-              _c(
-                "b-button",
-                {
-                  attrs: { size: "sm", variant: "secondary" },
-                  on: {
-                    click: function($event) {
-                      _vm.editingSubItem = false
-                    }
-                  }
-                },
-                [_vm._v("Cancel")]
+                "div",
+                { staticClass: "d-flex justify-content-end" },
+                [
+                  _c(
+                    "b-button",
+                    {
+                      staticClass: "flex-grow-0 mr-1",
+                      attrs: { size: "sm", variant: "success", type: "submit" }
+                    },
+                    [_vm._v("Save")]
+                  ),
+                  _vm._v(" "),
+                  _c(
+                    "b-button",
+                    {
+                      staticClass: "flex-grow-0",
+                      attrs: { size: "sm", variant: "secondary" },
+                      on: {
+                        click: function($event) {
+                          _vm.editingSubItem = false
+                        }
+                      }
+                    },
+                    [_vm._v("Cancel")]
+                  )
+                ],
+                1
               )
             ],
             1

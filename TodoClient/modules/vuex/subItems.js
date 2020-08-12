@@ -54,13 +54,15 @@ const subItems = {
                 console.log(error);
             }
         },
-        async updateSubItem(context, { listId, todoItemId, subItemId, name }) {
+        async updateSubItem(context, { listId, subItem }) {
             try {
+                context.commit('updateSubItem', { listId, subItem });
+
                 await axios({
                     method: 'PUT',
-                    url: `api/lists/${listId}/todos/${todoItemId}/subitems/${subItemId}`,
+                    url: `api/lists/${listId}/todos/${subItem.listItemId}/subitems/${subItem.id}`,
                     headers: { 'content-type': 'application/json' },
-                    data: JSON.stringify({ name })
+                    data: JSON.stringify({ name: subItem.name })
                 })
             }
             catch (error) {
