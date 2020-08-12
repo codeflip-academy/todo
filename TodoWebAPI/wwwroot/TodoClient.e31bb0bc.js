@@ -47824,7 +47824,7 @@ var _default = {
       subItem
     }));
     this.$store.state.connection.on("SubItemCompletedStateChanged", subItem => this.$store.commit("updateSubItemCompletedState", {
-      todoItemId: subItem.todoItemId,
+      todoItemId: subItem.listItemId,
       subItemId: subItem.id,
       completed: subItem.completed
     }));
