@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Braintree;
@@ -31,6 +32,10 @@ namespace TodoWebAPI.UserStories
             var gateway = _braintreeConfiguration.GetGateway();
             var paymentMethod = await _paymentMethod.FindByAccountIdAsync(request.AccountId);
             var account = await _account.FindAccountByIdAsync(request.AccountId);
+            var subscriptionId = Guid.NewGuid().ToString();
+            var plans = gateway.Plan.All();
+
+            var plan = (from p in plans where p.Name == request.Plan select p).FirstOrDefault();
 
             if (paymentMethod != null)
             {
@@ -40,13 +45,21 @@ namespace TodoWebAPI.UserStories
 
                 var result = gateway.Subscription.Update(subscription.Id, new SubscriptionRequest
                 {
-                    Id = Guid.NewGuid().ToString(),
-                    PaymentMethodNonce = paymentMethod.TokenId,
-                    PlanId = brainPlanValue
+                    Id = subscriptionId,
+                    PaymentMethodToken = paymentMethod.TokenId,
+                    PlanId = brainPlanValue,
+                    Price = plan.Price
                 });
 
+                account.SubscriptionId = subscriptionId;
+
                 if (result.IsSuccess())
+                {
+                    await _account.SaveChangesAsync();
+
                     return true;
+                }
+
             }
             return false;
         }

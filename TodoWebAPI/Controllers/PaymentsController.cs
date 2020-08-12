@@ -157,30 +157,59 @@ namespace TodoWebAPI.Controllers
             return BadRequest();
         }
 
-        [HttpPost, Route("change")]
+        [HttpPost, Route("subscription/change")]
         public async Task<IActionResult> ChangePaymentSubscription([FromBody] ChangePaymentSubscription changePayment)
         {
             var accountId = Guid.Parse(User.FindFirst(c => c.Type == "urn:codefliptodo:accountid").Value);
             var account = await _accountRepository.FindAccountByIdAsync(accountId);
+            var gateway = _braintreeConfiguration.GetGateway();
 
-            changePayment.AccountId = accountId;
-
-            var planChange = new PlanChange
+            if (account.SubscriptionId == null)
             {
-                AccountId = accountId,
-                Plan = changePayment.Plan
-            };
-
-            var response = await _mediator.Send(planChange);
-
-            if (response == true)
-            {
-                var brainTreeResponse = await _mediator.Send(changePayment);
-                if (brainTreeResponse == true)
+                var createsubscription = new CreateSubscription
                 {
+                    AccountId = accountId,
+                    Plan = changePayment.Plan
+                };
+
+                var response = await _mediator.Send(createsubscription);
+
+                if (response == true)
+                {
+                    var planChange = new PlanChange
+                    {
+                        AccountId = accountId,
+                        Plan = changePayment.Plan
+                    };
+                    await _mediator.Send(planChange);
+
                     return Ok();
                 }
+
             }
+            else
+            {
+
+                changePayment.AccountId = accountId;
+
+                var planChange = new PlanChange
+                {
+                    AccountId = accountId,
+                    Plan = changePayment.Plan
+                };
+
+                var response = await _mediator.Send(planChange);
+
+                if (response == true)
+                {
+                    var brainTreeResponse = await _mediator.Send(changePayment);
+                    if (brainTreeResponse == true)
+                    {
+                        return Ok();
+                    }
+                }
+            }
+
             return BadRequest();
         }
     }
