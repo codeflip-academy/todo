@@ -102,7 +102,7 @@ namespace TodoWebAPI.Controllers
 
         [Authorize]
         [HttpPut("api/accounts/role")]
-        public async Task<IActionResult> ChangeRoleAysnc([FromBody] RoleChange roleChanged)
+        public async Task<IActionResult> ChangeRoleAysnc([FromBody] PlanChange roleChanged)
         {
             var accountId = Guid.Parse(User.FindFirst(c => c.Type == "urn:codefliptodo:accountid").Value);
 
@@ -110,7 +110,7 @@ namespace TodoWebAPI.Controllers
 
             var mediator = await _mediator.Send(roleChanged);
 
-            if(mediator == null)
+            if (mediator == false)
             {
                 return BadRequest();
             }
