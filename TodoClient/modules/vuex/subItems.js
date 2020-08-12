@@ -20,9 +20,9 @@ const subItems = {
             const index = state.subItems[todoItemId].findIndex(i => i.id == subItemId);
             state.subItems[todoItemId].splice(index, 1);
         },
-        updateSubItemCompletedState(state, { subItem }) {
-            const index = state.subItems[subItem.listItemId].findIndex(i => i.id == subItem.id);
-            state.subItems[subItem.listItemId][index].completed = subItem.completed;
+        updateSubItemCompletedState(state, { todoItemId, subItemId, completed }) {
+            const index = state.subItems[todoItemId].findIndex(i => i.id == subItemId);
+            state.subItems[todoItemId][index].completed = completed;
         }
     },
     actions: {
@@ -81,6 +81,8 @@ const subItems = {
             }
         },
         async toggleSubItemCompletedState(context, { listId, todoItemId, subItemId, completed }) {
+            context.commit('updateSubItemCompletedState', { todoItemId, subItemId, completed });
+
             try {
                 await axios({
                     method: 'PUT',

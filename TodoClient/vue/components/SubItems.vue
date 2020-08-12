@@ -87,9 +87,29 @@ export default {
       return this.$store.getters.getSubItemsByItemId(this.todoListItem.id);
     },
   },
+  computed: {
+    subItemsCompleted() {
+      return (
+        this.items.every((item) => item.completed) && this.items?.length > 0
+      );
+    },
+  },
   watch: {
     items: async function () {
       await this.getLayout();
+    },
+    subItemsCompleted: function () {
+      if (this.subItemsCompleted && !this.todoListItem.completed) {
+        this.todoListItem.completed = true;
+        this.$store.commit("updateItemCompletedState", {
+          item: this.todoListItem,
+        });
+      } else if (!this.subItemsCompleted && this.todoListItem.completed) {
+        this.todoListItem.completed = false;
+        this.$store.commit("updateItemCompletedState", {
+          item: this.todoListItem,
+        });
+      }
     },
   },
 };

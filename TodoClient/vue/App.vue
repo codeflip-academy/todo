@@ -55,7 +55,11 @@ export default {
       this.$store.commit("addSubItem", { subItem })
     );
     this.$store.state.connection.on("SubItemCompletedStateChanged", (subItem) =>
-      this.$store.commit("updateSubItemCompletedState", { subItem })
+      this.$store.commit("updateSubItemCompletedState", {
+        todoItemId: subItem.todoItemId,
+        subItemId: subItem.id,
+        completed: subItem.completed,
+      })
     );
     this.$store.state.connection.on("SubItemUpdated", (subItem) =>
       this.$store.commit("updateSubItem", { subItem })

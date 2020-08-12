@@ -56,7 +56,6 @@ export default {
   data() {
     return {
       editingSubItem: false,
-      itemCompletedState: false,
       form: {
         name: this.subItem.name,
       },

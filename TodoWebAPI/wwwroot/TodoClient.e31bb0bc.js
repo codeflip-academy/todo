@@ -19521,10 +19521,12 @@ const subItems = {
     },
 
     updateSubItemCompletedState(state, {
-      subItem
+      todoItemId,
+      subItemId,
+      completed
     }) {
-      const index = state.subItems[subItem.listItemId].findIndex(i => i.id == subItem.id);
-      state.subItems[subItem.listItemId][index].completed = subItem.completed;
+      const index = state.subItems[todoItemId].findIndex(i => i.id == subItemId);
+      state.subItems[todoItemId][index].completed = completed;
     }
 
   },
@@ -19618,6 +19620,12 @@ const subItems = {
       subItemId,
       completed
     }) {
+      context.commit('updateSubItemCompletedState', {
+        todoItemId,
+        subItemId,
+        completed
+      });
+
       try {
         await (0, _axios.default)({
           method: 'PUT',
@@ -37256,7 +37264,6 @@ var _default = {
   data() {
     return {
       editingSubItem: false,
-      itemCompletedState: false,
       form: {
         name: this.subItem.name
       }
@@ -37561,9 +37568,30 @@ var _default = {
     }
 
   },
+  computed: {
+    subItemsCompleted() {
+      var _this$items;
+
+      return this.items.every(item => item.completed) && ((_this$items = this.items) === null || _this$items === void 0 ? void 0 : _this$items.length) > 0;
+    }
+
+  },
   watch: {
     items: async function () {
       await this.getLayout();
+    },
+    subItemsCompleted: function () {
+      if (this.subItemsCompleted && !this.todoListItem.completed) {
+        this.todoListItem.completed = true;
+        this.$store.commit("updateItemCompletedState", {
+          item: this.todoListItem
+        });
+      } else if (!this.subItemsCompleted && this.todoListItem.completed) {
+        this.todoListItem.completed = false;
+        this.$store.commit("updateItemCompletedState", {
+          item: this.todoListItem
+        });
+      }
     }
   }
 };
@@ -47772,7 +47800,9 @@ var _default = {
       subItem
     }));
     this.$store.state.connection.on("SubItemCompletedStateChanged", subItem => this.$store.commit("updateSubItemCompletedState", {
-      subItem
+      todoItemId: subItem.todoItemId,
+      subItemId: subItem.id,
+      completed: subItem.completed
     }));
     this.$store.state.connection.on("SubItemUpdated", subItem => this.$store.commit("updateSubItem", {
       subItem
@@ -97163,7 +97193,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "58929" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "54388" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};
