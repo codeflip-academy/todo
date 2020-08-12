@@ -1,8 +1,8 @@
 <template>
   <b-list-group-item
-    :data-id="todoListItem.id"
     class="todo-item bg-light"
     :class="{ 'align-items-center': !todoListItem.dueDate && !todoListItem.notes }"
+    :data-id="todoListItem.id"
   >
     <div class="item-handle mr-2">
       <b-icon-list></b-icon-list>

@@ -28,8 +28,9 @@ export default {
     await this.getLayout();
   },
   mounted() {
-    this.$store.state.connection.on("ItemLayoutUpdated", (itemId) =>
-      this.refreshSubItemLayout(itemId)
+    this.$store.state.connection.on(
+      "ItemLayoutUpdated",
+      async (itemId) => await this.refreshSubItemLayout(itemId)
     );
     this.$store.state.connection.on(
       "SubItemTrashed",
@@ -38,7 +39,7 @@ export default {
           todoItemId,
           subItemId: subItem.id,
         });
-        this.refreshSubItemLayout(itemId);
+        await this.refreshSubItemLayout(todoItemId);
       }
     );
   },

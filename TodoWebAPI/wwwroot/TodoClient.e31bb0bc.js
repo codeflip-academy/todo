@@ -37527,13 +37527,13 @@ var _default = {
   },
 
   mounted() {
-    this.$store.state.connection.on("ItemLayoutUpdated", itemId => this.refreshSubItemLayout(itemId));
+    this.$store.state.connection.on("ItemLayoutUpdated", async itemId => await this.refreshSubItemLayout(itemId));
     this.$store.state.connection.on("SubItemTrashed", async (todoItemId, subItem) => {
       this.$store.commit("trashSubItem", {
         todoItemId,
         subItemId: subItem.id
       });
-      this.refreshSubItemLayout(itemId);
+      await this.refreshSubItemLayout(todoItemId);
     });
   },
 
@@ -38587,8 +38587,8 @@ var _default = {
     };
   },
 
-  created() {
-    this.getLayout();
+  async created() {
+    await this.getLayout();
   },
 
   mounted() {
@@ -38597,13 +38597,12 @@ var _default = {
   },
 
   methods: {
-    getLayout() {
-      (0, _axios.default)({
+    async getLayout() {
+      const response = await (0, _axios.default)({
         method: "GET",
         url: "api/lists/".concat(this.listId, "/layout")
-      }).then(response => {
-        this.layout = response.data;
       });
+      this.layout = response.data;
     },
 
     updateLayout(e) {
