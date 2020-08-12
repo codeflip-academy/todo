@@ -38985,7 +38985,7 @@ var _default = {
     },
 
     allItemsCompleted() {
-      return this.items.every(item => item.completed === true) && this.items.length > 0;
+      return this.items.every(item => item.completed) && this.items.length > 0;
     }
 
   },
@@ -38999,8 +38999,16 @@ var _default = {
           particlesPerFrame: 0.5,
           dropRate: 8
         });
+        this.$store.commit("setTodoListCompletedState", {
+          listId: this.todoListId,
+          listCompletedState: true
+        });
       } else {
         this.$confetti.stop();
+        this.$store.commit("setTodoListCompletedState", {
+          listId: this.todoListId,
+          listCompletedState: false
+        });
       }
     }
   },
