@@ -46966,6 +46966,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 //
 //
 //
+//
 var _default = {
   name: "ChangePlan",
 
@@ -46980,9 +46981,9 @@ var _default = {
     async changePlan() {
       const response = await (0, _axios.default)({
         method: "POST",
-        url: "api/payments/subscription",
+        url: "api/payments/subscription/change",
         data: JSON.stringify({
-          planName: this.selectedPlan
+          plan: this.selectedPlan
         }),
         headers: {
           "content-type": "application/json"
@@ -97152,7 +97153,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "52321" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "56435" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};

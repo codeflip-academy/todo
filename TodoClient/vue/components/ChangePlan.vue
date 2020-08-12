@@ -17,7 +17,8 @@
             variant="success"
             size="sm"
             :disabled="selectedPlan === currentPlan"
-            @click="changePlan">Choose plan</b-button>
+            @click="changePlan"
+          >Choose plan</b-button>
         </b-col>
       </b-row>
     </template>
@@ -49,18 +50,18 @@ export default {
     };
   },
   methods: {
-    async changePlan(){
+    async changePlan() {
       const response = await axios({
         method: "POST",
-        url: "api/payments/subscription",
+        url: "api/payments/subscription/change",
         data: JSON.stringify({
-          planName: this.selectedPlan
+          plan: this.selectedPlan,
         }),
         headers: {
-          "content-type": "application/json"
-        }
+          "content-type": "application/json",
+        },
       });
-    }
+    },
   },
   computed: {
     currentPlan() {

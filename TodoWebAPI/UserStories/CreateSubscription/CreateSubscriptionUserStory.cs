@@ -3,6 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Braintree;
 using MediatR;
+using Todo.Domain.Repositories;
 using Todo.Infrastructure.PaymentMethods;
 using TodoWebAPI.BraintreeService;
 
@@ -12,11 +13,13 @@ namespace TodoWebAPI.UserStories
     {
         private readonly IBraintreeConfiguration _braintreeConfiguration;
         private readonly IPaymentMethodRepository _paymentMethod;
+        private readonly IAccountRepository _account;
 
-        public CreateSubscriptionUserStory(IBraintreeConfiguration braintreeConfiguration, IPaymentMethodRepository paymentMethod)
+        public CreateSubscriptionUserStory(IBraintreeConfiguration braintreeConfiguration, IPaymentMethodRepository paymentMethod, IAccountRepository account)
         {
             _braintreeConfiguration = braintreeConfiguration;
             _paymentMethod = paymentMethod;
+            _account = account;
         }
 
         public async Task<bool> Handle(CreateSubscription request, CancellationToken cancellationToken)
@@ -25,25 +28,19 @@ namespace TodoWebAPI.UserStories
 
             var paymentMethod = await _paymentMethod.FindByAccountIdAsync(request.AccountId);
 
-            var intPlan = "";
-            if (request.Plan == "Free")
-            {
-                intPlan = "1";
-            }
-            else if (request.Plan == "Basic")
-            {
-                intPlan = "2";
-            }
-            else if (request.Plan == "Premium")
-            {
-                intPlan = "3";
-            }
+            var brainType = SubscriptionHelper.ConvertPlanToBrainTreeType(request.Plan);
 
             var re = new SubscriptionRequest
             {
                 PaymentMethodToken = paymentMethod.TokenId,
-                PlanId = intPlan
+                PlanId = brainType,
+                Id = Guid.NewGuid().ToString()
             };
+
+            var account = await _account.FindAccountByIdAsync(request.AccountId);
+            account.SubscriptionId = re.Id;
+
+            await _account.SaveChangesAsync();
 
             Result<Subscription> result = gateway.Subscription.Create(re);
             if (result.IsSuccess())

@@ -32,7 +32,7 @@ namespace TodoWebAPI.Controllers
             IBraintreeConfiguration braintreeConfiguration,
             IMediator mediator,
             IAccountRepository accountRepository,
-            IPaymentMethodRepository paymentMethod 
+            IPaymentMethodRepository paymentMethod
             )
         {
             _braintreeConfiguration = braintreeConfiguration;
@@ -64,26 +64,21 @@ namespace TodoWebAPI.Controllers
         public async Task<IActionResult> GetPaymentMethod()
         {
             var accountId = Guid.Parse(User.FindFirst(c => c.Type == "urn:codefliptodo:accountid").Value);
-            var account = await _accountRepository.FindAccountByIdAsync(accountId);
-
             var gateway = _braintreeConfiguration.GetGateway();
+            var paymentMethod = await _paymentMethod.FindByAccountIdAsync(accountId);
 
-            var dbPaymentMethod = await _paymentMethod.FindByAccountIdAsync(accountId);
-
-
-            if (dbPaymentMethod != null)
+            if (paymentMethod != null)
             {
-                CreditCard paymentMethod = null;
-                paymentMethod = (CreditCard) await gateway.PaymentMethod.FindAsync(dbPaymentMethod.TokenId);
+                CreditCard creditCard = (CreditCard)await gateway.PaymentMethod.FindAsync(paymentMethod.TokenId);
 
-                var cardInfo = new CardInfoModel()
+                var creditCardInfo = new CardInfoModel()
                 {
-                    CardType = paymentMethod.CardType.ToString(),
-                    ExpirationDate = paymentMethod.ExpirationDate,
-                    LastFourDigits = paymentMethod.LastFour
+                    CardType = creditCard.CardType.ToString(),
+                    ExpirationDate = creditCard.ExpirationDate,
+                    LastFourDigits = creditCard.LastFour
                 };
 
-                return Ok(cardInfo);
+                return Ok(creditCardInfo);
             }
 
             return Ok();
@@ -94,12 +89,10 @@ namespace TodoWebAPI.Controllers
         {
             var accountId = Guid.Parse(User.FindFirst(c => c.Type == "urn:codefliptodo:accountid").Value);
             var account = await _accountRepository.FindAccountByIdAsync(accountId);
-
             var gateway = _braintreeConfiguration.GetGateway();
-
             var paymentMethod = await _paymentMethod.FindByAccountIdAsync(accountId);
 
-            if(paymentMethod != null)
+            if (paymentMethod != null)
             {
                 var deletePayment = new DeletePaymentMethod
                 {
@@ -107,7 +100,7 @@ namespace TodoWebAPI.Controllers
                 };
                 await _mediator.Send(deletePayment);
             }
-            
+
             Customer customer = await gateway.Customer.FindAsync(account.PaymentId);
 
             var request = new PaymentMethodRequest()
@@ -136,13 +129,10 @@ namespace TodoWebAPI.Controllers
         public async Task<IActionResult> CreatePaymentSubscription([FromBody] CreateSubscriptionModel createSubscriptionModel)
         {
             var accountId = Guid.Parse(User.FindFirst(c => c.Type == "urn:codefliptodo:accountid").Value);
-            var account = await _accountRepository.FindAccountByIdAsync(accountId);
-
             var gateway = _braintreeConfiguration.GetGateway();
-
             var paymentMethod = await _paymentMethod.FindByAccountIdAsync(accountId);
 
-            if(paymentMethod != null)
+            if (paymentMethod != null)
             {
                 var subscription = new CreateSubscription
                 {
@@ -152,9 +142,9 @@ namespace TodoWebAPI.Controllers
 
                 var response = await _mediator.Send(subscription);
 
-                if(response == true)
+                if (response == true)
                 {
-                    var planChange = new RoleChange
+                    var planChange = new PlanChange
                     {
                         AccountId = accountId,
                         Plan = createSubscriptionModel.PlanName
@@ -164,6 +154,66 @@ namespace TodoWebAPI.Controllers
                     return Ok();
                 }
             }
+            return BadRequest();
+        }
+
+        [HttpPost, Route("subscription/change")]
+        public async Task<IActionResult> ChangePaymentSubscription([FromBody] ChangePaymentSubscription changePayment)
+        {
+            var accountId = Guid.Parse(User.FindFirst(c => c.Type == "urn:codefliptodo:accountid").Value);
+            var account = await _accountRepository.FindAccountByIdAsync(accountId);
+            var gateway = _braintreeConfiguration.GetGateway();
+
+            if (account.SubscriptionId == null)
+            {
+                var createsubscription = new CreateSubscription
+                {
+                    AccountId = accountId,
+                    Plan = changePayment.Plan
+                };
+
+                var response = await _mediator.Send(createsubscription);
+
+                if (response == true)
+                {
+                    var planChange = new PlanChange
+                    {
+                        AccountId = accountId,
+                        Plan = changePayment.Plan
+                    };
+                    await _mediator.Send(planChange);
+
+                    return Ok();
+                }
+
+            }
+            else
+            {
+
+                changePayment.AccountId = accountId;
+
+                var planChange = new PlanChange
+                {
+                    AccountId = accountId,
+                    Plan = changePayment.Plan
+                };
+
+                var response = await _mediator.Send(planChange);
+
+                if (response == true)
+                {
+                    var brainTreeResponse = await _mediator.Send(changePayment);
+                    if (brainTreeResponse == true)
+                    {
+                        return Ok();
+                    }
+                }
+                else
+                {
+                    return Forbid();
+                }
+            }
+
             return BadRequest();
         }
     }
