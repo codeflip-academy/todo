@@ -3,7 +3,7 @@ import axios from 'axios';
 
 const todoLists = {
     state: () => ({
-        items: {}
+        items: {},
     }),
     mutations: {
         setItems(state, { listId, items }) {

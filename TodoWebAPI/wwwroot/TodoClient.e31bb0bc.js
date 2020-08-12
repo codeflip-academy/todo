@@ -37522,8 +37522,9 @@ var _default = {
   },
 
   async created() {
-    this.items = this.setSubItems();
     await this.getLayout();
+    this.items = this.setSubItems();
+    this.loadingSubItems = false;
   },
 
   mounted() {
@@ -37540,7 +37541,8 @@ var _default = {
   data() {
     return {
       items: [],
-      layout: []
+      layout: [],
+      loadingSubItems: true
     };
   },
 
@@ -37629,44 +37631,46 @@ exports.default = _default;
   var _vm = this
   var _h = _vm.$createElement
   var _c = _vm._self._c || _h
-  return _c(
-    "b-list-group",
-    [
-      _c(
-        "Draggable",
-        {
-          attrs: { handle: ".sub-item-handle" },
-          on: { end: _vm.updateSubItemPosition },
-          model: {
-            value: _vm.layout,
-            callback: function($$v) {
-              _vm.layout = $$v
-            },
-            expression: "layout"
-          }
-        },
+  return !_vm.loadingSubItems
+    ? _c(
+        "b-list-group",
         [
-          _vm._l(_vm.layout, function(itemId) {
-            return _c("SubItem", {
-              key: itemId,
-              attrs: {
-                subItem: _vm.items.find(function(x) {
-                  return x.id === itemId
-                }),
-                listId: _vm.todoListItem.listId
+          _c(
+            "Draggable",
+            {
+              attrs: { handle: ".sub-item-handle" },
+              on: { end: _vm.updateSubItemPosition },
+              model: {
+                value: _vm.layout,
+                callback: function($$v) {
+                  _vm.layout = $$v
+                },
+                expression: "layout"
               }
-            })
-          }),
-          _vm._v(" "),
-          _vm.layout.length < 1
-            ? _c("b-list-group-item", [_vm._v("There are no sub-items.")])
-            : _vm._e()
+            },
+            [
+              _vm._l(_vm.layout, function(itemId) {
+                return _c("SubItem", {
+                  key: itemId,
+                  attrs: {
+                    subItem: _vm.items.find(function(x) {
+                      return x.id === itemId
+                    }),
+                    listId: _vm.todoListItem.listId
+                  }
+                })
+              }),
+              _vm._v(" "),
+              _vm.layout.length < 1
+                ? _c("b-list-group-item", [_vm._v("There are no sub-items.")])
+                : _vm._e()
+            ],
+            2
+          )
         ],
-        2
+        1
       )
-    ],
-    1
-  )
+    : _vm._e()
 }
 var staticRenderFns = []
 render._withStripped = true
@@ -38975,7 +38979,8 @@ var _default = {
       editingTitle: false,
       form: {
         title: ""
-      }
+      },
+      loadingItems: true
     };
   },
 
@@ -38984,6 +38989,7 @@ var _default = {
       todoListId: this.todoListId
     });
     this.items = this.getItems();
+    this.loadingItems = false;
   },
 
   destroyed() {
@@ -39148,16 +39154,20 @@ exports.default = _default;
                 class: { "col-md-8": _vm.list.role == 3 }
               },
               [
-                _vm.items.length > 0
+                !_vm.loadingItems
                   ? _c("TodoListItems", {
                       attrs: {
                         listId: _vm.todoListId,
                         todoListItems: _vm.items
                       }
                     })
-                  : _c("b-list-group-item", [
+                  : _vm._e(),
+                _vm._v(" "),
+                _vm.items && _vm.items.length < 1
+                  ? _c("b-list-group-item", [
                       _vm._v("Add an item to get started.")
-                    ]),
+                    ])
+                  : _vm._e(),
                 _vm._v(" "),
                 _c("AddTodoListItemForm", {
                   staticClass: "mt-3",

@@ -29,8 +29,8 @@
 
       <b-row>
         <b-col class="mb-3" :class="{ 'col-md-8': list.role == 3 }">
-          <TodoListItems :listId="todoListId" :todoListItems="items" v-if="items.length > 0"></TodoListItems>
-          <b-list-group-item v-else>Add an item to get started.</b-list-group-item>
+          <TodoListItems :listId="todoListId" :todoListItems="items" v-if="!loadingItems"></TodoListItems>
+          <b-list-group-item v-if="items && items.length < 1">Add an item to get started.</b-list-group-item>
           <AddTodoListItemForm class="mt-3" :todoListId="todoListId"></AddTodoListItemForm>
         </b-col>
 
@@ -62,6 +62,7 @@ export default {
       form: {
         title: "",
       },
+      loadingItems: true,
     };
   },
   async created() {
@@ -70,6 +71,7 @@ export default {
     });
 
     this.items = this.getItems();
+    this.loadingItems = false;
   },
   destroyed() {
     this.$confetti.stop();

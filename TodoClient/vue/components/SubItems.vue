@@ -1,5 +1,5 @@
 <template>
-  <b-list-group>
+  <b-list-group v-if="!loadingSubItems">
     <Draggable handle=".sub-item-handle" v-model="layout" @end="updateSubItemPosition">
       <SubItem
         v-for="itemId in layout"
@@ -24,8 +24,9 @@ export default {
     SubItem,
   },
   async created() {
-    this.items = this.setSubItems();
     await this.getLayout();
+    this.items = this.setSubItems();
+    this.loadingSubItems = false;
   },
   mounted() {
     this.$store.state.connection.on(
@@ -47,6 +48,7 @@ export default {
     return {
       items: [],
       layout: [],
+      loadingSubItems: true,
     };
   },
   methods: {
