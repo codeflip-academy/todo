@@ -52,10 +52,14 @@ const todoLists = {
             });
 
             const itemAdded = response.data;
+
             context.commit('addItem', {
                 listId: itemAdded.listId,
                 item: itemAdded
             });
+
+            // Set initial state for sub items in new item
+            context.commit('setSubItems', { todoItemId: itemAdded.id, subItems: [] });
         },
         toggleItemCompletedState(context, { item }) {
             axios({

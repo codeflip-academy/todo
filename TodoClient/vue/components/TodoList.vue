@@ -30,6 +30,7 @@
       <b-row>
         <b-col class="mb-3" :class="{ 'col-md-8': list.role == 3 }">
           <TodoListItems :listId="todoListId" :todoListItems="items" v-if="items.length > 0"></TodoListItems>
+          <b-list-group-item v-else>Add an item to get started.</b-list-group-item>
           <AddTodoListItemForm class="mt-3" :todoListId="todoListId"></AddTodoListItemForm>
         </b-col>
 

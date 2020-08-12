@@ -19403,6 +19403,11 @@ const todoLists = {
       context.commit('addItem', {
         listId: itemAdded.listId,
         item: itemAdded
+      }); // Set initial state for sub items in new item
+
+      context.commit('setSubItems', {
+        todoItemId: itemAdded.id,
+        subItems: []
       });
     },
 
@@ -38572,8 +38577,6 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 //
 //
 //
-//
-//
 var _default = {
   name: "TodoListItems",
   props: ["listId", "todoListItems"],
@@ -38653,10 +38656,6 @@ exports.default = _default;
     "b-list-group",
     { staticClass: "todo-list-items" },
     [
-      _vm.todoListItems.length < 1
-        ? _c("b-list-group-item", [_vm._v("Add an item to get started.")])
-        : _vm._e(),
-      _vm._v(" "),
       _c(
         "Draggable",
         {
@@ -38964,6 +38963,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 //
 //
 //
+//
 _vue.default.use(_vueConfetti.default);
 
 var _default = {
@@ -39156,7 +39156,9 @@ exports.default = _default;
                         todoListItems: _vm.items
                       }
                     })
-                  : _vm._e(),
+                  : _c("b-list-group-item", [
+                      _vm._v("Add an item to get started.")
+                    ]),
                 _vm._v(" "),
                 _c("AddTodoListItemForm", {
                   staticClass: "mt-3",
@@ -47810,10 +47812,16 @@ var _default = {
       listId,
       listCompletedState
     }));
-    this.$store.state.connection.on("ItemCreated", (listId, item) => this.$store.commit("addItem", {
-      listId,
-      item
-    }));
+    this.$store.state.connection.on("ItemCreated", (listId, item) => {
+      this.$store.commit("addItem", {
+        listId,
+        item
+      });
+      this.$store.commit("setSubItems", {
+        todoItemId: item.id,
+        subItems: []
+      });
+    });
     this.$store.state.connection.on("ItemCompleted", item => this.$store.commit("updateItemCompletedState", {
       item
     }));

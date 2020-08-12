@@ -42,9 +42,10 @@ export default {
           listCompletedState,
         })
     );
-    this.$store.state.connection.on("ItemCreated", (listId, item) =>
-      this.$store.commit("addItem", { listId, item })
-    );
+    this.$store.state.connection.on("ItemCreated", (listId, item) => {
+      this.$store.commit("addItem", { listId, item });
+      this.$store.commit("setSubItems", { todoItemId: item.id, subItems: [] });
+    });
     this.$store.state.connection.on("ItemCompleted", (item) =>
       this.$store.commit("updateItemCompletedState", { item })
     );
