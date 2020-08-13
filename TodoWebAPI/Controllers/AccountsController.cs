@@ -102,7 +102,7 @@ namespace TodoWebAPI.Controllers
 
         [Authorize]
         [HttpPut("api/accounts/role")]
-        public async Task<IActionResult> ChangeRoleAysnc([FromBody] PlanChange roleChanged)
+        public async Task<IActionResult> ChangeRoleAysnc([FromBody] ChangePlan roleChanged)
         {
             var accountId = Guid.Parse(User.FindFirst(c => c.Type == "urn:codefliptodo:accountid").Value);
 
