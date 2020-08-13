@@ -2,8 +2,8 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using MediatR;
+using Todo.Domain;
 using Todo.Domain.Repositories;
-using Todo.Infrastructure;
 
 namespace TodoWebAPI.UserStories
 {
@@ -14,8 +14,8 @@ namespace TodoWebAPI.UserStories
         private readonly ITodoListRepository _listRepository;
         private readonly IAccountsListsRepository _accountsListsRepository;
 
-        public RemoveContributorFromListHandler(IAccountRepository accountRepository, 
-        IAccountPlanRepository accountPlanRepository, 
+        public RemoveContributorFromListHandler(IAccountRepository accountRepository,
+        IAccountPlanRepository accountPlanRepository,
         ITodoListRepository listRepository,
         IAccountsListsRepository accountsListsRepository)
         {

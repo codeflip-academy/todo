@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Todo.Core;
 using Todo.Domain.DomainEvents;
 
 namespace Todo.Domain
