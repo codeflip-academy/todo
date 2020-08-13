@@ -49,28 +49,28 @@ import Contributors from "./Contributors";
 export default {
   props: ["todoList", "contributors"],
   components: {
-    Contributors
+    Contributors,
   },
   methods: {
     deleteTodoList() {
-      this.$store.dispatch("deleteTodoList", { listId: this.todoList.id });
+      this.$emit("delete-todo-list", this.todoList.id);
     },
     async acceptInvitation() {
       await this.$store.dispatch("acceptInvitation", {
-        listId: this.todoList.id
+        listId: this.todoList.id,
       });
     },
     async declineInvitation() {
       await this.$store.dispatch("declineInvitation", {
-        listId: this.todoList.id
+        listId: this.todoList.id,
       });
     },
     async leaveTodoList() {
       await this.$store.dispatch("leaveTodoList", {
-        listId: this.todoList.id
+        listId: this.todoList.id,
       });
-    }
-  }
+    },
+  },
 };
 </script>
 

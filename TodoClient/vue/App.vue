@@ -13,58 +13,13 @@ export default {
   components: {
     Header,
   },
-  async beforeCreate() {
-    try {
-      await this.$store.dispatch("loadTodoLists");
-    } catch (error) {}
+  async created() {
+    await this.$store.dispatch("getTodoLists");
   },
   mounted() {
     this.$store.state.connection
       .start()
       .catch((err) => console.error(err.toString()));
-    this.$store.state.connection.on("InvitationSent", (list) =>
-      this.$store.commit("addTodoList", { list })
-    );
-    this.$store.state.connection.on("InvitationAccepted", (list) =>
-      this.$store.dispatch("refreshContributors", { list })
-    );
-    this.$store.state.connection.on("ContributorLeft", (list) =>
-      this.$store.dispatch("refreshContributors", { list })
-    );
-    this.$store.state.connection.on("ListNameUpdated", (listId, listTitle) =>
-      this.$store.commit("updateListTitle", { listId, listTitle })
-    );
-    this.$store.state.connection.on(
-      "ListCompletedStateChanged",
-      (listId, listCompletedState) =>
-        this.$store.commit("setTodoListCompletedState", {
-          listId,
-          listCompletedState,
-        })
-    );
-    this.$store.state.connection.on("ItemCreated", (listId, item) => {
-      this.$store.commit("addItem", { listId, item });
-      this.$store.commit("setSubItems", { todoItemId: item.id, subItems: [] });
-    });
-    this.$store.state.connection.on("ItemCompleted", (item) =>
-      this.$store.commit("updateItemCompletedState", { item })
-    );
-    this.$store.state.connection.on("ItemUpdated", (item) =>
-      this.$store.commit("updateItem", { item })
-    );
-    this.$store.state.connection.on("SubItemCreated", (subItem) =>
-      this.$store.commit("addSubItem", { subItem })
-    );
-    this.$store.state.connection.on("SubItemCompletedStateChanged", (subItem) =>
-      this.$store.commit("updateSubItemCompletedState", {
-        todoItemId: subItem.listItemId,
-        subItemId: subItem.id,
-        completed: subItem.completed,
-      })
-    );
-    this.$store.state.connection.on("SubItemUpdated", (subItem) =>
-      this.$store.commit("updateSubItem", { subItem })
-    );
   },
 };
 </script>

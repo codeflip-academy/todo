@@ -24,50 +24,6 @@ export default {
       layout: [],
     };
   },
-  async created() {
-    await this.getLayout();
-  },
-  mounted() {
-    this.$store.state.connection.on("ListLayoutChanged", (listId) =>
-      this.refreshLayout(listId)
-    );
-    this.$store.state.connection.on("ItemTrashed", (listId, item) =>
-      this.refreshLayout(listId)
-    );
-  },
-  methods: {
-    async getLayout() {
-      const response = await axios({
-        method: "GET",
-        url: `api/lists/${this.listId}/layout`,
-      });
-
-      this.layout = response.data;
-    },
-    updateLayout(e) {
-      let position = e.newIndex;
-      let itemId = e.item.getAttribute("data-id");
-
-      axios({
-        method: "PUT",
-        url: `api/lists/${this.listId}/layout`,
-        data: JSON.stringify({ itemId, position }),
-        headers: {
-          "content-type": "application/json",
-        },
-      });
-    },
-    refreshLayout(listId) {
-      if (this.listId === listId) {
-        this.getLayout();
-      }
-    },
-  },
-  watch: {
-    todoListItems: function () {
-      this.refreshLayout(this.listId);
-    },
-  },
   components: {
     Draggable,
     TodoListItem,
