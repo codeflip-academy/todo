@@ -3,7 +3,7 @@
     <b-button @click="$bvModal.show('modal-add-todo-list-item')">Add item</b-button>
 
     <b-modal id="modal-add-todo-list-item" title="Add item" @shown="focusOnForm">
-      <b-form @submit.prevent="addItem">
+      <b-form @submit.prevent="addItemRequest">
         <!-- Name -->
         <b-form-group label="Name">
           <b-form-input ref="title" v-model="form.name" maxlength="50" required></b-form-input>
@@ -48,8 +48,11 @@ export default {
     focusOnForm() {
       this.$refs.title.focus();
     },
-    async addItem() {
-      await this.$store.dispatch("addItem", this.form);
+    async addItemRequest() {
+      let item = { ...this.form };
+
+      this.$emit("add-item", item);
+
       this.form.name = null;
       this.form.notes = null;
       this.form.dueDate = null;

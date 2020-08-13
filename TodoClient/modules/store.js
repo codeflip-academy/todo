@@ -36,6 +36,9 @@ const store = new Vuex.Store({
         state.todoLists.findIndex((t) => t.id === todoListId),
         1
       );
+    },
+    updateTodoListTitle(state, { todoListId, listTitle }) {
+      state.todoLists[state.todoLists.findIndex((t) => t.id === todoListId)].listTitle = listTitle;
     }
   },
   actions: {
@@ -102,6 +105,18 @@ const store = new Vuex.Store({
         url: `api/lists/${todoListId}`,
       });
     },
+    async updateTodoListTitle(context, { todoListId, listTitle }) {
+      context.commit('updateTodoListTitle', { todoListId, listTitle });
+
+      await axios({
+        method: 'PUT',
+        url: `api/lists/${todoListId}`,
+        data: JSON.stringify({ listTitle }),
+        headers: {
+          'content-type': 'application/json',
+        }
+      });
+    }
   },
   getters: {
     user(state) {
