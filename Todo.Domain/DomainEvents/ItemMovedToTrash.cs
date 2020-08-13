@@ -9,6 +9,5 @@ namespace Todo.Domain.DomainEvents
     {
         public TodoListItem Item { get; set; }
         public Guid? ListId { get; set; }
-        public Guid AccountId {get; set;}
     }
 }

@@ -8,6 +8,7 @@ using Todo.Domain;
 using Todo.Domain.Repositories;
 using Newtonsoft.Json;
 using System.Collections.Generic;
+using Todo.Core;
 
 namespace Todo.Infrastructure
 {
@@ -135,6 +136,7 @@ namespace Todo.Infrastructure
                 entity
                     .Property(e => e.DueDate)
                     .HasColumnType("datetime");
+
             });
 
             modelBuilder.Entity<TodoListLayout>(entity =>

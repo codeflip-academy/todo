@@ -144,7 +144,7 @@ namespace TodoWebAPI.Controllers
 
                 if (response == true)
                 {
-                    var planChange = new PlanChange
+                    var planChange = new ChangePlan
                     {
                         AccountId = accountId,
                         Plan = createSubscriptionModel.PlanName
@@ -160,41 +160,22 @@ namespace TodoWebAPI.Controllers
         [HttpPost, Route("subscription/change")]
         public async Task<IActionResult> ChangePaymentSubscription([FromBody] ChangePaymentSubscription changePayment)
         {
-            var accountId = Guid.Parse(User.FindFirst(c => c.Type == "urn:codefliptodo:accountid").Value);
-            var account = await _accountRepository.FindAccountByIdAsync(accountId);
+            changePayment.AccountId = Guid.Parse(User.FindFirst(c => c.Type == "urn:codefliptodo:accountid").Value);
             var gateway = _braintreeConfiguration.GetGateway();
 
-            if (account.SubscriptionId == null)
+            var createsubscription = new CreateSubscription
             {
-                var createsubscription = new CreateSubscription
-                {
-                    AccountId = accountId,
-                    Plan = changePayment.Plan
-                };
+                AccountId = changePayment.AccountId,
+                Plan = changePayment.Plan
+            };
 
-                var response = await _mediator.Send(createsubscription);
+            var result = await _mediator.Send(createsubscription);
 
-                if (response == true)
-                {
-                    var planChange = new PlanChange
-                    {
-                        AccountId = accountId,
-                        Plan = changePayment.Plan
-                    };
-                    await _mediator.Send(planChange);
-
-                    return Ok();
-                }
-
-            }
-            else
+            if (result)
             {
-
-                changePayment.AccountId = accountId;
-
-                var planChange = new PlanChange
+                var planChange = new ChangePlan
                 {
-                    AccountId = accountId,
+                    AccountId = changePayment.AccountId,
                     Plan = changePayment.Plan
                 };
 

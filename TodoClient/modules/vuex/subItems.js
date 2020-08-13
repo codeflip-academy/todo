@@ -16,13 +16,13 @@ const subItems = {
             const index = state.subItems[subItem.listItemId].findIndex(i => i.id == subItem.id);
             Vue.set(state.subItems[subItem.listItemId], index, subItem);
         },
-        trashSubItem(state, { subItem }) {
-            const index = state.subItems[subItem.listItemId].findIndex(i => i.id == subItem.id);
-            state.subItems[subItem.listItemId].splice(index, 1);
+        trashSubItem(state, { todoItemId, subItemId }) {
+            const index = state.subItems[todoItemId].findIndex(i => i.id == subItemId);
+            state.subItems[todoItemId].splice(index, 1);
         },
-        updateSubItemCompletedState(state, { subItem }) {
-            const index = state.subItems[subItem.listItemId].findIndex(i => i.id == subItem.id);
-            state.subItems[subItem.listItemId][index].completed = subItem.completed;
+        updateSubItemCompletedState(state, { todoItemId, subItemId, completed }) {
+            const index = state.subItems[todoItemId].findIndex(i => i.id == subItemId);
+            state.subItems[todoItemId][index].completed = completed;
         }
     },
     actions: {
@@ -41,24 +41,28 @@ const subItems = {
         },
         async addSubItem(context, { listId, todoItemId, name }) {
             try {
-                await axios({
+                const response = await axios({
                     method: 'POST',
                     url: `api/lists/${listId}/todos/${todoItemId}/subitems`,
                     headers: { 'content-type': 'application/json' },
                     data: JSON.stringify({ name })
                 });
+
+                context.commit('addSubItem', { subItem: response.data });
             }
             catch (error) {
                 console.log(error);
             }
         },
-        async updateSubItem(context, { listId, todoItemId, subItemId, name }) {
+        async updateSubItem(context, { listId, subItem }) {
             try {
+                context.commit('updateSubItem', { listId, subItem });
+
                 await axios({
                     method: 'PUT',
-                    url: `api/lists/${listId}/todos/${todoItemId}/subitems/${subItemId}`,
+                    url: `api/lists/${listId}/todos/${subItem.listItemId}/subitems/${subItem.id}`,
                     headers: { 'content-type': 'application/json' },
-                    data: JSON.stringify({ name })
+                    data: JSON.stringify({ name: subItem.name })
                 })
             }
             catch (error) {
@@ -71,12 +75,16 @@ const subItems = {
                     method: 'DELETE',
                     url: `api/lists/${listId}/todos/${todoItemId}/subitems/${subItemId}`,
                 });
+
+                context.commit('trashSubItem', { todoItemId, subItemId });
             }
             catch (error) {
                 console.log(error);
             }
         },
         async toggleSubItemCompletedState(context, { listId, todoItemId, subItemId, completed }) {
+            context.commit('updateSubItemCompletedState', { todoItemId, subItemId, completed });
+
             try {
                 await axios({
                     method: 'PUT',

@@ -19155,21 +19155,16 @@ const todoLists = {
       });
     },
 
-    addTodoList(context, payload) {
-      return new Promise((resolve, reject) => {
-        (0, _axios.default)({
-          method: 'POST',
-          url: 'api/lists',
-          data: JSON.stringify(payload),
-          headers: {
-            'content-type': 'application/json'
-          }
-        }).then(() => {
-          context.dispatch('loadTodoLists');
-        }).finally(() => {
-          resolve();
-        });
+    async addTodoList(context, payload) {
+      await (0, _axios.default)({
+        method: 'POST',
+        url: 'api/lists',
+        data: JSON.stringify(payload),
+        headers: {
+          'content-type': 'application/json'
+        }
       });
+      await context.dispatch('loadTodoLists');
     },
 
     deleteTodoList(context, payload) {
@@ -19209,6 +19204,10 @@ const todoLists = {
       listId,
       listTitle
     }) {
+      context.commit('updateListTitle', {
+        listId,
+        listTitle
+      });
       await (0, _axios.default)({
         method: 'PUT',
         url: "api/lists/".concat(listId),
@@ -19339,7 +19338,7 @@ const todoLists = {
       listId,
       items
     }) {
-      state.items[listId] = items;
+      _vue.default.set(state.items, listId, items);
     },
 
     addItem(state, {
@@ -19347,6 +19346,14 @@ const todoLists = {
       item
     }) {
       state.items[listId].unshift(item);
+    },
+
+    deleteItem(state, {
+      listId,
+      itemId
+    }) {
+      const index = state.items[listId].findIndex(i => i.itemId === itemId);
+      state.items[listId].splice(index, 1);
     },
 
     updateItemCompletedState(state, {
@@ -19383,73 +19390,75 @@ const todoLists = {
       });
     },
 
-    addItem(context, payload) {
-      return new Promise((resolve, reject) => {
-        (0, _axios.default)({
-          method: 'POST',
-          url: "api/lists/".concat(payload.listId, "/todos"),
-          data: JSON.stringify(payload),
-          headers: {
-            'content-type': 'application/json'
-          }
-        }).then(response => {}).finally(() => {
-          resolve();
-        });
+    async addItem(context, item) {
+      const response = await (0, _axios.default)({
+        method: 'POST',
+        url: "api/lists/".concat(item.listId, "/todos"),
+        data: JSON.stringify(item),
+        headers: {
+          'content-type': 'application/json'
+        }
+      });
+      const itemAdded = response.data;
+      context.commit('addItem', {
+        listId: itemAdded.listId,
+        item: itemAdded
+      }); // Set initial state for sub items in new item
+
+      context.commit('setSubItems', {
+        todoItemId: itemAdded.id,
+        subItems: []
       });
     },
 
     toggleItemCompletedState(context, {
-      listId,
-      itemId,
-      completed
+      item
     }) {
-      return new Promise((resolve, reject) => {
-        (0, _axios.default)({
-          method: 'PUT',
-          url: "api/lists/".concat(listId, "/todos/").concat(itemId, "/completed"),
-          data: JSON.stringify({
-            completed
-          }),
-          headers: {
-            'content-type': 'application/json'
-          }
-        }).finally(() => {
-          resolve();
-        });
+      (0, _axios.default)({
+        method: 'PUT',
+        url: "api/lists/".concat(item.listId, "/todos/").concat(item.id, "/completed"),
+        data: JSON.stringify({
+          completed: item.completed
+        }),
+        headers: {
+          'content-type': 'application/json'
+        }
+      });
+      context.commit('updateItemCompletedState', {
+        item
       });
     },
 
-    updateItem(context, {
+    async updateItem(context, {
       item
     }) {
-      return new Promise((resolve, reject) => {
-        (0, _axios.default)({
-          method: 'PUT',
-          url: "api/lists/".concat(item.listId, "/todos/").concat(item.id),
-          data: JSON.stringify({
-            name: item.name,
-            notes: item.notes,
-            dueDate: item.dueDate
-          }),
-          headers: {
-            'content-type': 'application/json'
-          }
-        }).finally(() => {
-          resolve();
-        });
+      context.commit('updateItem', {
+        item
+      });
+      await (0, _axios.default)({
+        method: 'PUT',
+        url: "api/lists/".concat(item.listId, "/todos/").concat(item.id),
+        data: JSON.stringify({
+          name: item.name,
+          notes: item.notes,
+          dueDate: item.dueDate
+        }),
+        headers: {
+          'content-type': 'application/json'
+        }
       });
     },
 
-    deleteItem(context, {
+    async deleteItem(context, {
       item
     }) {
-      return new Promise((resolve, reject) => {
-        (0, _axios.default)({
-          method: 'DELETE',
-          url: "api/lists/".concat(item.listId, "/todos/").concat(item.id)
-        }).finally(() => {
-          resolve();
-        });
+      await (0, _axios.default)({
+        method: 'DELETE',
+        url: "api/lists/".concat(item.listId, "/todos/").concat(item.id)
+      });
+      context.commit('deleteItem', {
+        listId: item.listId,
+        itemId: item.id
       });
     }
 
@@ -19509,17 +19518,20 @@ const subItems = {
     },
 
     trashSubItem(state, {
-      subItem
+      todoItemId,
+      subItemId
     }) {
-      const index = state.subItems[subItem.listItemId].findIndex(i => i.id == subItem.id);
-      state.subItems[subItem.listItemId].splice(index, 1);
+      const index = state.subItems[todoItemId].findIndex(i => i.id == subItemId);
+      state.subItems[todoItemId].splice(index, 1);
     },
 
     updateSubItemCompletedState(state, {
-      subItem
+      todoItemId,
+      subItemId,
+      completed
     }) {
-      const index = state.subItems[subItem.listItemId].findIndex(i => i.id == subItem.id);
-      state.subItems[subItem.listItemId][index].completed = subItem.completed;
+      const index = state.subItems[todoItemId].findIndex(i => i.id == subItemId);
+      state.subItems[todoItemId][index].completed = completed;
     }
 
   },
@@ -19548,7 +19560,7 @@ const subItems = {
       name
     }) {
       try {
-        await (0, _axios.default)({
+        const response = await (0, _axios.default)({
           method: 'POST',
           url: "api/lists/".concat(listId, "/todos/").concat(todoItemId, "/subitems"),
           headers: {
@@ -19558,6 +19570,9 @@ const subItems = {
             name
           })
         });
+        context.commit('addSubItem', {
+          subItem: response.data
+        });
       } catch (error) {
         console.log(error);
       }
@@ -19565,19 +19580,21 @@ const subItems = {
 
     async updateSubItem(context, {
       listId,
-      todoItemId,
-      subItemId,
-      name
+      subItem
     }) {
       try {
+        context.commit('updateSubItem', {
+          listId,
+          subItem
+        });
         await (0, _axios.default)({
           method: 'PUT',
-          url: "api/lists/".concat(listId, "/todos/").concat(todoItemId, "/subitems/").concat(subItemId),
+          url: "api/lists/".concat(listId, "/todos/").concat(subItem.listItemId, "/subitems/").concat(subItem.id),
           headers: {
             'content-type': 'application/json'
           },
           data: JSON.stringify({
-            name
+            name: subItem.name
           })
         });
       } catch (error) {
@@ -19595,6 +19612,10 @@ const subItems = {
           method: 'DELETE',
           url: "api/lists/".concat(listId, "/todos/").concat(todoItemId, "/subitems/").concat(subItemId)
         });
+        context.commit('trashSubItem', {
+          todoItemId,
+          subItemId
+        });
       } catch (error) {
         console.log(error);
       }
@@ -19606,6 +19627,12 @@ const subItems = {
       subItemId,
       completed
     }) {
+      context.commit('updateSubItemCompletedState', {
+        todoItemId,
+        subItemId,
+        completed
+      });
+
       try {
         await (0, _axios.default)({
           method: 'PUT',
@@ -23417,16 +23444,13 @@ exports.default = void 0;
 //
 //
 //
-//
-//
-//
 var _default = {
-  name: 'AddTodoListForm',
+  name: "AddTodoListForm",
 
   data() {
     return {
       form: {
-        listTitle: ''
+        listTitle: ""
       }
     };
   },
@@ -23442,14 +23466,13 @@ var _default = {
       this.$refs.listTitle.focus();
     },
 
-    addTodoList() {
-      this.$store.dispatch('addTodoList', {
+    async addTodoList() {
+      await this.$store.dispatch("addTodoList", {
         listTitle: this.form.listTitle,
         email: this.user.email
-      }).then(() => {
-        this.form.listTitle = '';
       });
-      this.$bvModal.hide('modal-add-todo-list');
+      this.form.listTitle = "";
+      this.$bvModal.hide("modal-add-todo-list");
     }
 
   }
@@ -23698,12 +23721,9 @@ exports.default = void 0;
 //
 //
 //
-//
-//
-//
 var _default = {
-  name: 'AddTodoListItemForm',
-  props: ['todoListId'],
+  name: "AddTodoListItemForm",
+  props: ["todoListId"],
 
   data() {
     return {
@@ -23727,13 +23747,12 @@ var _default = {
       this.$refs.title.focus();
     },
 
-    addItem() {
-      this.$store.dispatch('addItem', this.form).then(() => {
-        this.form.name = null;
-        this.form.notes = null;
-        this.form.dueDate = null;
-        this.$bvModal.hide('modal-add-todo-list-item');
-      });
+    async addItem() {
+      await this.$store.dispatch("addItem", this.form);
+      this.form.name = null;
+      this.form.notes = null;
+      this.form.dueDate = null;
+      this.$bvModal.hide("modal-add-todo-list-item");
     }
 
   }
@@ -37229,6 +37248,13 @@ exports.default = void 0;
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
 var _default = {
   props: ["listId", "subItem"],
   computed: {
@@ -37252,7 +37278,6 @@ var _default = {
   data() {
     return {
       editingSubItem: false,
-      itemCompletedState: false,
       form: {
         name: this.subItem.name
       }
@@ -37268,26 +37293,19 @@ var _default = {
     },
 
     async updateSubItem() {
+      this.subItem.name = this.form.name;
       await this.$store.dispatch("updateSubItem", {
         listId: this.listId,
-        todoItemId: this.subItem.listItemId,
-        subItemId: this.subItem.id,
-        name: this.form.name
+        subItem: this.subItem
       });
       this.editingSubItem = false;
     },
 
     async deleteSubItem() {
-      this.$store.commit("trashSubItem", {
-        subItem: this.subItem
-      });
       await this.$store.dispatch("trashSubItem", {
         listId: this.listId,
         todoItemId: this.subItem.listItemId,
         subItemId: this.subItem.id
-      });
-      await this.$store.dispatch("loadItemsByListId", {
-        todoListId: this.listId
       });
     }
 
@@ -37397,25 +37415,33 @@ exports.default = _default;
               ),
               _vm._v(" "),
               _c(
-                "b-button",
-                {
-                  staticClass: "mr-1",
-                  attrs: { size: "sm", variant: "success", type: "submit" }
-                },
-                [_vm._v("Save")]
-              ),
-              _vm._v(" "),
-              _c(
-                "b-button",
-                {
-                  attrs: { size: "sm", variant: "secondary" },
-                  on: {
-                    click: function($event) {
-                      _vm.editingSubItem = false
-                    }
-                  }
-                },
-                [_vm._v("Cancel")]
+                "div",
+                { staticClass: "d-flex justify-content-end" },
+                [
+                  _c(
+                    "b-button",
+                    {
+                      staticClass: "flex-grow-0 mr-1",
+                      attrs: { size: "sm", variant: "success", type: "submit" }
+                    },
+                    [_vm._v("Save")]
+                  ),
+                  _vm._v(" "),
+                  _c(
+                    "b-button",
+                    {
+                      staticClass: "flex-grow-0",
+                      attrs: { size: "sm", variant: "secondary" },
+                      on: {
+                        click: function($event) {
+                          _vm.editingSubItem = false
+                        }
+                      }
+                    },
+                    [_vm._v("Cancel")]
+                  )
+                ],
+                1
               )
             ],
             1
@@ -37488,29 +37514,35 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 //
 //
 //
-//
-//
 var _default = {
-  props: ['todoListItem'],
+  props: ["todoListItem"],
   components: {
     Draggable: _vuedraggable.default,
     SubItem: _SubItem.default
   },
 
   async created() {
-    this.items = this.setSubItems();
     await this.getLayout();
+    this.items = this.setSubItems();
+    this.loadingSubItems = false;
   },
 
   mounted() {
     this.$store.state.connection.on("ItemLayoutUpdated", async itemId => await this.refreshSubItemLayout(itemId));
-    this.$store.state.connection.on("SubItemTrashed", async (itemId, subItem) => await this.refreshSubItemLayout(itemId));
+    this.$store.state.connection.on("SubItemTrashed", async (todoItemId, subItem) => {
+      this.$store.commit("trashSubItem", {
+        todoItemId,
+        subItemId: subItem.id
+      });
+      await this.refreshSubItemLayout(todoItemId);
+    });
   },
 
   data() {
     return {
       items: [],
-      layout: []
+      layout: [],
+      loadingSubItems: true
     };
   },
 
@@ -37518,7 +37550,7 @@ var _default = {
     async getLayout() {
       try {
         const response = await (0, _axios.default)({
-          method: 'GET',
+          method: "GET",
           url: "api/lists/".concat(this.todoListItem.listId, "/todos/").concat(this.todoListItem.id, "/layout")
         });
         this.layout = response.data.layout;
@@ -37528,15 +37560,15 @@ var _default = {
     },
 
     async updateSubItemPosition(event) {
-      const subItemId = event.item.getAttribute('data-id');
+      const subItemId = event.item.getAttribute("data-id");
       const position = event.newIndex;
 
       try {
         await (0, _axios.default)({
-          method: 'PUT',
+          method: "PUT",
           url: "api/lists/".concat(this.todoListItem.listId, "/todos/").concat(this.todoListItem.id, "/layout"),
           headers: {
-            'content-type': 'application/json'
+            "content-type": "application/json"
           },
           data: JSON.stringify({
             subItemId,
@@ -37558,6 +37590,32 @@ var _default = {
       return this.$store.getters.getSubItemsByItemId(this.todoListItem.id);
     }
 
+  },
+  computed: {
+    subItemsCompleted() {
+      var _this$items;
+
+      return this.items.every(item => item.completed) && ((_this$items = this.items) === null || _this$items === void 0 ? void 0 : _this$items.length) > 0;
+    }
+
+  },
+  watch: {
+    items: async function () {
+      await this.getLayout();
+    },
+    subItemsCompleted: function () {
+      if (this.subItemsCompleted && !this.todoListItem.completed) {
+        this.todoListItem.completed = true;
+        this.$store.commit("updateItemCompletedState", {
+          item: this.todoListItem
+        });
+      } else if (!this.subItemsCompleted && this.todoListItem.completed) {
+        this.todoListItem.completed = false;
+        this.$store.commit("updateItemCompletedState", {
+          item: this.todoListItem
+        });
+      }
+    }
   }
 };
 exports.default = _default;
@@ -37573,44 +37631,46 @@ exports.default = _default;
   var _vm = this
   var _h = _vm.$createElement
   var _c = _vm._self._c || _h
-  return _c(
-    "b-list-group",
-    [
-      _c(
-        "Draggable",
-        {
-          attrs: { handle: ".sub-item-handle" },
-          on: { end: _vm.updateSubItemPosition },
-          model: {
-            value: _vm.layout,
-            callback: function($$v) {
-              _vm.layout = $$v
-            },
-            expression: "layout"
-          }
-        },
+  return !_vm.loadingSubItems
+    ? _c(
+        "b-list-group",
         [
-          _vm._l(_vm.layout, function(itemId) {
-            return _c("SubItem", {
-              key: itemId,
-              attrs: {
-                subItem: _vm.items.find(function(x) {
-                  return x.id === itemId
-                }),
-                listId: _vm.todoListItem.listId
+          _c(
+            "Draggable",
+            {
+              attrs: { handle: ".sub-item-handle" },
+              on: { end: _vm.updateSubItemPosition },
+              model: {
+                value: _vm.layout,
+                callback: function($$v) {
+                  _vm.layout = $$v
+                },
+                expression: "layout"
               }
-            })
-          }),
-          _vm._v(" "),
-          _vm.layout.length < 1
-            ? _c("b-list-group-item", [_vm._v("There are no sub-items.")])
-            : _vm._e()
+            },
+            [
+              _vm._l(_vm.layout, function(itemId) {
+                return _c("SubItem", {
+                  key: itemId,
+                  attrs: {
+                    subItem: _vm.items.find(function(x) {
+                      return x.id === itemId
+                    }),
+                    listId: _vm.todoListItem.listId
+                  }
+                })
+              }),
+              _vm._v(" "),
+              _vm.layout.length < 1
+                ? _c("b-list-group-item", [_vm._v("There are no sub-items.")])
+                : _vm._e()
+            ],
+            2
+          )
         ],
-        2
+        1
       )
-    ],
-    1
-  )
+    : _vm._e()
 }
 var staticRenderFns = []
 render._withStripped = true
@@ -38311,10 +38371,9 @@ var _default = {
       },
 
       set(value) {
+        this.todoListItem.completed = value;
         this.$store.dispatch("toggleItemCompletedState", {
-          listId: this.todoListItem.listId,
-          itemId: this.todoListItem.id,
-          completed: value
+          item: this.todoListItem
         });
       }
 
@@ -38522,8 +38581,6 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 //
 //
 //
-//
-//
 var _default = {
   name: "TodoListItems",
   props: ["listId", "todoListItems"],
@@ -38534,8 +38591,8 @@ var _default = {
     };
   },
 
-  created() {
-    this.getLayout();
+  async created() {
+    await this.getLayout();
   },
 
   mounted() {
@@ -38544,13 +38601,12 @@ var _default = {
   },
 
   methods: {
-    getLayout() {
-      (0, _axios.default)({
+    async getLayout() {
+      const response = await (0, _axios.default)({
         method: "GET",
         url: "api/lists/".concat(this.listId, "/layout")
-      }).then(response => {
-        this.layout = response.data;
       });
+      this.layout = response.data;
     },
 
     updateLayout(e) {
@@ -38576,6 +38632,11 @@ var _default = {
     }
 
   },
+  watch: {
+    todoListItems: function () {
+      this.refreshLayout(this.listId);
+    }
+  },
   components: {
     Draggable: _vuedraggable.default,
     TodoListItem: _TodoListItem.default
@@ -38598,10 +38659,6 @@ exports.default = _default;
     "b-list-group",
     { staticClass: "todo-list-items" },
     [
-      _vm.todoListItems.length < 1
-        ? _c("b-list-group-item", [_vm._v("Add an item to get started.")])
-        : _vm._e(),
-      _vm._v(" "),
       _c(
         "Draggable",
         {
@@ -38909,6 +38966,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 //
 //
 //
+//
 _vue.default.use(_vueConfetti.default);
 
 var _default = {
@@ -38921,7 +38979,8 @@ var _default = {
       editingTitle: false,
       form: {
         title: ""
-      }
+      },
+      loadingItems: true
     };
   },
 
@@ -38930,6 +38989,7 @@ var _default = {
       todoListId: this.todoListId
     });
     this.items = this.getItems();
+    this.loadingItems = false;
   },
 
   destroyed() {
@@ -38946,7 +39006,7 @@ var _default = {
     },
 
     allItemsCompleted() {
-      return this.items.every(item => item.completed === true) && this.items.length > 0;
+      return this.items.every(item => item.completed) && this.items.length > 0;
     }
 
   },
@@ -38960,8 +39020,16 @@ var _default = {
           particlesPerFrame: 0.5,
           dropRate: 8
         });
+        this.$store.commit("setTodoListCompletedState", {
+          listId: this.todoListId,
+          listCompletedState: true
+        });
       } else {
         this.$confetti.stop();
+        this.$store.commit("setTodoListCompletedState", {
+          listId: this.todoListId,
+          listCompletedState: false
+        });
       }
     }
   },
@@ -39086,13 +39154,19 @@ exports.default = _default;
                 class: { "col-md-8": _vm.list.role == 3 }
               },
               [
-                _vm.items.length > 0
+                !_vm.loadingItems
                   ? _c("TodoListItems", {
                       attrs: {
                         listId: _vm.todoListId,
                         todoListItems: _vm.items
                       }
                     })
+                  : _vm._e(),
+                _vm._v(" "),
+                _vm.items && _vm.items.length < 1
+                  ? _c("b-list-group-item", [
+                      _vm._v("Add an item to get started.")
+                    ])
                   : _vm._e(),
                 _vm._v(" "),
                 _c("AddTodoListItemForm", {
@@ -47748,10 +47822,16 @@ var _default = {
       listId,
       listCompletedState
     }));
-    this.$store.state.connection.on("ItemCreated", (listId, item) => this.$store.commit("addItem", {
-      listId,
-      item
-    }));
+    this.$store.state.connection.on("ItemCreated", (listId, item) => {
+      this.$store.commit("addItem", {
+        listId,
+        item
+      });
+      this.$store.commit("setSubItems", {
+        todoItemId: item.id,
+        subItems: []
+      });
+    });
     this.$store.state.connection.on("ItemCompleted", item => this.$store.commit("updateItemCompletedState", {
       item
     }));
@@ -47762,7 +47842,9 @@ var _default = {
       subItem
     }));
     this.$store.state.connection.on("SubItemCompletedStateChanged", subItem => this.$store.commit("updateSubItemCompletedState", {
-      subItem
+      todoItemId: subItem.listItemId,
+      subItemId: subItem.id,
+      completed: subItem.completed
     }));
     this.$store.state.connection.on("SubItemUpdated", subItem => this.$store.commit("updateSubItem", {
       subItem
@@ -97153,7 +97235,11 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
+<<<<<<< HEAD
   var ws = new WebSocket(protocol + '://' + hostname + ':' + "50764" + '/');
+=======
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "50911" + '/');
+>>>>>>> master
 
   ws.onmessage = function (event) {
     checkedAssets = {};

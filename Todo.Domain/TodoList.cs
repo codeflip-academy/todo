@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Todo.Core;
 using Todo.Domain.DomainEvents;
 
 namespace Todo.Domain
@@ -75,9 +76,15 @@ namespace Todo.Domain
                 return;
             Contributors.Add(email);
         }
+        public void RemoveContribuor(string email)
+        {
+            if(email == null)
+                return;
+            Contributors.Remove(email);
+        }
         public void UpdateListName()
         {
-            DomainEvents.Add(new ListNameUpdated { List = this });
+            DomainEvents.Add(new ListNameUpdated { List = this,  });
         }
 
         public int GetContributorCountExcludingOwner()

@@ -24,6 +24,13 @@ namespace TodoWebAPI.UserStories
 
         public async Task<bool> Handle(CreateSubscription request, CancellationToken cancellationToken)
         {
+            var account = await _account.FindAccountByIdAsync(request.AccountId);
+
+            if (account.SubscriptionId != null)
+            {
+                return true;
+            }
+
             var gateway = _braintreeConfiguration.GetGateway();
 
             var paymentMethod = await _paymentMethod.FindByAccountIdAsync(request.AccountId);
@@ -37,7 +44,6 @@ namespace TodoWebAPI.UserStories
                 Id = Guid.NewGuid().ToString()
             };
 
-            var account = await _account.FindAccountByIdAsync(request.AccountId);
             account.SubscriptionId = re.Id;
 
             await _account.SaveChangesAsync();

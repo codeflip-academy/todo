@@ -26,7 +26,6 @@ using System.Text.Json;
 using Octokit;
 using Octokit.Internal;
 using TodoWebAPI.Models;
-using Todo.Infrastructure.Guids;
 using Dapper;
 using TodoWebAPI.TypeHandlers;
 using TodoWebAPI.SignalR;
@@ -34,6 +33,8 @@ using Microsoft.AspNetCore.SignalR;
 using TodoWebAPI.BraintreeService;
 using TodoWebAPI.ServiceBus;
 using Todo.Infrastructure.PaymentMethods;
+using Todo.Domain;
+using Todo.Core;
 
 namespace TodoWebAPI
 {
@@ -76,6 +77,7 @@ namespace TodoWebAPI
             services.AddScoped<ISequentialIdGenerator, SequentialIdGenerator>();
             services.AddControllers();
             services.AddMediatR(typeof(Startup).GetTypeInfo().Assembly);
+            services.AddHttpContextAccessor();
             services.AddScoped<IBraintreeConfiguration, BraintreeConfiguration>();
             services.AddSingleton<IServiceBusConsumer, ServiceBusConsumer>();
             services.AddSingleton<IEmailQueue, AzureServiceBusEmailQueue>();

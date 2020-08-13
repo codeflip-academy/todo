@@ -8,7 +8,6 @@ using System.Threading.Tasks;
 using Todo.Domain;
 using Todo.Domain.Repositories;
 using Todo.Infrastructure;
-using Todo.Infrastructure.Guids;
 using TodoWebAPI.BraintreeService;
 using TodoWebAPI.Models;
 
