@@ -5,10 +5,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Todo.Core;
 using Todo.Domain;
 using Todo.Domain.Repositories;
 using Todo.Infrastructure;
-using Todo.Infrastructure.Guids;
 
 namespace TodoWebAPI.Data
 {

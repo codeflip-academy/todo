@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Linq;
 using Todo.Domain.DomainEvents;
+using Todo.Core;
 
 namespace Todo.Domain
 {

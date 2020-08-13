@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using Todo.Core;
 using Todo.Domain.DomainEvents;
 
 namespace Todo.Domain
