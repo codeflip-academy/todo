@@ -197,5 +197,18 @@ namespace TodoWebAPI.Controllers
 
             return BadRequest();
         }
+
+        [HttpDelete, Route("paymentMethod/delete")]
+        public async Task<IActionResult> DeletePayment(DeletePaymentMethod deletePaymentMethod)
+        {
+            var accountId = Guid.Parse(User.FindFirst(c => c.Type == "urn:codefliptodo:accountid").Value);
+            var paymentMethod = await _paymentMethod.FindByAccountIdAsync(accountId);
+
+            deletePaymentMethod.Method = paymentMethod;
+
+            await _mediator.Send(deletePaymentMethod);
+
+            return Ok();
+        }
     }
 }

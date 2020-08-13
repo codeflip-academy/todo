@@ -9,6 +9,7 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Todo.Domain;
 using Todo.Domain.DomainEvents;
 using Todo.Domain.Repositories;
 using Todo.Infrastructure.Email;
@@ -22,13 +23,22 @@ namespace TodoWebAPI.DomainEventHandlers
         private readonly IConfiguration _config;
         private readonly DapperQuery _dapper;
         private readonly ILogger _logger;
+        private readonly IAccountRepository _account;
+        private readonly IAccountPlanRepository _accountPlan;
 
-        public SendEmailWhenListIsCompletedDomainEventHandler(IConfiguration config, DapperQuery dapper, IEmailQueue emailQueue, ILogger<SendEmailWhenListIsCompletedDomainEventHandler> logger)
+        public SendEmailWhenListIsCompletedDomainEventHandler(IConfiguration config,
+         DapperQuery dapper,
+          IEmailQueue emailQueue,
+           ILogger<SendEmailWhenListIsCompletedDomainEventHandler> logger,
+           IAccountRepository account,
+           IAccountPlanRepository accountPlan)
         {
             _config = config;
             _dapper = dapper;
             _emailQueue = emailQueue;
             _logger = logger;
+            _account = account;
+            _accountPlan = accountPlan;
         }
         public async Task Handle(TodoListCompletedStateChanged notification, CancellationToken cancellationToken)
         {
@@ -43,14 +53,20 @@ namespace TodoWebAPI.DomainEventHandlers
             {
                 foreach (var userEmail in emails)
                 {
-                    messages.Add(
-                        new EmailMessage()
-                        {
-                            To = userEmail,
-                            From = _config.GetSection("Emails")["Notifications"],
-                            Subject = $"You completed a list!",
-                            Body = $"{list.ListTitle} is completed! Nice work!"
-                        });
+                    var account = await _account.FindAccountByEmailAsync(userEmail);
+                    var accountPlan = await _accountPlan.FindAccountPlanByAccountIdAsync(account.Id);
+
+                    if (accountPlan.PlanId == PlanTiers.Basic || accountPlan.PlanId == PlanTiers.Premium)
+                    {
+                        messages.Add(
+                            new EmailMessage()
+                            {
+                                To = userEmail,
+                                From = _config.GetSection("Emails")["Notifications"],
+                                Subject = $"You completed a list!",
+                                Body = $"{list.ListTitle} is completed! Nice work!"
+                            });
+                    }
                 }
 
                 _logger.LogInformation($"Sending email notification for completed list {list.Id}.");
