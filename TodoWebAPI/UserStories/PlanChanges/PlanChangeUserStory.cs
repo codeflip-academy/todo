@@ -8,7 +8,7 @@ using Todo.Infrastructure;
 
 namespace TodoWebAPI.UserStories.RoleChanges
 {
-    public class PlanChangeUserStory : IRequestHandler<PlanChange, bool>
+    public class PlanChangeUserStory : IRequestHandler<ChangePlan, bool>
     {
         private readonly IAccountPlanRepository _accountPlan;
 
@@ -17,7 +17,7 @@ namespace TodoWebAPI.UserStories.RoleChanges
             _accountPlan = accountPlan;
         }
 
-        public async Task<bool> Handle(PlanChange request, CancellationToken cancellationToken)
+        public async Task<bool> Handle(ChangePlan request, CancellationToken cancellationToken)
         {
             var accountPlan = await _accountPlan.FindAccountPlanByAccountIdAsync(request.AccountId);
 

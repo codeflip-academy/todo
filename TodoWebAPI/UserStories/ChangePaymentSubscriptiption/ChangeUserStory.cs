@@ -33,7 +33,7 @@ namespace TodoWebAPI.UserStories
             var paymentMethod = await _paymentMethod.FindByAccountIdAsync(request.AccountId);
             var account = await _account.FindAccountByIdAsync(request.AccountId);
             var subscriptionId = Guid.NewGuid().ToString();
-            var plans = gateway.Plan.All();
+            var plans = await gateway.Plan.AllAsync();
 
             var plan = (from p in plans where p.Name == request.Plan select p).FirstOrDefault();
 
@@ -41,9 +41,9 @@ namespace TodoWebAPI.UserStories
             {
                 var brainPlanValue = SubscriptionHelper.ConvertPlanToBrainTreeType(request.Plan);
 
-                Subscription subscription = gateway.Subscription.Find(account.SubscriptionId);
+                Subscription subscription = await gateway.Subscription.FindAsync(account.SubscriptionId);
 
-                var result = gateway.Subscription.Update(subscription.Id, new SubscriptionRequest
+                var result = await gateway.Subscription.UpdateAsync(subscription.Id, new SubscriptionRequest
                 {
                     Id = subscriptionId,
                     PaymentMethodToken = paymentMethod.TokenId,
