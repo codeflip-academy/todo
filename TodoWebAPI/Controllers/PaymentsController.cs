@@ -88,18 +88,17 @@ namespace TodoWebAPI.Controllers
             var subscriptionId = Guid.NewGuid().ToString();
 
             addPayment.AccountId = accountId;
+
             var paymentMethodAdded = await _mediator.Send(addPayment);
 
             if (account.SubscriptionId != null)
             {
-                var subscriptionUpdated = await gateway.Subscription.UpdateAsync(account.SubscriptionId, new SubscriptionRequest
+                var updateSubscription = new UpdateSubscriptionPaymentMethod
                 {
-                    Id = subscriptionId,
-                    PaymentMethodToken = account.PaymentMethodId,
-                });
+                    AccountId = accountId
+                };
 
-                account.SubscriptionId = subscriptionId;
-                await _accountRepository.SaveChangesAsync();
+                await _mediator.Send(updateSubscription);
             }
 
             if (previousPaymentMethodId != null)
