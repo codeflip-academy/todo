@@ -36900,11 +36900,25 @@ var _default = {
     return {
       subItems: [],
       subItemsLayout: [],
-      loadingSubItems: false
+      loadingSubItems: true
     };
   },
 
+  async created() {
+    await this.dispatchGetSubItems();
+  },
+
   methods: {
+    async dispatchGetSubItems() {
+      this.commitSetLoadingSubItemsState(true);
+      const response = await (0, _axios.default)({
+        method: "GET",
+        url: "api/lists/".concat(this.todoListItem.listId, "/todos/").concat(this.todoListItem.id, "/subitems")
+      });
+      this.commitSetSubItems(response.data);
+      this.commitSetLoadingSubItemsState(false);
+    },
+
     async dispatchAddSubItem(subItemName) {
       const response = await (0, _axios.default)({
         method: "POST",
@@ -36922,13 +36936,19 @@ var _default = {
 
     async dispatchUpdateSubItemPosition() {},
 
+    commitSetLoadingSubItemsState(state) {
+      this.loadingSubItems = state;
+    },
+
+    commitSetSubItems(subItems) {
+      this.subItems = subItems;
+    },
+
     commitAddSubItem(subItem) {
       this.subItems.unshift(subItem);
     }
 
-  },
-  computed: {},
-  watch: {}
+  }
 };
 exports.default = _default;
         var $9ad823 = exports.default || module.exports;

@@ -37,10 +37,25 @@ export default {
     return {
       subItems: [],
       subItemsLayout: [],
-      loadingSubItems: false,
+      loadingSubItems: true,
     };
   },
+  async created() {
+    await this.dispatchGetSubItems();
+  },
   methods: {
+    async dispatchGetSubItems() {
+      this.commitSetLoadingSubItemsState(true);
+
+      const response = await axios({
+        method: "GET",
+        url: `api/lists/${this.todoListItem.listId}/todos/${this.todoListItem.id}/subitems`,
+      });
+
+      this.commitSetSubItems(response.data);
+
+      this.commitSetLoadingSubItemsState(false);
+    },
     async dispatchAddSubItem(subItemName) {
       const response = await axios({
         method: "POST",
@@ -54,11 +69,15 @@ export default {
       this.commitAddSubItem(newSubItem);
     },
     async dispatchUpdateSubItemPosition() {},
+    commitSetLoadingSubItemsState(state) {
+      this.loadingSubItems = state;
+    },
+    commitSetSubItems(subItems) {
+      this.subItems = subItems;
+    },
     commitAddSubItem(subItem) {
       this.subItems.unshift(subItem);
     },
   },
-  computed: {},
-  watch: {},
 };
 </script>
