@@ -39,6 +39,9 @@ const store = new Vuex.Store({
     },
     updateTodoListTitle(state, { todoListId, listTitle }) {
       state.todoLists[state.todoLists.findIndex((t) => t.id === todoListId)].listTitle = listTitle;
+    },
+    setTodoListCompletedState(state, { todoListId, completed }) {
+      state.todoLists[state.todoLists.findIndex((t) => t.id === todoListId)].completed = completed;
     }
   },
   actions: {

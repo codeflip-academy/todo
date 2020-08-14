@@ -19039,6 +19039,13 @@ const store = new _vuex.default.Store({
       listTitle
     }) {
       state.todoLists[state.todoLists.findIndex(t => t.id === todoListId)].listTitle = listTitle;
+    },
+
+    setTodoListCompletedState(state, {
+      todoListId,
+      completed
+    }) {
+      state.todoLists[state.todoLists.findIndex(t => t.id === todoListId)].completed = completed;
     }
 
   },
@@ -38094,18 +38101,30 @@ var _default = {
 
     commitSetItemCompletedState(itemId, completed) {
       this.items[this.items.findIndex(i => i.id === itemId)].completed = completed;
+      this.triggerTodoListCompletedEvent();
     },
 
     commitDeleteItem(itemId) {
-      this.items.splice(this.items.indexOf(itemId), 1);
+      this.items.splice(this.items.findIndex(i => i.id == itemId), 1);
+    },
+
+    triggerTodoListCompletedEvent() {
+      const listCompleted = this.items.length > 0 && this.items.every(item => item.completed);
+      if (listCompleted) this.$emit("todo-list-completed");else this.$emit("todo-list-uncompleted");
     }
 
   },
 
   async created() {
     await this.dispatchGetItems();
-  }
+  },
 
+  watch: {
+    items() {
+      this.triggerTodoListCompletedEvent();
+    }
+
+  }
 };
 exports.default = _default;
         var $642124 = exports.default || module.exports;
@@ -38438,6 +38457,10 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 //
 //
 //
+//
+//
+//
+//
 _vue.default.use(_vueConfetti.default);
 
 var _default = {
@@ -38453,9 +38476,17 @@ var _default = {
     };
   },
 
+  destroyed() {
+    this.stopConfetti();
+  },
+
   computed: {
     todoList() {
       return this.$store.getters.getTodoListById(this.todoListId);
+    },
+
+    todoListCompleted() {
+      return this.todoList.completed;
     },
 
     ...(0, _vuex.mapState)({
@@ -38483,8 +38514,49 @@ var _default = {
         listTitle: this.form.title
       });
       this.todoListForm.listTitle = "";
+    },
+
+    setTodoListCompleted() {
+      this.$store.commit("setTodoListCompletedState", {
+        todoListId: this.todoListId,
+        completed: true
+      });
+    },
+
+    setTodoListUncompleted() {
+      this.$store.commit("setTodoListCompletedState", {
+        todoListId: this.todoListId,
+        completed: false
+      });
+    },
+
+    throwConfetti() {
+      this.$confetti.start({
+        particles: [{
+          type: "rect"
+        }],
+        particlesPerFrame: 0.4,
+        dropRate: 8
+      });
+    },
+
+    stopConfetti() {
+      this.$confetti.stop();
     }
 
+  },
+  watch: {
+    todoListCompleted: {
+      handler() {
+        if (this.todoListCompleted) {
+          this.throwConfetti();
+        } else {
+          this.stopConfetti();
+        }
+      },
+
+      immediate: true
+    }
   }
 };
 exports.default = _default;
@@ -38577,7 +38649,15 @@ exports.default = _default;
                 staticClass: "mb-3",
                 class: { "col-md-8": _vm.todoList.role == 3 }
               },
-              [_c("TodoListItems", { attrs: { todoListId: _vm.todoListId } })],
+              [
+                _c("TodoListItems", {
+                  attrs: { todoListId: _vm.todoListId },
+                  on: {
+                    "todo-list-completed": _vm.setTodoListCompleted,
+                    "todo-list-uncompleted": _vm.setTodoListUncompleted
+                  }
+                })
+              ],
               1
             ),
             _vm._v(" "),

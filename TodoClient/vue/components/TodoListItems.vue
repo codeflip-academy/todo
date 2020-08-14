@@ -103,13 +103,30 @@ export default {
       this.items[
         this.items.findIndex((i) => i.id === itemId)
       ].completed = completed;
+
+      this.triggerTodoListCompletedEvent();
     },
     commitDeleteItem(itemId) {
-      this.items.splice(this.items.indexOf(itemId), 1);
+      this.items.splice(
+        this.items.findIndex((i) => i.id == itemId),
+        1
+      );
+    },
+    triggerTodoListCompletedEvent() {
+      const listCompleted =
+        this.items.length > 0 && this.items.every((item) => item.completed);
+
+      if (listCompleted) this.$emit("todo-list-completed");
+      else this.$emit("todo-list-uncompleted");
     },
   },
   async created() {
     await this.dispatchGetItems();
+  },
+  watch: {
+    items() {
+      this.triggerTodoListCompletedEvent();
+    },
   },
 };
 </script>

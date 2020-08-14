@@ -29,7 +29,11 @@
 
       <b-row>
         <b-col class="mb-3" :class="{ 'col-md-8': todoList.role == 3 }">
-          <TodoListItems :todoListId="todoListId"></TodoListItems>
+          <TodoListItems
+            :todoListId="todoListId"
+            @todo-list-completed="setTodoListCompleted"
+            @todo-list-uncompleted="setTodoListUncompleted"
+          ></TodoListItems>
         </b-col>
 
         <b-col md="4" v-if="todoList.role == 3">
@@ -62,9 +66,15 @@ export default {
       },
     };
   },
+  destroyed() {
+    this.stopConfetti();
+  },
   computed: {
     todoList() {
       return this.$store.getters.getTodoListById(this.todoListId);
+    },
+    todoListCompleted() {
+      return this.todoList.completed;
     },
     ...mapState({
       contributors: (state) => state.contributors,
@@ -92,6 +102,40 @@ export default {
       });
 
       this.todoListForm.listTitle = "";
+    },
+    setTodoListCompleted() {
+      this.$store.commit("setTodoListCompletedState", {
+        todoListId: this.todoListId,
+        completed: true,
+      });
+    },
+    setTodoListUncompleted() {
+      this.$store.commit("setTodoListCompletedState", {
+        todoListId: this.todoListId,
+        completed: false,
+      });
+    },
+    throwConfetti() {
+      this.$confetti.start({
+        particles: [{ type: "rect" }],
+        particlesPerFrame: 0.4,
+        dropRate: 8,
+      });
+    },
+    stopConfetti() {
+      this.$confetti.stop();
+    },
+  },
+  watch: {
+    todoListCompleted: {
+      handler() {
+        if (this.todoListCompleted) {
+          this.throwConfetti();
+        } else {
+          this.stopConfetti();
+        }
+      },
+      immediate: true,
     },
   },
 };
