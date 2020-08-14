@@ -11,6 +11,7 @@
           :key="subItem.id"
           :subItem="subItem"
           :listId="todoListItem.listId"
+          @checkbox-clicked="dispatchSetSubItemCompletedState"
           @delete-sub-item="dispatchDeleteSubItem"
         ></SubItem>
         <b-list-group-item v-if="subItems.length < 1">There are no sub-items.</b-list-group-item>
@@ -69,6 +70,18 @@ export default {
 
       this.commitAddSubItem(newSubItem);
     },
+    async dispatchSetSubItemCompletedState({ subItemId, completed }) {
+      this.commitSetSubItemCompletedState(subItemId, completed);
+
+      await axios({
+        method: "PUT",
+        url: `api/lists/${this.todoListItem.listId}/todos/${this.todoListItem.id}/subitems/${subItemId}/completed`,
+        headers: {
+          "content-type": "application/json",
+        },
+        data: completed,
+      });
+    },
     async dispatchDeleteSubItem(subItemId) {
       this.commitDeleteSubItem(subItemId);
 
@@ -92,6 +105,11 @@ export default {
     },
     commitAddSubItem(subItem) {
       this.subItems.unshift(subItem);
+    },
+    commitSetSubItemCompletedState(subItemId, completed) {
+      this.subItems[
+        this.subItems.findIndex((s) => s.id == subItemId)
+      ].completed = completed;
     },
   },
 };

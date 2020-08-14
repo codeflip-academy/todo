@@ -36480,7 +36480,6 @@ exports.default = void 0;
 //
 var _default = {
   props: ["listId", "subItem"],
-  computed: {},
 
   data() {
     return {
@@ -36491,6 +36490,18 @@ var _default = {
     };
   },
 
+  computed: {
+    subItemCompletedState: {
+      get() {
+        return this.subItem.completed;
+      },
+
+      set(val) {
+        this.sendCheckboxClickedEvent(val);
+      }
+
+    }
+  },
   methods: {
     focusForm() {
       this.editingSubItem = true;
@@ -36501,6 +36512,13 @@ var _default = {
 
     sendDeleteSubItemEvent() {
       this.$emit("delete-sub-item", this.subItem.id);
+    },
+
+    sendCheckboxClickedEvent(completed) {
+      this.$emit("checkbox-clicked", {
+        subItemId: this.subItem.id,
+        completed: completed
+      });
     }
 
   }
@@ -36538,11 +36556,11 @@ exports.default = _default;
             [
               _c("b-form-checkbox", {
                 model: {
-                  value: _vm.subItem.completed,
+                  value: _vm.subItemCompletedState,
                   callback: function($$v) {
-                    _vm.$set(_vm.subItem, "completed", $$v)
+                    _vm.subItemCompletedState = $$v
                   },
-                  expression: "subItem.completed"
+                  expression: "subItemCompletedState"
                 }
               })
             ],
@@ -36893,6 +36911,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 //
 //
 //
+//
 var _default = {
   props: ["todoListItem"],
   components: {
@@ -36939,6 +36958,21 @@ var _default = {
       this.commitAddSubItem(newSubItem);
     },
 
+    async dispatchSetSubItemCompletedState({
+      subItemId,
+      completed
+    }) {
+      this.commitSetSubItemCompletedState(subItemId, completed);
+      await (0, _axios.default)({
+        method: "PUT",
+        url: "api/lists/".concat(this.todoListItem.listId, "/todos/").concat(this.todoListItem.id, "/subitems/").concat(subItemId, "/completed"),
+        headers: {
+          "content-type": "application/json"
+        },
+        data: completed
+      });
+    },
+
     async dispatchDeleteSubItem(subItemId) {
       this.commitDeleteSubItem(subItemId);
       await (0, _axios.default)({
@@ -36963,6 +36997,10 @@ var _default = {
 
     commitAddSubItem(subItem) {
       this.subItems.unshift(subItem);
+    },
+
+    commitSetSubItemCompletedState(subItemId, completed) {
+      this.subItems[this.subItems.findIndex(s => s.id == subItemId)].completed = completed;
     }
 
   }
@@ -37009,7 +37047,11 @@ exports.default = _default;
                         subItem: subItem,
                         listId: _vm.todoListItem.listId
                       },
-                      on: { "delete-sub-item": _vm.dispatchDeleteSubItem }
+                      on: {
+                        "checkbox-clicked":
+                          _vm.dispatchSetSubItemCompletedState,
+                        "delete-sub-item": _vm.dispatchDeleteSubItem
+                      }
                     })
                   }),
                   _vm._v(" "),

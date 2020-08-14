@@ -5,7 +5,7 @@
     </div>
 
     <div class="sub-item-checkbox-wrapper" v-if="!editingSubItem">
-      <b-form-checkbox v-model="subItem.completed"></b-form-checkbox>
+      <b-form-checkbox v-model="subItemCompletedState"></b-form-checkbox>
     </div>
 
     <div class="sub-item-name" @click="focusForm" v-if="!editingSubItem">{{ subItem.name }}</div>
@@ -42,7 +42,6 @@
 <script>
 export default {
   props: ["listId", "subItem"],
-  computed: {},
   data() {
     return {
       editingSubItem: false,
@@ -50,6 +49,16 @@ export default {
         name: this.subItem.name,
       },
     };
+  },
+  computed: {
+    subItemCompletedState: {
+      get() {
+        return this.subItem.completed;
+      },
+      set(val) {
+        this.sendCheckboxClickedEvent(val);
+      },
+    },
   },
   methods: {
     focusForm() {
@@ -61,6 +70,12 @@ export default {
     },
     sendDeleteSubItemEvent() {
       this.$emit("delete-sub-item", this.subItem.id);
+    },
+    sendCheckboxClickedEvent(completed) {
+      this.$emit("checkbox-clicked", {
+        subItemId: this.subItem.id,
+        completed: completed,
+      });
     },
   },
 };
