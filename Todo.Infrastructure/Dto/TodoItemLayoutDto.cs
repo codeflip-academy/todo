@@ -4,11 +4,10 @@ using System.Linq;
 using System.Threading.Tasks;
 using Todo.Domain;
 using TodoWebAPI.Data;
-using TodoWebAPI.Models;
 
-namespace TodoWebAPI.Presentation
+namespace Todo.Infrastructure.Dto
 {
-    public class TodoItemLayoutPresentation
+    public class TodoItemLayoutDto
     {
         public List<string> Layout { get; set; }
     }

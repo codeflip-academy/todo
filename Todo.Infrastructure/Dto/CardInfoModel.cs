@@ -1,8 +1,8 @@
 using System;
 
-namespace TodoWebAPI.Models
+namespace Todo.Infrastructure
 {
-    public class CardInfoModel
+    public class CardInfoDto
     {
         public string CardType { get; set; }
         public string LastFourDigits { get; set; }

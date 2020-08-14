@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using Newtonsoft.Json.Linq;
 
-namespace TodoWebAPI.Models
+namespace Todo.Infrastructure.Dto
 {
-    public class TodoListModel
+    public class TodoListDto
     {
         public Guid Id { get; set; }
         public string ListTitle { get; set; }

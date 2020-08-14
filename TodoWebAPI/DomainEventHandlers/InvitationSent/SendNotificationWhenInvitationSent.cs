@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Todo.Domain;
 using Todo.Domain.Repositories;
 using Todo.Infrastructure;
+using Todo.Infrastructure.Dto;
 using TodoWebAPI.Models;
 using TodoWebAPI.SignalR;
 
@@ -38,7 +39,7 @@ namespace TodoWebAPI.DomainEventHandlers.Invitation
             var invitee = await _accountRepository.FindAccountByIdAsync(notification.InviteeAccountId);
             var accountsLists = await _accountsListsRepository.FindAccountsListsByAccountIdAndListIdAsync(invitee.Id, list.Id);
 
-            var listModel = new TodoListModel()
+            var listModel = new TodoListDto()
             {
                 Id = list.Id,
                 Contributors = list.Contributors,

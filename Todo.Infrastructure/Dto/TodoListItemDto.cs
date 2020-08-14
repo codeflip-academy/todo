@@ -2,16 +2,18 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Todo.Domain;
+using TodoWebAPI.Data;
 
-namespace TodoWebAPI.Models
+namespace Todo.Infrastructure.Dto
 {
-    public class TodoListItemModel
+    public class TodoListItemDto
     {
         public Guid Id { get; set; }
         public string Notes { get; set; }
+        public bool Completed { get; protected set; }
         public string Name { get; set; }
-        public Guid ListId { get; set; }
-        public bool Completed { get; set; }
+        public Guid? ListId { get; set; }
         public DateTime? DueDate { get; set; }
     }
 }

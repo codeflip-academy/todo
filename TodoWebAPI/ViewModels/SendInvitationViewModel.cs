@@ -2,7 +2,7 @@ using System;
 using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Mvc;
 
-namespace TodoWebAPI.Models
+namespace TodoWebAPI.ViewModels
 {
     public class SendInvitationViewModel
     {

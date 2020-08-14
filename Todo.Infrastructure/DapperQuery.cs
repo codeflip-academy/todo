@@ -3,10 +3,9 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Todo.Domain;
 using System.Data.SqlClient;
-using TodoWebAPI.Presentation;
+using Todo.Infrastructure.Dto;
 using Dapper;
 using Dapper.Transaction;
-using TodoWebAPI.Models;
 using System.Collections.Generic;
 using System.Linq;
 using Todo.Infrastructure;
@@ -21,27 +20,27 @@ namespace TodoWebAPI
         {
             _connectionString = config.GetSection("ConnectionStrings")["Development"];
         }
-        public async Task<AccountPresentation> GetAccountAsync(Guid accountId)
+        public async Task<AccountDto> GetAccountAsync(Guid accountId)
         {
             using (var connection = new SqlConnection(_connectionString))
             {
                 await connection.OpenAsync();
 
-                var result = await connection.QueryAsync<AccountPresentation>("SELECT * From Accounts Where ID = @accountId", new { accountId = accountId });
+                var result = await connection.QueryAsync<AccountDto>("SELECT * From Accounts Where ID = @accountId", new { accountId = accountId });
 
                 return result.FirstOrDefault();
             }
         }
 
-        public async Task<Dictionary<string, AccountContributorsPresentation>> GetContributorsAsync(Guid accountId)
+        public async Task<Dictionary<string, AccountContributorsDto>> GetContributorsAsync(Guid accountId)
         {
-            Dictionary<string, AccountContributorsPresentation> contributors = null;
+            Dictionary<string, AccountContributorsDto> contributors = null;
 
             using (var connection = new SqlConnection(_connectionString))
             {
                 await connection.OpenAsync();
 
-                var contributorsResult = await connection.QueryAsync<AccountContributorsPresentation>(@"
+                var contributorsResult = await connection.QueryAsync<AccountContributorsDto>(@"
                     select distinct a.FullName, a.PictureUrl, a.Email
                     from AccountsLists al
                     INNER JOIN (select ListID from AccountsLists where AccountID = @accountId)
@@ -54,45 +53,45 @@ namespace TodoWebAPI
             }
         }
 
-        public async Task<List<TodoListItemModel>> GetAllTodoItemsAsync(Guid listId)
+        public async Task<List<TodoListItemDto>> GetAllTodoItemsAsync(Guid listId)
         {
             using (var connection = new SqlConnection(_connectionString))
             {
                 await connection.OpenAsync();
 
-                var result = await connection.QueryAsync<TodoListItemModel>("SELECT * From TodoListItems WHERE ListID = @listId", new { listId = listId });
+                var result = await connection.QueryAsync<TodoListItemDto>("SELECT * From TodoListItems WHERE ListID = @listId", new { listId = listId });
 
                 return result.ToList();
             }
         }
 
-        public async Task<TodoListModel> GetListAsync(Guid listId)
+        public async Task<TodoListDto> GetListAsync(Guid listId)
         {
             using (var connection = new SqlConnection(_connectionString))
             {
                 await connection.OpenAsync();
-                var result = await connection.QueryAsync<TodoListModel>("SELECT * FROM TodoLists WHERE ID = @listId", new { listId = listId });
+                var result = await connection.QueryAsync<TodoListDto>("SELECT * FROM TodoLists WHERE ID = @listId", new { listId = listId });
                 return result.FirstOrDefault();
             }
         }
 
-        public async Task<PlanPresentation> GetPlanByAccountIdAsync(Guid accountId)
+        public async Task<PlanDto> GetPlanByAccountIdAsync(Guid accountId)
         {
             using (var connection = new SqlConnection(_connectionString))
             {
                 await connection.OpenAsync();
-                var result = await connection.QueryAsync<PlanPresentation>("Select Name, MaxContributors, MaxContributors, MaxLists, CanAddDueDates From Plans Where ID = (Select PlanID From AccountsPlans Where AccountID = @accountId)", new { accountId = accountId });
+                var result = await connection.QueryAsync<PlanDto>("Select Name, MaxContributors, MaxContributors, MaxLists, CanAddDueDates From Plans Where ID = (Select PlanID From AccountsPlans Where AccountID = @accountId)", new { accountId = accountId });
                 return result.FirstOrDefault();
             }
         }
 
-        public async Task<List<TodoListModel>> GetListsAsync(Guid accountId)
+        public async Task<List<TodoListDto>> GetListsAsync(Guid accountId)
         {
             using (var connection = new SqlConnection(_connectionString))
             {
                 await connection.OpenAsync();
 
-                var result = await connection.QueryAsync<TodoListModel>(@"
+                var result = await connection.QueryAsync<TodoListDto>(@"
                     SELECT t.ID, t.ListTitle, a.AccountID, t.Completed, t.Contributors, a.Role
                     FROM TodoLists as t INNER JOIN AccountsLists as a
                     ON t.ID = a.ListID WHERE a.AccountID = @accountId
@@ -103,45 +102,45 @@ namespace TodoWebAPI
             }
         }
 
-        public async Task<TodoListLayoutPresentation> GetTodoListLayoutAsync(Guid listId)
+        public async Task<TodoListLayoutDto> GetTodoListLayoutAsync(Guid listId)
         {
             using (var connection = new SqlConnection(_connectionString))
             {
                 await connection.OpenAsync();
-                var result = await connection.QueryAsync<TodoListLayoutPresentation>("SELECT * FROM TodoListLayouts WHERE ListId = @listId", new { listId = listId });
+                var result = await connection.QueryAsync<TodoListLayoutDto>("SELECT * FROM TodoListLayouts WHERE ListId = @listId", new { listId = listId });
                 return result.FirstOrDefault();
             }
         }
 
-        public async Task<TodoItemLayoutPresentation> GetTodoItemLayoutAsync(Guid itemId)
+        public async Task<TodoItemLayoutDto> GetTodoItemLayoutAsync(Guid itemId)
         {
             using (var connection = new SqlConnection(_connectionString))
             {
                 await connection.OpenAsync();
-                var result = await connection.QueryAsync<TodoItemLayoutPresentation>("SELECT Layout FROM SubItemLayouts WHERE ItemId = @itemId", new { itemId = itemId });
+                var result = await connection.QueryAsync<TodoItemLayoutDto>("SELECT Layout FROM SubItemLayouts WHERE ItemId = @itemId", new { itemId = itemId });
                 return result.FirstOrDefault();
             }
         }
 
-        public async Task<List<SubItemModel>> GetSubItems(Guid listItemId)
+        public async Task<List<SubItemDto>> GetSubItems(Guid listItemId)
         {
             using (var connection = new SqlConnection(_connectionString))
             {
                 await connection.OpenAsync();
 
-                var result = await connection.QueryAsync<SubItemModel>("SELECT * FROM SubItems WHERE ListItemID = @listItemId", new { listItemId = listItemId });
+                var result = await connection.QueryAsync<SubItemDto>("SELECT * FROM SubItems WHERE ListItemID = @listItemId", new { listItemId = listItemId });
 
                 return result.ToList();
             }
         }
 
-        public async Task<List<TodoListItem>> GetItemsFromListItemsAsync()
+        public async Task<List<TodoListItemDto>> GetItemsFromListItemsAsync()
         {
             using (var connection = new SqlConnection(_connectionString))
             {
                 await connection.OpenAsync();
 
-                var result = await connection.QueryAsync<TodoListItem>("SELECT * FROM TodoListItems WHERE DueDate IS NOT NULL");
+                var result = await connection.QueryAsync<TodoListItemDto>("SELECT * FROM TodoListItems WHERE DueDate IS NOT NULL");
                 return result.ToList();
             }
         }
