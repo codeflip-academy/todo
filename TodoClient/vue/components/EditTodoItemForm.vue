@@ -50,7 +50,11 @@
 
     <!-- Sub Items -->
     <b-form-group label="Sub-items" class="mb-2"></b-form-group>
-    <SubItems :todoListItem="todoListItem"></SubItems>
+    <SubItems
+      :todoListItem="todoListItem"
+      @sub-items-completed="$emit('sub-items-completed')"
+      @sub-items-uncompleted="$emit('sub-items-uncompleted')"
+    ></SubItems>
   </b-modal>
 </template>
 

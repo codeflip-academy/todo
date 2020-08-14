@@ -37001,6 +37001,17 @@ var _default = {
 
     commitSetSubItemCompletedState(subItemId, completed) {
       this.subItems[this.subItems.findIndex(s => s.id == subItemId)].completed = completed;
+      this.triggerSubItemsCompletedEvent();
+    },
+
+    triggerSubItemsCompletedEvent() {
+      const subItemsCompleted = this.subItems.length > 0 && this.subItems.every(s => s.completed);
+
+      if (subItemsCompleted) {
+        this.$emit("sub-items-completed");
+      } else {
+        this.$emit("sub-items-uncompleted");
+      }
     }
 
   }
@@ -37121,6 +37132,10 @@ var _SubItems = _interopRequireDefault(require("./SubItems"));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
+//
+//
+//
+//
 //
 //
 //
@@ -37437,7 +37452,17 @@ exports.default = _default;
         attrs: { label: "Sub-items" }
       }),
       _vm._v(" "),
-      _c("SubItems", { attrs: { todoListItem: _vm.todoListItem } })
+      _c("SubItems", {
+        attrs: { todoListItem: _vm.todoListItem },
+        on: {
+          "sub-items-completed": function($event) {
+            return _vm.$emit("sub-items-completed")
+          },
+          "sub-items-uncompleted": function($event) {
+            return _vm.$emit("sub-items-uncompleted")
+          }
+        }
+      })
     ],
     1
   )
@@ -37527,6 +37552,11 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 //
 //
 //
+//
+//
+//
+//
+//
 var _default = {
   name: "TodoListItem",
   props: ["item"],
@@ -37540,10 +37570,7 @@ var _default = {
       },
 
       set(val) {
-        this.$emit("checkbox-clicked", {
-          itemId: this.item.id,
-          completed: val
-        });
+        this.sendCheckboxClickedEvent(val);
       }
 
     }
@@ -37559,6 +37586,13 @@ var _default = {
   methods: {
     sendItemEditedEvent(item) {
       this.$emit("item-edited", item);
+    },
+
+    sendCheckboxClickedEvent(completed) {
+      this.$emit("checkbox-clicked", {
+        itemId: this.item.id,
+        completed: completed
+      });
     }
 
   }
@@ -37679,7 +37713,15 @@ exports.default = _default;
           _vm._v(" "),
           _c("EditTodoItemForm", {
             attrs: { todoListItem: _vm.item },
-            on: { "item-edited": _vm.sendItemEditedEvent }
+            on: {
+              "item-edited": _vm.sendItemEditedEvent,
+              "sub-items-completed": function($event) {
+                return _vm.sendCheckboxClickedEvent(true)
+              },
+              "sub-items-uncompleted": function($event) {
+                return _vm.sendCheckboxClickedEvent(false)
+              }
+            }
           })
         ],
         1

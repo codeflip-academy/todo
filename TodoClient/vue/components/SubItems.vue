@@ -110,6 +110,18 @@ export default {
       this.subItems[
         this.subItems.findIndex((s) => s.id == subItemId)
       ].completed = completed;
+
+      this.triggerSubItemsCompletedEvent();
+    },
+    triggerSubItemsCompletedEvent() {
+      const subItemsCompleted =
+        this.subItems.length > 0 && this.subItems.every((s) => s.completed);
+
+      if (subItemsCompleted) {
+        this.$emit("sub-items-completed");
+      } else {
+        this.$emit("sub-items-uncompleted");
+      }
     },
   },
 };

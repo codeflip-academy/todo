@@ -31,7 +31,12 @@
         <b-button variant="info" @click="$bvModal.show(`modal-${item.id}`)">View</b-button>
         <b-button variant="danger" @click="$emit('delete-item', item.id)">Delete</b-button>
       </b-button-group>
-      <EditTodoItemForm :todoListItem="item" @item-edited="sendItemEditedEvent"></EditTodoItemForm>
+      <EditTodoItemForm
+        :todoListItem="item"
+        @item-edited="sendItemEditedEvent"
+        @sub-items-completed="sendCheckboxClickedEvent(true)"
+        @sub-items-uncompleted="sendCheckboxClickedEvent(false)"
+      ></EditTodoItemForm>
     </div>
   </b-list-group-item>
 </template>
@@ -52,10 +57,7 @@ export default {
         return this.item.completed;
       },
       set(val) {
-        this.$emit("checkbox-clicked", {
-          itemId: this.item.id,
-          completed: val,
-        });
+        this.sendCheckboxClickedEvent(val);
       },
     },
   },
@@ -70,6 +72,12 @@ export default {
   methods: {
     sendItemEditedEvent(item) {
       this.$emit("item-edited", item);
+    },
+    sendCheckboxClickedEvent(completed) {
+      this.$emit("checkbox-clicked", {
+        itemId: this.item.id,
+        completed: completed,
+      });
     },
   },
 };
