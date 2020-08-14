@@ -27,7 +27,7 @@ namespace TodoWebAPI.UserStories
             var gateway = _braintreeConfiguration.GetGateway();
             var account = await _account.FindAccountByIdAsync(request.AccountId);
 
-            Customer customer = await gateway.Customer.FindAsync(account.PaymentId);
+            var customer = await gateway.Customer.FindAsync(account.CustomerId);
 
             var result = new PaymentMethodRequest()
             {
@@ -38,17 +38,11 @@ namespace TodoWebAPI.UserStories
 
             Result<PaymentMethod> response = await gateway.PaymentMethod.CreateAsync(result);
 
-            var payment = new Payment()
-            {
-                AccountId = request.AccountId,
-                TokenId = result.Token
-            };
-
-            _paymentMethod.Add(payment);
+            account.PaymentMethodId = result.Token;
 
             if (response.IsSuccess())
             {
-                await _paymentMethod.SaveChangesAsync();
+                await _account.SaveChangesAsync();
 
                 return true;
             }

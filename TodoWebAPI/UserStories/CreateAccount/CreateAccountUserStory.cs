@@ -49,11 +49,11 @@ namespace TodoWebAPI.UserStories.CreateAccount
 
             var customerId = customerResult.Target.Id;
 
-            account = new Account(_accountRepository.NextId(), request.Email, PlanTiers.Free)
+            account = new Account(_accountRepository.NextId(), request.Email)
             {
                 FullName = request.FullName,
                 PictureUrl = request.PictureUrl,
-                PaymentId = customerId
+                CustomerId = customerId
             };
 
             _accountRepository.AddAccount(account);
