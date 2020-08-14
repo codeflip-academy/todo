@@ -30,23 +30,20 @@ namespace TodoWebAPI.UserStories
         public async Task<bool> Handle(ChangePaymentSubscription request, CancellationToken cancellationToken)
         {
             var gateway = _braintreeConfiguration.GetGateway();
-            var paymentMethod = await _paymentMethod.FindByAccountIdAsync(request.AccountId);
             var account = await _account.FindAccountByIdAsync(request.AccountId);
             var subscriptionId = Guid.NewGuid().ToString();
             var plans = await gateway.Plan.AllAsync();
 
             var plan = (from p in plans where p.Name == request.Plan select p).FirstOrDefault();
 
-            if (paymentMethod != null)
+            if (account.PaymentMethodId != null)
             {
                 var brainPlanValue = SubscriptionHelper.ConvertPlanToBrainTreeType(request.Plan);
 
-                Subscription subscription = await gateway.Subscription.FindAsync(account.SubscriptionId);
-
-                var result = await gateway.Subscription.UpdateAsync(subscription.Id, new SubscriptionRequest
+                var result = await gateway.Subscription.UpdateAsync(account.SubscriptionId, new SubscriptionRequest
                 {
                     Id = subscriptionId,
-                    PaymentMethodToken = paymentMethod.TokenId,
+                    PaymentMethodToken = account.PaymentMethodId,
                     PlanId = brainPlanValue,
                     Price = plan.Price
                 });

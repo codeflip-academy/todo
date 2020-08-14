@@ -33,13 +33,11 @@ namespace TodoWebAPI.UserStories
 
             var gateway = _braintreeConfiguration.GetGateway();
 
-            var paymentMethod = await _paymentMethod.FindByAccountIdAsync(request.AccountId);
-
             var brainType = SubscriptionHelper.ConvertPlanToBrainTreeType(request.Plan);
 
             var re = new SubscriptionRequest
             {
-                PaymentMethodToken = paymentMethod.TokenId,
+                PaymentMethodToken = account.PaymentMethodId,
                 PlanId = brainType,
                 Id = Guid.NewGuid().ToString()
             };

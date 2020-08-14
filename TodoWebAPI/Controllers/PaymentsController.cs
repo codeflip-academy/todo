@@ -79,25 +79,40 @@ namespace TodoWebAPI.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> AddPaymentMethod([FromBody] AddPayment addPayment)
+        public async Task<IActionResult> AddOrReplacePaymentMethod([FromBody] AddPayment addPayment)
         {
             var accountId = Guid.Parse(User.FindFirst(c => c.Type == "urn:codefliptodo:accountid").Value);
-            var paymentMethod = await _paymentMethod.FindByAccountIdAsync(accountId);
+            var account = await _accountRepository.FindAccountByIdAsync(accountId);
+            var previousPaymentMethodId = account.PaymentMethodId;
+            var gateway = _braintreeConfiguration.GetGateway();
+            var subscriptionId = Guid.NewGuid().ToString();
 
             addPayment.AccountId = accountId;
+            var paymentMethodAdded = await _mediator.Send(addPayment);
 
-            if (paymentMethod != null)
+            if (account.SubscriptionId != null)
+            {
+                var subscriptionUpdated = await gateway.Subscription.UpdateAsync(account.SubscriptionId, new SubscriptionRequest
+                {
+                    Id = subscriptionId,
+                    PaymentMethodToken = account.PaymentMethodId,
+                });
+
+                account.SubscriptionId = subscriptionId;
+                await _accountRepository.SaveChangesAsync();
+            }
+
+            if (previousPaymentMethodId != null)
             {
                 var deletePayment = new DeletePaymentMethod
                 {
-                    Method = paymentMethod
+                    PaymentMethodId = previousPaymentMethodId,
+                    AccountId = accountId
                 };
                 await _mediator.Send(deletePayment);
             }
 
-            var result = await _mediator.Send(addPayment);
-
-            if (result == true)
+            if (paymentMethodAdded)
                 return Ok();
 
             return BadRequest();
@@ -109,13 +124,13 @@ namespace TodoWebAPI.Controllers
             changePayment.AccountId = Guid.Parse(User.FindFirst(c => c.Type == "urn:codefliptodo:accountid").Value);
             var gateway = _braintreeConfiguration.GetGateway();
 
-            var createsubscription = new CreateSubscription
+            var createSubscription = new CreateSubscription
             {
                 AccountId = changePayment.AccountId,
                 Plan = changePayment.Plan
             };
 
-            var result = await _mediator.Send(createsubscription);
+            var result = await _mediator.Send(createSubscription);
 
             if (result)
             {
@@ -148,9 +163,9 @@ namespace TodoWebAPI.Controllers
         public async Task<IActionResult> DeletePayment(DeletePaymentMethod deletePaymentMethod)
         {
             var accountId = Guid.Parse(User.FindFirst(c => c.Type == "urn:codefliptodo:accountid").Value);
-            var paymentMethod = await _paymentMethod.FindByAccountIdAsync(accountId);
-
-            deletePaymentMethod.Method = paymentMethod;
+            var account = await _accountRepository.FindAccountByIdAsync(accountId);
+            deletePaymentMethod.PaymentMethodId = account.PaymentMethodId;
+            deletePaymentMethod.AccountId = accountId;
 
             await _mediator.Send(deletePaymentMethod);
 
