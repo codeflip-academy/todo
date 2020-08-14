@@ -37122,6 +37122,8 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.default = void 0;
 
+var _vuex = require("vuex");
+
 var _moment = _interopRequireDefault(require("moment"));
 
 var _SubItems = _interopRequireDefault(require("./SubItems"));
@@ -37187,34 +37189,9 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 //
 //
 //
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
 var _default = {
-  name: 'EditTodoItemForm',
-  props: ['todoListItem'],
+  name: "EditTodoItemForm",
+  props: ["todoListItem"],
 
   data() {
     return {
@@ -37237,14 +37214,13 @@ var _default = {
       return this.form.dueDate;
     },
 
-    plan() {
-      return this.$store.getters.plan;
-    }
-
+    ...(0, _vuex.mapState)({
+      plan: state => state.plan
+    })
   },
   watch: {
     dueDate: function () {
-      this.updateItem();
+      this.sendItemEditedEvent();
     }
   },
   methods: {
@@ -37264,7 +37240,7 @@ var _default = {
       this.editingNotes = false;
     },
 
-    updateItem() {
+    sendItemEditedEvent() {
       this.editingName = false;
       this.editingNotes = false;
       let item = {
@@ -37274,15 +37250,13 @@ var _default = {
         notes: this.form.notes,
         dueDate: this.form.dueDate
       };
-      this.$store.dispatch('updateItem', {
-        item
-      });
+      this.$emit("item-edited", item);
     }
 
   },
   filters: {
     formatDate: function (value) {
-      return (0, _moment.default)(value).format('MM/D/YYYY');
+      return (0, _moment.default)(value).format("MM/D/YYYY");
     }
   }
 };
@@ -37315,7 +37289,7 @@ exports.default = _default;
           on: {
             submit: function($event) {
               $event.preventDefault()
-              return _vm.updateItem($event)
+              return _vm.sendItemEditedEvent($event)
             }
           }
         },
@@ -37351,7 +37325,7 @@ exports.default = _default;
                   staticClass: "mb-2",
                   attrs: { type: "submit", variant: "success", size: "sm" }
                 },
-                [_vm._v("\n            Save\n        ")]
+                [_vm._v("Save")]
               )
             : _vm._e(),
           _vm._v(" "),
@@ -37363,7 +37337,7 @@ exports.default = _default;
                   attrs: { variant: "secondary", size: "sm" },
                   on: { click: _vm.cancelChangesToName }
                 },
-                [_vm._v("\n            Cancel\n        ")]
+                [_vm._v("Cancel")]
               )
             : _vm._e()
         ],
@@ -37376,7 +37350,7 @@ exports.default = _default;
           on: {
             submit: function($event) {
               $event.preventDefault()
-              return _vm.updateItem($event)
+              return _vm.sendItemEditedEvent($event)
             }
           }
         },
@@ -37411,7 +37385,7 @@ exports.default = _default;
                   staticClass: "mb-2",
                   attrs: { type: "submit", variant: "success", size: "sm" }
                 },
-                [_vm._v("\n            Save\n        ")]
+                [_vm._v("Save")]
               )
             : _vm._e(),
           _vm._v(" "),
@@ -37423,7 +37397,7 @@ exports.default = _default;
                   attrs: { variant: "secondary", size: "sm" },
                   on: { click: _vm.cancelChangesToNotes }
                 },
-                [_vm._v("\n            Cancel\n        ")]
+                [_vm._v("Cancel")]
               )
             : _vm._e()
         ],
@@ -37445,7 +37419,7 @@ exports.default = _default;
                 "b-form-group",
                 [
                   _c("label", { attrs: { for: "due-date" } }, [
-                    _vm._v("Due Date: "),
+                    _vm._v("\n        Due Date:\n        "),
                     _vm.form.dueDate
                       ? _c("span", [
                           _vm._v(_vm._s(_vm._f("formatDate")(_vm.form.dueDate)))
@@ -37471,14 +37445,20 @@ exports.default = _default;
           )
         : _vm._e(),
       _vm._v(" "),
-      _c("b-form-group", {
-        staticClass: "mb-2",
-        attrs: { label: "Sub-items" }
-      }),
+      false
+        ? _c("b-form-group", {
+            staticClass: "mb-2",
+            attrs: { label: "Sub-items" }
+          })
+        : _vm._e(),
       _vm._v(" "),
-      _c("SubItems", { attrs: { todoListItem: _vm.todoListItem } }),
+      false
+        ? _c("SubItems", { attrs: { todoListItem: _vm.todoListItem } })
+        : _vm._e(),
       _vm._v(" "),
-      _c("AddSubItemForm", { attrs: { todoListItem: _vm.todoListItem } })
+      false
+        ? _c("AddSubItemForm", { attrs: { todoListItem: _vm.todoListItem } })
+        : _vm._e()
     ],
     1
   )
@@ -37516,7 +37496,7 @@ render._withStripped = true
       
       }
     })();
-},{"moment":"node_modules/moment/moment.js","./SubItems":"vue/components/SubItems.vue","./AddSubItemForm":"vue/components/AddSubItemForm.vue","_css_loader":"node_modules/parcel-bundler/src/builtins/css-loader.js","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/components/TodoListItem.vue":[function(require,module,exports) {
+},{"vuex":"node_modules/vuex/dist/vuex.esm.js","moment":"node_modules/moment/moment.js","./SubItems":"vue/components/SubItems.vue","./AddSubItemForm":"vue/components/AddSubItemForm.vue","_css_loader":"node_modules/parcel-bundler/src/builtins/css-loader.js","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/components/TodoListItem.vue":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -37596,6 +37576,12 @@ var _default = {
     truncate: function (text, length, suffix) {
       return text.substring(0, length) + suffix;
     }
+  },
+  methods: {
+    sendItemEditedEvent(item) {
+      this.$emit("item-edited", item);
+    }
+
   }
 };
 exports.default = _default;
@@ -37712,7 +37698,10 @@ exports.default = _default;
             1
           ),
           _vm._v(" "),
-          _c("EditTodoItemForm", { attrs: { todoListItem: _vm.item } })
+          _c("EditTodoItemForm", {
+            attrs: { todoListItem: _vm.item },
+            on: { "item-edited": _vm.sendItemEditedEvent }
+          })
         ],
         1
       )
@@ -37983,6 +37972,8 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.default = void 0;
 
+var _vue = _interopRequireDefault(require("vue"));
+
 var _axios = _interopRequireDefault(require("axios"));
 
 var _vuedraggable = _interopRequireDefault(require("vuedraggable"));
@@ -37993,6 +37984,7 @@ var _AddTodoListItemForm = _interopRequireDefault(require("./AddTodoListItemForm
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
+//
 //
 //
 //
@@ -38074,6 +38066,22 @@ var _default = {
       });
     },
 
+    async dispatchUpdateItem(item) {
+      this.commitUpdateItem(item);
+      await (0, _axios.default)({
+        method: "PUT",
+        url: "api/lists/".concat(item.listId, "/todos/").concat(item.id),
+        data: JSON.stringify({
+          name: item.name,
+          notes: item.notes,
+          dueDate: item.dueDate
+        }),
+        headers: {
+          "content-type": "application/json"
+        }
+      });
+    },
+
     async dispatchDeleteItem(itemId) {
       this.commitDeleteItem(itemId);
       await (0, _axios.default)({
@@ -38099,6 +38107,12 @@ var _default = {
     commitSetItemCompletedState(itemId, completed) {
       this.items[this.items.findIndex(i => i.id === itemId)].completed = completed;
       this.triggerTodoListCompletedEvent();
+    },
+
+    commitUpdateItem(item) {
+      const itemIndex = this.items.findIndex(i => i.id === item.id);
+
+      _vue.default.set(this.items, itemIndex, item);
     },
 
     commitDeleteItem(itemId) {
@@ -38165,6 +38179,7 @@ exports.default = _default;
                 attrs: { item: item },
                 on: {
                   "checkbox-clicked": _vm.dispatchSetItemCompletedState,
+                  "item-edited": _vm.dispatchUpdateItem,
                   "delete-item": _vm.dispatchDeleteItem
                 }
               })
@@ -38215,7 +38230,7 @@ render._withStripped = true
         
       }
     })();
-},{"axios":"node_modules/axios/index.js","vuedraggable":"node_modules/vuedraggable/dist/vuedraggable.common.js","./TodoListItem":"vue/components/TodoListItem.vue","./AddTodoListItemForm.vue":"vue/components/AddTodoListItemForm.vue","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/components/InviteContributorsForm.vue":[function(require,module,exports) {
+},{"vue":"node_modules/vue/dist/vue.runtime.esm.js","axios":"node_modules/axios/index.js","vuedraggable":"node_modules/vuedraggable/dist/vuedraggable.common.js","./TodoListItem":"vue/components/TodoListItem.vue","./AddTodoListItemForm.vue":"vue/components/AddTodoListItemForm.vue","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js"}],"vue/components/InviteContributorsForm.vue":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {

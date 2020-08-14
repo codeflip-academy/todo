@@ -12,6 +12,7 @@
         :key="item.id"
         :item="item"
         @checkbox-clicked="dispatchSetItemCompletedState"
+        @item-edited="dispatchUpdateItem"
         @delete-item="dispatchDeleteItem"
       ></TodoListItem>
     </Draggable>
@@ -23,6 +24,7 @@
 </template>
 
 <script>
+import Vue from "vue";
 import axios from "axios";
 
 import Draggable from "vuedraggable";
@@ -81,6 +83,22 @@ export default {
         },
       });
     },
+    async dispatchUpdateItem(item) {
+      this.commitUpdateItem(item);
+
+      await axios({
+        method: "PUT",
+        url: `api/lists/${item.listId}/todos/${item.id}`,
+        data: JSON.stringify({
+          name: item.name,
+          notes: item.notes,
+          dueDate: item.dueDate,
+        }),
+        headers: {
+          "content-type": "application/json",
+        },
+      });
+    },
     async dispatchDeleteItem(itemId) {
       this.commitDeleteItem(itemId);
 
@@ -105,6 +123,11 @@ export default {
       ].completed = completed;
 
       this.triggerTodoListCompletedEvent();
+    },
+    commitUpdateItem(item) {
+      const itemIndex = this.items.findIndex((i) => i.id === item.id);
+
+      Vue.set(this.items, itemIndex, item);
     },
     commitDeleteItem(itemId) {
       this.items.splice(

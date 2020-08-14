@@ -31,7 +31,7 @@
         <b-button variant="info" @click="$bvModal.show(`modal-${item.id}`)">View</b-button>
         <b-button variant="danger" @click="$emit('delete-item', item.id)">Delete</b-button>
       </b-button-group>
-      <EditTodoItemForm :todoListItem="item"></EditTodoItemForm>
+      <EditTodoItemForm :todoListItem="item" @item-edited="sendItemEditedEvent"></EditTodoItemForm>
     </div>
   </b-list-group-item>
 </template>
@@ -65,6 +65,11 @@ export default {
     },
     truncate: function (text, length, suffix) {
       return text.substring(0, length) + suffix;
+    },
+  },
+  methods: {
+    sendItemEditedEvent(item) {
+      this.$emit("item-edited", item);
     },
   },
 };
