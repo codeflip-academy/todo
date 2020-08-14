@@ -1,8 +1,8 @@
 using System;
 
-namespace TodoWebAPI.Presentation
+namespace Todo.Infrastructure.Dto
 {
-    public class PlanPresentation
+    public class PlanDto
     {
         public string Name { get; set; }
         public int MaxContributors { get; set; }

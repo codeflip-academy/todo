@@ -3,13 +3,14 @@ using System.Threading;
 using System.Threading.Tasks;
 using Braintree;
 using MediatR;
+using Todo.Infrastructure;
 using Todo.Infrastructure.PaymentMethods;
 using TodoWebAPI.BraintreeService;
 using TodoWebAPI.Models;
 
 namespace TodoWebAPI.UserStories
 {
-    public class GetPaymentMethodUserStory : IRequestHandler<GetPaymentMethod, CardInfoModel>
+    public class GetPaymentMethodUserStory : IRequestHandler<GetPaymentMethod, CardInfoDto>
     {
         private readonly IBraintreeConfiguration _braintreeConfiguration;
         private readonly IPaymentMethodRepository _paymentMethod;
@@ -20,7 +21,7 @@ namespace TodoWebAPI.UserStories
             _paymentMethod = paymentMethod;
         }
 
-        public async Task<CardInfoModel> Handle(GetPaymentMethod request, CancellationToken cancellationToken)
+        public async Task<CardInfoDto> Handle(GetPaymentMethod request, CancellationToken cancellationToken)
         {
             var gateway = _braintreeConfiguration.GetGateway();
             var paymentMethod = await _paymentMethod.FindByAccountIdAsync(request.AccountId);
@@ -29,7 +30,7 @@ namespace TodoWebAPI.UserStories
             {
                 CreditCard creditCard = (CreditCard)await gateway.PaymentMethod.FindAsync(paymentMethod.TokenId);
 
-                var creditCardInfo = new CardInfoModel()
+                var creditCardInfo = new CardInfoDto()
                 {
                     CardType = creditCard.CardType.ToString(),
                     ExpirationDate = creditCard.ExpirationDate,

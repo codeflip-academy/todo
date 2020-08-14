@@ -6,7 +6,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Todo.Domain;
 
-namespace TodoWebAPI.Models
+namespace TodoWebAPI.ViewModels
 {
     public class CreateItemViewModel
     {

@@ -6,7 +6,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace TodoWebAPI.Models
+namespace TodoWebAPI.ViewModels
 {
     public class EditItemViewModel
     {
