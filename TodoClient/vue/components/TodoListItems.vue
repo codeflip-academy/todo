@@ -116,8 +116,11 @@ export default {
       const listCompleted =
         this.items.length > 0 && this.items.every((item) => item.completed);
 
-      if (listCompleted) this.$emit("todo-list-completed");
-      else this.$emit("todo-list-uncompleted");
+      if (listCompleted) {
+        this.$emit("todo-list-completed");
+      } else {
+        this.$emit("todo-list-uncompleted");
+      }
     },
   },
   async created() {

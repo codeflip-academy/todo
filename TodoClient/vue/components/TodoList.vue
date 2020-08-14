@@ -1,5 +1,7 @@
 <template>
   <div class="todo-list-wrapper">
+    <Confetti v-if="todoList.completed"></Confetti>
+
     <div class="todo-list">
       <h1
         class="todo-list-title mb-2"
@@ -45,15 +47,12 @@
 </template>
 
 <script>
-import Vue from "vue";
-import VueConfetti from "vue-confetti";
 import { mapState, mapGetters } from "vuex";
 
 import TodoListItems from "./TodoListItems";
 import Contributors from "./Contributors";
 import InviteContributorsForm from "./InviteContributorsForm";
-
-Vue.use(VueConfetti);
+import Confetti from "./Confetti";
 
 export default {
   name: "TodoList",
@@ -66,15 +65,9 @@ export default {
       },
     };
   },
-  destroyed() {
-    this.stopConfetti();
-  },
   computed: {
     todoList() {
       return this.$store.getters.getTodoListById(this.todoListId);
-    },
-    todoListCompleted() {
-      return this.todoList.completed;
     },
     ...mapState({
       contributors: (state) => state.contributors,
@@ -84,6 +77,7 @@ export default {
     TodoListItems,
     Contributors,
     InviteContributorsForm,
+    Confetti,
   },
   methods: {
     showTitleEditor() {
@@ -114,28 +108,6 @@ export default {
         todoListId: this.todoListId,
         completed: false,
       });
-    },
-    throwConfetti() {
-      this.$confetti.start({
-        particles: [{ type: "rect" }],
-        particlesPerFrame: 0.4,
-        dropRate: 8,
-      });
-    },
-    stopConfetti() {
-      this.$confetti.stop();
-    },
-  },
-  watch: {
-    todoListCompleted: {
-      handler() {
-        if (this.todoListCompleted) {
-          this.throwConfetti();
-        } else {
-          this.stopConfetti();
-        }
-      },
-      immediate: true,
     },
   },
 };
