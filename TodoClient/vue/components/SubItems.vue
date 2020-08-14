@@ -11,6 +11,7 @@
           :key="subItem.id"
           :subItem="subItem"
           :listId="todoListItem.listId"
+          @delete-sub-item="dispatchDeleteSubItem"
         ></SubItem>
         <b-list-group-item v-if="subItems.length < 1">There are no sub-items.</b-list-group-item>
       </Draggable>
@@ -68,9 +69,23 @@ export default {
 
       this.commitAddSubItem(newSubItem);
     },
+    async dispatchDeleteSubItem(subItemId) {
+      this.commitDeleteSubItem(subItemId);
+
+      await axios({
+        method: "DELETE",
+        url: `api/lists/${this.todoListItem.listId}/todos/${this.todoListItem.id}/subitems/${subItemId}`,
+      });
+    },
     async dispatchUpdateSubItemPosition() {},
     commitSetLoadingSubItemsState(state) {
       this.loadingSubItems = state;
+    },
+    commitDeleteSubItem(subItemId) {
+      this.subItems.splice(
+        this.subItems.findIndex((s) => s.id == subItemId),
+        1
+      );
     },
     commitSetSubItems(subItems) {
       this.subItems = subItems;

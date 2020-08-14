@@ -11,7 +11,7 @@
     <div class="sub-item-name" @click="focusForm" v-if="!editingSubItem">{{ subItem.name }}</div>
 
     <div class="sub-item-controls pr-3" v-if="!editingSubItem">
-      <b-button size="sm" variant="danger" @click="null">Delete</b-button>
+      <b-button size="sm" variant="danger" @click="sendDeleteSubItemEvent">Delete</b-button>
     </div>
 
     <b-form @submit.prevent="null" v-if="editingSubItem" class="edit-sub-item-form">
@@ -58,6 +58,9 @@ export default {
       this.$nextTick(() => {
         this.$refs.subItemName.focus();
       });
+    },
+    sendDeleteSubItemEvent() {
+      this.$emit("delete-sub-item", this.subItem.id);
     },
   },
 };

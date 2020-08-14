@@ -36497,6 +36497,10 @@ var _default = {
       this.$nextTick(() => {
         this.$refs.subItemName.focus();
       });
+    },
+
+    sendDeleteSubItemEvent() {
+      this.$emit("delete-sub-item", this.subItem.id);
     }
 
   }
@@ -36563,7 +36567,7 @@ exports.default = _default;
                 "b-button",
                 {
                   attrs: { size: "sm", variant: "danger" },
-                  on: { click: null }
+                  on: { click: _vm.sendDeleteSubItemEvent }
                 },
                 [_vm._v("Delete")]
               )
@@ -36888,6 +36892,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 //
 //
 //
+//
 var _default = {
   props: ["todoListItem"],
   components: {
@@ -36934,10 +36939,22 @@ var _default = {
       this.commitAddSubItem(newSubItem);
     },
 
+    async dispatchDeleteSubItem(subItemId) {
+      this.commitDeleteSubItem(subItemId);
+      await (0, _axios.default)({
+        method: "DELETE",
+        url: "api/lists/".concat(this.todoListItem.listId, "/todos/").concat(this.todoListItem.id, "/subitems/").concat(subItemId)
+      });
+    },
+
     async dispatchUpdateSubItemPosition() {},
 
     commitSetLoadingSubItemsState(state) {
       this.loadingSubItems = state;
+    },
+
+    commitDeleteSubItem(subItemId) {
+      this.subItems.splice(this.subItems.findIndex(s => s.id == subItemId), 1);
     },
 
     commitSetSubItems(subItems) {
@@ -36991,7 +37008,8 @@ exports.default = _default;
                       attrs: {
                         subItem: subItem,
                         listId: _vm.todoListItem.listId
-                      }
+                      },
+                      on: { "delete-sub-item": _vm.dispatchDeleteSubItem }
                     })
                   }),
                   _vm._v(" "),
