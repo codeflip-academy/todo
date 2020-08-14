@@ -11,7 +11,7 @@
     <b-form-checkbox
       :disabled="/* subItems && subItems.length > 0 */ false"
       class="todo-item-checkbox"
-      v-model="item.completed"
+      v-model="itemCompletedState"
     ></b-form-checkbox>
 
     <div class="todo-item-details">
@@ -43,11 +43,21 @@ import EditTodoItemForm from "./EditTodoItemForm";
 export default {
   name: "TodoListItem",
   props: ["item"],
-  data() {
-    return {};
-  },
   components: {
     EditTodoItemForm,
+  },
+  computed: {
+    itemCompletedState: {
+      get() {
+        return this.item.completed;
+      },
+      set(val) {
+        this.$emit("checkbox-clicked", {
+          itemId: this.item.id,
+          completed: val,
+        });
+      },
+    },
   },
   filters: {
     formatDate: function (value) {

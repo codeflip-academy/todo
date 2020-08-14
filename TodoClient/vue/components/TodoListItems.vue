@@ -11,6 +11,7 @@
         v-for="item in items"
         :key="item.id"
         :item="item"
+        @checkbox-clicked="dispatchSetItemCompletedState"
         @delete-item="dispatchDeleteItem"
       ></TodoListItem>
     </Draggable>
@@ -68,6 +69,18 @@ export default {
 
       this.commitAddItem(response.data);
     },
+    async dispatchSetItemCompletedState({ itemId, completed }) {
+      this.commitSetItemCompletedState(itemId, completed);
+
+      await axios({
+        method: "PUT",
+        url: `api/lists/${this.todoListId}/todos/${itemId}/completed`,
+        data: JSON.stringify({ completed }),
+        headers: {
+          "content-type": "application/json",
+        },
+      });
+    },
     async dispatchDeleteItem(itemId) {
       this.commitDeleteItem(itemId);
 
@@ -85,6 +98,11 @@ export default {
     },
     commitAddItem(item) {
       this.items.unshift(item);
+    },
+    commitSetItemCompletedState(itemId, completed) {
+      this.items[
+        this.items.findIndex((i) => i.id === itemId)
+      ].completed = completed;
     },
     commitDeleteItem(itemId) {
       this.items.splice(this.items.indexOf(itemId), 1);

@@ -37567,13 +37567,23 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 var _default = {
   name: "TodoListItem",
   props: ["item"],
-
-  data() {
-    return {};
-  },
-
   components: {
     EditTodoItemForm: _EditTodoItemForm.default
+  },
+  computed: {
+    itemCompletedState: {
+      get() {
+        return this.item.completed;
+      },
+
+      set(val) {
+        this.$emit("checkbox-clicked", {
+          itemId: this.item.id,
+          completed: val
+        });
+      }
+
+    }
   },
   filters: {
     formatDate: function (value) {
@@ -37611,11 +37621,11 @@ exports.default = _default;
         staticClass: "todo-item-checkbox",
         attrs: { disabled: /* subItems && subItems.length > 0 */ false },
         model: {
-          value: _vm.item.completed,
+          value: _vm.itemCompletedState,
           callback: function($$v) {
-            _vm.$set(_vm.item, "completed", $$v)
+            _vm.itemCompletedState = $$v
           },
-          expression: "item.completed"
+          expression: "itemCompletedState"
         }
       }),
       _vm._v(" "),
@@ -38002,6 +38012,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 //
 //
 //
+//
 var _default = {
   name: "TodoListItems",
   props: ["todoListId"],
@@ -38042,6 +38053,23 @@ var _default = {
       this.commitAddItem(response.data);
     },
 
+    async dispatchSetItemCompletedState({
+      itemId,
+      completed
+    }) {
+      this.commitSetItemCompletedState(itemId, completed);
+      await (0, _axios.default)({
+        method: "PUT",
+        url: "api/lists/".concat(this.todoListId, "/todos/").concat(itemId, "/completed"),
+        data: JSON.stringify({
+          completed
+        }),
+        headers: {
+          "content-type": "application/json"
+        }
+      });
+    },
+
     async dispatchDeleteItem(itemId) {
       this.commitDeleteItem(itemId);
       await (0, _axios.default)({
@@ -38062,6 +38090,10 @@ var _default = {
 
     commitAddItem(item) {
       this.items.unshift(item);
+    },
+
+    commitSetItemCompletedState(itemId, completed) {
+      this.items[this.items.findIndex(i => i.id === itemId)].completed = completed;
     },
 
     commitDeleteItem(itemId) {
@@ -38110,7 +38142,10 @@ exports.default = _default;
               return _c("TodoListItem", {
                 key: item.id,
                 attrs: { item: item },
-                on: { "delete-item": _vm.dispatchDeleteItem }
+                on: {
+                  "checkbox-clicked": _vm.dispatchSetItemCompletedState,
+                  "delete-item": _vm.dispatchDeleteItem
+                }
               })
             }),
             1
