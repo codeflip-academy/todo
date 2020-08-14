@@ -49,9 +49,8 @@
     </b-form>
 
     <!-- Sub Items -->
-    <b-form-group v-if="false" label="Sub-items" class="mb-2"></b-form-group>
-    <SubItems v-if="false" :todoListItem="todoListItem"></SubItems>
-    <AddSubItemForm v-if="false" :todoListItem="todoListItem"></AddSubItemForm>
+    <b-form-group label="Sub-items" class="mb-2"></b-form-group>
+    <SubItems :todoListItem="todoListItem"></SubItems>
   </b-modal>
 </template>
 
@@ -60,7 +59,6 @@ import { mapState } from "vuex";
 import moment from "moment";
 
 import SubItems from "./SubItems";
-import AddSubItemForm from "./AddSubItemForm";
 
 export default {
   name: "EditTodoItemForm",
@@ -78,7 +76,6 @@ export default {
   },
   components: {
     SubItems,
-    AddSubItemForm,
   },
   computed: {
     dueDate() {

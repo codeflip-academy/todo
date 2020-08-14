@@ -36480,23 +36480,7 @@ exports.default = void 0;
 //
 var _default = {
   props: ["listId", "subItem"],
-  computed: {
-    completedState: {
-      get() {
-        return this.$store.getters.getSubItemCompletedState(this.subItem.listItemId, this.subItem.id);
-      },
-
-      set(value) {
-        this.$store.dispatch("toggleSubItemCompletedState", {
-          listId: this.listId,
-          todoItemId: this.subItem.listItemId,
-          subItemId: this.subItem.id,
-          completed: value
-        });
-      }
-
-    }
-  },
+  computed: {},
 
   data() {
     return {
@@ -36512,23 +36496,6 @@ var _default = {
       this.editingSubItem = true;
       this.$nextTick(() => {
         this.$refs.subItemName.focus();
-      });
-    },
-
-    async updateSubItem() {
-      this.subItem.name = this.form.name;
-      await this.$store.dispatch("updateSubItem", {
-        listId: this.listId,
-        subItem: this.subItem
-      });
-      this.editingSubItem = false;
-    },
-
-    async deleteSubItem() {
-      await this.$store.dispatch("trashSubItem", {
-        listId: this.listId,
-        todoItemId: this.subItem.listItemId,
-        subItemId: this.subItem.id
       });
     }
 
@@ -36567,11 +36534,11 @@ exports.default = _default;
             [
               _c("b-form-checkbox", {
                 model: {
-                  value: _vm.completedState,
+                  value: _vm.subItem.completed,
                   callback: function($$v) {
-                    _vm.completedState = $$v
+                    _vm.$set(_vm.subItem, "completed", $$v)
                   },
-                  expression: "completedState"
+                  expression: "subItem.completed"
                 }
               })
             ],
@@ -36596,7 +36563,7 @@ exports.default = _default;
                 "b-button",
                 {
                   attrs: { size: "sm", variant: "danger" },
-                  on: { click: _vm.deleteSubItem }
+                  on: { click: null }
                 },
                 [_vm._v("Delete")]
               )
@@ -36613,7 +36580,7 @@ exports.default = _default;
               on: {
                 submit: function($event) {
                   $event.preventDefault()
-                  return _vm.updateSubItem($event)
+                  return null($event)
                 }
               }
             },
@@ -36707,22 +36674,20 @@ render._withStripped = true
       
       }
     })();
-},{"_css_loader":"node_modules/parcel-bundler/src/builtins/css-loader.js","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/components/SubItems.vue":[function(require,module,exports) {
+},{"_css_loader":"node_modules/parcel-bundler/src/builtins/css-loader.js","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/components/AddSubItemForm.vue":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.default = void 0;
-
-var _axios = _interopRequireDefault(require("axios"));
-
-var _SubItem = _interopRequireDefault(require("./SubItem"));
-
-var _vuedraggable = _interopRequireDefault(require("vuedraggable"));
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
+//
+//
+//
+//
+//
+//
+//
 //
 //
 //
@@ -36738,240 +36703,13 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 //
 //
 var _default = {
+  name: "AddSubItemForm",
   props: ["todoListItem"],
-  components: {
-    Draggable: _vuedraggable.default,
-    SubItem: _SubItem.default
-  },
-
-  async created() {
-    await this.getLayout();
-    this.items = this.setSubItems();
-    this.loadingSubItems = false;
-  },
-
-  mounted() {
-    this.$store.state.connection.on("ItemLayoutUpdated", async itemId => await this.refreshSubItemLayout(itemId));
-    this.$store.state.connection.on("SubItemTrashed", async (todoItemId, subItem) => {
-      this.$store.commit("trashSubItem", {
-        todoItemId,
-        subItemId: subItem.id
-      });
-      await this.refreshSubItemLayout(todoItemId);
-    });
-  },
-
-  data() {
-    return {
-      items: [],
-      layout: [],
-      loadingSubItems: true
-    };
-  },
-
-  methods: {
-    async getLayout() {
-      try {
-        const response = await (0, _axios.default)({
-          method: "GET",
-          url: "api/lists/".concat(this.todoListItem.listId, "/todos/").concat(this.todoListItem.id, "/layout")
-        });
-        this.layout = response.data.layout;
-      } catch (error) {
-        console.log(error);
-      }
-    },
-
-    async updateSubItemPosition(event) {
-      const subItemId = event.item.getAttribute("data-id");
-      const position = event.newIndex;
-
-      try {
-        await (0, _axios.default)({
-          method: "PUT",
-          url: "api/lists/".concat(this.todoListItem.listId, "/todos/").concat(this.todoListItem.id, "/layout"),
-          headers: {
-            "content-type": "application/json"
-          },
-          data: JSON.stringify({
-            subItemId,
-            position
-          })
-        });
-      } catch (error) {
-        console.log(error);
-      }
-    },
-
-    async refreshSubItemLayout(todoItemId) {
-      if (todoItemId === this.todoListItem.id) {
-        await this.getLayout();
-      }
-    },
-
-    setSubItems() {
-      return this.$store.getters.getSubItemsByItemId(this.todoListItem.id);
-    }
-
-  },
-  computed: {
-    subItemsCompleted() {
-      var _this$items;
-
-      return this.items.every(item => item.completed) && ((_this$items = this.items) === null || _this$items === void 0 ? void 0 : _this$items.length) > 0;
-    }
-
-  },
-  watch: {
-    items: async function () {
-      await this.getLayout();
-    },
-    subItemsCompleted: function () {
-      if (this.subItemsCompleted && !this.todoListItem.completed) {
-        this.todoListItem.completed = true;
-        this.$store.commit("updateItemCompletedState", {
-          item: this.todoListItem
-        });
-      } else if (!this.subItemsCompleted && this.todoListItem.completed) {
-        this.todoListItem.completed = false;
-        this.$store.commit("updateItemCompletedState", {
-          item: this.todoListItem
-        });
-      }
-    }
-  }
-};
-exports.default = _default;
-        var $9ad823 = exports.default || module.exports;
-      
-      if (typeof $9ad823 === 'function') {
-        $9ad823 = $9ad823.options;
-      }
-    
-        /* template */
-        Object.assign($9ad823, (function () {
-          var render = function() {
-  var _vm = this
-  var _h = _vm.$createElement
-  var _c = _vm._self._c || _h
-  return !_vm.loadingSubItems
-    ? _c(
-        "b-list-group",
-        [
-          _c(
-            "Draggable",
-            {
-              attrs: { handle: ".sub-item-handle" },
-              on: { end: _vm.updateSubItemPosition },
-              model: {
-                value: _vm.layout,
-                callback: function($$v) {
-                  _vm.layout = $$v
-                },
-                expression: "layout"
-              }
-            },
-            [
-              _vm._l(_vm.layout, function(itemId) {
-                return _c("SubItem", {
-                  key: itemId,
-                  attrs: {
-                    subItem: _vm.items.find(function(x) {
-                      return x.id === itemId
-                    }),
-                    listId: _vm.todoListItem.listId
-                  }
-                })
-              }),
-              _vm._v(" "),
-              _vm.layout.length < 1
-                ? _c("b-list-group-item", [_vm._v("There are no sub-items.")])
-                : _vm._e()
-            ],
-            2
-          )
-        ],
-        1
-      )
-    : _vm._e()
-}
-var staticRenderFns = []
-render._withStripped = true
-
-          return {
-            render: render,
-            staticRenderFns: staticRenderFns,
-            _compiled: true,
-            _scopeId: null,
-            functional: undefined
-          };
-        })());
-      
-    /* hot reload */
-    (function () {
-      if (module.hot) {
-        var api = require('vue-hot-reload-api');
-        api.install(require('vue'));
-        if (api.compatible) {
-          module.hot.accept();
-          if (!module.hot.data) {
-            api.createRecord('$9ad823', $9ad823);
-          } else {
-            api.reload('$9ad823', $9ad823);
-          }
-        }
-
-        
-      }
-    })();
-},{"axios":"node_modules/axios/index.js","./SubItem":"vue/components/SubItem.vue","vuedraggable":"node_modules/vuedraggable/dist/vuedraggable.common.js","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/components/AddSubItemForm.vue":[function(require,module,exports) {
-"use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.default = void 0;
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-var _default = {
-  name: 'AddSubItemForm',
-  props: ['todoListItem'],
 
   data() {
     return {
       form: {
-        name: ''
+        name: ""
       },
       formActive: false
     };
@@ -36993,13 +36731,10 @@ var _default = {
     },
 
     async addSubItem() {
-      await this.$store.dispatch('addSubItem', {
-        listId: this.todoListItem.listId,
-        todoItemId: this.todoListItem.id,
-        name: this.form.name
-      });
+      const subItemName = this.form.name;
+      this.$emit("add-sub-item", subItemName);
       this.blurForm();
-      this.form.name = '';
+      this.form.name = "";
     }
 
   }
@@ -37038,7 +36773,7 @@ exports.default = _default;
               attrs: { size: "sm" },
               on: { click: _vm.focusForm }
             },
-            [_vm._v("\n        Add an item\n    ")]
+            [_vm._v("Add an item")]
           )
         : _vm._e(),
       _vm._v(" "),
@@ -37069,13 +36804,13 @@ exports.default = _default;
               _c(
                 "b-button",
                 { attrs: { size: "sm", variant: "success", type: "submit" } },
-                [_vm._v("\n            Add\n        ")]
+                [_vm._v("Add")]
               ),
               _vm._v(" "),
               _c(
                 "b-button",
                 { attrs: { size: "sm" }, on: { click: _vm.blurForm } },
-                [_vm._v("\n            Cancel\n        ")]
+                [_vm._v("Cancel")]
               )
             ],
             1
@@ -37114,7 +36849,183 @@ render._withStripped = true
         
       }
     })();
-},{"vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/components/EditTodoItemForm.vue":[function(require,module,exports) {
+},{"vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/components/SubItems.vue":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = void 0;
+
+var _axios = _interopRequireDefault(require("axios"));
+
+var _vuedraggable = _interopRequireDefault(require("vuedraggable"));
+
+var _SubItem = _interopRequireDefault(require("./SubItem"));
+
+var _AddSubItemForm = _interopRequireDefault(require("./AddSubItemForm"));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+var _default = {
+  props: ["todoListItem"],
+  components: {
+    Draggable: _vuedraggable.default,
+    SubItem: _SubItem.default,
+    AddSubItemForm: _AddSubItemForm.default
+  },
+
+  data() {
+    return {
+      subItems: [],
+      subItemsLayout: [],
+      loadingSubItems: false
+    };
+  },
+
+  methods: {
+    async dispatchAddSubItem(subItemName) {
+      const response = await (0, _axios.default)({
+        method: "POST",
+        url: "api/lists/".concat(this.todoListItem.listId, "/todos/").concat(this.todoListItem.id, "/subitems"),
+        headers: {
+          "content-type": "application/json"
+        },
+        data: JSON.stringify({
+          name: subItemName
+        })
+      });
+      const newSubItem = response.data;
+      this.commitAddSubItem(newSubItem);
+    },
+
+    async dispatchUpdateSubItemPosition() {},
+
+    commitAddSubItem(subItem) {
+      this.subItems.unshift(subItem);
+    }
+
+  },
+  computed: {},
+  watch: {}
+};
+exports.default = _default;
+        var $9ad823 = exports.default || module.exports;
+      
+      if (typeof $9ad823 === 'function') {
+        $9ad823 = $9ad823.options;
+      }
+    
+        /* template */
+        Object.assign($9ad823, (function () {
+          var render = function() {
+  var _vm = this
+  var _h = _vm.$createElement
+  var _c = _vm._self._c || _h
+  return _c(
+    "div",
+    { staticClass: "sub-items-wrapper" },
+    [
+      !_vm.loadingSubItems
+        ? _c(
+            "b-list-group",
+            [
+              _c(
+                "Draggable",
+                {
+                  attrs: { handle: ".sub-item-handle" },
+                  on: { end: _vm.dispatchUpdateSubItemPosition },
+                  model: {
+                    value: _vm.subItemsLayout,
+                    callback: function($$v) {
+                      _vm.subItemsLayout = $$v
+                    },
+                    expression: "subItemsLayout"
+                  }
+                },
+                [
+                  _vm._l(_vm.subItems, function(subItem) {
+                    return _c("SubItem", {
+                      key: subItem.id,
+                      attrs: {
+                        subItem: subItem,
+                        listId: _vm.todoListItem.listId
+                      }
+                    })
+                  }),
+                  _vm._v(" "),
+                  _vm.subItems.length < 1
+                    ? _c("b-list-group-item", [
+                        _vm._v("There are no sub-items.")
+                      ])
+                    : _vm._e()
+                ],
+                2
+              )
+            ],
+            1
+          )
+        : _vm._e(),
+      _vm._v(" "),
+      _c("AddSubItemForm", {
+        attrs: { todoListItem: _vm.todoListItem },
+        on: { "add-sub-item": _vm.dispatchAddSubItem }
+      })
+    ],
+    1
+  )
+}
+var staticRenderFns = []
+render._withStripped = true
+
+          return {
+            render: render,
+            staticRenderFns: staticRenderFns,
+            _compiled: true,
+            _scopeId: null,
+            functional: undefined
+          };
+        })());
+      
+    /* hot reload */
+    (function () {
+      if (module.hot) {
+        var api = require('vue-hot-reload-api');
+        api.install(require('vue'));
+        if (api.compatible) {
+          module.hot.accept();
+          if (!module.hot.data) {
+            api.createRecord('$9ad823', $9ad823);
+          } else {
+            api.reload('$9ad823', $9ad823);
+          }
+        }
+
+        
+      }
+    })();
+},{"axios":"node_modules/axios/index.js","vuedraggable":"node_modules/vuedraggable/dist/vuedraggable.common.js","./SubItem":"vue/components/SubItem.vue","./AddSubItemForm":"vue/components/AddSubItemForm.vue","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/components/EditTodoItemForm.vue":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -37128,11 +37039,8 @@ var _moment = _interopRequireDefault(require("moment"));
 
 var _SubItems = _interopRequireDefault(require("./SubItems"));
 
-var _AddSubItemForm = _interopRequireDefault(require("./AddSubItemForm"));
-
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-//
 //
 //
 //
@@ -37206,8 +37114,7 @@ var _default = {
   },
 
   components: {
-    SubItems: _SubItems.default,
-    AddSubItemForm: _AddSubItemForm.default
+    SubItems: _SubItems.default
   },
   computed: {
     dueDate() {
@@ -37445,20 +37352,12 @@ exports.default = _default;
           )
         : _vm._e(),
       _vm._v(" "),
-      false
-        ? _c("b-form-group", {
-            staticClass: "mb-2",
-            attrs: { label: "Sub-items" }
-          })
-        : _vm._e(),
+      _c("b-form-group", {
+        staticClass: "mb-2",
+        attrs: { label: "Sub-items" }
+      }),
       _vm._v(" "),
-      false
-        ? _c("SubItems", { attrs: { todoListItem: _vm.todoListItem } })
-        : _vm._e(),
-      _vm._v(" "),
-      false
-        ? _c("AddSubItemForm", { attrs: { todoListItem: _vm.todoListItem } })
-        : _vm._e()
+      _c("SubItems", { attrs: { todoListItem: _vm.todoListItem } })
     ],
     1
   )
@@ -37496,7 +37395,7 @@ render._withStripped = true
       
       }
     })();
-},{"vuex":"node_modules/vuex/dist/vuex.esm.js","moment":"node_modules/moment/moment.js","./SubItems":"vue/components/SubItems.vue","./AddSubItemForm":"vue/components/AddSubItemForm.vue","_css_loader":"node_modules/parcel-bundler/src/builtins/css-loader.js","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/components/TodoListItem.vue":[function(require,module,exports) {
+},{"vuex":"node_modules/vuex/dist/vuex.esm.js","moment":"node_modules/moment/moment.js","./SubItems":"vue/components/SubItems.vue","_css_loader":"node_modules/parcel-bundler/src/builtins/css-loader.js","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/components/TodoListItem.vue":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
