@@ -17,9 +17,20 @@ export default {
     await this.$store.dispatch("getTodoLists");
   },
   mounted() {
+    // Establish connection with SignalR
     this.$store.state.connection
       .start()
       .catch((err) => console.error(err.toString()));
+
+    // Todo list completed state changed
+    this.$store.state.connection.on(
+      "ListCompletedStateChanged",
+      (todoListId, completed) =>
+        this.$store.commit("setTodoListCompletedState", {
+          todoListId,
+          completed,
+        })
+    );
   },
 };
 </script>

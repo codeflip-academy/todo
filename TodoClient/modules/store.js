@@ -42,6 +42,9 @@ const store = new Vuex.Store({
     },
     setTodoListCompletedState(state, { todoListId, completed }) {
       state.todoLists[state.todoLists.findIndex((t) => t.id === todoListId)].completed = completed;
+    },
+    changeUserRoleByListId(state, { todoListId, role }) {
+      state.todoLists[state.todoLists.findIndex((t) => t.id === todoListId)].role = role;
     }
   },
   actions: {

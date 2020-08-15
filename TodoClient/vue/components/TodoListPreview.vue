@@ -44,6 +44,8 @@
 </template>
 
 <script>
+import axios from "axios";
+
 import Contributors from "./Contributors";
 
 export default {
@@ -56,19 +58,31 @@ export default {
       this.$emit("delete-todo-list", this.todoList.id);
     },
     async acceptInvitation() {
-      await this.$store.dispatch("acceptInvitation", {
-        listId: this.todoList.id,
+      await axios({
+        method: "POST",
+        url: `api/lists/${this.todoList.id}/accept`,
+      });
+
+      this.$store.commit("changeUserRoleByListId", {
+        todoListId: this.todoList.id,
+        role: 2,
       });
     },
     async declineInvitation() {
-      await this.$store.dispatch("declineInvitation", {
-        listId: this.todoList.id,
+      await axios({
+        method: "POST",
+        url: `api/lists/${this.todoList.id}/decline`,
       });
+
+      this.$store.commit("deleteTodoList", this.todoList.id);
     },
     async leaveTodoList() {
-      await this.$store.dispatch("leaveTodoList", {
-        listId: this.todoList.id,
+      await axios({
+        method: "POST",
+        url: `api/lists/${this.todoList.id}/removeself`,
       });
+
+      this.$store.commit("deleteTodoList", this.todoList.id);
     },
   },
 };

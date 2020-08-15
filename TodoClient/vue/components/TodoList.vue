@@ -80,13 +80,6 @@ export default {
     Confetti,
   },
   methods: {
-    showTitleEditor() {
-      this.editingTitle = true;
-      this.$nextTick(() => {
-        this.$refs.listTitleInput.focus();
-      });
-      this.todoListForm.listTitle = this.todoList.listTitle;
-    },
     async updateListTitle() {
       this.editingTitle = false;
 
@@ -96,6 +89,13 @@ export default {
       });
 
       this.todoListForm.listTitle = "";
+    },
+    showTitleEditor() {
+      this.editingTitle = true;
+      this.$nextTick(() => {
+        this.$refs.listTitleInput.focus();
+      });
+      this.todoListForm.listTitle = this.todoList.listTitle;
     },
     setTodoListCompleted() {
       this.$store.commit("setTodoListCompletedState", {
