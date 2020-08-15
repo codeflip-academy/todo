@@ -58,7 +58,9 @@ export default {
         return this.item.completed;
       },
       set(val) {
-        this.sendCheckboxClickedEvent(val);
+        if (val !== null) {
+          this.sendCheckboxClickedEvent(val);
+        }
       },
     },
   },

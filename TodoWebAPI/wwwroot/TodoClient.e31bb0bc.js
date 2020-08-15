@@ -36478,6 +36478,10 @@ exports.default = void 0;
 //
 //
 //
+//
+//
+//
+//
 var _default = {
   props: ["listId", "subItem"],
 
@@ -36519,6 +36523,14 @@ var _default = {
         subItemId: this.subItem.id,
         completed: completed
       });
+    },
+
+    sendUpdateSubItemNameEvent() {
+      this.$emit("update-sub-item-name", {
+        subItemId: this.subItem.id,
+        subItemName: this.form.name
+      });
+      this.editingSubItem = false;
     }
 
   }
@@ -36602,7 +36614,7 @@ exports.default = _default;
               on: {
                 submit: function($event) {
                   $event.preventDefault()
-                  return null($event)
+                  return _vm.sendUpdateSubItemNameEvent($event)
                 }
               }
             },
@@ -36912,6 +36924,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 //
 //
 //
+//
 var _default = {
   props: ["todoListItem"],
   components: {
@@ -36981,6 +36994,23 @@ var _default = {
       });
     },
 
+    async dispatchUpdateSubItemName({
+      subItemId,
+      subItemName
+    }) {
+      this.commitUpdateSubItemName(subItemId, subItemName);
+      await (0, _axios.default)({
+        method: "PUT",
+        url: "api/lists/".concat(this.todoListItem.listId, "/todos/").concat(this.todoListItem.id, "/subitems/").concat(subItemId),
+        headers: {
+          "content-type": "application/json"
+        },
+        data: JSON.stringify({
+          name: subItemName
+        })
+      });
+    },
+
     async dispatchUpdateSubItemPosition() {},
 
     commitSetLoadingSubItemsState(state) {
@@ -36989,6 +37019,7 @@ var _default = {
 
     commitDeleteSubItem(subItemId) {
       this.subItems.splice(this.subItems.findIndex(s => s.id == subItemId), 1);
+      this.triggerSubItemsCompletedEvent();
     },
 
     commitSetSubItems(subItems) {
@@ -36997,6 +37028,11 @@ var _default = {
 
     commitAddSubItem(subItem) {
       this.subItems.unshift(subItem);
+      this.triggerSubItemsCompletedEvent();
+    },
+
+    commitUpdateSubItemName(subItemId, subItemName) {
+      this.subItems[this.subItems.findIndex(s => s.id == subItemId)].name = subItemName;
     },
 
     commitSetSubItemCompletedState(subItemId, completed) {
@@ -37031,7 +37067,6 @@ var _default = {
   watch: {
     subItems() {
       this.triggerSubItemCountChangedEvent();
-      this.triggerSubItemsCompletedEvent();
     }
 
   }
@@ -37081,6 +37116,7 @@ exports.default = _default;
                       on: {
                         "checkbox-clicked":
                           _vm.dispatchSetSubItemCompletedState,
+                        "update-sub-item-name": _vm.dispatchUpdateSubItemName,
                         "delete-sub-item": _vm.dispatchDeleteSubItem
                       }
                     })
@@ -37601,7 +37637,9 @@ var _default = {
       },
 
       set(val) {
-        this.sendCheckboxClickedEvent(val);
+        if (val !== null) {
+          this.sendCheckboxClickedEvent(val);
+        }
       }
 
     }

@@ -14,7 +14,11 @@
       <b-button size="sm" variant="danger" @click="sendDeleteSubItemEvent">Delete</b-button>
     </div>
 
-    <b-form @submit.prevent="null" v-if="editingSubItem" class="edit-sub-item-form">
+    <b-form
+      @submit.prevent="sendUpdateSubItemNameEvent"
+      v-if="editingSubItem"
+      class="edit-sub-item-form"
+    >
       <b-form-group>
         <b-form-input
           ref="subItemName"
@@ -76,6 +80,14 @@ export default {
         subItemId: this.subItem.id,
         completed: completed,
       });
+    },
+    sendUpdateSubItemNameEvent() {
+      this.$emit("update-sub-item-name", {
+        subItemId: this.subItem.id,
+        subItemName: this.form.name,
+      });
+
+      this.editingSubItem = false;
     },
   },
 };

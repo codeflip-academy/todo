@@ -12,6 +12,7 @@
           :subItem="subItem"
           :listId="todoListItem.listId"
           @checkbox-clicked="dispatchSetSubItemCompletedState"
+          @update-sub-item-name="dispatchUpdateSubItemName"
           @delete-sub-item="dispatchDeleteSubItem"
         ></SubItem>
         <b-list-group-item v-if="subItems.length < 1">There are no sub-items.</b-list-group-item>
@@ -90,6 +91,16 @@ export default {
         url: `api/lists/${this.todoListItem.listId}/todos/${this.todoListItem.id}/subitems/${subItemId}`,
       });
     },
+    async dispatchUpdateSubItemName({ subItemId, subItemName }) {
+      this.commitUpdateSubItemName(subItemId, subItemName);
+
+      await axios({
+        method: "PUT",
+        url: `api/lists/${this.todoListItem.listId}/todos/${this.todoListItem.id}/subitems/${subItemId}`,
+        headers: { "content-type": "application/json" },
+        data: JSON.stringify({ name: subItemName }),
+      });
+    },
     async dispatchUpdateSubItemPosition() {},
     commitSetLoadingSubItemsState(state) {
       this.loadingSubItems = state;
@@ -99,12 +110,19 @@ export default {
         this.subItems.findIndex((s) => s.id == subItemId),
         1
       );
+      this.triggerSubItemsCompletedEvent();
     },
     commitSetSubItems(subItems) {
       this.subItems = subItems;
     },
     commitAddSubItem(subItem) {
       this.subItems.unshift(subItem);
+      this.triggerSubItemsCompletedEvent();
+    },
+    commitUpdateSubItemName(subItemId, subItemName) {
+      this.subItems[
+        this.subItems.findIndex((s) => s.id == subItemId)
+      ].name = subItemName;
     },
     commitSetSubItemCompletedState(subItemId, completed) {
       this.subItems[
@@ -135,7 +153,6 @@ export default {
   watch: {
     subItems() {
       this.triggerSubItemCountChangedEvent();
-      this.triggerSubItemsCompletedEvent();
     },
   },
 };
