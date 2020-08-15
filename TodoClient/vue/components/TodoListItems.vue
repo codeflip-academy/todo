@@ -203,6 +203,13 @@ export default {
         this.commitAddItem(item);
       }
     });
+
+    // Item trashed
+    this.$store.state.connection.on("ItemTrashed", (todoListId, item) => {
+      if (this.itemBelongsToList(todoListId)) {
+        this.commitDeleteItem(item.id);
+      }
+    });
   },
   watch: {
     items() {
