@@ -36942,10 +36942,15 @@ var _default = {
   },
 
   async created() {
-    await this.dispatchGetSubItems();
+    await this.dispatchGetSubItemsAndLayout();
   },
 
   methods: {
+    async dispatchGetSubItemsAndLayout() {
+      await this.dispatchGetSubItemsLayout();
+      await this.dispatchGetSubItems();
+    },
+
     async dispatchGetSubItems() {
       this.commitSetLoadingSubItemsState(true);
       const response = await (0, _axios.default)({
@@ -36954,6 +36959,14 @@ var _default = {
       });
       this.commitSetSubItems(response.data);
       this.commitSetLoadingSubItemsState(false);
+    },
+
+    async dispatchGetSubItemsLayout() {
+      const response = await (0, _axios.default)({
+        method: "GET",
+        url: "api/lists/".concat(this.todoListItem.listId, "/todos/").concat(this.todoListItem.id, "/layout")
+      });
+      this.commitSetSubItemsLayout(response.data.layout);
     },
 
     async dispatchAddSubItem(subItemName) {
@@ -37011,13 +37024,28 @@ var _default = {
       });
     },
 
-    async dispatchUpdateSubItemPosition() {},
+    async dispatchUpdateSubItemPosition(event) {
+      const subItemId = event.item.getAttribute("data-id");
+      const position = event.newIndex;
+      await (0, _axios.default)({
+        method: "PUT",
+        url: "api/lists/".concat(this.todoListItem.listId, "/todos/").concat(this.todoListItem.id, "/layout"),
+        headers: {
+          "content-type": "application/json"
+        },
+        data: JSON.stringify({
+          subItemId,
+          position
+        })
+      });
+    },
 
     commitSetLoadingSubItemsState(state) {
       this.loadingSubItems = state;
     },
 
     commitDeleteSubItem(subItemId) {
+      this.commitRemoveSubItemLayoutPosition(subItemId);
       this.subItems.splice(this.subItems.findIndex(s => s.id == subItemId), 1);
       this.triggerSubItemsCompletedEvent();
     },
@@ -37026,8 +37054,21 @@ var _default = {
       this.subItems = subItems;
     },
 
+    commitSetSubItemsLayout(layout) {
+      this.subItemsLayout = layout;
+    },
+
+    commitAddSubItemLayoutPosition(subItemId) {
+      this.subItemsLayout.unshift(subItemId);
+    },
+
+    commitRemoveSubItemLayoutPosition(subItemId) {
+      this.subItemsLayout.splice(this.subItemsLayout.findIndex(l => l == subItemId), 1);
+    },
+
     commitAddSubItem(subItem) {
       this.subItems.unshift(subItem);
+      this.commitAddSubItemLayoutPosition(subItem.id);
       this.triggerSubItemsCompletedEvent();
     },
 
@@ -37106,11 +37147,13 @@ exports.default = _default;
                   }
                 },
                 [
-                  _vm._l(_vm.subItems, function(subItem) {
+                  _vm._l(_vm.subItemsLayout, function(subItemId) {
                     return _c("SubItem", {
-                      key: subItem.id,
+                      key: subItemId,
                       attrs: {
-                        subItem: subItem,
+                        subItem: _vm.subItems.find(function(s) {
+                          return s.id == subItemId
+                        }),
                         listId: _vm.todoListItem.listId
                       },
                       on: {
@@ -38109,7 +38152,6 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 //
 //
 //
-//
 var _default = {
   name: "TodoListItems",
   props: ["todoListId"],
@@ -38128,6 +38170,11 @@ var _default = {
   },
 
   methods: {
+    async dispatchGetItemsAndLayout() {
+      await this.dispatchGetItemsLayout();
+      await this.dispatchGetItems();
+    },
+
     async dispatchGetItemsLayout() {
       const response = await (0, _axios.default)({
         method: "GET",
@@ -38276,8 +38323,7 @@ var _default = {
   },
 
   async created() {
-    await this.dispatchGetItemsLayout();
-    await this.dispatchGetItems();
+    await this.dispatchGetItemsAndLayout();
   },
 
   watch: {

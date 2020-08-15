@@ -6,7 +6,6 @@
       handle=".item-handle"
       v-if="!loadingItems"
     >
-      <!-- Replace items loop with itemsLayout and find items with items.find(i => i.id === position) -->
       <TodoListItem
         v-for="itemId in itemsLayout"
         :key="itemId"
@@ -48,6 +47,10 @@ export default {
     };
   },
   methods: {
+    async dispatchGetItemsAndLayout() {
+      await this.dispatchGetItemsLayout();
+      await this.dispatchGetItems();
+    },
     async dispatchGetItemsLayout() {
       const response = await axios({
         method: "GET",
@@ -188,8 +191,7 @@ export default {
     },
   },
   async created() {
-    await this.dispatchGetItemsLayout();
-    await this.dispatchGetItems();
+    await this.dispatchGetItemsAndLayout();
   },
   watch: {
     items() {

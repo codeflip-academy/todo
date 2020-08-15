@@ -7,9 +7,9 @@
         @end="dispatchUpdateSubItemPosition"
       >
         <SubItem
-          v-for="subItem in subItems"
-          :key="subItem.id"
-          :subItem="subItem"
+          v-for="subItemId in subItemsLayout"
+          :key="subItemId"
+          :subItem="subItems.find(s => s.id == subItemId)"
           :listId="todoListItem.listId"
           @checkbox-clicked="dispatchSetSubItemCompletedState"
           @update-sub-item-name="dispatchUpdateSubItemName"
@@ -44,9 +44,13 @@ export default {
     };
   },
   async created() {
-    await this.dispatchGetSubItems();
+    await this.dispatchGetSubItemsAndLayout();
   },
   methods: {
+    async dispatchGetSubItemsAndLayout() {
+      await this.dispatchGetSubItemsLayout();
+      await this.dispatchGetSubItems();
+    },
     async dispatchGetSubItems() {
       this.commitSetLoadingSubItemsState(true);
 
@@ -58,6 +62,14 @@ export default {
       this.commitSetSubItems(response.data);
 
       this.commitSetLoadingSubItemsState(false);
+    },
+    async dispatchGetSubItemsLayout() {
+      const response = await axios({
+        method: "GET",
+        url: `api/lists/${this.todoListItem.listId}/todos/${this.todoListItem.id}/layout`,
+      });
+
+      this.commitSetSubItemsLayout(response.data.layout);
     },
     async dispatchAddSubItem(subItemName) {
       const response = await axios({
@@ -101,22 +113,52 @@ export default {
         data: JSON.stringify({ name: subItemName }),
       });
     },
-    async dispatchUpdateSubItemPosition() {},
+    async dispatchUpdateSubItemPosition(event) {
+      const subItemId = event.item.getAttribute("data-id");
+      const position = event.newIndex;
+
+      await axios({
+        method: "PUT",
+        url: `api/lists/${this.todoListItem.listId}/todos/${this.todoListItem.id}/layout`,
+        headers: {
+          "content-type": "application/json",
+        },
+        data: JSON.stringify({ subItemId, position }),
+      });
+    },
     commitSetLoadingSubItemsState(state) {
       this.loadingSubItems = state;
     },
     commitDeleteSubItem(subItemId) {
+      this.commitRemoveSubItemLayoutPosition(subItemId);
+
       this.subItems.splice(
         this.subItems.findIndex((s) => s.id == subItemId),
         1
       );
+
       this.triggerSubItemsCompletedEvent();
     },
     commitSetSubItems(subItems) {
       this.subItems = subItems;
     },
+    commitSetSubItemsLayout(layout) {
+      this.subItemsLayout = layout;
+    },
+    commitAddSubItemLayoutPosition(subItemId) {
+      this.subItemsLayout.unshift(subItemId);
+    },
+    commitRemoveSubItemLayoutPosition(subItemId) {
+      this.subItemsLayout.splice(
+        this.subItemsLayout.findIndex((l) => l == subItemId),
+        1
+      );
+    },
     commitAddSubItem(subItem) {
       this.subItems.unshift(subItem);
+
+      this.commitAddSubItemLayoutPosition(subItem.id);
+
       this.triggerSubItemsCompletedEvent();
     },
     commitUpdateSubItemName(subItemId, subItemName) {
