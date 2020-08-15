@@ -26,7 +26,6 @@ using System.Text.Json;
 using Octokit;
 using Octokit.Internal;
 using TodoWebAPI.Models;
-using Todo.Infrastructure.Guids;
 using Dapper;
 using TodoWebAPI.TypeHandlers;
 using TodoWebAPI.SignalR;
@@ -34,6 +33,8 @@ using Microsoft.AspNetCore.SignalR;
 using TodoWebAPI.BraintreeService;
 using TodoWebAPI.ServiceBus;
 using Todo.Infrastructure.PaymentMethods;
+using Todo.Domain;
+using Todo.Core;
 
 namespace TodoWebAPI
 {

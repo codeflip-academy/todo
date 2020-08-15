@@ -64,137 +64,78 @@ namespace TodoWebAPI.Controllers
         public async Task<IActionResult> GetPaymentMethod()
         {
             var accountId = Guid.Parse(User.FindFirst(c => c.Type == "urn:codefliptodo:accountid").Value);
-            var gateway = _braintreeConfiguration.GetGateway();
-            var paymentMethod = await _paymentMethod.FindByAccountIdAsync(accountId);
 
-            if (paymentMethod != null)
+            var payment = new GetPaymentMethod
             {
-                CreditCard creditCard = (CreditCard)await gateway.PaymentMethod.FindAsync(paymentMethod.TokenId);
+                AccountId = accountId
+            };
 
-                var creditCardInfo = new CardInfoModel()
-                {
-                    CardType = creditCard.CardType.ToString(),
-                    ExpirationDate = creditCard.ExpirationDate,
-                    LastFourDigits = creditCard.LastFour
-                };
+            var result = await _mediator.Send(payment);
 
-                return Ok(creditCardInfo);
-            }
+            if (result != null)
+                return Ok(result);
 
-            return Ok();
+            return BadRequest();
         }
 
         [HttpPost]
-        public async Task<bool> AddPaymentMethod([FromBody] AddPaymentMethodModel addPaymentModel)
+        public async Task<IActionResult> AddOrReplacePaymentMethod([FromBody] AddPayment addPayment)
         {
             var accountId = Guid.Parse(User.FindFirst(c => c.Type == "urn:codefliptodo:accountid").Value);
             var account = await _accountRepository.FindAccountByIdAsync(accountId);
+            var previousPaymentMethodId = account.PaymentMethodId;
             var gateway = _braintreeConfiguration.GetGateway();
-            var paymentMethod = await _paymentMethod.FindByAccountIdAsync(accountId);
+            var subscriptionId = Guid.NewGuid().ToString();
 
-            if (paymentMethod != null)
+            addPayment.AccountId = accountId;
+
+            var paymentMethodAdded = await _mediator.Send(addPayment);
+
+            if (account.SubscriptionId != null)
+            {
+                var updateSubscription = new UpdateSubscriptionPaymentMethod
+                {
+                    AccountId = accountId
+                };
+
+                await _mediator.Send(updateSubscription);
+            }
+
+            if (previousPaymentMethodId != null)
             {
                 var deletePayment = new DeletePaymentMethod
                 {
-                    Method = paymentMethod
+                    PaymentMethodId = previousPaymentMethodId,
+                    AccountId = accountId
                 };
                 await _mediator.Send(deletePayment);
             }
 
-            Customer customer = await gateway.Customer.FindAsync(account.PaymentId);
+            if (paymentMethodAdded)
+                return Ok();
 
-            var request = new PaymentMethodRequest()
-            {
-                CustomerId = customer.Id,
-                PaymentMethodNonce = addPaymentModel.PaymentMethodNonce,
-                Token = Guid.NewGuid().ToString()
-            };
-
-            Result<PaymentMethod> result = await gateway.PaymentMethod.CreateAsync(request);
-
-            var payment = new Payment()
-            {
-                AccountId = accountId,
-                TokenId = request.Token
-            };
-
-            _paymentMethod.Add(payment);
-
-            await _paymentMethod.SaveChangesAsync();
-
-            return result.IsSuccess();
-        }
-
-        [HttpPost, Route("subscription")]
-        public async Task<IActionResult> CreatePaymentSubscription([FromBody] CreateSubscriptionModel createSubscriptionModel)
-        {
-            var accountId = Guid.Parse(User.FindFirst(c => c.Type == "urn:codefliptodo:accountid").Value);
-            var gateway = _braintreeConfiguration.GetGateway();
-            var paymentMethod = await _paymentMethod.FindByAccountIdAsync(accountId);
-
-            if (paymentMethod != null)
-            {
-                var subscription = new CreateSubscription
-                {
-                    AccountId = accountId,
-                    Plan = createSubscriptionModel.PlanName
-                };
-
-                var response = await _mediator.Send(subscription);
-
-                if (response == true)
-                {
-                    var planChange = new PlanChange
-                    {
-                        AccountId = accountId,
-                        Plan = createSubscriptionModel.PlanName
-                    };
-                    await _mediator.Send(planChange);
-
-                    return Ok();
-                }
-            }
             return BadRequest();
         }
 
         [HttpPost, Route("subscription/change")]
         public async Task<IActionResult> ChangePaymentSubscription([FromBody] ChangePaymentSubscription changePayment)
         {
-            var accountId = Guid.Parse(User.FindFirst(c => c.Type == "urn:codefliptodo:accountid").Value);
-            var account = await _accountRepository.FindAccountByIdAsync(accountId);
+            changePayment.AccountId = Guid.Parse(User.FindFirst(c => c.Type == "urn:codefliptodo:accountid").Value);
             var gateway = _braintreeConfiguration.GetGateway();
 
-            if (account.SubscriptionId == null)
+            var createSubscription = new CreateSubscription
             {
-                var createsubscription = new CreateSubscription
-                {
-                    AccountId = accountId,
-                    Plan = changePayment.Plan
-                };
+                AccountId = changePayment.AccountId,
+                Plan = changePayment.Plan
+            };
 
-                var response = await _mediator.Send(createsubscription);
+            var result = await _mediator.Send(createSubscription);
 
-                if (response == true)
-                {
-                    var planChange = new PlanChange
-                    {
-                        AccountId = accountId,
-                        Plan = changePayment.Plan
-                    };
-                    await _mediator.Send(planChange);
-
-                    return Ok();
-                }
-
-            }
-            else
+            if (result)
             {
-
-                changePayment.AccountId = accountId;
-
-                var planChange = new PlanChange
+                var planChange = new ChangePlan
                 {
-                    AccountId = accountId,
+                    AccountId = changePayment.AccountId,
                     Plan = changePayment.Plan
                 };
 
@@ -215,6 +156,19 @@ namespace TodoWebAPI.Controllers
             }
 
             return BadRequest();
+        }
+
+        [HttpDelete, Route("paymentMethod/delete")]
+        public async Task<IActionResult> DeletePayment(DeletePaymentMethod deletePaymentMethod)
+        {
+            var accountId = Guid.Parse(User.FindFirst(c => c.Type == "urn:codefliptodo:accountid").Value);
+            var account = await _accountRepository.FindAccountByIdAsync(accountId);
+            deletePaymentMethod.PaymentMethodId = account.PaymentMethodId;
+            deletePaymentMethod.AccountId = accountId;
+
+            await _mediator.Send(deletePaymentMethod);
+
+            return Ok();
         }
     }
 }

@@ -9747,6 +9747,7 @@ var index = {
 };
 var _default = index;
 exports.default = _default;
+<<<<<<< HEAD
 },{}],"node_modules/axios/lib/helpers/bind.js":[function(require,module,exports) {
 'use strict';
 
@@ -15775,6 +15776,4272 @@ function () {
   HubConnection.prototype.reconnect = function (error) {
     return __awaiter(this, void 0, void 0, function () {
       var reconnectStartTime, previousReconnectAttempts, retryError, nextRetryDelay, e_4;
+=======
+},{}],"node_modules/@microsoft/signalr/dist/esm/Errors.js":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.AbortError = exports.TimeoutError = exports.HttpError = void 0;
+
+// Copyright (c) .NET Foundation. All rights reserved.
+// Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
+var __extends = void 0 && (void 0).__extends || function () {
+  var extendStatics = Object.setPrototypeOf || {
+    __proto__: []
+  } instanceof Array && function (d, b) {
+    d.__proto__ = b;
+  } || function (d, b) {
+    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+  };
+
+  return function (d, b) {
+    extendStatics(d, b);
+
+    function __() {
+      this.constructor = d;
+    }
+
+    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+  };
+}();
+/** Error thrown when an HTTP request fails. */
+
+
+var HttpError =
+/** @class */
+function (_super) {
+  __extends(HttpError, _super);
+  /** Constructs a new instance of {@link @microsoft/signalr.HttpError}.
+   *
+   * @param {string} errorMessage A descriptive error message.
+   * @param {number} statusCode The HTTP status code represented by this error.
+   */
+
+
+  function HttpError(errorMessage, statusCode) {
+    var _newTarget = this.constructor;
+
+    var _this = this;
+
+    var trueProto = _newTarget.prototype;
+    _this = _super.call(this, errorMessage) || this;
+    _this.statusCode = statusCode; // Workaround issue in Typescript compiler
+    // https://github.com/Microsoft/TypeScript/issues/13965#issuecomment-278570200
+
+    _this.__proto__ = trueProto;
+    return _this;
+  }
+
+  return HttpError;
+}(Error);
+
+exports.HttpError = HttpError;
+
+/** Error thrown when a timeout elapses. */
+var TimeoutError =
+/** @class */
+function (_super) {
+  __extends(TimeoutError, _super);
+  /** Constructs a new instance of {@link @microsoft/signalr.TimeoutError}.
+   *
+   * @param {string} errorMessage A descriptive error message.
+   */
+
+
+  function TimeoutError(errorMessage) {
+    var _newTarget = this.constructor;
+
+    if (errorMessage === void 0) {
+      errorMessage = "A timeout occurred.";
+    }
+
+    var _this = this;
+
+    var trueProto = _newTarget.prototype;
+    _this = _super.call(this, errorMessage) || this; // Workaround issue in Typescript compiler
+    // https://github.com/Microsoft/TypeScript/issues/13965#issuecomment-278570200
+
+    _this.__proto__ = trueProto;
+    return _this;
+  }
+
+  return TimeoutError;
+}(Error);
+
+exports.TimeoutError = TimeoutError;
+
+/** Error thrown when an action is aborted. */
+var AbortError =
+/** @class */
+function (_super) {
+  __extends(AbortError, _super);
+  /** Constructs a new instance of {@link AbortError}.
+   *
+   * @param {string} errorMessage A descriptive error message.
+   */
+
+
+  function AbortError(errorMessage) {
+    var _newTarget = this.constructor;
+
+    if (errorMessage === void 0) {
+      errorMessage = "An abort occurred.";
+    }
+
+    var _this = this;
+
+    var trueProto = _newTarget.prototype;
+    _this = _super.call(this, errorMessage) || this; // Workaround issue in Typescript compiler
+    // https://github.com/Microsoft/TypeScript/issues/13965#issuecomment-278570200
+
+    _this.__proto__ = trueProto;
+    return _this;
+  }
+
+  return AbortError;
+}(Error);
+
+exports.AbortError = AbortError;
+},{}],"node_modules/@microsoft/signalr/dist/esm/HttpClient.js":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.HttpClient = exports.HttpResponse = void 0;
+
+// Copyright (c) .NET Foundation. All rights reserved.
+// Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
+var __assign = void 0 && (void 0).__assign || Object.assign || function (t) {
+  for (var s, i = 1, n = arguments.length; i < n; i++) {
+    s = arguments[i];
+
+    for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p)) t[p] = s[p];
+  }
+
+  return t;
+};
+/** Represents an HTTP response. */
+
+
+var HttpResponse =
+/** @class */
+function () {
+  function HttpResponse(statusCode, statusText, content) {
+    this.statusCode = statusCode;
+    this.statusText = statusText;
+    this.content = content;
+  }
+
+  return HttpResponse;
+}();
+
+exports.HttpResponse = HttpResponse;
+
+/** Abstraction over an HTTP client.
+ *
+ * This class provides an abstraction over an HTTP client so that a different implementation can be provided on different platforms.
+ */
+var HttpClient =
+/** @class */
+function () {
+  function HttpClient() {}
+
+  HttpClient.prototype.get = function (url, options) {
+    return this.send(__assign({}, options, {
+      method: "GET",
+      url: url
+    }));
+  };
+
+  HttpClient.prototype.post = function (url, options) {
+    return this.send(__assign({}, options, {
+      method: "POST",
+      url: url
+    }));
+  };
+
+  HttpClient.prototype.delete = function (url, options) {
+    return this.send(__assign({}, options, {
+      method: "DELETE",
+      url: url
+    }));
+  };
+  /** Gets all cookies that apply to the specified URL.
+   *
+   * @param url The URL that the cookies are valid for.
+   * @returns {string} A string containing all the key-value cookie pairs for the specified URL.
+   */
+  // @ts-ignore
+
+
+  HttpClient.prototype.getCookieString = function (url) {
+    return "";
+  };
+
+  return HttpClient;
+}();
+
+exports.HttpClient = HttpClient;
+},{}],"node_modules/@microsoft/signalr/dist/esm/ILogger.js":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.LogLevel = void 0;
+// Copyright (c) .NET Foundation. All rights reserved.
+// Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
+// These values are designed to match the ASP.NET Log Levels since that's the pattern we're emulating here.
+
+/** Indicates the severity of a log message.
+ *
+ * Log Levels are ordered in increasing severity. So `Debug` is more severe than `Trace`, etc.
+ */
+var LogLevel;
+exports.LogLevel = LogLevel;
+
+(function (LogLevel) {
+  /** Log level for very low severity diagnostic messages. */
+  LogLevel[LogLevel["Trace"] = 0] = "Trace";
+  /** Log level for low severity diagnostic messages. */
+
+  LogLevel[LogLevel["Debug"] = 1] = "Debug";
+  /** Log level for informational diagnostic messages. */
+
+  LogLevel[LogLevel["Information"] = 2] = "Information";
+  /** Log level for diagnostic messages that indicate a non-fatal problem. */
+
+  LogLevel[LogLevel["Warning"] = 3] = "Warning";
+  /** Log level for diagnostic messages that indicate a failure in the current operation. */
+
+  LogLevel[LogLevel["Error"] = 4] = "Error";
+  /** Log level for diagnostic messages that indicate a failure that will terminate the entire application. */
+
+  LogLevel[LogLevel["Critical"] = 5] = "Critical";
+  /** The highest possible log level. Used when configuring logging to indicate that no log messages should be emitted. */
+
+  LogLevel[LogLevel["None"] = 6] = "None";
+})(LogLevel || (exports.LogLevel = LogLevel = {}));
+},{}],"node_modules/@microsoft/signalr/dist/esm/Loggers.js":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.NullLogger = void 0;
+
+// Copyright (c) .NET Foundation. All rights reserved.
+// Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
+
+/** A logger that does nothing when log messages are sent to it. */
+var NullLogger =
+/** @class */
+function () {
+  function NullLogger() {}
+  /** @inheritDoc */
+  // tslint:disable-next-line
+
+
+  NullLogger.prototype.log = function (_logLevel, _message) {};
+  /** The singleton instance of the {@link @microsoft/signalr.NullLogger}. */
+
+
+  NullLogger.instance = new NullLogger();
+  return NullLogger;
+}();
+
+exports.NullLogger = NullLogger;
+},{}],"node_modules/@microsoft/signalr/dist/esm/Utils.js":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.getDataDetail = getDataDetail;
+exports.formatArrayBuffer = formatArrayBuffer;
+exports.isArrayBuffer = isArrayBuffer;
+exports.sendMessage = sendMessage;
+exports.createLogger = createLogger;
+exports.ConsoleLogger = exports.SubjectSubscription = exports.Platform = exports.Arg = void 0;
+
+var _ILogger = require("./ILogger");
+
+var _Loggers = require("./Loggers");
+
+// Copyright (c) .NET Foundation. All rights reserved.
+// Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
+var __awaiter = void 0 && (void 0).__awaiter || function (thisArg, _arguments, P, generator) {
+  return new (P || (P = Promise))(function (resolve, reject) {
+    function fulfilled(value) {
+      try {
+        step(generator.next(value));
+      } catch (e) {
+        reject(e);
+      }
+    }
+
+    function rejected(value) {
+      try {
+        step(generator["throw"](value));
+      } catch (e) {
+        reject(e);
+      }
+    }
+
+    function step(result) {
+      result.done ? resolve(result.value) : new P(function (resolve) {
+        resolve(result.value);
+      }).then(fulfilled, rejected);
+    }
+
+    step((generator = generator.apply(thisArg, _arguments || [])).next());
+  });
+};
+
+var __generator = void 0 && (void 0).__generator || function (thisArg, body) {
+  var _ = {
+    label: 0,
+    sent: function () {
+      if (t[0] & 1) throw t[1];
+      return t[1];
+    },
+    trys: [],
+    ops: []
+  },
+      f,
+      y,
+      t,
+      g;
+  return g = {
+    next: verb(0),
+    "throw": verb(1),
+    "return": verb(2)
+  }, typeof Symbol === "function" && (g[Symbol.iterator] = function () {
+    return this;
+  }), g;
+
+  function verb(n) {
+    return function (v) {
+      return step([n, v]);
+    };
+  }
+
+  function step(op) {
+    if (f) throw new TypeError("Generator is already executing.");
+
+    while (_) try {
+      if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
+      if (y = 0, t) op = [op[0] & 2, t.value];
+
+      switch (op[0]) {
+        case 0:
+        case 1:
+          t = op;
+          break;
+
+        case 4:
+          _.label++;
+          return {
+            value: op[1],
+            done: false
+          };
+
+        case 5:
+          _.label++;
+          y = op[1];
+          op = [0];
+          continue;
+
+        case 7:
+          op = _.ops.pop();
+
+          _.trys.pop();
+
+          continue;
+
+        default:
+          if (!(t = _.trys, t = t.length > 0 && t[t.length - 1]) && (op[0] === 6 || op[0] === 2)) {
+            _ = 0;
+            continue;
+          }
+
+          if (op[0] === 3 && (!t || op[1] > t[0] && op[1] < t[3])) {
+            _.label = op[1];
+            break;
+          }
+
+          if (op[0] === 6 && _.label < t[1]) {
+            _.label = t[1];
+            t = op;
+            break;
+          }
+
+          if (t && _.label < t[2]) {
+            _.label = t[2];
+
+            _.ops.push(op);
+
+            break;
+          }
+
+          if (t[2]) _.ops.pop();
+
+          _.trys.pop();
+
+          continue;
+      }
+
+      op = body.call(thisArg, _);
+    } catch (e) {
+      op = [6, e];
+      y = 0;
+    } finally {
+      f = t = 0;
+    }
+
+    if (op[0] & 5) throw op[1];
+    return {
+      value: op[0] ? op[1] : void 0,
+      done: true
+    };
+  }
+};
+
+/** @private */
+var Arg =
+/** @class */
+function () {
+  function Arg() {}
+
+  Arg.isRequired = function (val, name) {
+    if (val === null || val === undefined) {
+      throw new Error("The '" + name + "' argument is required.");
+    }
+  };
+
+  Arg.isIn = function (val, values, name) {
+    // TypeScript enums have keys for **both** the name and the value of each enum member on the type itself.
+    if (!(val in values)) {
+      throw new Error("Unknown " + name + " value: " + val + ".");
+    }
+  };
+
+  return Arg;
+}();
+
+exports.Arg = Arg;
+
+/** @private */
+var Platform =
+/** @class */
+function () {
+  function Platform() {}
+
+  Object.defineProperty(Platform, "isBrowser", {
+    get: function () {
+      return typeof window === "object";
+    },
+    enumerable: true,
+    configurable: true
+  });
+  Object.defineProperty(Platform, "isWebWorker", {
+    get: function () {
+      return typeof self === "object" && "importScripts" in self;
+    },
+    enumerable: true,
+    configurable: true
+  });
+  Object.defineProperty(Platform, "isNode", {
+    get: function () {
+      return !this.isBrowser && !this.isWebWorker;
+    },
+    enumerable: true,
+    configurable: true
+  });
+  return Platform;
+}();
+
+exports.Platform = Platform;
+
+/** @private */
+function getDataDetail(data, includeContent) {
+  var detail = "";
+
+  if (isArrayBuffer(data)) {
+    detail = "Binary data of length " + data.byteLength;
+
+    if (includeContent) {
+      detail += ". Content: '" + formatArrayBuffer(data) + "'";
+    }
+  } else if (typeof data === "string") {
+    detail = "String data of length " + data.length;
+
+    if (includeContent) {
+      detail += ". Content: '" + data + "'";
+    }
+  }
+
+  return detail;
+}
+/** @private */
+
+
+function formatArrayBuffer(data) {
+  var view = new Uint8Array(data); // Uint8Array.map only supports returning another Uint8Array?
+
+  var str = "";
+  view.forEach(function (num) {
+    var pad = num < 16 ? "0" : "";
+    str += "0x" + pad + num.toString(16) + " ";
+  }); // Trim of trailing space.
+
+  return str.substr(0, str.length - 1);
+} // Also in signalr-protocol-msgpack/Utils.ts
+
+/** @private */
+
+
+function isArrayBuffer(val) {
+  return val && typeof ArrayBuffer !== "undefined" && (val instanceof ArrayBuffer || // Sometimes we get an ArrayBuffer that doesn't satisfy instanceof
+  val.constructor && val.constructor.name === "ArrayBuffer");
+}
+/** @private */
+
+
+function sendMessage(logger, transportName, httpClient, url, accessTokenFactory, content, logMessageContent) {
+  return __awaiter(this, void 0, void 0, function () {
+    var _a, headers, token, responseType, response;
+
+    return __generator(this, function (_b) {
+      switch (_b.label) {
+        case 0:
+          if (!accessTokenFactory) return [3
+          /*break*/
+          , 2];
+          return [4
+          /*yield*/
+          , accessTokenFactory()];
+
+        case 1:
+          token = _b.sent();
+
+          if (token) {
+            headers = (_a = {}, _a["Authorization"] = "Bearer " + token, _a);
+          }
+
+          _b.label = 2;
+
+        case 2:
+          logger.log(_ILogger.LogLevel.Trace, "(" + transportName + " transport) sending data. " + getDataDetail(content, logMessageContent) + ".");
+          responseType = isArrayBuffer(content) ? "arraybuffer" : "text";
+          return [4
+          /*yield*/
+          , httpClient.post(url, {
+            content: content,
+            headers: headers,
+            responseType: responseType
+          })];
+
+        case 3:
+          response = _b.sent();
+          logger.log(_ILogger.LogLevel.Trace, "(" + transportName + " transport) request complete. Response status: " + response.statusCode + ".");
+          return [2
+          /*return*/
+          ];
+      }
+    });
+  });
+}
+/** @private */
+
+
+function createLogger(logger) {
+  if (logger === undefined) {
+    return new ConsoleLogger(_ILogger.LogLevel.Information);
+  }
+
+  if (logger === null) {
+    return _Loggers.NullLogger.instance;
+  }
+
+  if (logger.log) {
+    return logger;
+  }
+
+  return new ConsoleLogger(logger);
+}
+/** @private */
+
+
+var SubjectSubscription =
+/** @class */
+function () {
+  function SubjectSubscription(subject, observer) {
+    this.subject = subject;
+    this.observer = observer;
+  }
+
+  SubjectSubscription.prototype.dispose = function () {
+    var index = this.subject.observers.indexOf(this.observer);
+
+    if (index > -1) {
+      this.subject.observers.splice(index, 1);
+    }
+
+    if (this.subject.observers.length === 0 && this.subject.cancelCallback) {
+      this.subject.cancelCallback().catch(function (_) {});
+    }
+  };
+
+  return SubjectSubscription;
+}();
+
+exports.SubjectSubscription = SubjectSubscription;
+
+/** @private */
+var ConsoleLogger =
+/** @class */
+function () {
+  function ConsoleLogger(minimumLogLevel) {
+    this.minimumLogLevel = minimumLogLevel;
+    this.outputConsole = console;
+  }
+
+  ConsoleLogger.prototype.log = function (logLevel, message) {
+    if (logLevel >= this.minimumLogLevel) {
+      switch (logLevel) {
+        case _ILogger.LogLevel.Critical:
+        case _ILogger.LogLevel.Error:
+          this.outputConsole.error("[" + new Date().toISOString() + "] " + _ILogger.LogLevel[logLevel] + ": " + message);
+          break;
+
+        case _ILogger.LogLevel.Warning:
+          this.outputConsole.warn("[" + new Date().toISOString() + "] " + _ILogger.LogLevel[logLevel] + ": " + message);
+          break;
+
+        case _ILogger.LogLevel.Information:
+          this.outputConsole.info("[" + new Date().toISOString() + "] " + _ILogger.LogLevel[logLevel] + ": " + message);
+          break;
+
+        default:
+          // console.debug only goes to attached debuggers in Node, so we use console.log for Trace and Debug
+          this.outputConsole.log("[" + new Date().toISOString() + "] " + _ILogger.LogLevel[logLevel] + ": " + message);
+          break;
+      }
+    }
+  };
+
+  return ConsoleLogger;
+}();
+
+exports.ConsoleLogger = ConsoleLogger;
+},{"./ILogger":"node_modules/@microsoft/signalr/dist/esm/ILogger.js","./Loggers":"node_modules/@microsoft/signalr/dist/esm/Loggers.js"}],"node_modules/base64-js/index.js":[function(require,module,exports) {
+'use strict'
+
+exports.byteLength = byteLength
+exports.toByteArray = toByteArray
+exports.fromByteArray = fromByteArray
+
+var lookup = []
+var revLookup = []
+var Arr = typeof Uint8Array !== 'undefined' ? Uint8Array : Array
+
+var code = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
+for (var i = 0, len = code.length; i < len; ++i) {
+  lookup[i] = code[i]
+  revLookup[code.charCodeAt(i)] = i
+}
+
+// Support decoding URL-safe base64 strings, as Node.js does.
+// See: https://en.wikipedia.org/wiki/Base64#URL_applications
+revLookup['-'.charCodeAt(0)] = 62
+revLookup['_'.charCodeAt(0)] = 63
+
+function getLens (b64) {
+  var len = b64.length
+
+  if (len % 4 > 0) {
+    throw new Error('Invalid string. Length must be a multiple of 4')
+  }
+
+  // Trim off extra bytes after placeholder bytes are found
+  // See: https://github.com/beatgammit/base64-js/issues/42
+  var validLen = b64.indexOf('=')
+  if (validLen === -1) validLen = len
+
+  var placeHoldersLen = validLen === len
+    ? 0
+    : 4 - (validLen % 4)
+
+  return [validLen, placeHoldersLen]
+}
+
+// base64 is 4/3 + up to two characters of the original data
+function byteLength (b64) {
+  var lens = getLens(b64)
+  var validLen = lens[0]
+  var placeHoldersLen = lens[1]
+  return ((validLen + placeHoldersLen) * 3 / 4) - placeHoldersLen
+}
+
+function _byteLength (b64, validLen, placeHoldersLen) {
+  return ((validLen + placeHoldersLen) * 3 / 4) - placeHoldersLen
+}
+
+function toByteArray (b64) {
+  var tmp
+  var lens = getLens(b64)
+  var validLen = lens[0]
+  var placeHoldersLen = lens[1]
+
+  var arr = new Arr(_byteLength(b64, validLen, placeHoldersLen))
+
+  var curByte = 0
+
+  // if there are placeholders, only get up to the last complete 4 chars
+  var len = placeHoldersLen > 0
+    ? validLen - 4
+    : validLen
+
+  var i
+  for (i = 0; i < len; i += 4) {
+    tmp =
+      (revLookup[b64.charCodeAt(i)] << 18) |
+      (revLookup[b64.charCodeAt(i + 1)] << 12) |
+      (revLookup[b64.charCodeAt(i + 2)] << 6) |
+      revLookup[b64.charCodeAt(i + 3)]
+    arr[curByte++] = (tmp >> 16) & 0xFF
+    arr[curByte++] = (tmp >> 8) & 0xFF
+    arr[curByte++] = tmp & 0xFF
+  }
+
+  if (placeHoldersLen === 2) {
+    tmp =
+      (revLookup[b64.charCodeAt(i)] << 2) |
+      (revLookup[b64.charCodeAt(i + 1)] >> 4)
+    arr[curByte++] = tmp & 0xFF
+  }
+
+  if (placeHoldersLen === 1) {
+    tmp =
+      (revLookup[b64.charCodeAt(i)] << 10) |
+      (revLookup[b64.charCodeAt(i + 1)] << 4) |
+      (revLookup[b64.charCodeAt(i + 2)] >> 2)
+    arr[curByte++] = (tmp >> 8) & 0xFF
+    arr[curByte++] = tmp & 0xFF
+  }
+
+  return arr
+}
+
+function tripletToBase64 (num) {
+  return lookup[num >> 18 & 0x3F] +
+    lookup[num >> 12 & 0x3F] +
+    lookup[num >> 6 & 0x3F] +
+    lookup[num & 0x3F]
+}
+
+function encodeChunk (uint8, start, end) {
+  var tmp
+  var output = []
+  for (var i = start; i < end; i += 3) {
+    tmp =
+      ((uint8[i] << 16) & 0xFF0000) +
+      ((uint8[i + 1] << 8) & 0xFF00) +
+      (uint8[i + 2] & 0xFF)
+    output.push(tripletToBase64(tmp))
+  }
+  return output.join('')
+}
+
+function fromByteArray (uint8) {
+  var tmp
+  var len = uint8.length
+  var extraBytes = len % 3 // if we have 1 byte left, pad 2 bytes
+  var parts = []
+  var maxChunkLength = 16383 // must be multiple of 3
+
+  // go through the array every three bytes, we'll deal with trailing stuff later
+  for (var i = 0, len2 = len - extraBytes; i < len2; i += maxChunkLength) {
+    parts.push(encodeChunk(
+      uint8, i, (i + maxChunkLength) > len2 ? len2 : (i + maxChunkLength)
+    ))
+  }
+
+  // pad the end with zeros, but make sure to not forget the extra bytes
+  if (extraBytes === 1) {
+    tmp = uint8[len - 1]
+    parts.push(
+      lookup[tmp >> 2] +
+      lookup[(tmp << 4) & 0x3F] +
+      '=='
+    )
+  } else if (extraBytes === 2) {
+    tmp = (uint8[len - 2] << 8) + uint8[len - 1]
+    parts.push(
+      lookup[tmp >> 10] +
+      lookup[(tmp >> 4) & 0x3F] +
+      lookup[(tmp << 2) & 0x3F] +
+      '='
+    )
+  }
+
+  return parts.join('')
+}
+
+},{}],"node_modules/ieee754/index.js":[function(require,module,exports) {
+exports.read = function (buffer, offset, isLE, mLen, nBytes) {
+  var e, m
+  var eLen = (nBytes * 8) - mLen - 1
+  var eMax = (1 << eLen) - 1
+  var eBias = eMax >> 1
+  var nBits = -7
+  var i = isLE ? (nBytes - 1) : 0
+  var d = isLE ? -1 : 1
+  var s = buffer[offset + i]
+
+  i += d
+
+  e = s & ((1 << (-nBits)) - 1)
+  s >>= (-nBits)
+  nBits += eLen
+  for (; nBits > 0; e = (e * 256) + buffer[offset + i], i += d, nBits -= 8) {}
+
+  m = e & ((1 << (-nBits)) - 1)
+  e >>= (-nBits)
+  nBits += mLen
+  for (; nBits > 0; m = (m * 256) + buffer[offset + i], i += d, nBits -= 8) {}
+
+  if (e === 0) {
+    e = 1 - eBias
+  } else if (e === eMax) {
+    return m ? NaN : ((s ? -1 : 1) * Infinity)
+  } else {
+    m = m + Math.pow(2, mLen)
+    e = e - eBias
+  }
+  return (s ? -1 : 1) * m * Math.pow(2, e - mLen)
+}
+
+exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
+  var e, m, c
+  var eLen = (nBytes * 8) - mLen - 1
+  var eMax = (1 << eLen) - 1
+  var eBias = eMax >> 1
+  var rt = (mLen === 23 ? Math.pow(2, -24) - Math.pow(2, -77) : 0)
+  var i = isLE ? 0 : (nBytes - 1)
+  var d = isLE ? 1 : -1
+  var s = value < 0 || (value === 0 && 1 / value < 0) ? 1 : 0
+
+  value = Math.abs(value)
+
+  if (isNaN(value) || value === Infinity) {
+    m = isNaN(value) ? 1 : 0
+    e = eMax
+  } else {
+    e = Math.floor(Math.log(value) / Math.LN2)
+    if (value * (c = Math.pow(2, -e)) < 1) {
+      e--
+      c *= 2
+    }
+    if (e + eBias >= 1) {
+      value += rt / c
+    } else {
+      value += rt * Math.pow(2, 1 - eBias)
+    }
+    if (value * c >= 2) {
+      e++
+      c /= 2
+    }
+
+    if (e + eBias >= eMax) {
+      m = 0
+      e = eMax
+    } else if (e + eBias >= 1) {
+      m = ((value * c) - 1) * Math.pow(2, mLen)
+      e = e + eBias
+    } else {
+      m = value * Math.pow(2, eBias - 1) * Math.pow(2, mLen)
+      e = 0
+    }
+  }
+
+  for (; mLen >= 8; buffer[offset + i] = m & 0xff, i += d, m /= 256, mLen -= 8) {}
+
+  e = (e << mLen) | m
+  eLen += mLen
+  for (; eLen > 0; buffer[offset + i] = e & 0xff, i += d, e /= 256, eLen -= 8) {}
+
+  buffer[offset + i - d] |= s * 128
+}
+
+},{}],"node_modules/isarray/index.js":[function(require,module,exports) {
+var toString = {}.toString;
+
+module.exports = Array.isArray || function (arr) {
+  return toString.call(arr) == '[object Array]';
+};
+
+},{}],"node_modules/buffer/index.js":[function(require,module,exports) {
+
+var global = arguments[3];
+/*!
+ * The buffer module from node.js, for the browser.
+ *
+ * @author   Feross Aboukhadijeh <http://feross.org>
+ * @license  MIT
+ */
+/* eslint-disable no-proto */
+
+'use strict'
+
+var base64 = require('base64-js')
+var ieee754 = require('ieee754')
+var isArray = require('isarray')
+
+exports.Buffer = Buffer
+exports.SlowBuffer = SlowBuffer
+exports.INSPECT_MAX_BYTES = 50
+
+/**
+ * If `Buffer.TYPED_ARRAY_SUPPORT`:
+ *   === true    Use Uint8Array implementation (fastest)
+ *   === false   Use Object implementation (most compatible, even IE6)
+ *
+ * Browsers that support typed arrays are IE 10+, Firefox 4+, Chrome 7+, Safari 5.1+,
+ * Opera 11.6+, iOS 4.2+.
+ *
+ * Due to various browser bugs, sometimes the Object implementation will be used even
+ * when the browser supports typed arrays.
+ *
+ * Note:
+ *
+ *   - Firefox 4-29 lacks support for adding new properties to `Uint8Array` instances,
+ *     See: https://bugzilla.mozilla.org/show_bug.cgi?id=695438.
+ *
+ *   - Chrome 9-10 is missing the `TypedArray.prototype.subarray` function.
+ *
+ *   - IE10 has a broken `TypedArray.prototype.subarray` function which returns arrays of
+ *     incorrect length in some situations.
+
+ * We detect these buggy browsers and set `Buffer.TYPED_ARRAY_SUPPORT` to `false` so they
+ * get the Object implementation, which is slower but behaves correctly.
+ */
+Buffer.TYPED_ARRAY_SUPPORT = global.TYPED_ARRAY_SUPPORT !== undefined
+  ? global.TYPED_ARRAY_SUPPORT
+  : typedArraySupport()
+
+/*
+ * Export kMaxLength after typed array support is determined.
+ */
+exports.kMaxLength = kMaxLength()
+
+function typedArraySupport () {
+  try {
+    var arr = new Uint8Array(1)
+    arr.__proto__ = {__proto__: Uint8Array.prototype, foo: function () { return 42 }}
+    return arr.foo() === 42 && // typed array instances can be augmented
+        typeof arr.subarray === 'function' && // chrome 9-10 lack `subarray`
+        arr.subarray(1, 1).byteLength === 0 // ie10 has broken `subarray`
+  } catch (e) {
+    return false
+  }
+}
+
+function kMaxLength () {
+  return Buffer.TYPED_ARRAY_SUPPORT
+    ? 0x7fffffff
+    : 0x3fffffff
+}
+
+function createBuffer (that, length) {
+  if (kMaxLength() < length) {
+    throw new RangeError('Invalid typed array length')
+  }
+  if (Buffer.TYPED_ARRAY_SUPPORT) {
+    // Return an augmented `Uint8Array` instance, for best performance
+    that = new Uint8Array(length)
+    that.__proto__ = Buffer.prototype
+  } else {
+    // Fallback: Return an object instance of the Buffer class
+    if (that === null) {
+      that = new Buffer(length)
+    }
+    that.length = length
+  }
+
+  return that
+}
+
+/**
+ * The Buffer constructor returns instances of `Uint8Array` that have their
+ * prototype changed to `Buffer.prototype`. Furthermore, `Buffer` is a subclass of
+ * `Uint8Array`, so the returned instances will have all the node `Buffer` methods
+ * and the `Uint8Array` methods. Square bracket notation works as expected -- it
+ * returns a single octet.
+ *
+ * The `Uint8Array` prototype remains unmodified.
+ */
+
+function Buffer (arg, encodingOrOffset, length) {
+  if (!Buffer.TYPED_ARRAY_SUPPORT && !(this instanceof Buffer)) {
+    return new Buffer(arg, encodingOrOffset, length)
+  }
+
+  // Common case.
+  if (typeof arg === 'number') {
+    if (typeof encodingOrOffset === 'string') {
+      throw new Error(
+        'If encoding is specified then the first argument must be a string'
+      )
+    }
+    return allocUnsafe(this, arg)
+  }
+  return from(this, arg, encodingOrOffset, length)
+}
+
+Buffer.poolSize = 8192 // not used by this implementation
+
+// TODO: Legacy, not needed anymore. Remove in next major version.
+Buffer._augment = function (arr) {
+  arr.__proto__ = Buffer.prototype
+  return arr
+}
+
+function from (that, value, encodingOrOffset, length) {
+  if (typeof value === 'number') {
+    throw new TypeError('"value" argument must not be a number')
+  }
+
+  if (typeof ArrayBuffer !== 'undefined' && value instanceof ArrayBuffer) {
+    return fromArrayBuffer(that, value, encodingOrOffset, length)
+  }
+
+  if (typeof value === 'string') {
+    return fromString(that, value, encodingOrOffset)
+  }
+
+  return fromObject(that, value)
+}
+
+/**
+ * Functionally equivalent to Buffer(arg, encoding) but throws a TypeError
+ * if value is a number.
+ * Buffer.from(str[, encoding])
+ * Buffer.from(array)
+ * Buffer.from(buffer)
+ * Buffer.from(arrayBuffer[, byteOffset[, length]])
+ **/
+Buffer.from = function (value, encodingOrOffset, length) {
+  return from(null, value, encodingOrOffset, length)
+}
+
+if (Buffer.TYPED_ARRAY_SUPPORT) {
+  Buffer.prototype.__proto__ = Uint8Array.prototype
+  Buffer.__proto__ = Uint8Array
+  if (typeof Symbol !== 'undefined' && Symbol.species &&
+      Buffer[Symbol.species] === Buffer) {
+    // Fix subarray() in ES2016. See: https://github.com/feross/buffer/pull/97
+    Object.defineProperty(Buffer, Symbol.species, {
+      value: null,
+      configurable: true
+    })
+  }
+}
+
+function assertSize (size) {
+  if (typeof size !== 'number') {
+    throw new TypeError('"size" argument must be a number')
+  } else if (size < 0) {
+    throw new RangeError('"size" argument must not be negative')
+  }
+}
+
+function alloc (that, size, fill, encoding) {
+  assertSize(size)
+  if (size <= 0) {
+    return createBuffer(that, size)
+  }
+  if (fill !== undefined) {
+    // Only pay attention to encoding if it's a string. This
+    // prevents accidentally sending in a number that would
+    // be interpretted as a start offset.
+    return typeof encoding === 'string'
+      ? createBuffer(that, size).fill(fill, encoding)
+      : createBuffer(that, size).fill(fill)
+  }
+  return createBuffer(that, size)
+}
+
+/**
+ * Creates a new filled Buffer instance.
+ * alloc(size[, fill[, encoding]])
+ **/
+Buffer.alloc = function (size, fill, encoding) {
+  return alloc(null, size, fill, encoding)
+}
+
+function allocUnsafe (that, size) {
+  assertSize(size)
+  that = createBuffer(that, size < 0 ? 0 : checked(size) | 0)
+  if (!Buffer.TYPED_ARRAY_SUPPORT) {
+    for (var i = 0; i < size; ++i) {
+      that[i] = 0
+    }
+  }
+  return that
+}
+
+/**
+ * Equivalent to Buffer(num), by default creates a non-zero-filled Buffer instance.
+ * */
+Buffer.allocUnsafe = function (size) {
+  return allocUnsafe(null, size)
+}
+/**
+ * Equivalent to SlowBuffer(num), by default creates a non-zero-filled Buffer instance.
+ */
+Buffer.allocUnsafeSlow = function (size) {
+  return allocUnsafe(null, size)
+}
+
+function fromString (that, string, encoding) {
+  if (typeof encoding !== 'string' || encoding === '') {
+    encoding = 'utf8'
+  }
+
+  if (!Buffer.isEncoding(encoding)) {
+    throw new TypeError('"encoding" must be a valid string encoding')
+  }
+
+  var length = byteLength(string, encoding) | 0
+  that = createBuffer(that, length)
+
+  var actual = that.write(string, encoding)
+
+  if (actual !== length) {
+    // Writing a hex string, for example, that contains invalid characters will
+    // cause everything after the first invalid character to be ignored. (e.g.
+    // 'abxxcd' will be treated as 'ab')
+    that = that.slice(0, actual)
+  }
+
+  return that
+}
+
+function fromArrayLike (that, array) {
+  var length = array.length < 0 ? 0 : checked(array.length) | 0
+  that = createBuffer(that, length)
+  for (var i = 0; i < length; i += 1) {
+    that[i] = array[i] & 255
+  }
+  return that
+}
+
+function fromArrayBuffer (that, array, byteOffset, length) {
+  array.byteLength // this throws if `array` is not a valid ArrayBuffer
+
+  if (byteOffset < 0 || array.byteLength < byteOffset) {
+    throw new RangeError('\'offset\' is out of bounds')
+  }
+
+  if (array.byteLength < byteOffset + (length || 0)) {
+    throw new RangeError('\'length\' is out of bounds')
+  }
+
+  if (byteOffset === undefined && length === undefined) {
+    array = new Uint8Array(array)
+  } else if (length === undefined) {
+    array = new Uint8Array(array, byteOffset)
+  } else {
+    array = new Uint8Array(array, byteOffset, length)
+  }
+
+  if (Buffer.TYPED_ARRAY_SUPPORT) {
+    // Return an augmented `Uint8Array` instance, for best performance
+    that = array
+    that.__proto__ = Buffer.prototype
+  } else {
+    // Fallback: Return an object instance of the Buffer class
+    that = fromArrayLike(that, array)
+  }
+  return that
+}
+
+function fromObject (that, obj) {
+  if (Buffer.isBuffer(obj)) {
+    var len = checked(obj.length) | 0
+    that = createBuffer(that, len)
+
+    if (that.length === 0) {
+      return that
+    }
+
+    obj.copy(that, 0, 0, len)
+    return that
+  }
+
+  if (obj) {
+    if ((typeof ArrayBuffer !== 'undefined' &&
+        obj.buffer instanceof ArrayBuffer) || 'length' in obj) {
+      if (typeof obj.length !== 'number' || isnan(obj.length)) {
+        return createBuffer(that, 0)
+      }
+      return fromArrayLike(that, obj)
+    }
+
+    if (obj.type === 'Buffer' && isArray(obj.data)) {
+      return fromArrayLike(that, obj.data)
+    }
+  }
+
+  throw new TypeError('First argument must be a string, Buffer, ArrayBuffer, Array, or array-like object.')
+}
+
+function checked (length) {
+  // Note: cannot use `length < kMaxLength()` here because that fails when
+  // length is NaN (which is otherwise coerced to zero.)
+  if (length >= kMaxLength()) {
+    throw new RangeError('Attempt to allocate Buffer larger than maximum ' +
+                         'size: 0x' + kMaxLength().toString(16) + ' bytes')
+  }
+  return length | 0
+}
+
+function SlowBuffer (length) {
+  if (+length != length) { // eslint-disable-line eqeqeq
+    length = 0
+  }
+  return Buffer.alloc(+length)
+}
+
+Buffer.isBuffer = function isBuffer (b) {
+  return !!(b != null && b._isBuffer)
+}
+
+Buffer.compare = function compare (a, b) {
+  if (!Buffer.isBuffer(a) || !Buffer.isBuffer(b)) {
+    throw new TypeError('Arguments must be Buffers')
+  }
+
+  if (a === b) return 0
+
+  var x = a.length
+  var y = b.length
+
+  for (var i = 0, len = Math.min(x, y); i < len; ++i) {
+    if (a[i] !== b[i]) {
+      x = a[i]
+      y = b[i]
+      break
+    }
+  }
+
+  if (x < y) return -1
+  if (y < x) return 1
+  return 0
+}
+
+Buffer.isEncoding = function isEncoding (encoding) {
+  switch (String(encoding).toLowerCase()) {
+    case 'hex':
+    case 'utf8':
+    case 'utf-8':
+    case 'ascii':
+    case 'latin1':
+    case 'binary':
+    case 'base64':
+    case 'ucs2':
+    case 'ucs-2':
+    case 'utf16le':
+    case 'utf-16le':
+      return true
+    default:
+      return false
+  }
+}
+
+Buffer.concat = function concat (list, length) {
+  if (!isArray(list)) {
+    throw new TypeError('"list" argument must be an Array of Buffers')
+  }
+
+  if (list.length === 0) {
+    return Buffer.alloc(0)
+  }
+
+  var i
+  if (length === undefined) {
+    length = 0
+    for (i = 0; i < list.length; ++i) {
+      length += list[i].length
+    }
+  }
+
+  var buffer = Buffer.allocUnsafe(length)
+  var pos = 0
+  for (i = 0; i < list.length; ++i) {
+    var buf = list[i]
+    if (!Buffer.isBuffer(buf)) {
+      throw new TypeError('"list" argument must be an Array of Buffers')
+    }
+    buf.copy(buffer, pos)
+    pos += buf.length
+  }
+  return buffer
+}
+
+function byteLength (string, encoding) {
+  if (Buffer.isBuffer(string)) {
+    return string.length
+  }
+  if (typeof ArrayBuffer !== 'undefined' && typeof ArrayBuffer.isView === 'function' &&
+      (ArrayBuffer.isView(string) || string instanceof ArrayBuffer)) {
+    return string.byteLength
+  }
+  if (typeof string !== 'string') {
+    string = '' + string
+  }
+
+  var len = string.length
+  if (len === 0) return 0
+
+  // Use a for loop to avoid recursion
+  var loweredCase = false
+  for (;;) {
+    switch (encoding) {
+      case 'ascii':
+      case 'latin1':
+      case 'binary':
+        return len
+      case 'utf8':
+      case 'utf-8':
+      case undefined:
+        return utf8ToBytes(string).length
+      case 'ucs2':
+      case 'ucs-2':
+      case 'utf16le':
+      case 'utf-16le':
+        return len * 2
+      case 'hex':
+        return len >>> 1
+      case 'base64':
+        return base64ToBytes(string).length
+      default:
+        if (loweredCase) return utf8ToBytes(string).length // assume utf8
+        encoding = ('' + encoding).toLowerCase()
+        loweredCase = true
+    }
+  }
+}
+Buffer.byteLength = byteLength
+
+function slowToString (encoding, start, end) {
+  var loweredCase = false
+
+  // No need to verify that "this.length <= MAX_UINT32" since it's a read-only
+  // property of a typed array.
+
+  // This behaves neither like String nor Uint8Array in that we set start/end
+  // to their upper/lower bounds if the value passed is out of range.
+  // undefined is handled specially as per ECMA-262 6th Edition,
+  // Section 13.3.3.7 Runtime Semantics: KeyedBindingInitialization.
+  if (start === undefined || start < 0) {
+    start = 0
+  }
+  // Return early if start > this.length. Done here to prevent potential uint32
+  // coercion fail below.
+  if (start > this.length) {
+    return ''
+  }
+
+  if (end === undefined || end > this.length) {
+    end = this.length
+  }
+
+  if (end <= 0) {
+    return ''
+  }
+
+  // Force coersion to uint32. This will also coerce falsey/NaN values to 0.
+  end >>>= 0
+  start >>>= 0
+
+  if (end <= start) {
+    return ''
+  }
+
+  if (!encoding) encoding = 'utf8'
+
+  while (true) {
+    switch (encoding) {
+      case 'hex':
+        return hexSlice(this, start, end)
+
+      case 'utf8':
+      case 'utf-8':
+        return utf8Slice(this, start, end)
+
+      case 'ascii':
+        return asciiSlice(this, start, end)
+
+      case 'latin1':
+      case 'binary':
+        return latin1Slice(this, start, end)
+
+      case 'base64':
+        return base64Slice(this, start, end)
+
+      case 'ucs2':
+      case 'ucs-2':
+      case 'utf16le':
+      case 'utf-16le':
+        return utf16leSlice(this, start, end)
+
+      default:
+        if (loweredCase) throw new TypeError('Unknown encoding: ' + encoding)
+        encoding = (encoding + '').toLowerCase()
+        loweredCase = true
+    }
+  }
+}
+
+// The property is used by `Buffer.isBuffer` and `is-buffer` (in Safari 5-7) to detect
+// Buffer instances.
+Buffer.prototype._isBuffer = true
+
+function swap (b, n, m) {
+  var i = b[n]
+  b[n] = b[m]
+  b[m] = i
+}
+
+Buffer.prototype.swap16 = function swap16 () {
+  var len = this.length
+  if (len % 2 !== 0) {
+    throw new RangeError('Buffer size must be a multiple of 16-bits')
+  }
+  for (var i = 0; i < len; i += 2) {
+    swap(this, i, i + 1)
+  }
+  return this
+}
+
+Buffer.prototype.swap32 = function swap32 () {
+  var len = this.length
+  if (len % 4 !== 0) {
+    throw new RangeError('Buffer size must be a multiple of 32-bits')
+  }
+  for (var i = 0; i < len; i += 4) {
+    swap(this, i, i + 3)
+    swap(this, i + 1, i + 2)
+  }
+  return this
+}
+
+Buffer.prototype.swap64 = function swap64 () {
+  var len = this.length
+  if (len % 8 !== 0) {
+    throw new RangeError('Buffer size must be a multiple of 64-bits')
+  }
+  for (var i = 0; i < len; i += 8) {
+    swap(this, i, i + 7)
+    swap(this, i + 1, i + 6)
+    swap(this, i + 2, i + 5)
+    swap(this, i + 3, i + 4)
+  }
+  return this
+}
+
+Buffer.prototype.toString = function toString () {
+  var length = this.length | 0
+  if (length === 0) return ''
+  if (arguments.length === 0) return utf8Slice(this, 0, length)
+  return slowToString.apply(this, arguments)
+}
+
+Buffer.prototype.equals = function equals (b) {
+  if (!Buffer.isBuffer(b)) throw new TypeError('Argument must be a Buffer')
+  if (this === b) return true
+  return Buffer.compare(this, b) === 0
+}
+
+Buffer.prototype.inspect = function inspect () {
+  var str = ''
+  var max = exports.INSPECT_MAX_BYTES
+  if (this.length > 0) {
+    str = this.toString('hex', 0, max).match(/.{2}/g).join(' ')
+    if (this.length > max) str += ' ... '
+  }
+  return '<Buffer ' + str + '>'
+}
+
+Buffer.prototype.compare = function compare (target, start, end, thisStart, thisEnd) {
+  if (!Buffer.isBuffer(target)) {
+    throw new TypeError('Argument must be a Buffer')
+  }
+
+  if (start === undefined) {
+    start = 0
+  }
+  if (end === undefined) {
+    end = target ? target.length : 0
+  }
+  if (thisStart === undefined) {
+    thisStart = 0
+  }
+  if (thisEnd === undefined) {
+    thisEnd = this.length
+  }
+
+  if (start < 0 || end > target.length || thisStart < 0 || thisEnd > this.length) {
+    throw new RangeError('out of range index')
+  }
+
+  if (thisStart >= thisEnd && start >= end) {
+    return 0
+  }
+  if (thisStart >= thisEnd) {
+    return -1
+  }
+  if (start >= end) {
+    return 1
+  }
+
+  start >>>= 0
+  end >>>= 0
+  thisStart >>>= 0
+  thisEnd >>>= 0
+
+  if (this === target) return 0
+
+  var x = thisEnd - thisStart
+  var y = end - start
+  var len = Math.min(x, y)
+
+  var thisCopy = this.slice(thisStart, thisEnd)
+  var targetCopy = target.slice(start, end)
+
+  for (var i = 0; i < len; ++i) {
+    if (thisCopy[i] !== targetCopy[i]) {
+      x = thisCopy[i]
+      y = targetCopy[i]
+      break
+    }
+  }
+
+  if (x < y) return -1
+  if (y < x) return 1
+  return 0
+}
+
+// Finds either the first index of `val` in `buffer` at offset >= `byteOffset`,
+// OR the last index of `val` in `buffer` at offset <= `byteOffset`.
+//
+// Arguments:
+// - buffer - a Buffer to search
+// - val - a string, Buffer, or number
+// - byteOffset - an index into `buffer`; will be clamped to an int32
+// - encoding - an optional encoding, relevant is val is a string
+// - dir - true for indexOf, false for lastIndexOf
+function bidirectionalIndexOf (buffer, val, byteOffset, encoding, dir) {
+  // Empty buffer means no match
+  if (buffer.length === 0) return -1
+
+  // Normalize byteOffset
+  if (typeof byteOffset === 'string') {
+    encoding = byteOffset
+    byteOffset = 0
+  } else if (byteOffset > 0x7fffffff) {
+    byteOffset = 0x7fffffff
+  } else if (byteOffset < -0x80000000) {
+    byteOffset = -0x80000000
+  }
+  byteOffset = +byteOffset  // Coerce to Number.
+  if (isNaN(byteOffset)) {
+    // byteOffset: it it's undefined, null, NaN, "foo", etc, search whole buffer
+    byteOffset = dir ? 0 : (buffer.length - 1)
+  }
+
+  // Normalize byteOffset: negative offsets start from the end of the buffer
+  if (byteOffset < 0) byteOffset = buffer.length + byteOffset
+  if (byteOffset >= buffer.length) {
+    if (dir) return -1
+    else byteOffset = buffer.length - 1
+  } else if (byteOffset < 0) {
+    if (dir) byteOffset = 0
+    else return -1
+  }
+
+  // Normalize val
+  if (typeof val === 'string') {
+    val = Buffer.from(val, encoding)
+  }
+
+  // Finally, search either indexOf (if dir is true) or lastIndexOf
+  if (Buffer.isBuffer(val)) {
+    // Special case: looking for empty string/buffer always fails
+    if (val.length === 0) {
+      return -1
+    }
+    return arrayIndexOf(buffer, val, byteOffset, encoding, dir)
+  } else if (typeof val === 'number') {
+    val = val & 0xFF // Search for a byte value [0-255]
+    if (Buffer.TYPED_ARRAY_SUPPORT &&
+        typeof Uint8Array.prototype.indexOf === 'function') {
+      if (dir) {
+        return Uint8Array.prototype.indexOf.call(buffer, val, byteOffset)
+      } else {
+        return Uint8Array.prototype.lastIndexOf.call(buffer, val, byteOffset)
+      }
+    }
+    return arrayIndexOf(buffer, [ val ], byteOffset, encoding, dir)
+  }
+
+  throw new TypeError('val must be string, number or Buffer')
+}
+
+function arrayIndexOf (arr, val, byteOffset, encoding, dir) {
+  var indexSize = 1
+  var arrLength = arr.length
+  var valLength = val.length
+
+  if (encoding !== undefined) {
+    encoding = String(encoding).toLowerCase()
+    if (encoding === 'ucs2' || encoding === 'ucs-2' ||
+        encoding === 'utf16le' || encoding === 'utf-16le') {
+      if (arr.length < 2 || val.length < 2) {
+        return -1
+      }
+      indexSize = 2
+      arrLength /= 2
+      valLength /= 2
+      byteOffset /= 2
+    }
+  }
+
+  function read (buf, i) {
+    if (indexSize === 1) {
+      return buf[i]
+    } else {
+      return buf.readUInt16BE(i * indexSize)
+    }
+  }
+
+  var i
+  if (dir) {
+    var foundIndex = -1
+    for (i = byteOffset; i < arrLength; i++) {
+      if (read(arr, i) === read(val, foundIndex === -1 ? 0 : i - foundIndex)) {
+        if (foundIndex === -1) foundIndex = i
+        if (i - foundIndex + 1 === valLength) return foundIndex * indexSize
+      } else {
+        if (foundIndex !== -1) i -= i - foundIndex
+        foundIndex = -1
+      }
+    }
+  } else {
+    if (byteOffset + valLength > arrLength) byteOffset = arrLength - valLength
+    for (i = byteOffset; i >= 0; i--) {
+      var found = true
+      for (var j = 0; j < valLength; j++) {
+        if (read(arr, i + j) !== read(val, j)) {
+          found = false
+          break
+        }
+      }
+      if (found) return i
+    }
+  }
+
+  return -1
+}
+
+Buffer.prototype.includes = function includes (val, byteOffset, encoding) {
+  return this.indexOf(val, byteOffset, encoding) !== -1
+}
+
+Buffer.prototype.indexOf = function indexOf (val, byteOffset, encoding) {
+  return bidirectionalIndexOf(this, val, byteOffset, encoding, true)
+}
+
+Buffer.prototype.lastIndexOf = function lastIndexOf (val, byteOffset, encoding) {
+  return bidirectionalIndexOf(this, val, byteOffset, encoding, false)
+}
+
+function hexWrite (buf, string, offset, length) {
+  offset = Number(offset) || 0
+  var remaining = buf.length - offset
+  if (!length) {
+    length = remaining
+  } else {
+    length = Number(length)
+    if (length > remaining) {
+      length = remaining
+    }
+  }
+
+  // must be an even number of digits
+  var strLen = string.length
+  if (strLen % 2 !== 0) throw new TypeError('Invalid hex string')
+
+  if (length > strLen / 2) {
+    length = strLen / 2
+  }
+  for (var i = 0; i < length; ++i) {
+    var parsed = parseInt(string.substr(i * 2, 2), 16)
+    if (isNaN(parsed)) return i
+    buf[offset + i] = parsed
+  }
+  return i
+}
+
+function utf8Write (buf, string, offset, length) {
+  return blitBuffer(utf8ToBytes(string, buf.length - offset), buf, offset, length)
+}
+
+function asciiWrite (buf, string, offset, length) {
+  return blitBuffer(asciiToBytes(string), buf, offset, length)
+}
+
+function latin1Write (buf, string, offset, length) {
+  return asciiWrite(buf, string, offset, length)
+}
+
+function base64Write (buf, string, offset, length) {
+  return blitBuffer(base64ToBytes(string), buf, offset, length)
+}
+
+function ucs2Write (buf, string, offset, length) {
+  return blitBuffer(utf16leToBytes(string, buf.length - offset), buf, offset, length)
+}
+
+Buffer.prototype.write = function write (string, offset, length, encoding) {
+  // Buffer#write(string)
+  if (offset === undefined) {
+    encoding = 'utf8'
+    length = this.length
+    offset = 0
+  // Buffer#write(string, encoding)
+  } else if (length === undefined && typeof offset === 'string') {
+    encoding = offset
+    length = this.length
+    offset = 0
+  // Buffer#write(string, offset[, length][, encoding])
+  } else if (isFinite(offset)) {
+    offset = offset | 0
+    if (isFinite(length)) {
+      length = length | 0
+      if (encoding === undefined) encoding = 'utf8'
+    } else {
+      encoding = length
+      length = undefined
+    }
+  // legacy write(string, encoding, offset, length) - remove in v0.13
+  } else {
+    throw new Error(
+      'Buffer.write(string, encoding, offset[, length]) is no longer supported'
+    )
+  }
+
+  var remaining = this.length - offset
+  if (length === undefined || length > remaining) length = remaining
+
+  if ((string.length > 0 && (length < 0 || offset < 0)) || offset > this.length) {
+    throw new RangeError('Attempt to write outside buffer bounds')
+  }
+
+  if (!encoding) encoding = 'utf8'
+
+  var loweredCase = false
+  for (;;) {
+    switch (encoding) {
+      case 'hex':
+        return hexWrite(this, string, offset, length)
+
+      case 'utf8':
+      case 'utf-8':
+        return utf8Write(this, string, offset, length)
+
+      case 'ascii':
+        return asciiWrite(this, string, offset, length)
+
+      case 'latin1':
+      case 'binary':
+        return latin1Write(this, string, offset, length)
+
+      case 'base64':
+        // Warning: maxLength not taken into account in base64Write
+        return base64Write(this, string, offset, length)
+
+      case 'ucs2':
+      case 'ucs-2':
+      case 'utf16le':
+      case 'utf-16le':
+        return ucs2Write(this, string, offset, length)
+
+      default:
+        if (loweredCase) throw new TypeError('Unknown encoding: ' + encoding)
+        encoding = ('' + encoding).toLowerCase()
+        loweredCase = true
+    }
+  }
+}
+
+Buffer.prototype.toJSON = function toJSON () {
+  return {
+    type: 'Buffer',
+    data: Array.prototype.slice.call(this._arr || this, 0)
+  }
+}
+
+function base64Slice (buf, start, end) {
+  if (start === 0 && end === buf.length) {
+    return base64.fromByteArray(buf)
+  } else {
+    return base64.fromByteArray(buf.slice(start, end))
+  }
+}
+
+function utf8Slice (buf, start, end) {
+  end = Math.min(buf.length, end)
+  var res = []
+
+  var i = start
+  while (i < end) {
+    var firstByte = buf[i]
+    var codePoint = null
+    var bytesPerSequence = (firstByte > 0xEF) ? 4
+      : (firstByte > 0xDF) ? 3
+      : (firstByte > 0xBF) ? 2
+      : 1
+
+    if (i + bytesPerSequence <= end) {
+      var secondByte, thirdByte, fourthByte, tempCodePoint
+
+      switch (bytesPerSequence) {
+        case 1:
+          if (firstByte < 0x80) {
+            codePoint = firstByte
+          }
+          break
+        case 2:
+          secondByte = buf[i + 1]
+          if ((secondByte & 0xC0) === 0x80) {
+            tempCodePoint = (firstByte & 0x1F) << 0x6 | (secondByte & 0x3F)
+            if (tempCodePoint > 0x7F) {
+              codePoint = tempCodePoint
+            }
+          }
+          break
+        case 3:
+          secondByte = buf[i + 1]
+          thirdByte = buf[i + 2]
+          if ((secondByte & 0xC0) === 0x80 && (thirdByte & 0xC0) === 0x80) {
+            tempCodePoint = (firstByte & 0xF) << 0xC | (secondByte & 0x3F) << 0x6 | (thirdByte & 0x3F)
+            if (tempCodePoint > 0x7FF && (tempCodePoint < 0xD800 || tempCodePoint > 0xDFFF)) {
+              codePoint = tempCodePoint
+            }
+          }
+          break
+        case 4:
+          secondByte = buf[i + 1]
+          thirdByte = buf[i + 2]
+          fourthByte = buf[i + 3]
+          if ((secondByte & 0xC0) === 0x80 && (thirdByte & 0xC0) === 0x80 && (fourthByte & 0xC0) === 0x80) {
+            tempCodePoint = (firstByte & 0xF) << 0x12 | (secondByte & 0x3F) << 0xC | (thirdByte & 0x3F) << 0x6 | (fourthByte & 0x3F)
+            if (tempCodePoint > 0xFFFF && tempCodePoint < 0x110000) {
+              codePoint = tempCodePoint
+            }
+          }
+      }
+    }
+
+    if (codePoint === null) {
+      // we did not generate a valid codePoint so insert a
+      // replacement char (U+FFFD) and advance only 1 byte
+      codePoint = 0xFFFD
+      bytesPerSequence = 1
+    } else if (codePoint > 0xFFFF) {
+      // encode to utf16 (surrogate pair dance)
+      codePoint -= 0x10000
+      res.push(codePoint >>> 10 & 0x3FF | 0xD800)
+      codePoint = 0xDC00 | codePoint & 0x3FF
+    }
+
+    res.push(codePoint)
+    i += bytesPerSequence
+  }
+
+  return decodeCodePointsArray(res)
+}
+
+// Based on http://stackoverflow.com/a/22747272/680742, the browser with
+// the lowest limit is Chrome, with 0x10000 args.
+// We go 1 magnitude less, for safety
+var MAX_ARGUMENTS_LENGTH = 0x1000
+
+function decodeCodePointsArray (codePoints) {
+  var len = codePoints.length
+  if (len <= MAX_ARGUMENTS_LENGTH) {
+    return String.fromCharCode.apply(String, codePoints) // avoid extra slice()
+  }
+
+  // Decode in chunks to avoid "call stack size exceeded".
+  var res = ''
+  var i = 0
+  while (i < len) {
+    res += String.fromCharCode.apply(
+      String,
+      codePoints.slice(i, i += MAX_ARGUMENTS_LENGTH)
+    )
+  }
+  return res
+}
+
+function asciiSlice (buf, start, end) {
+  var ret = ''
+  end = Math.min(buf.length, end)
+
+  for (var i = start; i < end; ++i) {
+    ret += String.fromCharCode(buf[i] & 0x7F)
+  }
+  return ret
+}
+
+function latin1Slice (buf, start, end) {
+  var ret = ''
+  end = Math.min(buf.length, end)
+
+  for (var i = start; i < end; ++i) {
+    ret += String.fromCharCode(buf[i])
+  }
+  return ret
+}
+
+function hexSlice (buf, start, end) {
+  var len = buf.length
+
+  if (!start || start < 0) start = 0
+  if (!end || end < 0 || end > len) end = len
+
+  var out = ''
+  for (var i = start; i < end; ++i) {
+    out += toHex(buf[i])
+  }
+  return out
+}
+
+function utf16leSlice (buf, start, end) {
+  var bytes = buf.slice(start, end)
+  var res = ''
+  for (var i = 0; i < bytes.length; i += 2) {
+    res += String.fromCharCode(bytes[i] + bytes[i + 1] * 256)
+  }
+  return res
+}
+
+Buffer.prototype.slice = function slice (start, end) {
+  var len = this.length
+  start = ~~start
+  end = end === undefined ? len : ~~end
+
+  if (start < 0) {
+    start += len
+    if (start < 0) start = 0
+  } else if (start > len) {
+    start = len
+  }
+
+  if (end < 0) {
+    end += len
+    if (end < 0) end = 0
+  } else if (end > len) {
+    end = len
+  }
+
+  if (end < start) end = start
+
+  var newBuf
+  if (Buffer.TYPED_ARRAY_SUPPORT) {
+    newBuf = this.subarray(start, end)
+    newBuf.__proto__ = Buffer.prototype
+  } else {
+    var sliceLen = end - start
+    newBuf = new Buffer(sliceLen, undefined)
+    for (var i = 0; i < sliceLen; ++i) {
+      newBuf[i] = this[i + start]
+    }
+  }
+
+  return newBuf
+}
+
+/*
+ * Need to make sure that buffer isn't trying to write out of bounds.
+ */
+function checkOffset (offset, ext, length) {
+  if ((offset % 1) !== 0 || offset < 0) throw new RangeError('offset is not uint')
+  if (offset + ext > length) throw new RangeError('Trying to access beyond buffer length')
+}
+
+Buffer.prototype.readUIntLE = function readUIntLE (offset, byteLength, noAssert) {
+  offset = offset | 0
+  byteLength = byteLength | 0
+  if (!noAssert) checkOffset(offset, byteLength, this.length)
+
+  var val = this[offset]
+  var mul = 1
+  var i = 0
+  while (++i < byteLength && (mul *= 0x100)) {
+    val += this[offset + i] * mul
+  }
+
+  return val
+}
+
+Buffer.prototype.readUIntBE = function readUIntBE (offset, byteLength, noAssert) {
+  offset = offset | 0
+  byteLength = byteLength | 0
+  if (!noAssert) {
+    checkOffset(offset, byteLength, this.length)
+  }
+
+  var val = this[offset + --byteLength]
+  var mul = 1
+  while (byteLength > 0 && (mul *= 0x100)) {
+    val += this[offset + --byteLength] * mul
+  }
+
+  return val
+}
+
+Buffer.prototype.readUInt8 = function readUInt8 (offset, noAssert) {
+  if (!noAssert) checkOffset(offset, 1, this.length)
+  return this[offset]
+}
+
+Buffer.prototype.readUInt16LE = function readUInt16LE (offset, noAssert) {
+  if (!noAssert) checkOffset(offset, 2, this.length)
+  return this[offset] | (this[offset + 1] << 8)
+}
+
+Buffer.prototype.readUInt16BE = function readUInt16BE (offset, noAssert) {
+  if (!noAssert) checkOffset(offset, 2, this.length)
+  return (this[offset] << 8) | this[offset + 1]
+}
+
+Buffer.prototype.readUInt32LE = function readUInt32LE (offset, noAssert) {
+  if (!noAssert) checkOffset(offset, 4, this.length)
+
+  return ((this[offset]) |
+      (this[offset + 1] << 8) |
+      (this[offset + 2] << 16)) +
+      (this[offset + 3] * 0x1000000)
+}
+
+Buffer.prototype.readUInt32BE = function readUInt32BE (offset, noAssert) {
+  if (!noAssert) checkOffset(offset, 4, this.length)
+
+  return (this[offset] * 0x1000000) +
+    ((this[offset + 1] << 16) |
+    (this[offset + 2] << 8) |
+    this[offset + 3])
+}
+
+Buffer.prototype.readIntLE = function readIntLE (offset, byteLength, noAssert) {
+  offset = offset | 0
+  byteLength = byteLength | 0
+  if (!noAssert) checkOffset(offset, byteLength, this.length)
+
+  var val = this[offset]
+  var mul = 1
+  var i = 0
+  while (++i < byteLength && (mul *= 0x100)) {
+    val += this[offset + i] * mul
+  }
+  mul *= 0x80
+
+  if (val >= mul) val -= Math.pow(2, 8 * byteLength)
+
+  return val
+}
+
+Buffer.prototype.readIntBE = function readIntBE (offset, byteLength, noAssert) {
+  offset = offset | 0
+  byteLength = byteLength | 0
+  if (!noAssert) checkOffset(offset, byteLength, this.length)
+
+  var i = byteLength
+  var mul = 1
+  var val = this[offset + --i]
+  while (i > 0 && (mul *= 0x100)) {
+    val += this[offset + --i] * mul
+  }
+  mul *= 0x80
+
+  if (val >= mul) val -= Math.pow(2, 8 * byteLength)
+
+  return val
+}
+
+Buffer.prototype.readInt8 = function readInt8 (offset, noAssert) {
+  if (!noAssert) checkOffset(offset, 1, this.length)
+  if (!(this[offset] & 0x80)) return (this[offset])
+  return ((0xff - this[offset] + 1) * -1)
+}
+
+Buffer.prototype.readInt16LE = function readInt16LE (offset, noAssert) {
+  if (!noAssert) checkOffset(offset, 2, this.length)
+  var val = this[offset] | (this[offset + 1] << 8)
+  return (val & 0x8000) ? val | 0xFFFF0000 : val
+}
+
+Buffer.prototype.readInt16BE = function readInt16BE (offset, noAssert) {
+  if (!noAssert) checkOffset(offset, 2, this.length)
+  var val = this[offset + 1] | (this[offset] << 8)
+  return (val & 0x8000) ? val | 0xFFFF0000 : val
+}
+
+Buffer.prototype.readInt32LE = function readInt32LE (offset, noAssert) {
+  if (!noAssert) checkOffset(offset, 4, this.length)
+
+  return (this[offset]) |
+    (this[offset + 1] << 8) |
+    (this[offset + 2] << 16) |
+    (this[offset + 3] << 24)
+}
+
+Buffer.prototype.readInt32BE = function readInt32BE (offset, noAssert) {
+  if (!noAssert) checkOffset(offset, 4, this.length)
+
+  return (this[offset] << 24) |
+    (this[offset + 1] << 16) |
+    (this[offset + 2] << 8) |
+    (this[offset + 3])
+}
+
+Buffer.prototype.readFloatLE = function readFloatLE (offset, noAssert) {
+  if (!noAssert) checkOffset(offset, 4, this.length)
+  return ieee754.read(this, offset, true, 23, 4)
+}
+
+Buffer.prototype.readFloatBE = function readFloatBE (offset, noAssert) {
+  if (!noAssert) checkOffset(offset, 4, this.length)
+  return ieee754.read(this, offset, false, 23, 4)
+}
+
+Buffer.prototype.readDoubleLE = function readDoubleLE (offset, noAssert) {
+  if (!noAssert) checkOffset(offset, 8, this.length)
+  return ieee754.read(this, offset, true, 52, 8)
+}
+
+Buffer.prototype.readDoubleBE = function readDoubleBE (offset, noAssert) {
+  if (!noAssert) checkOffset(offset, 8, this.length)
+  return ieee754.read(this, offset, false, 52, 8)
+}
+
+function checkInt (buf, value, offset, ext, max, min) {
+  if (!Buffer.isBuffer(buf)) throw new TypeError('"buffer" argument must be a Buffer instance')
+  if (value > max || value < min) throw new RangeError('"value" argument is out of bounds')
+  if (offset + ext > buf.length) throw new RangeError('Index out of range')
+}
+
+Buffer.prototype.writeUIntLE = function writeUIntLE (value, offset, byteLength, noAssert) {
+  value = +value
+  offset = offset | 0
+  byteLength = byteLength | 0
+  if (!noAssert) {
+    var maxBytes = Math.pow(2, 8 * byteLength) - 1
+    checkInt(this, value, offset, byteLength, maxBytes, 0)
+  }
+
+  var mul = 1
+  var i = 0
+  this[offset] = value & 0xFF
+  while (++i < byteLength && (mul *= 0x100)) {
+    this[offset + i] = (value / mul) & 0xFF
+  }
+
+  return offset + byteLength
+}
+
+Buffer.prototype.writeUIntBE = function writeUIntBE (value, offset, byteLength, noAssert) {
+  value = +value
+  offset = offset | 0
+  byteLength = byteLength | 0
+  if (!noAssert) {
+    var maxBytes = Math.pow(2, 8 * byteLength) - 1
+    checkInt(this, value, offset, byteLength, maxBytes, 0)
+  }
+
+  var i = byteLength - 1
+  var mul = 1
+  this[offset + i] = value & 0xFF
+  while (--i >= 0 && (mul *= 0x100)) {
+    this[offset + i] = (value / mul) & 0xFF
+  }
+
+  return offset + byteLength
+}
+
+Buffer.prototype.writeUInt8 = function writeUInt8 (value, offset, noAssert) {
+  value = +value
+  offset = offset | 0
+  if (!noAssert) checkInt(this, value, offset, 1, 0xff, 0)
+  if (!Buffer.TYPED_ARRAY_SUPPORT) value = Math.floor(value)
+  this[offset] = (value & 0xff)
+  return offset + 1
+}
+
+function objectWriteUInt16 (buf, value, offset, littleEndian) {
+  if (value < 0) value = 0xffff + value + 1
+  for (var i = 0, j = Math.min(buf.length - offset, 2); i < j; ++i) {
+    buf[offset + i] = (value & (0xff << (8 * (littleEndian ? i : 1 - i)))) >>>
+      (littleEndian ? i : 1 - i) * 8
+  }
+}
+
+Buffer.prototype.writeUInt16LE = function writeUInt16LE (value, offset, noAssert) {
+  value = +value
+  offset = offset | 0
+  if (!noAssert) checkInt(this, value, offset, 2, 0xffff, 0)
+  if (Buffer.TYPED_ARRAY_SUPPORT) {
+    this[offset] = (value & 0xff)
+    this[offset + 1] = (value >>> 8)
+  } else {
+    objectWriteUInt16(this, value, offset, true)
+  }
+  return offset + 2
+}
+
+Buffer.prototype.writeUInt16BE = function writeUInt16BE (value, offset, noAssert) {
+  value = +value
+  offset = offset | 0
+  if (!noAssert) checkInt(this, value, offset, 2, 0xffff, 0)
+  if (Buffer.TYPED_ARRAY_SUPPORT) {
+    this[offset] = (value >>> 8)
+    this[offset + 1] = (value & 0xff)
+  } else {
+    objectWriteUInt16(this, value, offset, false)
+  }
+  return offset + 2
+}
+
+function objectWriteUInt32 (buf, value, offset, littleEndian) {
+  if (value < 0) value = 0xffffffff + value + 1
+  for (var i = 0, j = Math.min(buf.length - offset, 4); i < j; ++i) {
+    buf[offset + i] = (value >>> (littleEndian ? i : 3 - i) * 8) & 0xff
+  }
+}
+
+Buffer.prototype.writeUInt32LE = function writeUInt32LE (value, offset, noAssert) {
+  value = +value
+  offset = offset | 0
+  if (!noAssert) checkInt(this, value, offset, 4, 0xffffffff, 0)
+  if (Buffer.TYPED_ARRAY_SUPPORT) {
+    this[offset + 3] = (value >>> 24)
+    this[offset + 2] = (value >>> 16)
+    this[offset + 1] = (value >>> 8)
+    this[offset] = (value & 0xff)
+  } else {
+    objectWriteUInt32(this, value, offset, true)
+  }
+  return offset + 4
+}
+
+Buffer.prototype.writeUInt32BE = function writeUInt32BE (value, offset, noAssert) {
+  value = +value
+  offset = offset | 0
+  if (!noAssert) checkInt(this, value, offset, 4, 0xffffffff, 0)
+  if (Buffer.TYPED_ARRAY_SUPPORT) {
+    this[offset] = (value >>> 24)
+    this[offset + 1] = (value >>> 16)
+    this[offset + 2] = (value >>> 8)
+    this[offset + 3] = (value & 0xff)
+  } else {
+    objectWriteUInt32(this, value, offset, false)
+  }
+  return offset + 4
+}
+
+Buffer.prototype.writeIntLE = function writeIntLE (value, offset, byteLength, noAssert) {
+  value = +value
+  offset = offset | 0
+  if (!noAssert) {
+    var limit = Math.pow(2, 8 * byteLength - 1)
+
+    checkInt(this, value, offset, byteLength, limit - 1, -limit)
+  }
+
+  var i = 0
+  var mul = 1
+  var sub = 0
+  this[offset] = value & 0xFF
+  while (++i < byteLength && (mul *= 0x100)) {
+    if (value < 0 && sub === 0 && this[offset + i - 1] !== 0) {
+      sub = 1
+    }
+    this[offset + i] = ((value / mul) >> 0) - sub & 0xFF
+  }
+
+  return offset + byteLength
+}
+
+Buffer.prototype.writeIntBE = function writeIntBE (value, offset, byteLength, noAssert) {
+  value = +value
+  offset = offset | 0
+  if (!noAssert) {
+    var limit = Math.pow(2, 8 * byteLength - 1)
+
+    checkInt(this, value, offset, byteLength, limit - 1, -limit)
+  }
+
+  var i = byteLength - 1
+  var mul = 1
+  var sub = 0
+  this[offset + i] = value & 0xFF
+  while (--i >= 0 && (mul *= 0x100)) {
+    if (value < 0 && sub === 0 && this[offset + i + 1] !== 0) {
+      sub = 1
+    }
+    this[offset + i] = ((value / mul) >> 0) - sub & 0xFF
+  }
+
+  return offset + byteLength
+}
+
+Buffer.prototype.writeInt8 = function writeInt8 (value, offset, noAssert) {
+  value = +value
+  offset = offset | 0
+  if (!noAssert) checkInt(this, value, offset, 1, 0x7f, -0x80)
+  if (!Buffer.TYPED_ARRAY_SUPPORT) value = Math.floor(value)
+  if (value < 0) value = 0xff + value + 1
+  this[offset] = (value & 0xff)
+  return offset + 1
+}
+
+Buffer.prototype.writeInt16LE = function writeInt16LE (value, offset, noAssert) {
+  value = +value
+  offset = offset | 0
+  if (!noAssert) checkInt(this, value, offset, 2, 0x7fff, -0x8000)
+  if (Buffer.TYPED_ARRAY_SUPPORT) {
+    this[offset] = (value & 0xff)
+    this[offset + 1] = (value >>> 8)
+  } else {
+    objectWriteUInt16(this, value, offset, true)
+  }
+  return offset + 2
+}
+
+Buffer.prototype.writeInt16BE = function writeInt16BE (value, offset, noAssert) {
+  value = +value
+  offset = offset | 0
+  if (!noAssert) checkInt(this, value, offset, 2, 0x7fff, -0x8000)
+  if (Buffer.TYPED_ARRAY_SUPPORT) {
+    this[offset] = (value >>> 8)
+    this[offset + 1] = (value & 0xff)
+  } else {
+    objectWriteUInt16(this, value, offset, false)
+  }
+  return offset + 2
+}
+
+Buffer.prototype.writeInt32LE = function writeInt32LE (value, offset, noAssert) {
+  value = +value
+  offset = offset | 0
+  if (!noAssert) checkInt(this, value, offset, 4, 0x7fffffff, -0x80000000)
+  if (Buffer.TYPED_ARRAY_SUPPORT) {
+    this[offset] = (value & 0xff)
+    this[offset + 1] = (value >>> 8)
+    this[offset + 2] = (value >>> 16)
+    this[offset + 3] = (value >>> 24)
+  } else {
+    objectWriteUInt32(this, value, offset, true)
+  }
+  return offset + 4
+}
+
+Buffer.prototype.writeInt32BE = function writeInt32BE (value, offset, noAssert) {
+  value = +value
+  offset = offset | 0
+  if (!noAssert) checkInt(this, value, offset, 4, 0x7fffffff, -0x80000000)
+  if (value < 0) value = 0xffffffff + value + 1
+  if (Buffer.TYPED_ARRAY_SUPPORT) {
+    this[offset] = (value >>> 24)
+    this[offset + 1] = (value >>> 16)
+    this[offset + 2] = (value >>> 8)
+    this[offset + 3] = (value & 0xff)
+  } else {
+    objectWriteUInt32(this, value, offset, false)
+  }
+  return offset + 4
+}
+
+function checkIEEE754 (buf, value, offset, ext, max, min) {
+  if (offset + ext > buf.length) throw new RangeError('Index out of range')
+  if (offset < 0) throw new RangeError('Index out of range')
+}
+
+function writeFloat (buf, value, offset, littleEndian, noAssert) {
+  if (!noAssert) {
+    checkIEEE754(buf, value, offset, 4, 3.4028234663852886e+38, -3.4028234663852886e+38)
+  }
+  ieee754.write(buf, value, offset, littleEndian, 23, 4)
+  return offset + 4
+}
+
+Buffer.prototype.writeFloatLE = function writeFloatLE (value, offset, noAssert) {
+  return writeFloat(this, value, offset, true, noAssert)
+}
+
+Buffer.prototype.writeFloatBE = function writeFloatBE (value, offset, noAssert) {
+  return writeFloat(this, value, offset, false, noAssert)
+}
+
+function writeDouble (buf, value, offset, littleEndian, noAssert) {
+  if (!noAssert) {
+    checkIEEE754(buf, value, offset, 8, 1.7976931348623157E+308, -1.7976931348623157E+308)
+  }
+  ieee754.write(buf, value, offset, littleEndian, 52, 8)
+  return offset + 8
+}
+
+Buffer.prototype.writeDoubleLE = function writeDoubleLE (value, offset, noAssert) {
+  return writeDouble(this, value, offset, true, noAssert)
+}
+
+Buffer.prototype.writeDoubleBE = function writeDoubleBE (value, offset, noAssert) {
+  return writeDouble(this, value, offset, false, noAssert)
+}
+
+// copy(targetBuffer, targetStart=0, sourceStart=0, sourceEnd=buffer.length)
+Buffer.prototype.copy = function copy (target, targetStart, start, end) {
+  if (!start) start = 0
+  if (!end && end !== 0) end = this.length
+  if (targetStart >= target.length) targetStart = target.length
+  if (!targetStart) targetStart = 0
+  if (end > 0 && end < start) end = start
+
+  // Copy 0 bytes; we're done
+  if (end === start) return 0
+  if (target.length === 0 || this.length === 0) return 0
+
+  // Fatal error conditions
+  if (targetStart < 0) {
+    throw new RangeError('targetStart out of bounds')
+  }
+  if (start < 0 || start >= this.length) throw new RangeError('sourceStart out of bounds')
+  if (end < 0) throw new RangeError('sourceEnd out of bounds')
+
+  // Are we oob?
+  if (end > this.length) end = this.length
+  if (target.length - targetStart < end - start) {
+    end = target.length - targetStart + start
+  }
+
+  var len = end - start
+  var i
+
+  if (this === target && start < targetStart && targetStart < end) {
+    // descending copy from end
+    for (i = len - 1; i >= 0; --i) {
+      target[i + targetStart] = this[i + start]
+    }
+  } else if (len < 1000 || !Buffer.TYPED_ARRAY_SUPPORT) {
+    // ascending copy from start
+    for (i = 0; i < len; ++i) {
+      target[i + targetStart] = this[i + start]
+    }
+  } else {
+    Uint8Array.prototype.set.call(
+      target,
+      this.subarray(start, start + len),
+      targetStart
+    )
+  }
+
+  return len
+}
+
+// Usage:
+//    buffer.fill(number[, offset[, end]])
+//    buffer.fill(buffer[, offset[, end]])
+//    buffer.fill(string[, offset[, end]][, encoding])
+Buffer.prototype.fill = function fill (val, start, end, encoding) {
+  // Handle string cases:
+  if (typeof val === 'string') {
+    if (typeof start === 'string') {
+      encoding = start
+      start = 0
+      end = this.length
+    } else if (typeof end === 'string') {
+      encoding = end
+      end = this.length
+    }
+    if (val.length === 1) {
+      var code = val.charCodeAt(0)
+      if (code < 256) {
+        val = code
+      }
+    }
+    if (encoding !== undefined && typeof encoding !== 'string') {
+      throw new TypeError('encoding must be a string')
+    }
+    if (typeof encoding === 'string' && !Buffer.isEncoding(encoding)) {
+      throw new TypeError('Unknown encoding: ' + encoding)
+    }
+  } else if (typeof val === 'number') {
+    val = val & 255
+  }
+
+  // Invalid ranges are not set to a default, so can range check early.
+  if (start < 0 || this.length < start || this.length < end) {
+    throw new RangeError('Out of range index')
+  }
+
+  if (end <= start) {
+    return this
+  }
+
+  start = start >>> 0
+  end = end === undefined ? this.length : end >>> 0
+
+  if (!val) val = 0
+
+  var i
+  if (typeof val === 'number') {
+    for (i = start; i < end; ++i) {
+      this[i] = val
+    }
+  } else {
+    var bytes = Buffer.isBuffer(val)
+      ? val
+      : utf8ToBytes(new Buffer(val, encoding).toString())
+    var len = bytes.length
+    for (i = 0; i < end - start; ++i) {
+      this[i + start] = bytes[i % len]
+    }
+  }
+
+  return this
+}
+
+// HELPER FUNCTIONS
+// ================
+
+var INVALID_BASE64_RE = /[^+\/0-9A-Za-z-_]/g
+
+function base64clean (str) {
+  // Node strips out invalid characters like \n and \t from the string, base64-js does not
+  str = stringtrim(str).replace(INVALID_BASE64_RE, '')
+  // Node converts strings with length < 2 to ''
+  if (str.length < 2) return ''
+  // Node allows for non-padded base64 strings (missing trailing ===), base64-js does not
+  while (str.length % 4 !== 0) {
+    str = str + '='
+  }
+  return str
+}
+
+function stringtrim (str) {
+  if (str.trim) return str.trim()
+  return str.replace(/^\s+|\s+$/g, '')
+}
+
+function toHex (n) {
+  if (n < 16) return '0' + n.toString(16)
+  return n.toString(16)
+}
+
+function utf8ToBytes (string, units) {
+  units = units || Infinity
+  var codePoint
+  var length = string.length
+  var leadSurrogate = null
+  var bytes = []
+
+  for (var i = 0; i < length; ++i) {
+    codePoint = string.charCodeAt(i)
+
+    // is surrogate component
+    if (codePoint > 0xD7FF && codePoint < 0xE000) {
+      // last char was a lead
+      if (!leadSurrogate) {
+        // no lead yet
+        if (codePoint > 0xDBFF) {
+          // unexpected trail
+          if ((units -= 3) > -1) bytes.push(0xEF, 0xBF, 0xBD)
+          continue
+        } else if (i + 1 === length) {
+          // unpaired lead
+          if ((units -= 3) > -1) bytes.push(0xEF, 0xBF, 0xBD)
+          continue
+        }
+
+        // valid lead
+        leadSurrogate = codePoint
+
+        continue
+      }
+
+      // 2 leads in a row
+      if (codePoint < 0xDC00) {
+        if ((units -= 3) > -1) bytes.push(0xEF, 0xBF, 0xBD)
+        leadSurrogate = codePoint
+        continue
+      }
+
+      // valid surrogate pair
+      codePoint = (leadSurrogate - 0xD800 << 10 | codePoint - 0xDC00) + 0x10000
+    } else if (leadSurrogate) {
+      // valid bmp char, but last char was a lead
+      if ((units -= 3) > -1) bytes.push(0xEF, 0xBF, 0xBD)
+    }
+
+    leadSurrogate = null
+
+    // encode utf8
+    if (codePoint < 0x80) {
+      if ((units -= 1) < 0) break
+      bytes.push(codePoint)
+    } else if (codePoint < 0x800) {
+      if ((units -= 2) < 0) break
+      bytes.push(
+        codePoint >> 0x6 | 0xC0,
+        codePoint & 0x3F | 0x80
+      )
+    } else if (codePoint < 0x10000) {
+      if ((units -= 3) < 0) break
+      bytes.push(
+        codePoint >> 0xC | 0xE0,
+        codePoint >> 0x6 & 0x3F | 0x80,
+        codePoint & 0x3F | 0x80
+      )
+    } else if (codePoint < 0x110000) {
+      if ((units -= 4) < 0) break
+      bytes.push(
+        codePoint >> 0x12 | 0xF0,
+        codePoint >> 0xC & 0x3F | 0x80,
+        codePoint >> 0x6 & 0x3F | 0x80,
+        codePoint & 0x3F | 0x80
+      )
+    } else {
+      throw new Error('Invalid code point')
+    }
+  }
+
+  return bytes
+}
+
+function asciiToBytes (str) {
+  var byteArray = []
+  for (var i = 0; i < str.length; ++i) {
+    // Node's code seems to be doing this and not & 0x7F..
+    byteArray.push(str.charCodeAt(i) & 0xFF)
+  }
+  return byteArray
+}
+
+function utf16leToBytes (str, units) {
+  var c, hi, lo
+  var byteArray = []
+  for (var i = 0; i < str.length; ++i) {
+    if ((units -= 2) < 0) break
+
+    c = str.charCodeAt(i)
+    hi = c >> 8
+    lo = c % 256
+    byteArray.push(lo)
+    byteArray.push(hi)
+  }
+
+  return byteArray
+}
+
+function base64ToBytes (str) {
+  return base64.toByteArray(base64clean(str))
+}
+
+function blitBuffer (src, dst, offset, length) {
+  for (var i = 0; i < length; ++i) {
+    if ((i + offset >= dst.length) || (i >= src.length)) break
+    dst[i + offset] = src[i]
+  }
+  return i
+}
+
+function isnan (val) {
+  return val !== val // eslint-disable-line no-self-compare
+}
+
+},{"base64-js":"node_modules/base64-js/index.js","ieee754":"node_modules/ieee754/index.js","isarray":"node_modules/isarray/index.js","buffer":"node_modules/buffer/index.js"}],"node_modules/@microsoft/signalr/dist/esm/NodeHttpClient.js":[function(require,module,exports) {
+var Buffer = require("buffer").Buffer;
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.NodeHttpClient = void 0;
+
+var _Errors = require("./Errors");
+
+var _HttpClient = require("./HttpClient");
+
+var _ILogger = require("./ILogger");
+
+var _Utils = require("./Utils");
+
+// Copyright (c) .NET Foundation. All rights reserved.
+// Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
+var __extends = void 0 && (void 0).__extends || function () {
+  var extendStatics = Object.setPrototypeOf || {
+    __proto__: []
+  } instanceof Array && function (d, b) {
+    d.__proto__ = b;
+  } || function (d, b) {
+    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+  };
+
+  return function (d, b) {
+    extendStatics(d, b);
+
+    function __() {
+      this.constructor = d;
+    }
+
+    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+  };
+}();
+
+var __assign = void 0 && (void 0).__assign || Object.assign || function (t) {
+  for (var s, i = 1, n = arguments.length; i < n; i++) {
+    s = arguments[i];
+
+    for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p)) t[p] = s[p];
+  }
+
+  return t;
+};
+
+var requestModule;
+
+if (typeof XMLHttpRequest === "undefined") {
+  // In order to ignore the dynamic require in webpack builds we need to do this magic
+  // @ts-ignore: TS doesn't know about these names
+  var requireFunc = typeof __webpack_require__ === "function" ? __non_webpack_require__ : require;
+  requestModule = requireFunc("request");
+}
+/** @private */
+
+
+var NodeHttpClient =
+/** @class */
+function (_super) {
+  __extends(NodeHttpClient, _super);
+
+  function NodeHttpClient(logger) {
+    var _this = _super.call(this) || this;
+
+    if (typeof requestModule === "undefined") {
+      throw new Error("The 'request' module could not be loaded.");
+    }
+
+    _this.logger = logger;
+    _this.cookieJar = requestModule.jar();
+    _this.request = requestModule.defaults({
+      jar: _this.cookieJar
+    });
+    return _this;
+  }
+
+  NodeHttpClient.prototype.send = function (httpRequest) {
+    var _this = this;
+
+    return new Promise(function (resolve, reject) {
+      var requestBody;
+
+      if ((0, _Utils.isArrayBuffer)(httpRequest.content)) {
+        requestBody = Buffer.from(httpRequest.content);
+      } else {
+        requestBody = httpRequest.content || "";
+      }
+
+      var currentRequest = _this.request(httpRequest.url, {
+        body: requestBody,
+        // If binary is expected 'null' should be used, otherwise for text 'utf8'
+        encoding: httpRequest.responseType === "arraybuffer" ? null : "utf8",
+        headers: __assign({
+          // Tell auth middleware to 401 instead of redirecting
+          "X-Requested-With": "XMLHttpRequest"
+        }, httpRequest.headers),
+        method: httpRequest.method,
+        timeout: httpRequest.timeout
+      }, function (error, response, body) {
+        if (httpRequest.abortSignal) {
+          httpRequest.abortSignal.onabort = null;
+        }
+
+        if (error) {
+          if (error.code === "ETIMEDOUT") {
+            _this.logger.log(_ILogger.LogLevel.Warning, "Timeout from HTTP request.");
+
+            reject(new _Errors.TimeoutError());
+          }
+
+          _this.logger.log(_ILogger.LogLevel.Warning, "Error from HTTP request. " + error);
+
+          reject(error);
+          return;
+        }
+
+        if (response.statusCode >= 200 && response.statusCode < 300) {
+          resolve(new _HttpClient.HttpResponse(response.statusCode, response.statusMessage || "", body));
+        } else {
+          reject(new _Errors.HttpError(response.statusMessage || "", response.statusCode || 0));
+        }
+      });
+
+      if (httpRequest.abortSignal) {
+        httpRequest.abortSignal.onabort = function () {
+          currentRequest.abort();
+          reject(new _Errors.AbortError());
+        };
+      }
+    });
+  };
+
+  NodeHttpClient.prototype.getCookieString = function (url) {
+    return this.cookieJar.getCookieString(url);
+  };
+
+  return NodeHttpClient;
+}(_HttpClient.HttpClient);
+
+exports.NodeHttpClient = NodeHttpClient;
+},{"./Errors":"node_modules/@microsoft/signalr/dist/esm/Errors.js","./HttpClient":"node_modules/@microsoft/signalr/dist/esm/HttpClient.js","./ILogger":"node_modules/@microsoft/signalr/dist/esm/ILogger.js","./Utils":"node_modules/@microsoft/signalr/dist/esm/Utils.js","buffer":"node_modules/buffer/index.js"}],"node_modules/@microsoft/signalr/dist/esm/XhrHttpClient.js":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.XhrHttpClient = void 0;
+
+var _Errors = require("./Errors");
+
+var _HttpClient = require("./HttpClient");
+
+var _ILogger = require("./ILogger");
+
+// Copyright (c) .NET Foundation. All rights reserved.
+// Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
+var __extends = void 0 && (void 0).__extends || function () {
+  var extendStatics = Object.setPrototypeOf || {
+    __proto__: []
+  } instanceof Array && function (d, b) {
+    d.__proto__ = b;
+  } || function (d, b) {
+    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+  };
+
+  return function (d, b) {
+    extendStatics(d, b);
+
+    function __() {
+      this.constructor = d;
+    }
+
+    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+  };
+}();
+
+var XhrHttpClient =
+/** @class */
+function (_super) {
+  __extends(XhrHttpClient, _super);
+
+  function XhrHttpClient(logger) {
+    var _this = _super.call(this) || this;
+
+    _this.logger = logger;
+    return _this;
+  }
+  /** @inheritDoc */
+
+
+  XhrHttpClient.prototype.send = function (request) {
+    var _this = this; // Check that abort was not signaled before calling send
+
+
+    if (request.abortSignal && request.abortSignal.aborted) {
+      return Promise.reject(new _Errors.AbortError());
+    }
+
+    if (!request.method) {
+      return Promise.reject(new Error("No method defined."));
+    }
+
+    if (!request.url) {
+      return Promise.reject(new Error("No url defined."));
+    }
+
+    return new Promise(function (resolve, reject) {
+      var xhr = new XMLHttpRequest();
+      xhr.open(request.method, request.url, true);
+      xhr.withCredentials = true;
+      xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest"); // Explicitly setting the Content-Type header for React Native on Android platform.
+
+      xhr.setRequestHeader("Content-Type", "text/plain;charset=UTF-8");
+      var headers = request.headers;
+
+      if (headers) {
+        Object.keys(headers).forEach(function (header) {
+          xhr.setRequestHeader(header, headers[header]);
+        });
+      }
+
+      if (request.responseType) {
+        xhr.responseType = request.responseType;
+      }
+
+      if (request.abortSignal) {
+        request.abortSignal.onabort = function () {
+          xhr.abort();
+          reject(new _Errors.AbortError());
+        };
+      }
+
+      if (request.timeout) {
+        xhr.timeout = request.timeout;
+      }
+
+      xhr.onload = function () {
+        if (request.abortSignal) {
+          request.abortSignal.onabort = null;
+        }
+
+        if (xhr.status >= 200 && xhr.status < 300) {
+          resolve(new _HttpClient.HttpResponse(xhr.status, xhr.statusText, xhr.response || xhr.responseText));
+        } else {
+          reject(new _Errors.HttpError(xhr.statusText, xhr.status));
+        }
+      };
+
+      xhr.onerror = function () {
+        _this.logger.log(_ILogger.LogLevel.Warning, "Error from HTTP request. " + xhr.status + ": " + xhr.statusText + ".");
+
+        reject(new _Errors.HttpError(xhr.statusText, xhr.status));
+      };
+
+      xhr.ontimeout = function () {
+        _this.logger.log(_ILogger.LogLevel.Warning, "Timeout from HTTP request.");
+
+        reject(new _Errors.TimeoutError());
+      };
+
+      xhr.send(request.content || "");
+    });
+  };
+
+  return XhrHttpClient;
+}(_HttpClient.HttpClient);
+
+exports.XhrHttpClient = XhrHttpClient;
+},{"./Errors":"node_modules/@microsoft/signalr/dist/esm/Errors.js","./HttpClient":"node_modules/@microsoft/signalr/dist/esm/HttpClient.js","./ILogger":"node_modules/@microsoft/signalr/dist/esm/ILogger.js"}],"node_modules/@microsoft/signalr/dist/esm/DefaultHttpClient.js":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.DefaultHttpClient = void 0;
+
+var _Errors = require("./Errors");
+
+var _HttpClient = require("./HttpClient");
+
+var _NodeHttpClient = require("./NodeHttpClient");
+
+var _XhrHttpClient = require("./XhrHttpClient");
+
+// Copyright (c) .NET Foundation. All rights reserved.
+// Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
+var __extends = void 0 && (void 0).__extends || function () {
+  var extendStatics = Object.setPrototypeOf || {
+    __proto__: []
+  } instanceof Array && function (d, b) {
+    d.__proto__ = b;
+  } || function (d, b) {
+    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+  };
+
+  return function (d, b) {
+    extendStatics(d, b);
+
+    function __() {
+      this.constructor = d;
+    }
+
+    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+  };
+}();
+
+/** Default implementation of {@link @microsoft/signalr.HttpClient}. */
+var DefaultHttpClient =
+/** @class */
+function (_super) {
+  __extends(DefaultHttpClient, _super);
+  /** Creates a new instance of the {@link @microsoft/signalr.DefaultHttpClient}, using the provided {@link @microsoft/signalr.ILogger} to log messages. */
+
+
+  function DefaultHttpClient(logger) {
+    var _this = _super.call(this) || this;
+
+    if (typeof XMLHttpRequest !== "undefined") {
+      _this.httpClient = new _XhrHttpClient.XhrHttpClient(logger);
+    } else {
+      _this.httpClient = new _NodeHttpClient.NodeHttpClient(logger);
+    }
+
+    return _this;
+  }
+  /** @inheritDoc */
+
+
+  DefaultHttpClient.prototype.send = function (request) {
+    // Check that abort was not signaled before calling send
+    if (request.abortSignal && request.abortSignal.aborted) {
+      return Promise.reject(new _Errors.AbortError());
+    }
+
+    if (!request.method) {
+      return Promise.reject(new Error("No method defined."));
+    }
+
+    if (!request.url) {
+      return Promise.reject(new Error("No url defined."));
+    }
+
+    return this.httpClient.send(request);
+  };
+
+  DefaultHttpClient.prototype.getCookieString = function (url) {
+    return this.httpClient.getCookieString(url);
+  };
+
+  return DefaultHttpClient;
+}(_HttpClient.HttpClient);
+
+exports.DefaultHttpClient = DefaultHttpClient;
+},{"./Errors":"node_modules/@microsoft/signalr/dist/esm/Errors.js","./HttpClient":"node_modules/@microsoft/signalr/dist/esm/HttpClient.js","./NodeHttpClient":"node_modules/@microsoft/signalr/dist/esm/NodeHttpClient.js","./XhrHttpClient":"node_modules/@microsoft/signalr/dist/esm/XhrHttpClient.js"}],"node_modules/@microsoft/signalr/dist/esm/TextMessageFormat.js":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.TextMessageFormat = void 0;
+
+// Copyright (c) .NET Foundation. All rights reserved.
+// Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
+// Not exported from index
+
+/** @private */
+var TextMessageFormat =
+/** @class */
+function () {
+  function TextMessageFormat() {}
+
+  TextMessageFormat.write = function (output) {
+    return "" + output + TextMessageFormat.RecordSeparator;
+  };
+
+  TextMessageFormat.parse = function (input) {
+    if (input[input.length - 1] !== TextMessageFormat.RecordSeparator) {
+      throw new Error("Message is incomplete.");
+    }
+
+    var messages = input.split(TextMessageFormat.RecordSeparator);
+    messages.pop();
+    return messages;
+  };
+
+  TextMessageFormat.RecordSeparatorCode = 0x1e;
+  TextMessageFormat.RecordSeparator = String.fromCharCode(TextMessageFormat.RecordSeparatorCode);
+  return TextMessageFormat;
+}();
+
+exports.TextMessageFormat = TextMessageFormat;
+},{}],"node_modules/@microsoft/signalr/dist/esm/HandshakeProtocol.js":[function(require,module,exports) {
+var Buffer = require("buffer").Buffer;
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.HandshakeProtocol = void 0;
+
+var _TextMessageFormat = require("./TextMessageFormat");
+
+var _Utils = require("./Utils");
+
+// Copyright (c) .NET Foundation. All rights reserved.
+// Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
+
+/** @private */
+var HandshakeProtocol =
+/** @class */
+function () {
+  function HandshakeProtocol() {} // Handshake request is always JSON
+
+
+  HandshakeProtocol.prototype.writeHandshakeRequest = function (handshakeRequest) {
+    return _TextMessageFormat.TextMessageFormat.write(JSON.stringify(handshakeRequest));
+  };
+
+  HandshakeProtocol.prototype.parseHandshakeResponse = function (data) {
+    var responseMessage;
+    var messageData;
+    var remainingData;
+
+    if ((0, _Utils.isArrayBuffer)(data) || typeof Buffer !== "undefined" && data instanceof Buffer) {
+      // Format is binary but still need to read JSON text from handshake response
+      var binaryData = new Uint8Array(data);
+      var separatorIndex = binaryData.indexOf(_TextMessageFormat.TextMessageFormat.RecordSeparatorCode);
+
+      if (separatorIndex === -1) {
+        throw new Error("Message is incomplete.");
+      } // content before separator is handshake response
+      // optional content after is additional messages
+
+
+      var responseLength = separatorIndex + 1;
+      messageData = String.fromCharCode.apply(null, binaryData.slice(0, responseLength));
+      remainingData = binaryData.byteLength > responseLength ? binaryData.slice(responseLength).buffer : null;
+    } else {
+      var textData = data;
+      var separatorIndex = textData.indexOf(_TextMessageFormat.TextMessageFormat.RecordSeparator);
+
+      if (separatorIndex === -1) {
+        throw new Error("Message is incomplete.");
+      } // content before separator is handshake response
+      // optional content after is additional messages
+
+
+      var responseLength = separatorIndex + 1;
+      messageData = textData.substring(0, responseLength);
+      remainingData = textData.length > responseLength ? textData.substring(responseLength) : null;
+    } // At this point we should have just the single handshake message
+
+
+    var messages = _TextMessageFormat.TextMessageFormat.parse(messageData);
+
+    var response = JSON.parse(messages[0]);
+
+    if (response.type) {
+      throw new Error("Expected a handshake response from the server.");
+    }
+
+    responseMessage = response; // multiple messages could have arrived with handshake
+    // return additional data to be parsed as usual, or null if all parsed
+
+    return [remainingData, responseMessage];
+  };
+
+  return HandshakeProtocol;
+}();
+
+exports.HandshakeProtocol = HandshakeProtocol;
+},{"./TextMessageFormat":"node_modules/@microsoft/signalr/dist/esm/TextMessageFormat.js","./Utils":"node_modules/@microsoft/signalr/dist/esm/Utils.js","buffer":"node_modules/buffer/index.js"}],"node_modules/@microsoft/signalr/dist/esm/IHubProtocol.js":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.MessageType = void 0;
+// Copyright (c) .NET Foundation. All rights reserved.
+// Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
+
+/** Defines the type of a Hub Message. */
+var MessageType;
+exports.MessageType = MessageType;
+
+(function (MessageType) {
+  /** Indicates the message is an Invocation message and implements the {@link @microsoft/signalr.InvocationMessage} interface. */
+  MessageType[MessageType["Invocation"] = 1] = "Invocation";
+  /** Indicates the message is a StreamItem message and implements the {@link @microsoft/signalr.StreamItemMessage} interface. */
+
+  MessageType[MessageType["StreamItem"] = 2] = "StreamItem";
+  /** Indicates the message is a Completion message and implements the {@link @microsoft/signalr.CompletionMessage} interface. */
+
+  MessageType[MessageType["Completion"] = 3] = "Completion";
+  /** Indicates the message is a Stream Invocation message and implements the {@link @microsoft/signalr.StreamInvocationMessage} interface. */
+
+  MessageType[MessageType["StreamInvocation"] = 4] = "StreamInvocation";
+  /** Indicates the message is a Cancel Invocation message and implements the {@link @microsoft/signalr.CancelInvocationMessage} interface. */
+
+  MessageType[MessageType["CancelInvocation"] = 5] = "CancelInvocation";
+  /** Indicates the message is a Ping message and implements the {@link @microsoft/signalr.PingMessage} interface. */
+
+  MessageType[MessageType["Ping"] = 6] = "Ping";
+  /** Indicates the message is a Close message and implements the {@link @microsoft/signalr.CloseMessage} interface. */
+
+  MessageType[MessageType["Close"] = 7] = "Close";
+})(MessageType || (exports.MessageType = MessageType = {}));
+},{}],"node_modules/@microsoft/signalr/dist/esm/Subject.js":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.Subject = void 0;
+
+var _Utils = require("./Utils");
+
+// Copyright (c) .NET Foundation. All rights reserved.
+// Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
+
+/** Stream implementation to stream items to the server. */
+var Subject =
+/** @class */
+function () {
+  function Subject() {
+    this.observers = [];
+  }
+
+  Subject.prototype.next = function (item) {
+    for (var _i = 0, _a = this.observers; _i < _a.length; _i++) {
+      var observer = _a[_i];
+      observer.next(item);
+    }
+  };
+
+  Subject.prototype.error = function (err) {
+    for (var _i = 0, _a = this.observers; _i < _a.length; _i++) {
+      var observer = _a[_i];
+
+      if (observer.error) {
+        observer.error(err);
+      }
+    }
+  };
+
+  Subject.prototype.complete = function () {
+    for (var _i = 0, _a = this.observers; _i < _a.length; _i++) {
+      var observer = _a[_i];
+
+      if (observer.complete) {
+        observer.complete();
+      }
+    }
+  };
+
+  Subject.prototype.subscribe = function (observer) {
+    this.observers.push(observer);
+    return new _Utils.SubjectSubscription(this, observer);
+  };
+
+  return Subject;
+}();
+
+exports.Subject = Subject;
+},{"./Utils":"node_modules/@microsoft/signalr/dist/esm/Utils.js"}],"node_modules/@microsoft/signalr/dist/esm/HubConnection.js":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.HubConnection = exports.HubConnectionState = void 0;
+
+var _HandshakeProtocol = require("./HandshakeProtocol");
+
+var _IHubProtocol = require("./IHubProtocol");
+
+var _ILogger = require("./ILogger");
+
+var _Subject = require("./Subject");
+
+var _Utils = require("./Utils");
+
+// Copyright (c) .NET Foundation. All rights reserved.
+// Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
+var __awaiter = void 0 && (void 0).__awaiter || function (thisArg, _arguments, P, generator) {
+  return new (P || (P = Promise))(function (resolve, reject) {
+    function fulfilled(value) {
+      try {
+        step(generator.next(value));
+      } catch (e) {
+        reject(e);
+      }
+    }
+
+    function rejected(value) {
+      try {
+        step(generator["throw"](value));
+      } catch (e) {
+        reject(e);
+      }
+    }
+
+    function step(result) {
+      result.done ? resolve(result.value) : new P(function (resolve) {
+        resolve(result.value);
+      }).then(fulfilled, rejected);
+    }
+
+    step((generator = generator.apply(thisArg, _arguments || [])).next());
+  });
+};
+
+var __generator = void 0 && (void 0).__generator || function (thisArg, body) {
+  var _ = {
+    label: 0,
+    sent: function () {
+      if (t[0] & 1) throw t[1];
+      return t[1];
+    },
+    trys: [],
+    ops: []
+  },
+      f,
+      y,
+      t,
+      g;
+  return g = {
+    next: verb(0),
+    "throw": verb(1),
+    "return": verb(2)
+  }, typeof Symbol === "function" && (g[Symbol.iterator] = function () {
+    return this;
+  }), g;
+
+  function verb(n) {
+    return function (v) {
+      return step([n, v]);
+    };
+  }
+
+  function step(op) {
+    if (f) throw new TypeError("Generator is already executing.");
+
+    while (_) try {
+      if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
+      if (y = 0, t) op = [op[0] & 2, t.value];
+
+      switch (op[0]) {
+        case 0:
+        case 1:
+          t = op;
+          break;
+
+        case 4:
+          _.label++;
+          return {
+            value: op[1],
+            done: false
+          };
+
+        case 5:
+          _.label++;
+          y = op[1];
+          op = [0];
+          continue;
+
+        case 7:
+          op = _.ops.pop();
+
+          _.trys.pop();
+
+          continue;
+
+        default:
+          if (!(t = _.trys, t = t.length > 0 && t[t.length - 1]) && (op[0] === 6 || op[0] === 2)) {
+            _ = 0;
+            continue;
+          }
+
+          if (op[0] === 3 && (!t || op[1] > t[0] && op[1] < t[3])) {
+            _.label = op[1];
+            break;
+          }
+
+          if (op[0] === 6 && _.label < t[1]) {
+            _.label = t[1];
+            t = op;
+            break;
+          }
+
+          if (t && _.label < t[2]) {
+            _.label = t[2];
+
+            _.ops.push(op);
+
+            break;
+          }
+
+          if (t[2]) _.ops.pop();
+
+          _.trys.pop();
+
+          continue;
+      }
+
+      op = body.call(thisArg, _);
+    } catch (e) {
+      op = [6, e];
+      y = 0;
+    } finally {
+      f = t = 0;
+    }
+
+    if (op[0] & 5) throw op[1];
+    return {
+      value: op[0] ? op[1] : void 0,
+      done: true
+    };
+  }
+};
+
+var DEFAULT_TIMEOUT_IN_MS = 30 * 1000;
+var DEFAULT_PING_INTERVAL_IN_MS = 15 * 1000;
+/** Describes the current state of the {@link HubConnection} to the server. */
+
+var HubConnectionState;
+exports.HubConnectionState = HubConnectionState;
+
+(function (HubConnectionState) {
+  /** The hub connection is disconnected. */
+  HubConnectionState["Disconnected"] = "Disconnected";
+  /** The hub connection is connecting. */
+
+  HubConnectionState["Connecting"] = "Connecting";
+  /** The hub connection is connected. */
+
+  HubConnectionState["Connected"] = "Connected";
+  /** The hub connection is disconnecting. */
+
+  HubConnectionState["Disconnecting"] = "Disconnecting";
+  /** The hub connection is reconnecting. */
+
+  HubConnectionState["Reconnecting"] = "Reconnecting";
+})(HubConnectionState || (exports.HubConnectionState = HubConnectionState = {}));
+/** Represents a connection to a SignalR Hub. */
+
+
+var HubConnection =
+/** @class */
+function () {
+  function HubConnection(connection, logger, protocol, reconnectPolicy) {
+    var _this = this;
+
+    _Utils.Arg.isRequired(connection, "connection");
+
+    _Utils.Arg.isRequired(logger, "logger");
+
+    _Utils.Arg.isRequired(protocol, "protocol");
+
+    this.serverTimeoutInMilliseconds = DEFAULT_TIMEOUT_IN_MS;
+    this.keepAliveIntervalInMilliseconds = DEFAULT_PING_INTERVAL_IN_MS;
+    this.logger = logger;
+    this.protocol = protocol;
+    this.connection = connection;
+    this.reconnectPolicy = reconnectPolicy;
+    this.handshakeProtocol = new _HandshakeProtocol.HandshakeProtocol();
+
+    this.connection.onreceive = function (data) {
+      return _this.processIncomingData(data);
+    };
+
+    this.connection.onclose = function (error) {
+      return _this.connectionClosed(error);
+    };
+
+    this.callbacks = {};
+    this.methods = {};
+    this.closedCallbacks = [];
+    this.reconnectingCallbacks = [];
+    this.reconnectedCallbacks = [];
+    this.invocationId = 0;
+    this.receivedHandshakeResponse = false;
+    this.connectionState = HubConnectionState.Disconnected;
+    this.connectionStarted = false;
+    this.cachedPingMessage = this.protocol.writeMessage({
+      type: _IHubProtocol.MessageType.Ping
+    });
+  }
+  /** @internal */
+  // Using a public static factory method means we can have a private constructor and an _internal_
+  // create method that can be used by HubConnectionBuilder. An "internal" constructor would just
+  // be stripped away and the '.d.ts' file would have no constructor, which is interpreted as a
+  // public parameter-less constructor.
+
+
+  HubConnection.create = function (connection, logger, protocol, reconnectPolicy) {
+    return new HubConnection(connection, logger, protocol, reconnectPolicy);
+  };
+
+  Object.defineProperty(HubConnection.prototype, "state", {
+    /** Indicates the state of the {@link HubConnection} to the server. */
+    get: function () {
+      return this.connectionState;
+    },
+    enumerable: true,
+    configurable: true
+  });
+  Object.defineProperty(HubConnection.prototype, "connectionId", {
+    /** Represents the connection id of the {@link HubConnection} on the server. The connection id will be null when the connection is either
+     *  in the disconnected state or if the negotiation step was skipped.
+     */
+    get: function () {
+      return this.connection ? this.connection.connectionId || null : null;
+    },
+    enumerable: true,
+    configurable: true
+  });
+  Object.defineProperty(HubConnection.prototype, "baseUrl", {
+    /** Indicates the url of the {@link HubConnection} to the server. */
+    get: function () {
+      return this.connection.baseUrl || "";
+    },
+
+    /**
+     * Sets a new url for the HubConnection. Note that the url can only be changed when the connection is in either the Disconnected or
+     * Reconnecting states.
+     * @param {string} url The url to connect to.
+     */
+    set: function (url) {
+      if (this.connectionState !== HubConnectionState.Disconnected && this.connectionState !== HubConnectionState.Reconnecting) {
+        throw new Error("The HubConnection must be in the Disconnected or Reconnecting state to change the url.");
+      }
+
+      if (!url) {
+        throw new Error("The HubConnection url must be a valid url.");
+      }
+
+      this.connection.baseUrl = url;
+    },
+    enumerable: true,
+    configurable: true
+  });
+  /** Starts the connection.
+   *
+   * @returns {Promise<void>} A Promise that resolves when the connection has been successfully established, or rejects with an error.
+   */
+
+  HubConnection.prototype.start = function () {
+    this.startPromise = this.startWithStateTransitions();
+    return this.startPromise;
+  };
+
+  HubConnection.prototype.startWithStateTransitions = function () {
+    return __awaiter(this, void 0, void 0, function () {
+      var e_1;
+      return __generator(this, function (_a) {
+        switch (_a.label) {
+          case 0:
+            if (this.connectionState !== HubConnectionState.Disconnected) {
+              return [2
+              /*return*/
+              , Promise.reject(new Error("Cannot start a HubConnection that is not in the 'Disconnected' state."))];
+            }
+
+            this.connectionState = HubConnectionState.Connecting;
+            this.logger.log(_ILogger.LogLevel.Debug, "Starting HubConnection.");
+            _a.label = 1;
+
+          case 1:
+            _a.trys.push([1, 3,, 4]);
+
+            return [4
+            /*yield*/
+            , this.startInternal()];
+
+          case 2:
+            _a.sent();
+
+            this.connectionState = HubConnectionState.Connected;
+            this.connectionStarted = true;
+            this.logger.log(_ILogger.LogLevel.Debug, "HubConnection connected successfully.");
+            return [3
+            /*break*/
+            , 4];
+
+          case 3:
+            e_1 = _a.sent();
+            this.connectionState = HubConnectionState.Disconnected;
+            this.logger.log(_ILogger.LogLevel.Debug, "HubConnection failed to start successfully because of error '" + e_1 + "'.");
+            return [2
+            /*return*/
+            , Promise.reject(e_1)];
+
+          case 4:
+            return [2
+            /*return*/
+            ];
+        }
+      });
+    });
+  };
+
+  HubConnection.prototype.startInternal = function () {
+    return __awaiter(this, void 0, void 0, function () {
+      var handshakePromise, handshakeRequest, e_2;
+
+      var _this = this;
+
+      return __generator(this, function (_a) {
+        switch (_a.label) {
+          case 0:
+            this.stopDuringStartError = undefined;
+            this.receivedHandshakeResponse = false;
+            handshakePromise = new Promise(function (resolve, reject) {
+              _this.handshakeResolver = resolve;
+              _this.handshakeRejecter = reject;
+            });
+            return [4
+            /*yield*/
+            , this.connection.start(this.protocol.transferFormat)];
+
+          case 1:
+            _a.sent();
+
+            _a.label = 2;
+
+          case 2:
+            _a.trys.push([2, 5,, 7]);
+
+            handshakeRequest = {
+              protocol: this.protocol.name,
+              version: this.protocol.version
+            };
+            this.logger.log(_ILogger.LogLevel.Debug, "Sending handshake request.");
+            return [4
+            /*yield*/
+            , this.sendMessage(this.handshakeProtocol.writeHandshakeRequest(handshakeRequest))];
+
+          case 3:
+            _a.sent();
+
+            this.logger.log(_ILogger.LogLevel.Information, "Using HubProtocol '" + this.protocol.name + "'."); // defensively cleanup timeout in case we receive a message from the server before we finish start
+
+            this.cleanupTimeout();
+            this.resetTimeoutPeriod();
+            this.resetKeepAliveInterval();
+            return [4
+            /*yield*/
+            , handshakePromise];
+
+          case 4:
+            _a.sent(); // It's important to check the stopDuringStartError instead of just relying on the handshakePromise
+            // being rejected on close, because this continuation can run after both the handshake completed successfully
+            // and the connection was closed.
+
+
+            if (this.stopDuringStartError) {
+              // It's important to throw instead of returning a rejected promise, because we don't want to allow any state
+              // transitions to occur between now and the calling code observing the exceptions. Returning a rejected promise
+              // will cause the calling continuation to get scheduled to run later.
+              throw this.stopDuringStartError;
+            }
+
+            return [3
+            /*break*/
+            , 7];
+
+          case 5:
+            e_2 = _a.sent();
+            this.logger.log(_ILogger.LogLevel.Debug, "Hub handshake failed with error '" + e_2 + "' during start(). Stopping HubConnection.");
+            this.cleanupTimeout();
+            this.cleanupPingTimer(); // HttpConnection.stop() should not complete until after the onclose callback is invoked.
+            // This will transition the HubConnection to the disconnected state before HttpConnection.stop() completes.
+
+            return [4
+            /*yield*/
+            , this.connection.stop(e_2)];
+
+          case 6:
+            // HttpConnection.stop() should not complete until after the onclose callback is invoked.
+            // This will transition the HubConnection to the disconnected state before HttpConnection.stop() completes.
+            _a.sent();
+
+            throw e_2;
+
+          case 7:
+            return [2
+            /*return*/
+            ];
+        }
+      });
+    });
+  };
+  /** Stops the connection.
+   *
+   * @returns {Promise<void>} A Promise that resolves when the connection has been successfully terminated, or rejects with an error.
+   */
+
+
+  HubConnection.prototype.stop = function () {
+    return __awaiter(this, void 0, void 0, function () {
+      var startPromise, e_3;
+      return __generator(this, function (_a) {
+        switch (_a.label) {
+          case 0:
+            startPromise = this.startPromise;
+            this.stopPromise = this.stopInternal();
+            return [4
+            /*yield*/
+            , this.stopPromise];
+
+          case 1:
+            _a.sent();
+
+            _a.label = 2;
+
+          case 2:
+            _a.trys.push([2, 4,, 5]); // Awaiting undefined continues immediately
+
+
+            return [4
+            /*yield*/
+            , startPromise];
+
+          case 3:
+            // Awaiting undefined continues immediately
+            _a.sent();
+
+            return [3
+            /*break*/
+            , 5];
+
+          case 4:
+            e_3 = _a.sent();
+            return [3
+            /*break*/
+            , 5];
+
+          case 5:
+            return [2
+            /*return*/
+            ];
+        }
+      });
+    });
+  };
+
+  HubConnection.prototype.stopInternal = function (error) {
+    if (this.connectionState === HubConnectionState.Disconnected) {
+      this.logger.log(_ILogger.LogLevel.Debug, "Call to HubConnection.stop(" + error + ") ignored because it is already in the disconnected state.");
+      return Promise.resolve();
+    }
+
+    if (this.connectionState === HubConnectionState.Disconnecting) {
+      this.logger.log(_ILogger.LogLevel.Debug, "Call to HttpConnection.stop(" + error + ") ignored because the connection is already in the disconnecting state.");
+      return this.stopPromise;
+    }
+
+    this.connectionState = HubConnectionState.Disconnecting;
+    this.logger.log(_ILogger.LogLevel.Debug, "Stopping HubConnection.");
+
+    if (this.reconnectDelayHandle) {
+      // We're in a reconnect delay which means the underlying connection is currently already stopped.
+      // Just clear the handle to stop the reconnect loop (which no one is waiting on thankfully) and
+      // fire the onclose callbacks.
+      this.logger.log(_ILogger.LogLevel.Debug, "Connection stopped during reconnect delay. Done reconnecting.");
+      clearTimeout(this.reconnectDelayHandle);
+      this.reconnectDelayHandle = undefined;
+      this.completeClose();
+      return Promise.resolve();
+    }
+
+    this.cleanupTimeout();
+    this.cleanupPingTimer();
+    this.stopDuringStartError = error || new Error("The connection was stopped before the hub handshake could complete."); // HttpConnection.stop() should not complete until after either HttpConnection.start() fails
+    // or the onclose callback is invoked. The onclose callback will transition the HubConnection
+    // to the disconnected state if need be before HttpConnection.stop() completes.
+
+    return this.connection.stop(error);
+  };
+  /** Invokes a streaming hub method on the server using the specified name and arguments.
+   *
+   * @typeparam T The type of the items returned by the server.
+   * @param {string} methodName The name of the server method to invoke.
+   * @param {any[]} args The arguments used to invoke the server method.
+   * @returns {IStreamResult<T>} An object that yields results from the server as they are received.
+   */
+
+
+  HubConnection.prototype.stream = function (methodName) {
+    var _this = this;
+
+    var args = [];
+
+    for (var _i = 1; _i < arguments.length; _i++) {
+      args[_i - 1] = arguments[_i];
+    }
+
+    var _a = this.replaceStreamingParams(args),
+        streams = _a[0],
+        streamIds = _a[1];
+
+    var invocationDescriptor = this.createStreamInvocation(methodName, args, streamIds);
+    var promiseQueue;
+    var subject = new _Subject.Subject();
+
+    subject.cancelCallback = function () {
+      var cancelInvocation = _this.createCancelInvocation(invocationDescriptor.invocationId);
+
+      delete _this.callbacks[invocationDescriptor.invocationId];
+      return promiseQueue.then(function () {
+        return _this.sendWithProtocol(cancelInvocation);
+      });
+    };
+
+    this.callbacks[invocationDescriptor.invocationId] = function (invocationEvent, error) {
+      if (error) {
+        subject.error(error);
+        return;
+      } else if (invocationEvent) {
+        // invocationEvent will not be null when an error is not passed to the callback
+        if (invocationEvent.type === _IHubProtocol.MessageType.Completion) {
+          if (invocationEvent.error) {
+            subject.error(new Error(invocationEvent.error));
+          } else {
+            subject.complete();
+          }
+        } else {
+          subject.next(invocationEvent.item);
+        }
+      }
+    };
+
+    promiseQueue = this.sendWithProtocol(invocationDescriptor).catch(function (e) {
+      subject.error(e);
+      delete _this.callbacks[invocationDescriptor.invocationId];
+    });
+    this.launchStreams(streams, promiseQueue);
+    return subject;
+  };
+
+  HubConnection.prototype.sendMessage = function (message) {
+    this.resetKeepAliveInterval();
+    return this.connection.send(message);
+  };
+  /**
+   * Sends a js object to the server.
+   * @param message The js object to serialize and send.
+   */
+
+
+  HubConnection.prototype.sendWithProtocol = function (message) {
+    return this.sendMessage(this.protocol.writeMessage(message));
+  };
+  /** Invokes a hub method on the server using the specified name and arguments. Does not wait for a response from the receiver.
+   *
+   * The Promise returned by this method resolves when the client has sent the invocation to the server. The server may still
+   * be processing the invocation.
+   *
+   * @param {string} methodName The name of the server method to invoke.
+   * @param {any[]} args The arguments used to invoke the server method.
+   * @returns {Promise<void>} A Promise that resolves when the invocation has been successfully sent, or rejects with an error.
+   */
+
+
+  HubConnection.prototype.send = function (methodName) {
+    var args = [];
+
+    for (var _i = 1; _i < arguments.length; _i++) {
+      args[_i - 1] = arguments[_i];
+    }
+
+    var _a = this.replaceStreamingParams(args),
+        streams = _a[0],
+        streamIds = _a[1];
+
+    var sendPromise = this.sendWithProtocol(this.createInvocation(methodName, args, true, streamIds));
+    this.launchStreams(streams, sendPromise);
+    return sendPromise;
+  };
+  /** Invokes a hub method on the server using the specified name and arguments.
+   *
+   * The Promise returned by this method resolves when the server indicates it has finished invoking the method. When the promise
+   * resolves, the server has finished invoking the method. If the server method returns a result, it is produced as the result of
+   * resolving the Promise.
+   *
+   * @typeparam T The expected return type.
+   * @param {string} methodName The name of the server method to invoke.
+   * @param {any[]} args The arguments used to invoke the server method.
+   * @returns {Promise<T>} A Promise that resolves with the result of the server method (if any), or rejects with an error.
+   */
+
+
+  HubConnection.prototype.invoke = function (methodName) {
+    var _this = this;
+
+    var args = [];
+
+    for (var _i = 1; _i < arguments.length; _i++) {
+      args[_i - 1] = arguments[_i];
+    }
+
+    var _a = this.replaceStreamingParams(args),
+        streams = _a[0],
+        streamIds = _a[1];
+
+    var invocationDescriptor = this.createInvocation(methodName, args, false, streamIds);
+    var p = new Promise(function (resolve, reject) {
+      // invocationId will always have a value for a non-blocking invocation
+      _this.callbacks[invocationDescriptor.invocationId] = function (invocationEvent, error) {
+        if (error) {
+          reject(error);
+          return;
+        } else if (invocationEvent) {
+          // invocationEvent will not be null when an error is not passed to the callback
+          if (invocationEvent.type === _IHubProtocol.MessageType.Completion) {
+            if (invocationEvent.error) {
+              reject(new Error(invocationEvent.error));
+            } else {
+              resolve(invocationEvent.result);
+            }
+          } else {
+            reject(new Error("Unexpected message type: " + invocationEvent.type));
+          }
+        }
+      };
+
+      var promiseQueue = _this.sendWithProtocol(invocationDescriptor).catch(function (e) {
+        reject(e); // invocationId will always have a value for a non-blocking invocation
+
+        delete _this.callbacks[invocationDescriptor.invocationId];
+      });
+
+      _this.launchStreams(streams, promiseQueue);
+    });
+    return p;
+  };
+  /** Registers a handler that will be invoked when the hub method with the specified method name is invoked.
+   *
+   * @param {string} methodName The name of the hub method to define.
+   * @param {Function} newMethod The handler that will be raised when the hub method is invoked.
+   */
+
+
+  HubConnection.prototype.on = function (methodName, newMethod) {
+    if (!methodName || !newMethod) {
+      return;
+    }
+
+    methodName = methodName.toLowerCase();
+
+    if (!this.methods[methodName]) {
+      this.methods[methodName] = [];
+    } // Preventing adding the same handler multiple times.
+
+
+    if (this.methods[methodName].indexOf(newMethod) !== -1) {
+      return;
+    }
+
+    this.methods[methodName].push(newMethod);
+  };
+
+  HubConnection.prototype.off = function (methodName, method) {
+    if (!methodName) {
+      return;
+    }
+
+    methodName = methodName.toLowerCase();
+    var handlers = this.methods[methodName];
+
+    if (!handlers) {
+      return;
+    }
+
+    if (method) {
+      var removeIdx = handlers.indexOf(method);
+
+      if (removeIdx !== -1) {
+        handlers.splice(removeIdx, 1);
+
+        if (handlers.length === 0) {
+          delete this.methods[methodName];
+        }
+      }
+    } else {
+      delete this.methods[methodName];
+    }
+  };
+  /** Registers a handler that will be invoked when the connection is closed.
+   *
+   * @param {Function} callback The handler that will be invoked when the connection is closed. Optionally receives a single argument containing the error that caused the connection to close (if any).
+   */
+
+
+  HubConnection.prototype.onclose = function (callback) {
+    if (callback) {
+      this.closedCallbacks.push(callback);
+    }
+  };
+  /** Registers a handler that will be invoked when the connection starts reconnecting.
+   *
+   * @param {Function} callback The handler that will be invoked when the connection starts reconnecting. Optionally receives a single argument containing the error that caused the connection to start reconnecting (if any).
+   */
+
+
+  HubConnection.prototype.onreconnecting = function (callback) {
+    if (callback) {
+      this.reconnectingCallbacks.push(callback);
+    }
+  };
+  /** Registers a handler that will be invoked when the connection successfully reconnects.
+   *
+   * @param {Function} callback The handler that will be invoked when the connection successfully reconnects.
+   */
+
+
+  HubConnection.prototype.onreconnected = function (callback) {
+    if (callback) {
+      this.reconnectedCallbacks.push(callback);
+    }
+  };
+
+  HubConnection.prototype.processIncomingData = function (data) {
+    this.cleanupTimeout();
+
+    if (!this.receivedHandshakeResponse) {
+      data = this.processHandshakeResponse(data);
+      this.receivedHandshakeResponse = true;
+    } // Data may have all been read when processing handshake response
+
+
+    if (data) {
+      // Parse the messages
+      var messages = this.protocol.parseMessages(data, this.logger);
+
+      for (var _i = 0, messages_1 = messages; _i < messages_1.length; _i++) {
+        var message = messages_1[_i];
+
+        switch (message.type) {
+          case _IHubProtocol.MessageType.Invocation:
+            this.invokeClientMethod(message);
+            break;
+
+          case _IHubProtocol.MessageType.StreamItem:
+          case _IHubProtocol.MessageType.Completion:
+            var callback = this.callbacks[message.invocationId];
+
+            if (callback) {
+              if (message.type === _IHubProtocol.MessageType.Completion) {
+                delete this.callbacks[message.invocationId];
+              }
+
+              callback(message);
+            }
+
+            break;
+
+          case _IHubProtocol.MessageType.Ping:
+            // Don't care about pings
+            break;
+
+          case _IHubProtocol.MessageType.Close:
+            this.logger.log(_ILogger.LogLevel.Information, "Close message received from server.");
+            var error = message.error ? new Error("Server returned an error on close: " + message.error) : undefined;
+
+            if (message.allowReconnect === true) {
+              // It feels wrong not to await connection.stop() here, but processIncomingData is called as part of an onreceive callback which is not async,
+              // this is already the behavior for serverTimeout(), and HttpConnection.Stop() should catch and log all possible exceptions.
+              // tslint:disable-next-line:no-floating-promises
+              this.connection.stop(error);
+            } else {
+              // We cannot await stopInternal() here, but subsequent calls to stop() will await this if stopInternal() is still ongoing.
+              this.stopPromise = this.stopInternal(error);
+            }
+
+            break;
+
+          default:
+            this.logger.log(_ILogger.LogLevel.Warning, "Invalid message type: " + message.type + ".");
+            break;
+        }
+      }
+    }
+
+    this.resetTimeoutPeriod();
+  };
+
+  HubConnection.prototype.processHandshakeResponse = function (data) {
+    var _a;
+
+    var responseMessage;
+    var remainingData;
+
+    try {
+      _a = this.handshakeProtocol.parseHandshakeResponse(data), remainingData = _a[0], responseMessage = _a[1];
+    } catch (e) {
+      var message = "Error parsing handshake response: " + e;
+      this.logger.log(_ILogger.LogLevel.Error, message);
+      var error = new Error(message);
+      this.handshakeRejecter(error);
+      throw error;
+    }
+
+    if (responseMessage.error) {
+      var message = "Server returned handshake error: " + responseMessage.error;
+      this.logger.log(_ILogger.LogLevel.Error, message);
+      var error = new Error(message);
+      this.handshakeRejecter(error);
+      throw error;
+    } else {
+      this.logger.log(_ILogger.LogLevel.Debug, "Server handshake complete.");
+    }
+
+    this.handshakeResolver();
+    return remainingData;
+  };
+
+  HubConnection.prototype.resetKeepAliveInterval = function () {
+    var _this = this;
+
+    this.cleanupPingTimer();
+    this.pingServerHandle = setTimeout(function () {
+      return __awaiter(_this, void 0, void 0, function () {
+        var _a;
+
+        return __generator(this, function (_b) {
+          switch (_b.label) {
+            case 0:
+              if (!(this.connectionState === HubConnectionState.Connected)) return [3
+              /*break*/
+              , 4];
+              _b.label = 1;
+
+            case 1:
+              _b.trys.push([1, 3,, 4]);
+
+              return [4
+              /*yield*/
+              , this.sendMessage(this.cachedPingMessage)];
+
+            case 2:
+              _b.sent();
+
+              return [3
+              /*break*/
+              , 4];
+
+            case 3:
+              _a = _b.sent(); // We don't care about the error. It should be seen elsewhere in the client.
+              // The connection is probably in a bad or closed state now, cleanup the timer so it stops triggering
+
+              this.cleanupPingTimer();
+              return [3
+              /*break*/
+              , 4];
+
+            case 4:
+              return [2
+              /*return*/
+              ];
+          }
+        });
+      });
+    }, this.keepAliveIntervalInMilliseconds);
+  };
+
+  HubConnection.prototype.resetTimeoutPeriod = function () {
+    var _this = this;
+
+    if (!this.connection.features || !this.connection.features.inherentKeepAlive) {
+      // Set the timeout timer
+      this.timeoutHandle = setTimeout(function () {
+        return _this.serverTimeout();
+      }, this.serverTimeoutInMilliseconds);
+    }
+  };
+
+  HubConnection.prototype.serverTimeout = function () {
+    // The server hasn't talked to us in a while. It doesn't like us anymore ... :(
+    // Terminate the connection, but we don't need to wait on the promise. This could trigger reconnecting.
+    // tslint:disable-next-line:no-floating-promises
+    this.connection.stop(new Error("Server timeout elapsed without receiving a message from the server."));
+  };
+
+  HubConnection.prototype.invokeClientMethod = function (invocationMessage) {
+    var _this = this;
+
+    var methods = this.methods[invocationMessage.target.toLowerCase()];
+
+    if (methods) {
+      try {
+        methods.forEach(function (m) {
+          return m.apply(_this, invocationMessage.arguments);
+        });
+      } catch (e) {
+        this.logger.log(_ILogger.LogLevel.Error, "A callback for the method " + invocationMessage.target.toLowerCase() + " threw error '" + e + "'.");
+      }
+
+      if (invocationMessage.invocationId) {
+        // This is not supported in v1. So we return an error to avoid blocking the server waiting for the response.
+        var message = "Server requested a response, which is not supported in this version of the client.";
+        this.logger.log(_ILogger.LogLevel.Error, message); // We don't want to wait on the stop itself.
+
+        this.stopPromise = this.stopInternal(new Error(message));
+      }
+    } else {
+      this.logger.log(_ILogger.LogLevel.Warning, "No client method with the name '" + invocationMessage.target + "' found.");
+    }
+  };
+
+  HubConnection.prototype.connectionClosed = function (error) {
+    this.logger.log(_ILogger.LogLevel.Debug, "HubConnection.connectionClosed(" + error + ") called while in state " + this.connectionState + "."); // Triggering this.handshakeRejecter is insufficient because it could already be resolved without the continuation having run yet.
+
+    this.stopDuringStartError = this.stopDuringStartError || error || new Error("The underlying connection was closed before the hub handshake could complete."); // If the handshake is in progress, start will be waiting for the handshake promise, so we complete it.
+    // If it has already completed, this should just noop.
+
+    if (this.handshakeResolver) {
+      this.handshakeResolver();
+    }
+
+    this.cancelCallbacksWithError(error || new Error("Invocation canceled due to the underlying connection being closed."));
+    this.cleanupTimeout();
+    this.cleanupPingTimer();
+
+    if (this.connectionState === HubConnectionState.Disconnecting) {
+      this.completeClose(error);
+    } else if (this.connectionState === HubConnectionState.Connected && this.reconnectPolicy) {
+      // tslint:disable-next-line:no-floating-promises
+      this.reconnect(error);
+    } else if (this.connectionState === HubConnectionState.Connected) {
+      this.completeClose(error);
+    } // If none of the above if conditions were true were called the HubConnection must be in either:
+    // 1. The Connecting state in which case the handshakeResolver will complete it and stopDuringStartError will fail it.
+    // 2. The Reconnecting state in which case the handshakeResolver will complete it and stopDuringStartError will fail the current reconnect attempt
+    //    and potentially continue the reconnect() loop.
+    // 3. The Disconnected state in which case we're already done.
+
+  };
+
+  HubConnection.prototype.completeClose = function (error) {
+    var _this = this;
+
+    if (this.connectionStarted) {
+      this.connectionState = HubConnectionState.Disconnected;
+      this.connectionStarted = false;
+
+      try {
+        this.closedCallbacks.forEach(function (c) {
+          return c.apply(_this, [error]);
+        });
+      } catch (e) {
+        this.logger.log(_ILogger.LogLevel.Error, "An onclose callback called with error '" + error + "' threw error '" + e + "'.");
+      }
+    }
+  };
+
+  HubConnection.prototype.reconnect = function (error) {
+    return __awaiter(this, void 0, void 0, function () {
+      var reconnectStartTime, previousReconnectAttempts, retryError, nextRetryDelay, e_4;
 
       var _this = this;
 
@@ -16875,6 +21142,1481 @@ function () {
   ServerSentEventsTransport.prototype.connect = function (url, transferFormat) {
     return __awaiter(this, void 0, void 0, function () {
       var token;
+>>>>>>> master
+
+      var _this = this;
+
+      return __generator(this, function (_a) {
+        switch (_a.label) {
+          case 0:
+<<<<<<< HEAD
+            reconnectStartTime = Date.now();
+            previousReconnectAttempts = 0;
+            retryError = error !== undefined ? error : new Error("Attempting to reconnect due to a unknown error.");
+            nextRetryDelay = this.getNextRetryDelay(previousReconnectAttempts++, 0, retryError);
+
+            if (nextRetryDelay === null) {
+              this.logger.log(_ILogger.LogLevel.Debug, "Connection not reconnecting because the IRetryPolicy returned null on the first reconnect attempt.");
+              this.completeClose(error);
+              return [2
+              /*return*/
+              ];
+            }
+
+            this.connectionState = HubConnectionState.Reconnecting;
+
+            if (error) {
+              this.logger.log(_ILogger.LogLevel.Information, "Connection reconnecting because of error '" + error + "'.");
+            } else {
+              this.logger.log(_ILogger.LogLevel.Information, "Connection reconnecting.");
+            }
+
+            if (this.onreconnecting) {
+              try {
+                this.reconnectingCallbacks.forEach(function (c) {
+                  return c.apply(_this, [error]);
+                });
+              } catch (e) {
+                this.logger.log(_ILogger.LogLevel.Error, "An onreconnecting callback called with error '" + error + "' threw error '" + e + "'.");
+              } // Exit early if an onreconnecting callback called connection.stop().
+
+
+              if (this.connectionState !== HubConnectionState.Reconnecting) {
+                this.logger.log(_ILogger.LogLevel.Debug, "Connection left the reconnecting state in onreconnecting callback. Done reconnecting.");
+                return [2
+                /*return*/
+                ];
+              }
+            }
+
+            _a.label = 1;
+
+          case 1:
+            if (!(nextRetryDelay !== null)) return [3
+            /*break*/
+            , 7];
+            this.logger.log(_ILogger.LogLevel.Information, "Reconnect attempt number " + previousReconnectAttempts + " will start in " + nextRetryDelay + " ms.");
+            return [4
+            /*yield*/
+            , new Promise(function (resolve) {
+              _this.reconnectDelayHandle = setTimeout(resolve, nextRetryDelay);
+            })];
+
+          case 2:
+            _a.sent();
+
+            this.reconnectDelayHandle = undefined;
+
+            if (this.connectionState !== HubConnectionState.Reconnecting) {
+              this.logger.log(_ILogger.LogLevel.Debug, "Connection left the reconnecting state during reconnect delay. Done reconnecting.");
+              return [2
+              /*return*/
+              ];
+            }
+
+            _a.label = 3;
+
+          case 3:
+            _a.trys.push([3, 5,, 6]);
+
+            return [4
+            /*yield*/
+            , this.startInternal()];
+
+          case 4:
+            _a.sent();
+
+            this.connectionState = HubConnectionState.Connected;
+            this.logger.log(_ILogger.LogLevel.Information, "HubConnection reconnected successfully.");
+
+            if (this.onreconnected) {
+              try {
+                this.reconnectedCallbacks.forEach(function (c) {
+                  return c.apply(_this, [_this.connection.connectionId]);
+                });
+              } catch (e) {
+                this.logger.log(_ILogger.LogLevel.Error, "An onreconnected callback called with connectionId '" + this.connection.connectionId + "; threw error '" + e + "'.");
+              }
+            }
+
+            return [2
+            /*return*/
+            ];
+
+          case 5:
+            e_4 = _a.sent();
+            this.logger.log(_ILogger.LogLevel.Information, "Reconnect attempt failed because of error '" + e_4 + "'.");
+
+            if (this.connectionState !== HubConnectionState.Reconnecting) {
+              this.logger.log(_ILogger.LogLevel.Debug, "Connection left the reconnecting state during reconnect attempt. Done reconnecting.");
+              return [2
+              /*return*/
+              ];
+            }
+
+            retryError = e_4 instanceof Error ? e_4 : new Error(e_4.toString());
+            nextRetryDelay = this.getNextRetryDelay(previousReconnectAttempts++, Date.now() - reconnectStartTime, retryError);
+            return [3
+            /*break*/
+            , 6];
+
+          case 6:
+            return [3
+            /*break*/
+            , 1];
+
+          case 7:
+            this.logger.log(_ILogger.LogLevel.Information, "Reconnect retries have been exhausted after " + (Date.now() - reconnectStartTime) + " ms and " + previousReconnectAttempts + " failed attempts. Connection disconnecting.");
+            this.completeClose();
+            return [2
+            /*return*/
+            ];
+=======
+            _Utils.Arg.isRequired(url, "url");
+
+            _Utils.Arg.isRequired(transferFormat, "transferFormat");
+
+            _Utils.Arg.isIn(transferFormat, _ITransport.TransferFormat, "transferFormat");
+
+            this.logger.log(_ILogger.LogLevel.Trace, "(SSE transport) Connecting."); // set url before accessTokenFactory because this.url is only for send and we set the auth header instead of the query string for send
+
+            this.url = url;
+            if (!this.accessTokenFactory) return [3
+            /*break*/
+            , 2];
+            return [4
+            /*yield*/
+            , this.accessTokenFactory()];
+
+          case 1:
+            token = _a.sent();
+
+            if (token) {
+              url += (url.indexOf("?") < 0 ? "?" : "&") + ("access_token=" + encodeURIComponent(token));
+            }
+
+            _a.label = 2;
+
+          case 2:
+            return [2
+            /*return*/
+            , new Promise(function (resolve, reject) {
+              var opened = false;
+
+              if (transferFormat !== _ITransport.TransferFormat.Text) {
+                reject(new Error("The Server-Sent Events transport only supports the 'Text' transfer format"));
+                return;
+              }
+
+              var eventSource;
+
+              if (_Utils.Platform.isBrowser || _Utils.Platform.isWebWorker) {
+                eventSource = new _this.eventSourceConstructor(url, {
+                  withCredentials: true
+                });
+              } else {
+                // Non-browser passes cookies via the dictionary
+                var cookies = _this.httpClient.getCookieString(url);
+
+                eventSource = new _this.eventSourceConstructor(url, {
+                  withCredentials: true,
+                  headers: {
+                    Cookie: cookies
+                  }
+                });
+              }
+
+              try {
+                eventSource.onmessage = function (e) {
+                  if (_this.onreceive) {
+                    try {
+                      _this.logger.log(_ILogger.LogLevel.Trace, "(SSE transport) data received. " + (0, _Utils.getDataDetail)(e.data, _this.logMessageContent) + ".");
+
+                      _this.onreceive(e.data);
+                    } catch (error) {
+                      _this.close(error);
+
+                      return;
+                    }
+                  }
+                };
+
+                eventSource.onerror = function (e) {
+                  var error = new Error(e.data || "Error occurred");
+
+                  if (opened) {
+                    _this.close(error);
+                  } else {
+                    reject(error);
+                  }
+                };
+
+                eventSource.onopen = function () {
+                  _this.logger.log(_ILogger.LogLevel.Information, "SSE connected to " + _this.url);
+
+                  _this.eventSource = eventSource;
+                  opened = true;
+                  resolve();
+                };
+              } catch (e) {
+                reject(e);
+                return;
+              }
+            })];
+>>>>>>> master
+        }
+      });
+    });
+  };
+
+<<<<<<< HEAD
+  HubConnection.prototype.getNextRetryDelay = function (previousRetryCount, elapsedMilliseconds, retryReason) {
+    try {
+      return this.reconnectPolicy.nextRetryDelayInMilliseconds({
+        elapsedMilliseconds: elapsedMilliseconds,
+        previousRetryCount: previousRetryCount,
+        retryReason: retryReason
+      });
+    } catch (e) {
+      this.logger.log(_ILogger.LogLevel.Error, "IRetryPolicy.nextRetryDelayInMilliseconds(" + previousRetryCount + ", " + elapsedMilliseconds + ") threw error '" + e + "'.");
+      return null;
+    }
+  };
+
+  HubConnection.prototype.cancelCallbacksWithError = function (error) {
+    var callbacks = this.callbacks;
+    this.callbacks = {};
+    Object.keys(callbacks).forEach(function (key) {
+      var callback = callbacks[key];
+      callback(null, error);
+    });
+  };
+
+  HubConnection.prototype.cleanupPingTimer = function () {
+    if (this.pingServerHandle) {
+      clearTimeout(this.pingServerHandle);
+    }
+  };
+
+  HubConnection.prototype.cleanupTimeout = function () {
+    if (this.timeoutHandle) {
+      clearTimeout(this.timeoutHandle);
+    }
+  };
+
+  HubConnection.prototype.createInvocation = function (methodName, args, nonblocking, streamIds) {
+    if (nonblocking) {
+      return {
+        arguments: args,
+        streamIds: streamIds,
+        target: methodName,
+        type: _IHubProtocol.MessageType.Invocation
+      };
+    } else {
+      var invocationId = this.invocationId;
+      this.invocationId++;
+      return {
+        arguments: args,
+        invocationId: invocationId.toString(),
+        streamIds: streamIds,
+        target: methodName,
+        type: _IHubProtocol.MessageType.Invocation
+      };
+    }
+  };
+
+  HubConnection.prototype.launchStreams = function (streams, promiseQueue) {
+    var _this = this;
+
+    if (streams.length === 0) {
+      return;
+    } // Synchronize stream data so they arrive in-order on the server
+
+
+    if (!promiseQueue) {
+      promiseQueue = Promise.resolve();
+    }
+
+    var _loop_1 = function (streamId) {
+      streams[streamId].subscribe({
+        complete: function () {
+          promiseQueue = promiseQueue.then(function () {
+            return _this.sendWithProtocol(_this.createCompletionMessage(streamId));
+          });
+        },
+        error: function (err) {
+          var message;
+
+          if (err instanceof Error) {
+            message = err.message;
+          } else if (err && err.toString) {
+            message = err.toString();
+          } else {
+            message = "Unknown error";
+          }
+
+          promiseQueue = promiseQueue.then(function () {
+            return _this.sendWithProtocol(_this.createCompletionMessage(streamId, message));
+          });
+        },
+        next: function (item) {
+          promiseQueue = promiseQueue.then(function () {
+            return _this.sendWithProtocol(_this.createStreamItemMessage(streamId, item));
+          });
+        }
+      });
+    }; // We want to iterate over the keys, since the keys are the stream ids
+    // tslint:disable-next-line:forin
+
+
+    for (var streamId in streams) {
+      _loop_1(streamId);
+    }
+  };
+
+  HubConnection.prototype.replaceStreamingParams = function (args) {
+    var streams = [];
+    var streamIds = [];
+
+    for (var i = 0; i < args.length; i++) {
+      var argument = args[i];
+
+      if (this.isObservable(argument)) {
+        var streamId = this.invocationId;
+        this.invocationId++; // Store the stream for later use
+
+        streams[streamId] = argument;
+        streamIds.push(streamId.toString()); // remove stream from args
+
+        args.splice(i, 1);
+      }
+    }
+
+    return [streams, streamIds];
+  };
+
+  HubConnection.prototype.isObservable = function (arg) {
+    // This allows other stream implementations to just work (like rxjs)
+    return arg && arg.subscribe && typeof arg.subscribe === "function";
+  };
+
+  HubConnection.prototype.createStreamInvocation = function (methodName, args, streamIds) {
+    var invocationId = this.invocationId;
+    this.invocationId++;
+    return {
+      arguments: args,
+      invocationId: invocationId.toString(),
+      streamIds: streamIds,
+      target: methodName,
+      type: _IHubProtocol.MessageType.StreamInvocation
+    };
+  };
+
+  HubConnection.prototype.createCancelInvocation = function (id) {
+    return {
+      invocationId: id,
+      type: _IHubProtocol.MessageType.CancelInvocation
+    };
+  };
+
+  HubConnection.prototype.createStreamItemMessage = function (id, item) {
+    return {
+      invocationId: id,
+      item: item,
+      type: _IHubProtocol.MessageType.StreamItem
+    };
+  };
+
+  HubConnection.prototype.createCompletionMessage = function (id, error, result) {
+    if (error) {
+      return {
+        error: error,
+        invocationId: id,
+        type: _IHubProtocol.MessageType.Completion
+      };
+    }
+
+    return {
+      invocationId: id,
+      result: result,
+      type: _IHubProtocol.MessageType.Completion
+    };
+  };
+
+  return HubConnection;
+}();
+
+exports.HubConnection = HubConnection;
+},{"./HandshakeProtocol":"node_modules/@microsoft/signalr/dist/esm/HandshakeProtocol.js","./IHubProtocol":"node_modules/@microsoft/signalr/dist/esm/IHubProtocol.js","./ILogger":"node_modules/@microsoft/signalr/dist/esm/ILogger.js","./Subject":"node_modules/@microsoft/signalr/dist/esm/Subject.js","./Utils":"node_modules/@microsoft/signalr/dist/esm/Utils.js"}],"node_modules/@microsoft/signalr/dist/esm/DefaultReconnectPolicy.js":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.DefaultReconnectPolicy = void 0;
+// Copyright (c) .NET Foundation. All rights reserved.
+// Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
+// 0, 2, 10, 30 second delays before reconnect attempts.
+var DEFAULT_RETRY_DELAYS_IN_MILLISECONDS = [0, 2000, 10000, 30000, null];
+/** @private */
+
+var DefaultReconnectPolicy =
+/** @class */
+function () {
+  function DefaultReconnectPolicy(retryDelays) {
+    this.retryDelays = retryDelays !== undefined ? retryDelays.concat([null]) : DEFAULT_RETRY_DELAYS_IN_MILLISECONDS;
+  }
+
+  DefaultReconnectPolicy.prototype.nextRetryDelayInMilliseconds = function (retryContext) {
+    return this.retryDelays[retryContext.previousRetryCount];
+  };
+
+  return DefaultReconnectPolicy;
+}();
+
+exports.DefaultReconnectPolicy = DefaultReconnectPolicy;
+},{}],"node_modules/@microsoft/signalr/dist/esm/ITransport.js":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.TransferFormat = exports.HttpTransportType = void 0;
+// Copyright (c) .NET Foundation. All rights reserved.
+// Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
+// This will be treated as a bit flag in the future, so we keep it using power-of-two values.
+
+/** Specifies a specific HTTP transport type. */
+var HttpTransportType;
+exports.HttpTransportType = HttpTransportType;
+
+(function (HttpTransportType) {
+  /** Specifies no transport preference. */
+  HttpTransportType[HttpTransportType["None"] = 0] = "None";
+  /** Specifies the WebSockets transport. */
+
+  HttpTransportType[HttpTransportType["WebSockets"] = 1] = "WebSockets";
+  /** Specifies the Server-Sent Events transport. */
+
+  HttpTransportType[HttpTransportType["ServerSentEvents"] = 2] = "ServerSentEvents";
+  /** Specifies the Long Polling transport. */
+
+  HttpTransportType[HttpTransportType["LongPolling"] = 4] = "LongPolling";
+})(HttpTransportType || (exports.HttpTransportType = HttpTransportType = {}));
+/** Specifies the transfer format for a connection. */
+
+
+var TransferFormat;
+exports.TransferFormat = TransferFormat;
+
+(function (TransferFormat) {
+  /** Specifies that only text data will be transmitted over the connection. */
+  TransferFormat[TransferFormat["Text"] = 1] = "Text";
+  /** Specifies that binary data will be transmitted over the connection. */
+
+  TransferFormat[TransferFormat["Binary"] = 2] = "Binary";
+})(TransferFormat || (exports.TransferFormat = TransferFormat = {}));
+},{}],"node_modules/@microsoft/signalr/dist/esm/AbortController.js":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.AbortController = void 0;
+
+// Copyright (c) .NET Foundation. All rights reserved.
+// Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
+// Rough polyfill of https://developer.mozilla.org/en-US/docs/Web/API/AbortController
+// We don't actually ever use the API being polyfilled, we always use the polyfill because
+// it's a very new API right now.
+// Not exported from index.
+
+/** @private */
+var AbortController =
+/** @class */
+function () {
+  function AbortController() {
+    this.isAborted = false;
+    this.onabort = null;
+  }
+
+  AbortController.prototype.abort = function () {
+    if (!this.isAborted) {
+      this.isAborted = true;
+
+      if (this.onabort) {
+        this.onabort();
+=======
+  ServerSentEventsTransport.prototype.send = function (data) {
+    return __awaiter(this, void 0, void 0, function () {
+      return __generator(this, function (_a) {
+        if (!this.eventSource) {
+          return [2
+          /*return*/
+          , Promise.reject(new Error("Cannot send until the transport is connected"))];
+        }
+
+        return [2
+        /*return*/
+        , (0, _Utils.sendMessage)(this.logger, "SSE", this.httpClient, this.url, this.accessTokenFactory, data, this.logMessageContent)];
+      });
+    });
+  };
+
+  ServerSentEventsTransport.prototype.stop = function () {
+    this.close();
+    return Promise.resolve();
+  };
+
+  ServerSentEventsTransport.prototype.close = function (e) {
+    if (this.eventSource) {
+      this.eventSource.close();
+      this.eventSource = undefined;
+
+      if (this.onclose) {
+        this.onclose(e);
+>>>>>>> master
+      }
+    }
+  };
+
+<<<<<<< HEAD
+  Object.defineProperty(AbortController.prototype, "signal", {
+    get: function () {
+      return this;
+    },
+    enumerable: true,
+    configurable: true
+  });
+  Object.defineProperty(AbortController.prototype, "aborted", {
+    get: function () {
+      return this.isAborted;
+    },
+    enumerable: true,
+    configurable: true
+  });
+  return AbortController;
+}();
+
+exports.AbortController = AbortController;
+},{}],"node_modules/@microsoft/signalr/dist/esm/LongPollingTransport.js":[function(require,module,exports) {
+=======
+  return ServerSentEventsTransport;
+}();
+
+exports.ServerSentEventsTransport = ServerSentEventsTransport;
+},{"./ILogger":"node_modules/@microsoft/signalr/dist/esm/ILogger.js","./ITransport":"node_modules/@microsoft/signalr/dist/esm/ITransport.js","./Utils":"node_modules/@microsoft/signalr/dist/esm/Utils.js"}],"node_modules/@microsoft/signalr/dist/esm/WebSocketTransport.js":[function(require,module,exports) {
+>>>>>>> master
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+<<<<<<< HEAD
+exports.LongPollingTransport = void 0;
+
+var _AbortController = require("./AbortController");
+
+var _Errors = require("./Errors");
+=======
+exports.WebSocketTransport = void 0;
+>>>>>>> master
+
+var _ILogger = require("./ILogger");
+
+var _ITransport = require("./ITransport");
+
+var _Utils = require("./Utils");
+
+// Copyright (c) .NET Foundation. All rights reserved.
+// Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
+var __awaiter = void 0 && (void 0).__awaiter || function (thisArg, _arguments, P, generator) {
+  return new (P || (P = Promise))(function (resolve, reject) {
+    function fulfilled(value) {
+      try {
+        step(generator.next(value));
+      } catch (e) {
+        reject(e);
+      }
+    }
+
+    function rejected(value) {
+      try {
+        step(generator["throw"](value));
+      } catch (e) {
+        reject(e);
+      }
+    }
+
+    function step(result) {
+      result.done ? resolve(result.value) : new P(function (resolve) {
+        resolve(result.value);
+      }).then(fulfilled, rejected);
+    }
+
+    step((generator = generator.apply(thisArg, _arguments || [])).next());
+  });
+};
+
+var __generator = void 0 && (void 0).__generator || function (thisArg, body) {
+  var _ = {
+    label: 0,
+    sent: function () {
+      if (t[0] & 1) throw t[1];
+      return t[1];
+    },
+    trys: [],
+    ops: []
+  },
+      f,
+      y,
+      t,
+      g;
+  return g = {
+    next: verb(0),
+    "throw": verb(1),
+    "return": verb(2)
+  }, typeof Symbol === "function" && (g[Symbol.iterator] = function () {
+    return this;
+  }), g;
+
+  function verb(n) {
+    return function (v) {
+      return step([n, v]);
+    };
+  }
+
+  function step(op) {
+    if (f) throw new TypeError("Generator is already executing.");
+
+    while (_) try {
+      if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
+      if (y = 0, t) op = [op[0] & 2, t.value];
+
+      switch (op[0]) {
+        case 0:
+        case 1:
+          t = op;
+          break;
+
+        case 4:
+          _.label++;
+          return {
+            value: op[1],
+            done: false
+          };
+
+        case 5:
+          _.label++;
+          y = op[1];
+          op = [0];
+          continue;
+
+        case 7:
+          op = _.ops.pop();
+
+          _.trys.pop();
+
+          continue;
+
+        default:
+          if (!(t = _.trys, t = t.length > 0 && t[t.length - 1]) && (op[0] === 6 || op[0] === 2)) {
+            _ = 0;
+            continue;
+          }
+
+          if (op[0] === 3 && (!t || op[1] > t[0] && op[1] < t[3])) {
+            _.label = op[1];
+            break;
+          }
+
+          if (op[0] === 6 && _.label < t[1]) {
+            _.label = t[1];
+            t = op;
+            break;
+          }
+
+          if (t && _.label < t[2]) {
+            _.label = t[2];
+
+            _.ops.push(op);
+
+            break;
+          }
+
+          if (t[2]) _.ops.pop();
+
+          _.trys.pop();
+
+          continue;
+      }
+
+      op = body.call(thisArg, _);
+    } catch (e) {
+      op = [6, e];
+      y = 0;
+    } finally {
+      f = t = 0;
+    }
+
+    if (op[0] & 5) throw op[1];
+    return {
+      value: op[0] ? op[1] : void 0,
+      done: true
+    };
+  }
+};
+
+<<<<<<< HEAD
+// Not exported from 'index', this type is internal.
+
+/** @private */
+var LongPollingTransport =
+/** @class */
+function () {
+  function LongPollingTransport(httpClient, accessTokenFactory, logger, logMessageContent) {
+    this.httpClient = httpClient;
+    this.accessTokenFactory = accessTokenFactory;
+    this.logger = logger;
+    this.pollAbort = new _AbortController.AbortController();
+    this.logMessageContent = logMessageContent;
+    this.running = false;
+=======
+/** @private */
+var WebSocketTransport =
+/** @class */
+function () {
+  function WebSocketTransport(httpClient, accessTokenFactory, logger, logMessageContent, webSocketConstructor) {
+    this.logger = logger;
+    this.accessTokenFactory = accessTokenFactory;
+    this.logMessageContent = logMessageContent;
+    this.webSocketConstructor = webSocketConstructor;
+    this.httpClient = httpClient;
+>>>>>>> master
+    this.onreceive = null;
+    this.onclose = null;
+  }
+
+<<<<<<< HEAD
+  Object.defineProperty(LongPollingTransport.prototype, "pollAborted", {
+    // This is an internal type, not exported from 'index' so this is really just internal.
+    get: function () {
+      return this.pollAbort.aborted;
+    },
+    enumerable: true,
+    configurable: true
+  });
+
+  LongPollingTransport.prototype.connect = function (url, transferFormat) {
+    return __awaiter(this, void 0, void 0, function () {
+      var pollOptions, token, pollUrl, response;
+=======
+  WebSocketTransport.prototype.connect = function (url, transferFormat) {
+    return __awaiter(this, void 0, void 0, function () {
+      var token;
+
+      var _this = this;
+
+>>>>>>> master
+      return __generator(this, function (_a) {
+        switch (_a.label) {
+          case 0:
+            _Utils.Arg.isRequired(url, "url");
+
+            _Utils.Arg.isRequired(transferFormat, "transferFormat");
+
+            _Utils.Arg.isIn(transferFormat, _ITransport.TransferFormat, "transferFormat");
+
+<<<<<<< HEAD
+            this.url = url;
+            this.logger.log(_ILogger.LogLevel.Trace, "(LongPolling transport) Connecting."); // Allow binary format on Node and Browsers that support binary content (indicated by the presence of responseType property)
+
+            if (transferFormat === _ITransport.TransferFormat.Binary && typeof XMLHttpRequest !== "undefined" && typeof new XMLHttpRequest().responseType !== "string") {
+              throw new Error("Binary protocols over XmlHttpRequest not implementing advanced features are not supported.");
+            }
+
+            pollOptions = {
+              abortSignal: this.pollAbort.signal,
+              headers: {},
+              timeout: 100000
+            };
+
+            if (transferFormat === _ITransport.TransferFormat.Binary) {
+              pollOptions.responseType = "arraybuffer";
+            }
+
+            return [4
+            /*yield*/
+            , this.getAccessToken()];
+
+          case 1:
+            token = _a.sent();
+            this.updateHeaderToken(pollOptions, token);
+            pollUrl = url + "&_=" + Date.now();
+            this.logger.log(_ILogger.LogLevel.Trace, "(LongPolling transport) polling: " + pollUrl + ".");
+            return [4
+            /*yield*/
+            , this.httpClient.get(pollUrl, pollOptions)];
+
+          case 2:
+            response = _a.sent();
+
+            if (response.statusCode !== 200) {
+              this.logger.log(_ILogger.LogLevel.Error, "(LongPolling transport) Unexpected response code: " + response.statusCode + "."); // Mark running as false so that the poll immediately ends and runs the close logic
+
+              this.closeError = new _Errors.HttpError(response.statusText || "", response.statusCode);
+              this.running = false;
+            } else {
+              this.running = true;
+            }
+
+            this.receiving = this.poll(this.url, pollOptions);
+            return [2
+            /*return*/
+            ];
+        }
+      });
+    });
+  };
+
+  LongPollingTransport.prototype.getAccessToken = function () {
+    return __awaiter(this, void 0, void 0, function () {
+      return __generator(this, function (_a) {
+        switch (_a.label) {
+          case 0:
+=======
+            this.logger.log(_ILogger.LogLevel.Trace, "(WebSockets transport) Connecting.");
+>>>>>>> master
+            if (!this.accessTokenFactory) return [3
+            /*break*/
+            , 2];
+            return [4
+            /*yield*/
+            , this.accessTokenFactory()];
+
+          case 1:
+<<<<<<< HEAD
+            return [2
+            /*return*/
+            , _a.sent()];
+=======
+            token = _a.sent();
+
+            if (token) {
+              url += (url.indexOf("?") < 0 ? "?" : "&") + ("access_token=" + encodeURIComponent(token));
+            }
+
+            _a.label = 2;
+>>>>>>> master
+
+          case 2:
+            return [2
+            /*return*/
+<<<<<<< HEAD
+            , null];
+        }
+      });
+    });
+  };
+
+  LongPollingTransport.prototype.updateHeaderToken = function (request, token) {
+    if (!request.headers) {
+      request.headers = {};
+    }
+
+    if (token) {
+      // tslint:disable-next-line:no-string-literal
+      request.headers["Authorization"] = "Bearer " + token;
+      return;
+    } // tslint:disable-next-line:no-string-literal
+
+
+    if (request.headers["Authorization"]) {
+      // tslint:disable-next-line:no-string-literal
+      delete request.headers["Authorization"];
+    }
+  };
+
+  LongPollingTransport.prototype.poll = function (url, pollOptions) {
+    return __awaiter(this, void 0, void 0, function () {
+      var token, pollUrl, response, e_1;
+      return __generator(this, function (_a) {
+        switch (_a.label) {
+          case 0:
+            _a.trys.push([0,, 8, 9]);
+
+            _a.label = 1;
+
+          case 1:
+            if (!this.running) return [3
+            /*break*/
+            , 7];
+            return [4
+            /*yield*/
+            , this.getAccessToken()];
+
+          case 2:
+            token = _a.sent();
+            this.updateHeaderToken(pollOptions, token);
+            _a.label = 3;
+
+          case 3:
+            _a.trys.push([3, 5,, 6]);
+
+            pollUrl = url + "&_=" + Date.now();
+            this.logger.log(_ILogger.LogLevel.Trace, "(LongPolling transport) polling: " + pollUrl + ".");
+            return [4
+            /*yield*/
+            , this.httpClient.get(pollUrl, pollOptions)];
+
+          case 4:
+            response = _a.sent();
+
+            if (response.statusCode === 204) {
+              this.logger.log(_ILogger.LogLevel.Information, "(LongPolling transport) Poll terminated by server.");
+              this.running = false;
+            } else if (response.statusCode !== 200) {
+              this.logger.log(_ILogger.LogLevel.Error, "(LongPolling transport) Unexpected response code: " + response.statusCode + "."); // Unexpected status code
+
+              this.closeError = new _Errors.HttpError(response.statusText || "", response.statusCode);
+              this.running = false;
+            } else {
+              // Process the response
+              if (response.content) {
+                this.logger.log(_ILogger.LogLevel.Trace, "(LongPolling transport) data received. " + (0, _Utils.getDataDetail)(response.content, this.logMessageContent) + ".");
+
+                if (this.onreceive) {
+                  this.onreceive(response.content);
+                }
+              } else {
+                // This is another way timeout manifest.
+                this.logger.log(_ILogger.LogLevel.Trace, "(LongPolling transport) Poll timed out, reissuing.");
+              }
+            }
+
+            return [3
+            /*break*/
+            , 6];
+
+          case 5:
+            e_1 = _a.sent();
+
+            if (!this.running) {
+              // Log but disregard errors that occur after stopping
+              this.logger.log(_ILogger.LogLevel.Trace, "(LongPolling transport) Poll errored after shutdown: " + e_1.message);
+            } else {
+              if (e_1 instanceof _Errors.TimeoutError) {
+                // Ignore timeouts and reissue the poll.
+                this.logger.log(_ILogger.LogLevel.Trace, "(LongPolling transport) Poll timed out, reissuing.");
+              } else {
+                // Close the connection with the error as the result.
+                this.closeError = e_1;
+                this.running = false;
+              }
+            }
+
+            return [3
+            /*break*/
+            , 6];
+
+          case 6:
+            return [3
+            /*break*/
+            , 1];
+
+          case 7:
+            return [3
+            /*break*/
+            , 9];
+
+          case 8:
+            this.logger.log(_ILogger.LogLevel.Trace, "(LongPolling transport) Polling complete."); // We will reach here with pollAborted==false when the server returned a response causing the transport to stop.
+            // If pollAborted==true then client initiated the stop and the stop method will raise the close event after DELETE is sent.
+
+            if (!this.pollAborted) {
+              this.raiseOnClose();
+            }
+
+            return [7
+            /*endfinally*/
+            ];
+
+          case 9:
+            return [2
+            /*return*/
+            ];
+=======
+            , new Promise(function (resolve, reject) {
+              url = url.replace(/^http/, "ws");
+              var webSocket;
+
+              var cookies = _this.httpClient.getCookieString(url);
+
+              var opened = false;
+
+              if (_Utils.Platform.isNode && cookies) {
+                // Only pass cookies when in non-browser environments
+                webSocket = new _this.webSocketConstructor(url, undefined, {
+                  headers: {
+                    Cookie: "" + cookies
+                  }
+                });
+              }
+
+              if (!webSocket) {
+                // Chrome is not happy with passing 'undefined' as protocol
+                webSocket = new _this.webSocketConstructor(url);
+              }
+
+              if (transferFormat === _ITransport.TransferFormat.Binary) {
+                webSocket.binaryType = "arraybuffer";
+              } // tslint:disable-next-line:variable-name
+
+
+              webSocket.onopen = function (_event) {
+                _this.logger.log(_ILogger.LogLevel.Information, "WebSocket connected to " + url + ".");
+
+                _this.webSocket = webSocket;
+                opened = true;
+                resolve();
+              };
+
+              webSocket.onerror = function (event) {
+                var error = null; // ErrorEvent is a browser only type we need to check if the type exists before using it
+
+                if (typeof ErrorEvent !== "undefined" && event instanceof ErrorEvent) {
+                  error = event.error;
+                } else {
+                  error = new Error("There was an error with the transport.");
+                }
+
+                reject(error);
+              };
+
+              webSocket.onmessage = function (message) {
+                _this.logger.log(_ILogger.LogLevel.Trace, "(WebSockets transport) data received. " + (0, _Utils.getDataDetail)(message.data, _this.logMessageContent) + ".");
+
+                if (_this.onreceive) {
+                  _this.onreceive(message.data);
+                }
+              };
+
+              webSocket.onclose = function (event) {
+                // Don't call close handler if connection was never established
+                // We'll reject the connect call instead
+                if (opened) {
+                  _this.close(event);
+                } else {
+                  var error = null; // ErrorEvent is a browser only type we need to check if the type exists before using it
+
+                  if (typeof ErrorEvent !== "undefined" && event instanceof ErrorEvent) {
+                    error = event.error;
+                  } else {
+                    error = new Error("There was an error with the transport.");
+                  }
+
+                  reject(error);
+                }
+              };
+            })];
+>>>>>>> master
+        }
+      });
+    });
+  };
+
+<<<<<<< HEAD
+  LongPollingTransport.prototype.send = function (data) {
+    return __awaiter(this, void 0, void 0, function () {
+      return __generator(this, function (_a) {
+        if (!this.running) {
+          return [2
+          /*return*/
+          , Promise.reject(new Error("Cannot send until the transport is connected"))];
+        }
+
+        return [2
+        /*return*/
+        , (0, _Utils.sendMessage)(this.logger, "LongPolling", this.httpClient, this.url, this.accessTokenFactory, data, this.logMessageContent)];
+      });
+    });
+  };
+
+  LongPollingTransport.prototype.stop = function () {
+    return __awaiter(this, void 0, void 0, function () {
+      var deleteOptions, token;
+      return __generator(this, function (_a) {
+        switch (_a.label) {
+          case 0:
+            this.logger.log(_ILogger.LogLevel.Trace, "(LongPolling transport) Stopping polling."); // Tell receiving loop to stop, abort any current request, and then wait for it to finish
+
+            this.running = false;
+            this.pollAbort.abort();
+            _a.label = 1;
+
+          case 1:
+            _a.trys.push([1,, 5, 6]);
+
+            return [4
+            /*yield*/
+            , this.receiving];
+
+          case 2:
+            _a.sent(); // Send DELETE to clean up long polling on the server
+
+
+            this.logger.log(_ILogger.LogLevel.Trace, "(LongPolling transport) sending DELETE request to " + this.url + ".");
+            deleteOptions = {
+              headers: {}
+            };
+            return [4
+            /*yield*/
+            , this.getAccessToken()];
+
+          case 3:
+            token = _a.sent();
+            this.updateHeaderToken(deleteOptions, token);
+            return [4
+            /*yield*/
+            , this.httpClient.delete(this.url, deleteOptions)];
+
+          case 4:
+            _a.sent();
+
+            this.logger.log(_ILogger.LogLevel.Trace, "(LongPolling transport) DELETE request sent.");
+            return [3
+            /*break*/
+            , 6];
+
+          case 5:
+            this.logger.log(_ILogger.LogLevel.Trace, "(LongPolling transport) Stop finished."); // Raise close event here instead of in polling
+            // It needs to happen after the DELETE request is sent
+
+            this.raiseOnClose();
+            return [7
+            /*endfinally*/
+            ];
+
+          case 6:
+            return [2
+            /*return*/
+            ];
+        }
+      });
+    });
+  };
+
+  LongPollingTransport.prototype.raiseOnClose = function () {
+    if (this.onclose) {
+      var logMessage = "(LongPolling transport) Firing onclose event.";
+
+      if (this.closeError) {
+        logMessage += " Error: " + this.closeError;
+      }
+
+      this.logger.log(_ILogger.LogLevel.Trace, logMessage);
+      this.onclose(this.closeError);
+    }
+  };
+
+  return LongPollingTransport;
+}();
+
+exports.LongPollingTransport = LongPollingTransport;
+},{"./AbortController":"node_modules/@microsoft/signalr/dist/esm/AbortController.js","./Errors":"node_modules/@microsoft/signalr/dist/esm/Errors.js","./ILogger":"node_modules/@microsoft/signalr/dist/esm/ILogger.js","./ITransport":"node_modules/@microsoft/signalr/dist/esm/ITransport.js","./Utils":"node_modules/@microsoft/signalr/dist/esm/Utils.js"}],"node_modules/@microsoft/signalr/dist/esm/ServerSentEventsTransport.js":[function(require,module,exports) {
+=======
+  WebSocketTransport.prototype.send = function (data) {
+    if (this.webSocket && this.webSocket.readyState === this.webSocketConstructor.OPEN) {
+      this.logger.log(_ILogger.LogLevel.Trace, "(WebSockets transport) sending data. " + (0, _Utils.getDataDetail)(data, this.logMessageContent) + ".");
+      this.webSocket.send(data);
+      return Promise.resolve();
+    }
+
+    return Promise.reject("WebSocket is not in the OPEN state");
+  };
+
+  WebSocketTransport.prototype.stop = function () {
+    if (this.webSocket) {
+      // Clear websocket handlers because we are considering the socket closed now
+      this.webSocket.onclose = function () {};
+
+      this.webSocket.onmessage = function () {};
+
+      this.webSocket.onerror = function () {};
+
+      this.webSocket.close();
+      this.webSocket = undefined; // Manually invoke onclose callback inline so we know the HttpConnection was closed properly before returning
+      // This also solves an issue where websocket.onclose could take 18+ seconds to trigger during network disconnects
+
+      this.close(undefined);
+    }
+
+    return Promise.resolve();
+  };
+
+  WebSocketTransport.prototype.close = function (event) {
+    // webSocket will be null if the transport did not start successfully
+    this.logger.log(_ILogger.LogLevel.Trace, "(WebSockets transport) socket closed.");
+
+    if (this.onclose) {
+      if (event && (event.wasClean === false || event.code !== 1000)) {
+        this.onclose(new Error("WebSocket closed with status code: " + event.code + " (" + event.reason + ")."));
+      } else {
+        this.onclose();
+      }
+    }
+  };
+
+  return WebSocketTransport;
+}();
+
+exports.WebSocketTransport = WebSocketTransport;
+},{"./ILogger":"node_modules/@microsoft/signalr/dist/esm/ILogger.js","./ITransport":"node_modules/@microsoft/signalr/dist/esm/ITransport.js","./Utils":"node_modules/@microsoft/signalr/dist/esm/Utils.js"}],"node_modules/@microsoft/signalr/dist/esm/HttpConnection.js":[function(require,module,exports) {
+>>>>>>> master
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+<<<<<<< HEAD
+exports.ServerSentEventsTransport = void 0;
+=======
+exports.TransportSendQueue = exports.HttpConnection = void 0;
+
+var _DefaultHttpClient = require("./DefaultHttpClient");
+>>>>>>> master
+
+var _ILogger = require("./ILogger");
+
+var _ITransport = require("./ITransport");
+
+<<<<<<< HEAD
+var _Utils = require("./Utils");
+
+=======
+var _LongPollingTransport = require("./LongPollingTransport");
+
+var _ServerSentEventsTransport = require("./ServerSentEventsTransport");
+
+var _Utils = require("./Utils");
+
+var _WebSocketTransport = require("./WebSocketTransport");
+
+>>>>>>> master
+// Copyright (c) .NET Foundation. All rights reserved.
+// Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
+var __awaiter = void 0 && (void 0).__awaiter || function (thisArg, _arguments, P, generator) {
+  return new (P || (P = Promise))(function (resolve, reject) {
+    function fulfilled(value) {
+      try {
+        step(generator.next(value));
+      } catch (e) {
+        reject(e);
+      }
+    }
+
+    function rejected(value) {
+      try {
+        step(generator["throw"](value));
+      } catch (e) {
+        reject(e);
+      }
+    }
+
+    function step(result) {
+      result.done ? resolve(result.value) : new P(function (resolve) {
+        resolve(result.value);
+      }).then(fulfilled, rejected);
+    }
+
+    step((generator = generator.apply(thisArg, _arguments || [])).next());
+  });
+};
+
+var __generator = void 0 && (void 0).__generator || function (thisArg, body) {
+  var _ = {
+    label: 0,
+    sent: function () {
+      if (t[0] & 1) throw t[1];
+      return t[1];
+    },
+    trys: [],
+    ops: []
+  },
+      f,
+      y,
+      t,
+      g;
+  return g = {
+    next: verb(0),
+    "throw": verb(1),
+    "return": verb(2)
+  }, typeof Symbol === "function" && (g[Symbol.iterator] = function () {
+    return this;
+  }), g;
+
+  function verb(n) {
+    return function (v) {
+      return step([n, v]);
+    };
+  }
+
+  function step(op) {
+    if (f) throw new TypeError("Generator is already executing.");
+
+    while (_) try {
+      if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
+      if (y = 0, t) op = [op[0] & 2, t.value];
+
+      switch (op[0]) {
+        case 0:
+        case 1:
+          t = op;
+          break;
+
+        case 4:
+          _.label++;
+          return {
+            value: op[1],
+            done: false
+          };
+
+        case 5:
+          _.label++;
+          y = op[1];
+          op = [0];
+          continue;
+
+        case 7:
+          op = _.ops.pop();
+
+          _.trys.pop();
+
+          continue;
+
+        default:
+          if (!(t = _.trys, t = t.length > 0 && t[t.length - 1]) && (op[0] === 6 || op[0] === 2)) {
+            _ = 0;
+            continue;
+          }
+
+          if (op[0] === 3 && (!t || op[1] > t[0] && op[1] < t[3])) {
+            _.label = op[1];
+            break;
+          }
+
+          if (op[0] === 6 && _.label < t[1]) {
+            _.label = t[1];
+            t = op;
+            break;
+          }
+
+          if (t && _.label < t[2]) {
+            _.label = t[2];
+
+            _.ops.push(op);
+
+            break;
+          }
+
+          if (t[2]) _.ops.pop();
+
+          _.trys.pop();
+
+          continue;
+      }
+
+      op = body.call(thisArg, _);
+    } catch (e) {
+      op = [6, e];
+      y = 0;
+    } finally {
+      f = t = 0;
+    }
+
+    if (op[0] & 5) throw op[1];
+    return {
+      value: op[0] ? op[1] : void 0,
+      done: true
+    };
+  }
+};
+
+<<<<<<< HEAD
+/** @private */
+var ServerSentEventsTransport =
+/** @class */
+function () {
+  function ServerSentEventsTransport(httpClient, accessTokenFactory, logger, logMessageContent, eventSourceConstructor) {
+    this.httpClient = httpClient;
+    this.accessTokenFactory = accessTokenFactory;
+    this.logger = logger;
+    this.logMessageContent = logMessageContent;
+    this.eventSourceConstructor = eventSourceConstructor;
+=======
+var MAX_REDIRECTS = 100;
+var WebSocketModule = null;
+var EventSourceModule = null;
+
+if (_Utils.Platform.isNode && typeof require !== "undefined") {
+  // In order to ignore the dynamic require in webpack builds we need to do this magic
+  // @ts-ignore: TS doesn't know about these names
+  var requireFunc = typeof __webpack_require__ === "function" ? __non_webpack_require__ : require;
+  WebSocketModule = requireFunc("ws");
+  EventSourceModule = requireFunc("eventsource");
+}
+/** @private */
+
+
+var HttpConnection =
+/** @class */
+function () {
+  function HttpConnection(url, options) {
+    if (options === void 0) {
+      options = {};
+    }
+
+    this.features = {};
+    this.negotiateVersion = 1;
+
+    _Utils.Arg.isRequired(url, "url");
+
+    this.logger = (0, _Utils.createLogger)(options.logger);
+    this.baseUrl = this.resolveUrl(url);
+    options = options || {};
+    options.logMessageContent = options.logMessageContent || false;
+
+    if (!_Utils.Platform.isNode && typeof WebSocket !== "undefined" && !options.WebSocket) {
+      options.WebSocket = WebSocket;
+    } else if (_Utils.Platform.isNode && !options.WebSocket) {
+      if (WebSocketModule) {
+        options.WebSocket = WebSocketModule;
+      }
+    }
+
+    if (!_Utils.Platform.isNode && typeof EventSource !== "undefined" && !options.EventSource) {
+      options.EventSource = EventSource;
+    } else if (_Utils.Platform.isNode && !options.EventSource) {
+      if (typeof EventSourceModule !== "undefined") {
+        options.EventSource = EventSourceModule;
+      }
+    }
+
+    this.httpClient = options.httpClient || new _DefaultHttpClient.DefaultHttpClient(this.logger);
+    this.connectionState = "Disconnected"
+    /* Disconnected */
+    ;
+    this.connectionStarted = false;
+    this.options = options;
+>>>>>>> master
+    this.onreceive = null;
+    this.onclose = null;
+  }
+
+<<<<<<< HEAD
+  ServerSentEventsTransport.prototype.connect = function (url, transferFormat) {
+    return __awaiter(this, void 0, void 0, function () {
+      var token;
 
       var _this = this;
 
@@ -16972,11 +22714,154 @@ function () {
                 return;
               }
             })];
+=======
+  HttpConnection.prototype.start = function (transferFormat) {
+    return __awaiter(this, void 0, void 0, function () {
+      var message, message;
+      return __generator(this, function (_a) {
+        switch (_a.label) {
+          case 0:
+            transferFormat = transferFormat || _ITransport.TransferFormat.Binary;
+
+            _Utils.Arg.isIn(transferFormat, _ITransport.TransferFormat, "transferFormat");
+
+            this.logger.log(_ILogger.LogLevel.Debug, "Starting connection with transfer format '" + _ITransport.TransferFormat[transferFormat] + "'.");
+
+            if (this.connectionState !== "Disconnected"
+            /* Disconnected */
+            ) {
+                return [2
+                /*return*/
+                , Promise.reject(new Error("Cannot start an HttpConnection that is not in the 'Disconnected' state."))];
+              }
+
+            this.connectionState = "Connecting "
+            /* Connecting */
+            ;
+            this.startInternalPromise = this.startInternal(transferFormat);
+            return [4
+            /*yield*/
+            , this.startInternalPromise];
+
+          case 1:
+            _a.sent();
+
+            if (!(this.connectionState === "Disconnecting"
+            /* Disconnecting */
+            )) return [3
+              /*break*/
+              , 3];
+            message = "Failed to start the HttpConnection before stop() was called.";
+            this.logger.log(_ILogger.LogLevel.Error, message); // We cannot await stopPromise inside startInternal since stopInternal awaits the startInternalPromise.
+
+            return [4
+            /*yield*/
+            , this.stopPromise];
+
+          case 2:
+            // We cannot await stopPromise inside startInternal since stopInternal awaits the startInternalPromise.
+            _a.sent();
+
+            return [2
+            /*return*/
+            , Promise.reject(new Error(message))];
+
+          case 3:
+            if (this.connectionState !== "Connected"
+            /* Connected */
+            ) {
+                message = "HttpConnection.startInternal completed gracefully but didn't enter the connection into the connected state!";
+                this.logger.log(_ILogger.LogLevel.Error, message);
+                return [2
+                /*return*/
+                , Promise.reject(new Error(message))];
+              }
+
+            _a.label = 4;
+
+          case 4:
+            this.connectionStarted = true;
+            return [2
+            /*return*/
+            ];
         }
       });
     });
   };
 
+  HttpConnection.prototype.send = function (data) {
+    if (this.connectionState !== "Connected"
+    /* Connected */
+    ) {
+        return Promise.reject(new Error("Cannot send data if the connection is not in the 'Connected' State."));
+      }
+
+    if (!this.sendQueue) {
+      this.sendQueue = new TransportSendQueue(this.transport);
+    } // Transport will not be null if state is connected
+
+
+    return this.sendQueue.send(data);
+  };
+
+  HttpConnection.prototype.stop = function (error) {
+    return __awaiter(this, void 0, void 0, function () {
+      var _this = this;
+
+      return __generator(this, function (_a) {
+        switch (_a.label) {
+          case 0:
+            if (this.connectionState === "Disconnected"
+            /* Disconnected */
+            ) {
+                this.logger.log(_ILogger.LogLevel.Debug, "Call to HttpConnection.stop(" + error + ") ignored because the connection is already in the disconnected state.");
+                return [2
+                /*return*/
+                , Promise.resolve()];
+              }
+
+            if (this.connectionState === "Disconnecting"
+            /* Disconnecting */
+            ) {
+                this.logger.log(_ILogger.LogLevel.Debug, "Call to HttpConnection.stop(" + error + ") ignored because the connection is already in the disconnecting state.");
+                return [2
+                /*return*/
+                , this.stopPromise];
+              }
+
+            this.connectionState = "Disconnecting"
+            /* Disconnecting */
+            ;
+            this.stopPromise = new Promise(function (resolve) {
+              // Don't complete stop() until stopConnection() completes.
+              _this.stopPromiseResolver = resolve;
+            }); // stopInternal should never throw so just observe it.
+
+            return [4
+            /*yield*/
+            , this.stopInternal(error)];
+
+          case 1:
+            // stopInternal should never throw so just observe it.
+            _a.sent();
+
+            return [4
+            /*yield*/
+            , this.stopPromise];
+
+          case 2:
+            _a.sent();
+
+            return [2
+            /*return*/
+            ];
+>>>>>>> master
+        }
+      });
+    });
+  };
+
+<<<<<<< HEAD
   ServerSentEventsTransport.prototype.send = function (data) {
     return __awaiter(this, void 0, void 0, function () {
       return __generator(this, function (_a) {
@@ -17288,11 +23173,365 @@ function () {
                 }
               };
             })];
+=======
+  HttpConnection.prototype.stopInternal = function (error) {
+    return __awaiter(this, void 0, void 0, function () {
+      var e_1, e_2, e_3;
+      return __generator(this, function (_a) {
+        switch (_a.label) {
+          case 0:
+            // Set error as soon as possible otherwise there is a race between
+            // the transport closing and providing an error and the error from a close message
+            // We would prefer the close message error.
+            this.stopError = error;
+            _a.label = 1;
+
+          case 1:
+            _a.trys.push([1, 3,, 4]);
+
+            return [4
+            /*yield*/
+            , this.startInternalPromise];
+
+          case 2:
+            _a.sent();
+
+            return [3
+            /*break*/
+            , 4];
+
+          case 3:
+            e_1 = _a.sent();
+            return [3
+            /*break*/
+            , 4];
+
+          case 4:
+            if (!this.sendQueue) return [3
+            /*break*/
+            , 9];
+            _a.label = 5;
+
+          case 5:
+            _a.trys.push([5, 7,, 8]);
+
+            return [4
+            /*yield*/
+            , this.sendQueue.stop()];
+
+          case 6:
+            _a.sent();
+
+            return [3
+            /*break*/
+            , 8];
+
+          case 7:
+            e_2 = _a.sent();
+            this.logger.log(_ILogger.LogLevel.Error, "TransportSendQueue.stop() threw error '" + e_2 + "'.");
+            return [3
+            /*break*/
+            , 8];
+
+          case 8:
+            this.sendQueue = undefined;
+            _a.label = 9;
+
+          case 9:
+            if (!this.transport) return [3
+            /*break*/
+            , 14];
+            _a.label = 10;
+
+          case 10:
+            _a.trys.push([10, 12,, 13]);
+
+            return [4
+            /*yield*/
+            , this.transport.stop()];
+
+          case 11:
+            _a.sent();
+
+            return [3
+            /*break*/
+            , 13];
+
+          case 12:
+            e_3 = _a.sent();
+            this.logger.log(_ILogger.LogLevel.Error, "HttpConnection.transport.stop() threw error '" + e_3 + "'.");
+            this.stopConnection();
+            return [3
+            /*break*/
+            , 13];
+
+          case 13:
+            this.transport = undefined;
+            return [3
+            /*break*/
+            , 15];
+
+          case 14:
+            this.logger.log(_ILogger.LogLevel.Debug, "HttpConnection.transport is undefined in HttpConnection.stop() because start() failed.");
+            this.stopConnection();
+            _a.label = 15;
+
+          case 15:
+            return [2
+            /*return*/
+            ];
         }
       });
     });
   };
 
+  HttpConnection.prototype.startInternal = function (transferFormat) {
+    return __awaiter(this, void 0, void 0, function () {
+      var url, negotiateResponse, redirects, _loop_1, this_1, e_4;
+
+      return __generator(this, function (_a) {
+        switch (_a.label) {
+          case 0:
+            url = this.baseUrl;
+            this.accessTokenFactory = this.options.accessTokenFactory;
+            _a.label = 1;
+
+          case 1:
+            _a.trys.push([1, 12,, 13]);
+
+            if (!this.options.skipNegotiation) return [3
+            /*break*/
+            , 5];
+            if (!(this.options.transport === _ITransport.HttpTransportType.WebSockets)) return [3
+            /*break*/
+            , 3]; // No need to add a connection ID in this case
+
+            this.transport = this.constructTransport(_ITransport.HttpTransportType.WebSockets); // We should just call connect directly in this case.
+            // No fallback or negotiate in this case.
+
+            return [4
+            /*yield*/
+            , this.startTransport(url, transferFormat)];
+
+          case 2:
+            // We should just call connect directly in this case.
+            // No fallback or negotiate in this case.
+            _a.sent();
+
+            return [3
+            /*break*/
+            , 4];
+
+          case 3:
+            throw new Error("Negotiation can only be skipped when using the WebSocket transport directly.");
+
+          case 4:
+            return [3
+            /*break*/
+            , 11];
+
+          case 5:
+            negotiateResponse = null;
+            redirects = 0;
+
+            _loop_1 = function () {
+              var accessToken_1;
+              return __generator(this, function (_a) {
+                switch (_a.label) {
+                  case 0:
+                    return [4
+                    /*yield*/
+                    , this_1.getNegotiationResponse(url)];
+
+                  case 1:
+                    negotiateResponse = _a.sent(); // the user tries to stop the connection when it is being started
+
+                    if (this_1.connectionState === "Disconnecting"
+                    /* Disconnecting */
+                    || this_1.connectionState === "Disconnected"
+                    /* Disconnected */
+                    ) {
+                        throw new Error("The connection was stopped during negotiation.");
+                      }
+
+                    if (negotiateResponse.error) {
+                      throw new Error(negotiateResponse.error);
+                    }
+
+                    if (negotiateResponse.ProtocolVersion) {
+                      throw new Error("Detected a connection attempt to an ASP.NET SignalR Server. This client only supports connecting to an ASP.NET Core SignalR Server. See https://aka.ms/signalr-core-differences for details.");
+                    }
+
+                    if (negotiateResponse.url) {
+                      url = negotiateResponse.url;
+                    }
+
+                    if (negotiateResponse.accessToken) {
+                      accessToken_1 = negotiateResponse.accessToken;
+
+                      this_1.accessTokenFactory = function () {
+                        return accessToken_1;
+                      };
+                    }
+
+                    redirects++;
+                    return [2
+                    /*return*/
+                    ];
+                }
+              });
+            };
+
+            this_1 = this;
+            _a.label = 6;
+
+          case 6:
+            return [5
+            /*yield**/
+            , _loop_1()];
+
+          case 7:
+            _a.sent();
+
+            _a.label = 8;
+
+          case 8:
+            if (negotiateResponse.url && redirects < MAX_REDIRECTS) return [3
+            /*break*/
+            , 6];
+            _a.label = 9;
+
+          case 9:
+            if (redirects === MAX_REDIRECTS && negotiateResponse.url) {
+              throw new Error("Negotiate redirection limit exceeded.");
+            }
+
+            return [4
+            /*yield*/
+            , this.createTransport(url, this.options.transport, negotiateResponse, transferFormat)];
+
+          case 10:
+            _a.sent();
+
+            _a.label = 11;
+
+          case 11:
+            if (this.transport instanceof _LongPollingTransport.LongPollingTransport) {
+              this.features.inherentKeepAlive = true;
+            }
+
+            if (this.connectionState === "Connecting "
+            /* Connecting */
+            ) {
+                // Ensure the connection transitions to the connected state prior to completing this.startInternalPromise.
+                // start() will handle the case when stop was called and startInternal exits still in the disconnecting state.
+                this.logger.log(_ILogger.LogLevel.Debug, "The HttpConnection connected successfully.");
+                this.connectionState = "Connected"
+                /* Connected */
+                ;
+              }
+
+            return [3
+            /*break*/
+            , 13];
+
+          case 12:
+            e_4 = _a.sent();
+            this.logger.log(_ILogger.LogLevel.Error, "Failed to start the connection: " + e_4);
+            this.connectionState = "Disconnected"
+            /* Disconnected */
+            ;
+            this.transport = undefined;
+            return [2
+            /*return*/
+            , Promise.reject(e_4)];
+
+          case 13:
+            return [2
+            /*return*/
+            ];
+        }
+      });
+    });
+  };
+
+  HttpConnection.prototype.getNegotiationResponse = function (url) {
+    return __awaiter(this, void 0, void 0, function () {
+      var _a, headers, token, negotiateUrl, response, negotiateResponse, e_5;
+
+      return __generator(this, function (_b) {
+        switch (_b.label) {
+          case 0:
+            if (!this.accessTokenFactory) return [3
+            /*break*/
+            , 2];
+            return [4
+            /*yield*/
+            , this.accessTokenFactory()];
+
+          case 1:
+            token = _b.sent();
+
+            if (token) {
+              headers = (_a = {}, _a["Authorization"] = "Bearer " + token, _a);
+            }
+
+            _b.label = 2;
+
+          case 2:
+            negotiateUrl = this.resolveNegotiateUrl(url);
+            this.logger.log(_ILogger.LogLevel.Debug, "Sending negotiation request: " + negotiateUrl + ".");
+            _b.label = 3;
+
+          case 3:
+            _b.trys.push([3, 5,, 6]);
+
+            return [4
+            /*yield*/
+            , this.httpClient.post(negotiateUrl, {
+              content: "",
+              headers: headers
+            })];
+
+          case 4:
+            response = _b.sent();
+
+            if (response.statusCode !== 200) {
+              return [2
+              /*return*/
+              , Promise.reject(new Error("Unexpected status code returned from negotiate " + response.statusCode))];
+            }
+
+            negotiateResponse = JSON.parse(response.content);
+
+            if (!negotiateResponse.negotiateVersion || negotiateResponse.negotiateVersion < 1) {
+              // Negotiate version 0 doesn't use connectionToken
+              // So we set it equal to connectionId so all our logic can use connectionToken without being aware of the negotiate version
+              negotiateResponse.connectionToken = negotiateResponse.connectionId;
+            }
+
+            return [2
+            /*return*/
+            , negotiateResponse];
+
+          case 5:
+            e_5 = _b.sent();
+            this.logger.log(_ILogger.LogLevel.Error, "Failed to complete negotiation with the server: " + e_5);
+            return [2
+            /*return*/
+            , Promise.reject(e_5)];
+
+          case 6:
+            return [2
+            /*return*/
+            ];
+>>>>>>> master
+        }
+      });
+    });
+  };
+
+<<<<<<< HEAD
   WebSocketTransport.prototype.send = function (data) {
     if (this.webSocket && this.webSocket.readyState === this.webSocketConstructor.OPEN) {
       this.logger.log(_ILogger.LogLevel.Trace, "(WebSockets transport) sending data. " + (0, _Utils.getDataDetail)(data, this.logMessageContent) + ".");
@@ -17510,10 +23749,331 @@ if (_Utils.Platform.isNode && typeof require !== "undefined") {
   var requireFunc = typeof __webpack_require__ === "function" ? __non_webpack_require__ : require;
   WebSocketModule = requireFunc("ws");
   EventSourceModule = requireFunc("eventsource");
+=======
+  HttpConnection.prototype.createConnectUrl = function (url, connectionToken) {
+    if (!connectionToken) {
+      return url;
+    }
+
+    return url + (url.indexOf("?") === -1 ? "?" : "&") + ("id=" + connectionToken);
+  };
+
+  HttpConnection.prototype.createTransport = function (url, requestedTransport, negotiateResponse, requestedTransferFormat) {
+    return __awaiter(this, void 0, void 0, function () {
+      var connectUrl, transportExceptions, transports, negotiate, _i, transports_1, endpoint, transportOrError, ex_1, ex_2, message;
+
+      return __generator(this, function (_a) {
+        switch (_a.label) {
+          case 0:
+            connectUrl = this.createConnectUrl(url, negotiateResponse.connectionToken);
+            if (!this.isITransport(requestedTransport)) return [3
+            /*break*/
+            , 2];
+            this.logger.log(_ILogger.LogLevel.Debug, "Connection was provided an instance of ITransport, using that directly.");
+            this.transport = requestedTransport;
+            return [4
+            /*yield*/
+            , this.startTransport(connectUrl, requestedTransferFormat)];
+
+          case 1:
+            _a.sent();
+
+            this.connectionId = negotiateResponse.connectionId;
+            return [2
+            /*return*/
+            ];
+
+          case 2:
+            transportExceptions = [];
+            transports = negotiateResponse.availableTransports || [];
+            negotiate = negotiateResponse;
+            _i = 0, transports_1 = transports;
+            _a.label = 3;
+
+          case 3:
+            if (!(_i < transports_1.length)) return [3
+            /*break*/
+            , 13];
+            endpoint = transports_1[_i];
+            transportOrError = this.resolveTransportOrError(endpoint, requestedTransport, requestedTransferFormat);
+            if (!(transportOrError instanceof Error)) return [3
+            /*break*/
+            , 4]; // Store the error and continue, we don't want to cause a re-negotiate in these cases
+
+            transportExceptions.push(endpoint.transport + " failed: " + transportOrError);
+            return [3
+            /*break*/
+            , 12];
+
+          case 4:
+            if (!this.isITransport(transportOrError)) return [3
+            /*break*/
+            , 12];
+            this.transport = transportOrError;
+            if (!!negotiate) return [3
+            /*break*/
+            , 9];
+            _a.label = 5;
+
+          case 5:
+            _a.trys.push([5, 7,, 8]);
+
+            return [4
+            /*yield*/
+            , this.getNegotiationResponse(url)];
+
+          case 6:
+            negotiate = _a.sent();
+            return [3
+            /*break*/
+            , 8];
+
+          case 7:
+            ex_1 = _a.sent();
+            return [2
+            /*return*/
+            , Promise.reject(ex_1)];
+
+          case 8:
+            connectUrl = this.createConnectUrl(url, negotiate.connectionToken);
+            _a.label = 9;
+
+          case 9:
+            _a.trys.push([9, 11,, 12]);
+
+            return [4
+            /*yield*/
+            , this.startTransport(connectUrl, requestedTransferFormat)];
+
+          case 10:
+            _a.sent();
+
+            this.connectionId = negotiate.connectionId;
+            return [2
+            /*return*/
+            ];
+
+          case 11:
+            ex_2 = _a.sent();
+            this.logger.log(_ILogger.LogLevel.Error, "Failed to start the transport '" + endpoint.transport + "': " + ex_2);
+            negotiate = undefined;
+            transportExceptions.push(endpoint.transport + " failed: " + ex_2);
+
+            if (this.connectionState !== "Connecting "
+            /* Connecting */
+            ) {
+                message = "Failed to select transport before stop() was called.";
+                this.logger.log(_ILogger.LogLevel.Debug, message);
+                return [2
+                /*return*/
+                , Promise.reject(new Error(message))];
+              }
+
+            return [3
+            /*break*/
+            , 12];
+
+          case 12:
+            _i++;
+            return [3
+            /*break*/
+            , 3];
+
+          case 13:
+            if (transportExceptions.length > 0) {
+              return [2
+              /*return*/
+              , Promise.reject(new Error("Unable to connect to the server with any of the available transports. " + transportExceptions.join(" ")))];
+            }
+
+            return [2
+            /*return*/
+            , Promise.reject(new Error("None of the transports supported by the client are supported by the server."))];
+        }
+      });
+    });
+  };
+
+  HttpConnection.prototype.constructTransport = function (transport) {
+    switch (transport) {
+      case _ITransport.HttpTransportType.WebSockets:
+        if (!this.options.WebSocket) {
+          throw new Error("'WebSocket' is not supported in your environment.");
+        }
+
+        return new _WebSocketTransport.WebSocketTransport(this.httpClient, this.accessTokenFactory, this.logger, this.options.logMessageContent || false, this.options.WebSocket);
+
+      case _ITransport.HttpTransportType.ServerSentEvents:
+        if (!this.options.EventSource) {
+          throw new Error("'EventSource' is not supported in your environment.");
+        }
+
+        return new _ServerSentEventsTransport.ServerSentEventsTransport(this.httpClient, this.accessTokenFactory, this.logger, this.options.logMessageContent || false, this.options.EventSource);
+
+      case _ITransport.HttpTransportType.LongPolling:
+        return new _LongPollingTransport.LongPollingTransport(this.httpClient, this.accessTokenFactory, this.logger, this.options.logMessageContent || false);
+
+      default:
+        throw new Error("Unknown transport: " + transport + ".");
+    }
+  };
+
+  HttpConnection.prototype.startTransport = function (url, transferFormat) {
+    var _this = this;
+
+    this.transport.onreceive = this.onreceive;
+
+    this.transport.onclose = function (e) {
+      return _this.stopConnection(e);
+    };
+
+    return this.transport.connect(url, transferFormat);
+  };
+
+  HttpConnection.prototype.resolveTransportOrError = function (endpoint, requestedTransport, requestedTransferFormat) {
+    var transport = _ITransport.HttpTransportType[endpoint.transport];
+
+    if (transport === null || transport === undefined) {
+      this.logger.log(_ILogger.LogLevel.Debug, "Skipping transport '" + endpoint.transport + "' because it is not supported by this client.");
+      return new Error("Skipping transport '" + endpoint.transport + "' because it is not supported by this client.");
+    } else {
+      if (transportMatches(requestedTransport, transport)) {
+        var transferFormats = endpoint.transferFormats.map(function (s) {
+          return _ITransport.TransferFormat[s];
+        });
+
+        if (transferFormats.indexOf(requestedTransferFormat) >= 0) {
+          if (transport === _ITransport.HttpTransportType.WebSockets && !this.options.WebSocket || transport === _ITransport.HttpTransportType.ServerSentEvents && !this.options.EventSource) {
+            this.logger.log(_ILogger.LogLevel.Debug, "Skipping transport '" + _ITransport.HttpTransportType[transport] + "' because it is not supported in your environment.'");
+            return new Error("'" + _ITransport.HttpTransportType[transport] + "' is not supported in your environment.");
+          } else {
+            this.logger.log(_ILogger.LogLevel.Debug, "Selecting transport '" + _ITransport.HttpTransportType[transport] + "'.");
+
+            try {
+              return this.constructTransport(transport);
+            } catch (ex) {
+              return ex;
+            }
+          }
+        } else {
+          this.logger.log(_ILogger.LogLevel.Debug, "Skipping transport '" + _ITransport.HttpTransportType[transport] + "' because it does not support the requested transfer format '" + _ITransport.TransferFormat[requestedTransferFormat] + "'.");
+          return new Error("'" + _ITransport.HttpTransportType[transport] + "' does not support " + _ITransport.TransferFormat[requestedTransferFormat] + ".");
+        }
+      } else {
+        this.logger.log(_ILogger.LogLevel.Debug, "Skipping transport '" + _ITransport.HttpTransportType[transport] + "' because it was disabled by the client.");
+        return new Error("'" + _ITransport.HttpTransportType[transport] + "' is disabled by the client.");
+      }
+    }
+  };
+
+  HttpConnection.prototype.isITransport = function (transport) {
+    return transport && typeof transport === "object" && "connect" in transport;
+  };
+
+  HttpConnection.prototype.stopConnection = function (error) {
+    this.logger.log(_ILogger.LogLevel.Debug, "HttpConnection.stopConnection(" + error + ") called while in state " + this.connectionState + ".");
+    this.transport = undefined; // If we have a stopError, it takes precedence over the error from the transport
+
+    error = this.stopError || error;
+    this.stopError = undefined;
+
+    if (this.connectionState === "Disconnected"
+    /* Disconnected */
+    ) {
+        this.logger.log(_ILogger.LogLevel.Debug, "Call to HttpConnection.stopConnection(" + error + ") was ignored because the connection is already in the disconnected state.");
+        return;
+      }
+
+    if (this.connectionState === "Connecting "
+    /* Connecting */
+    ) {
+        this.logger.log(_ILogger.LogLevel.Warning, "Call to HttpConnection.stopConnection(" + error + ") was ignored because the connection hasn't yet left the in the connecting state.");
+        return;
+      }
+
+    if (this.connectionState === "Disconnecting"
+    /* Disconnecting */
+    ) {
+        // A call to stop() induced this call to stopConnection and needs to be completed.
+        // Any stop() awaiters will be scheduled to continue after the onclose callback fires.
+        this.stopPromiseResolver();
+      }
+
+    if (error) {
+      this.logger.log(_ILogger.LogLevel.Error, "Connection disconnected with error '" + error + "'.");
+    } else {
+      this.logger.log(_ILogger.LogLevel.Information, "Connection disconnected.");
+    }
+
+    this.connectionId = undefined;
+    this.connectionState = "Disconnected"
+    /* Disconnected */
+    ;
+
+    if (this.onclose && this.connectionStarted) {
+      this.connectionStarted = false;
+
+      try {
+        this.onclose(error);
+      } catch (e) {
+        this.logger.log(_ILogger.LogLevel.Error, "HttpConnection.onclose(" + error + ") threw error '" + e + "'.");
+      }
+    }
+  };
+
+  HttpConnection.prototype.resolveUrl = function (url) {
+    // startsWith is not supported in IE
+    if (url.lastIndexOf("https://", 0) === 0 || url.lastIndexOf("http://", 0) === 0) {
+      return url;
+    }
+
+    if (!_Utils.Platform.isBrowser || !window.document) {
+      throw new Error("Cannot resolve '" + url + "'.");
+    } // Setting the url to the href propery of an anchor tag handles normalization
+    // for us. There are 3 main cases.
+    // 1. Relative path normalization e.g "b" -> "http://localhost:5000/a/b"
+    // 2. Absolute path normalization e.g "/a/b" -> "http://localhost:5000/a/b"
+    // 3. Networkpath reference normalization e.g "//localhost:5000/a/b" -> "http://localhost:5000/a/b"
+
+
+    var aTag = window.document.createElement("a");
+    aTag.href = url;
+    this.logger.log(_ILogger.LogLevel.Information, "Normalizing '" + url + "' to '" + aTag.href + "'.");
+    return aTag.href;
+  };
+
+  HttpConnection.prototype.resolveNegotiateUrl = function (url) {
+    var index = url.indexOf("?");
+    var negotiateUrl = url.substring(0, index === -1 ? url.length : index);
+
+    if (negotiateUrl[negotiateUrl.length - 1] !== "/") {
+      negotiateUrl += "/";
+    }
+
+    negotiateUrl += "negotiate";
+    negotiateUrl += index === -1 ? "" : url.substring(index);
+
+    if (negotiateUrl.indexOf("negotiateVersion") === -1) {
+      negotiateUrl += index === -1 ? "?" : "&";
+      negotiateUrl += "negotiateVersion=" + this.negotiateVersion;
+    }
+
+    return negotiateUrl;
+  };
+
+  return HttpConnection;
+}();
+
+exports.HttpConnection = HttpConnection;
+
+function transportMatches(requestedTransport, actualTransport) {
+  return !requestedTransport || (actualTransport & requestedTransport) !== 0;
+>>>>>>> master
 }
 /** @private */
 
 
+<<<<<<< HEAD
 var HttpConnection =
 /** @class */
 function () {
@@ -17585,10 +24145,62 @@ function () {
             return [4
             /*yield*/
             , this.startInternalPromise];
+=======
+var TransportSendQueue =
+/** @class */
+function () {
+  function TransportSendQueue(transport) {
+    this.transport = transport;
+    this.buffer = [];
+    this.executing = true;
+    this.sendBufferedData = new PromiseSource();
+    this.transportResult = new PromiseSource();
+    this.sendLoopPromise = this.sendLoop();
+  }
+
+  TransportSendQueue.prototype.send = function (data) {
+    this.bufferData(data);
+
+    if (!this.transportResult) {
+      this.transportResult = new PromiseSource();
+    }
+
+    return this.transportResult.promise;
+  };
+
+  TransportSendQueue.prototype.stop = function () {
+    this.executing = false;
+    this.sendBufferedData.resolve();
+    return this.sendLoopPromise;
+  };
+
+  TransportSendQueue.prototype.bufferData = function (data) {
+    if (this.buffer.length && typeof this.buffer[0] !== typeof data) {
+      throw new Error("Expected data to be of type " + typeof this.buffer + " but was of type " + typeof data);
+    }
+
+    this.buffer.push(data);
+    this.sendBufferedData.resolve();
+  };
+
+  TransportSendQueue.prototype.sendLoop = function () {
+    return __awaiter(this, void 0, void 0, function () {
+      var transportResult, data, error_1;
+      return __generator(this, function (_a) {
+        switch (_a.label) {
+          case 0:
+            if (!true) return [3
+            /*break*/
+            , 6];
+            return [4
+            /*yield*/
+            , this.sendBufferedData.promise];
+>>>>>>> master
 
           case 1:
             _a.sent();
 
+<<<<<<< HEAD
             if (!(this.connectionState === "Disconnecting"
             /* Disconnecting */
             )) return [3
@@ -17624,6 +24236,53 @@ function () {
 
           case 4:
             this.connectionStarted = true;
+=======
+            if (!this.executing) {
+              if (this.transportResult) {
+                this.transportResult.reject("Connection stopped.");
+              }
+
+              return [3
+              /*break*/
+              , 6];
+            }
+
+            this.sendBufferedData = new PromiseSource();
+            transportResult = this.transportResult;
+            this.transportResult = undefined;
+            data = typeof this.buffer[0] === "string" ? this.buffer.join("") : TransportSendQueue.concatBuffers(this.buffer);
+            this.buffer.length = 0;
+            _a.label = 2;
+
+          case 2:
+            _a.trys.push([2, 4,, 5]);
+
+            return [4
+            /*yield*/
+            , this.transport.send(data)];
+
+          case 3:
+            _a.sent();
+
+            transportResult.resolve();
+            return [3
+            /*break*/
+            , 5];
+
+          case 4:
+            error_1 = _a.sent();
+            transportResult.reject(error_1);
+            return [3
+            /*break*/
+            , 5];
+
+          case 5:
+            return [3
+            /*break*/
+            , 0];
+
+          case 6:
+>>>>>>> master
             return [2
             /*return*/
             ];
@@ -17632,6 +24291,7 @@ function () {
     });
   };
 
+<<<<<<< HEAD
   HttpConnection.prototype.send = function (data) {
     if (this.connectionState !== "Connected"
     /* Connected */
@@ -18844,6 +25504,364 @@ function isLogger(logger) {
   return logger.log !== undefined;
 }
 },{"./DefaultReconnectPolicy":"node_modules/@microsoft/signalr/dist/esm/DefaultReconnectPolicy.js","./HttpConnection":"node_modules/@microsoft/signalr/dist/esm/HttpConnection.js","./HubConnection":"node_modules/@microsoft/signalr/dist/esm/HubConnection.js","./ILogger":"node_modules/@microsoft/signalr/dist/esm/ILogger.js","./JsonHubProtocol":"node_modules/@microsoft/signalr/dist/esm/JsonHubProtocol.js","./Loggers":"node_modules/@microsoft/signalr/dist/esm/Loggers.js","./Utils":"node_modules/@microsoft/signalr/dist/esm/Utils.js"}],"node_modules/@microsoft/signalr/dist/esm/index.js":[function(require,module,exports) {
+=======
+  TransportSendQueue.concatBuffers = function (arrayBuffers) {
+    var totalLength = arrayBuffers.map(function (b) {
+      return b.byteLength;
+    }).reduce(function (a, b) {
+      return a + b;
+    });
+    var result = new Uint8Array(totalLength);
+    var offset = 0;
+
+    for (var _i = 0, arrayBuffers_1 = arrayBuffers; _i < arrayBuffers_1.length; _i++) {
+      var item = arrayBuffers_1[_i];
+      result.set(new Uint8Array(item), offset);
+      offset += item.byteLength;
+    }
+
+    return result;
+  };
+
+  return TransportSendQueue;
+}();
+
+exports.TransportSendQueue = TransportSendQueue;
+
+var PromiseSource =
+/** @class */
+function () {
+  function PromiseSource() {
+    var _this = this;
+
+    this.promise = new Promise(function (resolve, reject) {
+      var _a;
+
+      return _a = [resolve, reject], _this.resolver = _a[0], _this.rejecter = _a[1], _a;
+    });
+  }
+
+  PromiseSource.prototype.resolve = function () {
+    this.resolver();
+  };
+
+  PromiseSource.prototype.reject = function (reason) {
+    this.rejecter(reason);
+  };
+
+  return PromiseSource;
+}();
+},{"./DefaultHttpClient":"node_modules/@microsoft/signalr/dist/esm/DefaultHttpClient.js","./ILogger":"node_modules/@microsoft/signalr/dist/esm/ILogger.js","./ITransport":"node_modules/@microsoft/signalr/dist/esm/ITransport.js","./LongPollingTransport":"node_modules/@microsoft/signalr/dist/esm/LongPollingTransport.js","./ServerSentEventsTransport":"node_modules/@microsoft/signalr/dist/esm/ServerSentEventsTransport.js","./Utils":"node_modules/@microsoft/signalr/dist/esm/Utils.js","./WebSocketTransport":"node_modules/@microsoft/signalr/dist/esm/WebSocketTransport.js"}],"node_modules/@microsoft/signalr/dist/esm/JsonHubProtocol.js":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.JsonHubProtocol = void 0;
+
+var _IHubProtocol = require("./IHubProtocol");
+
+var _ILogger = require("./ILogger");
+
+var _ITransport = require("./ITransport");
+
+var _Loggers = require("./Loggers");
+
+var _TextMessageFormat = require("./TextMessageFormat");
+
+// Copyright (c) .NET Foundation. All rights reserved.
+// Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
+var JSON_HUB_PROTOCOL_NAME = "json";
+/** Implements the JSON Hub Protocol. */
+
+var JsonHubProtocol =
+/** @class */
+function () {
+  function JsonHubProtocol() {
+    /** @inheritDoc */
+    this.name = JSON_HUB_PROTOCOL_NAME;
+    /** @inheritDoc */
+
+    this.version = 1;
+    /** @inheritDoc */
+
+    this.transferFormat = _ITransport.TransferFormat.Text;
+  }
+  /** Creates an array of {@link @microsoft/signalr.HubMessage} objects from the specified serialized representation.
+   *
+   * @param {string} input A string containing the serialized representation.
+   * @param {ILogger} logger A logger that will be used to log messages that occur during parsing.
+   */
+
+
+  JsonHubProtocol.prototype.parseMessages = function (input, logger) {
+    // The interface does allow "ArrayBuffer" to be passed in, but this implementation does not. So let's throw a useful error.
+    if (typeof input !== "string") {
+      throw new Error("Invalid input for JSON hub protocol. Expected a string.");
+    }
+
+    if (!input) {
+      return [];
+    }
+
+    if (logger === null) {
+      logger = _Loggers.NullLogger.instance;
+    } // Parse the messages
+
+
+    var messages = _TextMessageFormat.TextMessageFormat.parse(input);
+
+    var hubMessages = [];
+
+    for (var _i = 0, messages_1 = messages; _i < messages_1.length; _i++) {
+      var message = messages_1[_i];
+      var parsedMessage = JSON.parse(message);
+
+      if (typeof parsedMessage.type !== "number") {
+        throw new Error("Invalid payload.");
+      }
+
+      switch (parsedMessage.type) {
+        case _IHubProtocol.MessageType.Invocation:
+          this.isInvocationMessage(parsedMessage);
+          break;
+
+        case _IHubProtocol.MessageType.StreamItem:
+          this.isStreamItemMessage(parsedMessage);
+          break;
+
+        case _IHubProtocol.MessageType.Completion:
+          this.isCompletionMessage(parsedMessage);
+          break;
+
+        case _IHubProtocol.MessageType.Ping:
+          // Single value, no need to validate
+          break;
+
+        case _IHubProtocol.MessageType.Close:
+          // All optional values, no need to validate
+          break;
+
+        default:
+          // Future protocol changes can add message types, old clients can ignore them
+          logger.log(_ILogger.LogLevel.Information, "Unknown message type '" + parsedMessage.type + "' ignored.");
+          continue;
+      }
+
+      hubMessages.push(parsedMessage);
+    }
+
+    return hubMessages;
+  };
+  /** Writes the specified {@link @microsoft/signalr.HubMessage} to a string and returns it.
+   *
+   * @param {HubMessage} message The message to write.
+   * @returns {string} A string containing the serialized representation of the message.
+   */
+
+
+  JsonHubProtocol.prototype.writeMessage = function (message) {
+    return _TextMessageFormat.TextMessageFormat.write(JSON.stringify(message));
+  };
+
+  JsonHubProtocol.prototype.isInvocationMessage = function (message) {
+    this.assertNotEmptyString(message.target, "Invalid payload for Invocation message.");
+
+    if (message.invocationId !== undefined) {
+      this.assertNotEmptyString(message.invocationId, "Invalid payload for Invocation message.");
+    }
+  };
+
+  JsonHubProtocol.prototype.isStreamItemMessage = function (message) {
+    this.assertNotEmptyString(message.invocationId, "Invalid payload for StreamItem message.");
+
+    if (message.item === undefined) {
+      throw new Error("Invalid payload for StreamItem message.");
+    }
+  };
+
+  JsonHubProtocol.prototype.isCompletionMessage = function (message) {
+    if (message.result && message.error) {
+      throw new Error("Invalid payload for Completion message.");
+    }
+
+    if (!message.result && message.error) {
+      this.assertNotEmptyString(message.error, "Invalid payload for Completion message.");
+    }
+
+    this.assertNotEmptyString(message.invocationId, "Invalid payload for Completion message.");
+  };
+
+  JsonHubProtocol.prototype.assertNotEmptyString = function (value, errorMessage) {
+    if (typeof value !== "string" || value === "") {
+      throw new Error(errorMessage);
+    }
+  };
+
+  return JsonHubProtocol;
+}();
+
+exports.JsonHubProtocol = JsonHubProtocol;
+},{"./IHubProtocol":"node_modules/@microsoft/signalr/dist/esm/IHubProtocol.js","./ILogger":"node_modules/@microsoft/signalr/dist/esm/ILogger.js","./ITransport":"node_modules/@microsoft/signalr/dist/esm/ITransport.js","./Loggers":"node_modules/@microsoft/signalr/dist/esm/Loggers.js","./TextMessageFormat":"node_modules/@microsoft/signalr/dist/esm/TextMessageFormat.js"}],"node_modules/@microsoft/signalr/dist/esm/HubConnectionBuilder.js":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.HubConnectionBuilder = void 0;
+
+var _DefaultReconnectPolicy = require("./DefaultReconnectPolicy");
+
+var _HttpConnection = require("./HttpConnection");
+
+var _HubConnection = require("./HubConnection");
+
+var _ILogger = require("./ILogger");
+
+var _JsonHubProtocol = require("./JsonHubProtocol");
+
+var _Loggers = require("./Loggers");
+
+var _Utils = require("./Utils");
+
+// Copyright (c) .NET Foundation. All rights reserved.
+// Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
+var __assign = void 0 && (void 0).__assign || Object.assign || function (t) {
+  for (var s, i = 1, n = arguments.length; i < n; i++) {
+    s = arguments[i];
+
+    for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p)) t[p] = s[p];
+  }
+
+  return t;
+};
+
+// tslint:disable:object-literal-sort-keys
+var LogLevelNameMapping = {
+  trace: _ILogger.LogLevel.Trace,
+  debug: _ILogger.LogLevel.Debug,
+  info: _ILogger.LogLevel.Information,
+  information: _ILogger.LogLevel.Information,
+  warn: _ILogger.LogLevel.Warning,
+  warning: _ILogger.LogLevel.Warning,
+  error: _ILogger.LogLevel.Error,
+  critical: _ILogger.LogLevel.Critical,
+  none: _ILogger.LogLevel.None
+};
+
+function parseLogLevel(name) {
+  // Case-insensitive matching via lower-casing
+  // Yes, I know case-folding is a complicated problem in Unicode, but we only support
+  // the ASCII strings defined in LogLevelNameMapping anyway, so it's fine -anurse.
+  var mapping = LogLevelNameMapping[name.toLowerCase()];
+
+  if (typeof mapping !== "undefined") {
+    return mapping;
+  } else {
+    throw new Error("Unknown log level: " + name);
+  }
+}
+/** A builder for configuring {@link @microsoft/signalr.HubConnection} instances. */
+
+
+var HubConnectionBuilder =
+/** @class */
+function () {
+  function HubConnectionBuilder() {}
+
+  HubConnectionBuilder.prototype.configureLogging = function (logging) {
+    _Utils.Arg.isRequired(logging, "logging");
+
+    if (isLogger(logging)) {
+      this.logger = logging;
+    } else if (typeof logging === "string") {
+      var logLevel = parseLogLevel(logging);
+      this.logger = new _Utils.ConsoleLogger(logLevel);
+    } else {
+      this.logger = new _Utils.ConsoleLogger(logging);
+    }
+
+    return this;
+  };
+
+  HubConnectionBuilder.prototype.withUrl = function (url, transportTypeOrOptions) {
+    _Utils.Arg.isRequired(url, "url");
+
+    this.url = url; // Flow-typing knows where it's at. Since HttpTransportType is a number and IHttpConnectionOptions is guaranteed
+    // to be an object, we know (as does TypeScript) this comparison is all we need to figure out which overload was called.
+
+    if (typeof transportTypeOrOptions === "object") {
+      this.httpConnectionOptions = __assign({}, this.httpConnectionOptions, transportTypeOrOptions);
+    } else {
+      this.httpConnectionOptions = __assign({}, this.httpConnectionOptions, {
+        transport: transportTypeOrOptions
+      });
+    }
+
+    return this;
+  };
+  /** Configures the {@link @microsoft/signalr.HubConnection} to use the specified Hub Protocol.
+   *
+   * @param {IHubProtocol} protocol The {@link @microsoft/signalr.IHubProtocol} implementation to use.
+   */
+
+
+  HubConnectionBuilder.prototype.withHubProtocol = function (protocol) {
+    _Utils.Arg.isRequired(protocol, "protocol");
+
+    this.protocol = protocol;
+    return this;
+  };
+
+  HubConnectionBuilder.prototype.withAutomaticReconnect = function (retryDelaysOrReconnectPolicy) {
+    if (this.reconnectPolicy) {
+      throw new Error("A reconnectPolicy has already been set.");
+    }
+
+    if (!retryDelaysOrReconnectPolicy) {
+      this.reconnectPolicy = new _DefaultReconnectPolicy.DefaultReconnectPolicy();
+    } else if (Array.isArray(retryDelaysOrReconnectPolicy)) {
+      this.reconnectPolicy = new _DefaultReconnectPolicy.DefaultReconnectPolicy(retryDelaysOrReconnectPolicy);
+    } else {
+      this.reconnectPolicy = retryDelaysOrReconnectPolicy;
+    }
+
+    return this;
+  };
+  /** Creates a {@link @microsoft/signalr.HubConnection} from the configuration options specified in this builder.
+   *
+   * @returns {HubConnection} The configured {@link @microsoft/signalr.HubConnection}.
+   */
+
+
+  HubConnectionBuilder.prototype.build = function () {
+    // If httpConnectionOptions has a logger, use it. Otherwise, override it with the one
+    // provided to configureLogger
+    var httpConnectionOptions = this.httpConnectionOptions || {}; // If it's 'null', the user **explicitly** asked for null, don't mess with it.
+
+    if (httpConnectionOptions.logger === undefined) {
+      // If our logger is undefined or null, that's OK, the HttpConnection constructor will handle it.
+      httpConnectionOptions.logger = this.logger;
+    } // Now create the connection
+
+
+    if (!this.url) {
+      throw new Error("The 'HubConnectionBuilder.withUrl' method must be called before building the connection.");
+    }
+
+    var connection = new _HttpConnection.HttpConnection(this.url, httpConnectionOptions);
+    return _HubConnection.HubConnection.create(connection, this.logger || _Loggers.NullLogger.instance, this.protocol || new _JsonHubProtocol.JsonHubProtocol(), this.reconnectPolicy);
+  };
+
+  return HubConnectionBuilder;
+}();
+
+exports.HubConnectionBuilder = HubConnectionBuilder;
+
+function isLogger(logger) {
+  return logger.log !== undefined;
+}
+},{"./DefaultReconnectPolicy":"node_modules/@microsoft/signalr/dist/esm/DefaultReconnectPolicy.js","./HttpConnection":"node_modules/@microsoft/signalr/dist/esm/HttpConnection.js","./HubConnection":"node_modules/@microsoft/signalr/dist/esm/HubConnection.js","./ILogger":"node_modules/@microsoft/signalr/dist/esm/ILogger.js","./JsonHubProtocol":"node_modules/@microsoft/signalr/dist/esm/JsonHubProtocol.js","./Loggers":"node_modules/@microsoft/signalr/dist/esm/Loggers.js","./Utils":"node_modules/@microsoft/signalr/dist/esm/Utils.js"}],"node_modules/@microsoft/signalr/dist/esm/index.js":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -18976,7 +25994,1980 @@ var _Subject = require("./Subject");
 /** The version of the SignalR client. */
 var VERSION = "3.1.4";
 exports.VERSION = VERSION;
+},{"./Errors":"node_modules/@microsoft/signalr/dist/esm/Errors.js","./HttpClient":"node_modules/@microsoft/signalr/dist/esm/HttpClient.js","./DefaultHttpClient":"node_modules/@microsoft/signalr/dist/esm/DefaultHttpClient.js","./HubConnection":"node_modules/@microsoft/signalr/dist/esm/HubConnection.js","./HubConnectionBuilder":"node_modules/@microsoft/signalr/dist/esm/HubConnectionBuilder.js","./IHubProtocol":"node_modules/@microsoft/signalr/dist/esm/IHubProtocol.js","./ILogger":"node_modules/@microsoft/signalr/dist/esm/ILogger.js","./ITransport":"node_modules/@microsoft/signalr/dist/esm/ITransport.js","./Loggers":"node_modules/@microsoft/signalr/dist/esm/Loggers.js","./JsonHubProtocol":"node_modules/@microsoft/signalr/dist/esm/JsonHubProtocol.js","./Subject":"node_modules/@microsoft/signalr/dist/esm/Subject.js"}],"node_modules/axios/lib/helpers/bind.js":[function(require,module,exports) {
+'use strict';
+
+module.exports = function bind(fn, thisArg) {
+  return function wrap() {
+    var args = new Array(arguments.length);
+    for (var i = 0; i < args.length; i++) {
+      args[i] = arguments[i];
+    }
+    return fn.apply(thisArg, args);
+  };
+};
+
+},{}],"node_modules/axios/lib/utils.js":[function(require,module,exports) {
+'use strict';
+
+var bind = require('./helpers/bind');
+
+/*global toString:true*/
+
+// utils is a library of generic helper functions non-specific to axios
+
+var toString = Object.prototype.toString;
+
+/**
+ * Determine if a value is an Array
+ *
+ * @param {Object} val The value to test
+ * @returns {boolean} True if value is an Array, otherwise false
+ */
+function isArray(val) {
+  return toString.call(val) === '[object Array]';
+}
+
+/**
+ * Determine if a value is undefined
+ *
+ * @param {Object} val The value to test
+ * @returns {boolean} True if the value is undefined, otherwise false
+ */
+function isUndefined(val) {
+  return typeof val === 'undefined';
+}
+
+/**
+ * Determine if a value is a Buffer
+ *
+ * @param {Object} val The value to test
+ * @returns {boolean} True if value is a Buffer, otherwise false
+ */
+function isBuffer(val) {
+  return val !== null && !isUndefined(val) && val.constructor !== null && !isUndefined(val.constructor)
+    && typeof val.constructor.isBuffer === 'function' && val.constructor.isBuffer(val);
+}
+
+/**
+ * Determine if a value is an ArrayBuffer
+ *
+ * @param {Object} val The value to test
+ * @returns {boolean} True if value is an ArrayBuffer, otherwise false
+ */
+function isArrayBuffer(val) {
+  return toString.call(val) === '[object ArrayBuffer]';
+}
+
+/**
+ * Determine if a value is a FormData
+ *
+ * @param {Object} val The value to test
+ * @returns {boolean} True if value is an FormData, otherwise false
+ */
+function isFormData(val) {
+  return (typeof FormData !== 'undefined') && (val instanceof FormData);
+}
+
+/**
+ * Determine if a value is a view on an ArrayBuffer
+ *
+ * @param {Object} val The value to test
+ * @returns {boolean} True if value is a view on an ArrayBuffer, otherwise false
+ */
+function isArrayBufferView(val) {
+  var result;
+  if ((typeof ArrayBuffer !== 'undefined') && (ArrayBuffer.isView)) {
+    result = ArrayBuffer.isView(val);
+  } else {
+    result = (val) && (val.buffer) && (val.buffer instanceof ArrayBuffer);
+  }
+  return result;
+}
+
+/**
+ * Determine if a value is a String
+ *
+ * @param {Object} val The value to test
+ * @returns {boolean} True if value is a String, otherwise false
+ */
+function isString(val) {
+  return typeof val === 'string';
+}
+
+/**
+ * Determine if a value is a Number
+ *
+ * @param {Object} val The value to test
+ * @returns {boolean} True if value is a Number, otherwise false
+ */
+function isNumber(val) {
+  return typeof val === 'number';
+}
+
+/**
+ * Determine if a value is an Object
+ *
+ * @param {Object} val The value to test
+ * @returns {boolean} True if value is an Object, otherwise false
+ */
+function isObject(val) {
+  return val !== null && typeof val === 'object';
+}
+
+/**
+ * Determine if a value is a Date
+ *
+ * @param {Object} val The value to test
+ * @returns {boolean} True if value is a Date, otherwise false
+ */
+function isDate(val) {
+  return toString.call(val) === '[object Date]';
+}
+
+/**
+ * Determine if a value is a File
+ *
+ * @param {Object} val The value to test
+ * @returns {boolean} True if value is a File, otherwise false
+ */
+function isFile(val) {
+  return toString.call(val) === '[object File]';
+}
+
+/**
+ * Determine if a value is a Blob
+ *
+ * @param {Object} val The value to test
+ * @returns {boolean} True if value is a Blob, otherwise false
+ */
+function isBlob(val) {
+  return toString.call(val) === '[object Blob]';
+}
+
+/**
+ * Determine if a value is a Function
+ *
+ * @param {Object} val The value to test
+ * @returns {boolean} True if value is a Function, otherwise false
+ */
+function isFunction(val) {
+  return toString.call(val) === '[object Function]';
+}
+
+/**
+ * Determine if a value is a Stream
+ *
+ * @param {Object} val The value to test
+ * @returns {boolean} True if value is a Stream, otherwise false
+ */
+function isStream(val) {
+  return isObject(val) && isFunction(val.pipe);
+}
+
+/**
+ * Determine if a value is a URLSearchParams object
+ *
+ * @param {Object} val The value to test
+ * @returns {boolean} True if value is a URLSearchParams object, otherwise false
+ */
+function isURLSearchParams(val) {
+  return typeof URLSearchParams !== 'undefined' && val instanceof URLSearchParams;
+}
+
+/**
+ * Trim excess whitespace off the beginning and end of a string
+ *
+ * @param {String} str The String to trim
+ * @returns {String} The String freed of excess whitespace
+ */
+function trim(str) {
+  return str.replace(/^\s*/, '').replace(/\s*$/, '');
+}
+
+/**
+ * Determine if we're running in a standard browser environment
+ *
+ * This allows axios to run in a web worker, and react-native.
+ * Both environments support XMLHttpRequest, but not fully standard globals.
+ *
+ * web workers:
+ *  typeof window -> undefined
+ *  typeof document -> undefined
+ *
+ * react-native:
+ *  navigator.product -> 'ReactNative'
+ * nativescript
+ *  navigator.product -> 'NativeScript' or 'NS'
+ */
+function isStandardBrowserEnv() {
+  if (typeof navigator !== 'undefined' && (navigator.product === 'ReactNative' ||
+                                           navigator.product === 'NativeScript' ||
+                                           navigator.product === 'NS')) {
+    return false;
+  }
+  return (
+    typeof window !== 'undefined' &&
+    typeof document !== 'undefined'
+  );
+}
+
+/**
+ * Iterate over an Array or an Object invoking a function for each item.
+ *
+ * If `obj` is an Array callback will be called passing
+ * the value, index, and complete array for each item.
+ *
+ * If 'obj' is an Object callback will be called passing
+ * the value, key, and complete object for each property.
+ *
+ * @param {Object|Array} obj The object to iterate
+ * @param {Function} fn The callback to invoke for each item
+ */
+function forEach(obj, fn) {
+  // Don't bother if no value provided
+  if (obj === null || typeof obj === 'undefined') {
+    return;
+  }
+
+  // Force an array if not already something iterable
+  if (typeof obj !== 'object') {
+    /*eslint no-param-reassign:0*/
+    obj = [obj];
+  }
+
+  if (isArray(obj)) {
+    // Iterate over array values
+    for (var i = 0, l = obj.length; i < l; i++) {
+      fn.call(null, obj[i], i, obj);
+    }
+  } else {
+    // Iterate over object keys
+    for (var key in obj) {
+      if (Object.prototype.hasOwnProperty.call(obj, key)) {
+        fn.call(null, obj[key], key, obj);
+      }
+    }
+  }
+}
+
+/**
+ * Accepts varargs expecting each argument to be an object, then
+ * immutably merges the properties of each object and returns result.
+ *
+ * When multiple objects contain the same key the later object in
+ * the arguments list will take precedence.
+ *
+ * Example:
+ *
+ * ```js
+ * var result = merge({foo: 123}, {foo: 456});
+ * console.log(result.foo); // outputs 456
+ * ```
+ *
+ * @param {Object} obj1 Object to merge
+ * @returns {Object} Result of all merge properties
+ */
+function merge(/* obj1, obj2, obj3, ... */) {
+  var result = {};
+  function assignValue(val, key) {
+    if (typeof result[key] === 'object' && typeof val === 'object') {
+      result[key] = merge(result[key], val);
+    } else {
+      result[key] = val;
+    }
+  }
+
+  for (var i = 0, l = arguments.length; i < l; i++) {
+    forEach(arguments[i], assignValue);
+  }
+  return result;
+}
+
+/**
+ * Function equal to merge with the difference being that no reference
+ * to original objects is kept.
+ *
+ * @see merge
+ * @param {Object} obj1 Object to merge
+ * @returns {Object} Result of all merge properties
+ */
+function deepMerge(/* obj1, obj2, obj3, ... */) {
+  var result = {};
+  function assignValue(val, key) {
+    if (typeof result[key] === 'object' && typeof val === 'object') {
+      result[key] = deepMerge(result[key], val);
+    } else if (typeof val === 'object') {
+      result[key] = deepMerge({}, val);
+    } else {
+      result[key] = val;
+    }
+  }
+
+  for (var i = 0, l = arguments.length; i < l; i++) {
+    forEach(arguments[i], assignValue);
+  }
+  return result;
+}
+
+/**
+ * Extends object a by mutably adding to it the properties of object b.
+ *
+ * @param {Object} a The object to be extended
+ * @param {Object} b The object to copy properties from
+ * @param {Object} thisArg The object to bind function to
+ * @return {Object} The resulting value of object a
+ */
+function extend(a, b, thisArg) {
+  forEach(b, function assignValue(val, key) {
+    if (thisArg && typeof val === 'function') {
+      a[key] = bind(val, thisArg);
+    } else {
+      a[key] = val;
+    }
+  });
+  return a;
+}
+
+module.exports = {
+  isArray: isArray,
+  isArrayBuffer: isArrayBuffer,
+  isBuffer: isBuffer,
+  isFormData: isFormData,
+  isArrayBufferView: isArrayBufferView,
+  isString: isString,
+  isNumber: isNumber,
+  isObject: isObject,
+  isUndefined: isUndefined,
+  isDate: isDate,
+  isFile: isFile,
+  isBlob: isBlob,
+  isFunction: isFunction,
+  isStream: isStream,
+  isURLSearchParams: isURLSearchParams,
+  isStandardBrowserEnv: isStandardBrowserEnv,
+  forEach: forEach,
+  merge: merge,
+  deepMerge: deepMerge,
+  extend: extend,
+  trim: trim
+};
+
+},{"./helpers/bind":"node_modules/axios/lib/helpers/bind.js"}],"node_modules/axios/lib/helpers/buildURL.js":[function(require,module,exports) {
+'use strict';
+
+var utils = require('./../utils');
+
+function encode(val) {
+  return encodeURIComponent(val).
+    replace(/%40/gi, '@').
+    replace(/%3A/gi, ':').
+    replace(/%24/g, '$').
+    replace(/%2C/gi, ',').
+    replace(/%20/g, '+').
+    replace(/%5B/gi, '[').
+    replace(/%5D/gi, ']');
+}
+
+/**
+ * Build a URL by appending params to the end
+ *
+ * @param {string} url The base of the url (e.g., http://www.google.com)
+ * @param {object} [params] The params to be appended
+ * @returns {string} The formatted url
+ */
+module.exports = function buildURL(url, params, paramsSerializer) {
+  /*eslint no-param-reassign:0*/
+  if (!params) {
+    return url;
+  }
+
+  var serializedParams;
+  if (paramsSerializer) {
+    serializedParams = paramsSerializer(params);
+  } else if (utils.isURLSearchParams(params)) {
+    serializedParams = params.toString();
+  } else {
+    var parts = [];
+
+    utils.forEach(params, function serialize(val, key) {
+      if (val === null || typeof val === 'undefined') {
+        return;
+      }
+
+      if (utils.isArray(val)) {
+        key = key + '[]';
+      } else {
+        val = [val];
+      }
+
+      utils.forEach(val, function parseValue(v) {
+        if (utils.isDate(v)) {
+          v = v.toISOString();
+        } else if (utils.isObject(v)) {
+          v = JSON.stringify(v);
+        }
+        parts.push(encode(key) + '=' + encode(v));
+      });
+    });
+
+    serializedParams = parts.join('&');
+  }
+
+  if (serializedParams) {
+    var hashmarkIndex = url.indexOf('#');
+    if (hashmarkIndex !== -1) {
+      url = url.slice(0, hashmarkIndex);
+    }
+
+    url += (url.indexOf('?') === -1 ? '?' : '&') + serializedParams;
+  }
+
+  return url;
+};
+
+},{"./../utils":"node_modules/axios/lib/utils.js"}],"node_modules/axios/lib/core/InterceptorManager.js":[function(require,module,exports) {
+'use strict';
+
+var utils = require('./../utils');
+
+function InterceptorManager() {
+  this.handlers = [];
+}
+
+/**
+ * Add a new interceptor to the stack
+ *
+ * @param {Function} fulfilled The function to handle `then` for a `Promise`
+ * @param {Function} rejected The function to handle `reject` for a `Promise`
+ *
+ * @return {Number} An ID used to remove interceptor later
+ */
+InterceptorManager.prototype.use = function use(fulfilled, rejected) {
+  this.handlers.push({
+    fulfilled: fulfilled,
+    rejected: rejected
+  });
+  return this.handlers.length - 1;
+};
+
+/**
+ * Remove an interceptor from the stack
+ *
+ * @param {Number} id The ID that was returned by `use`
+ */
+InterceptorManager.prototype.eject = function eject(id) {
+  if (this.handlers[id]) {
+    this.handlers[id] = null;
+  }
+};
+
+/**
+ * Iterate over all the registered interceptors
+ *
+ * This method is particularly useful for skipping over any
+ * interceptors that may have become `null` calling `eject`.
+ *
+ * @param {Function} fn The function to call for each interceptor
+ */
+InterceptorManager.prototype.forEach = function forEach(fn) {
+  utils.forEach(this.handlers, function forEachHandler(h) {
+    if (h !== null) {
+      fn(h);
+    }
+  });
+};
+
+module.exports = InterceptorManager;
+
+},{"./../utils":"node_modules/axios/lib/utils.js"}],"node_modules/axios/lib/core/transformData.js":[function(require,module,exports) {
+'use strict';
+
+var utils = require('./../utils');
+
+/**
+ * Transform the data for a request or a response
+ *
+ * @param {Object|String} data The data to be transformed
+ * @param {Array} headers The headers for the request or response
+ * @param {Array|Function} fns A single function or Array of functions
+ * @returns {*} The resulting transformed data
+ */
+module.exports = function transformData(data, headers, fns) {
+  /*eslint no-param-reassign:0*/
+  utils.forEach(fns, function transform(fn) {
+    data = fn(data, headers);
+  });
+
+  return data;
+};
+
+},{"./../utils":"node_modules/axios/lib/utils.js"}],"node_modules/axios/lib/cancel/isCancel.js":[function(require,module,exports) {
+'use strict';
+
+module.exports = function isCancel(value) {
+  return !!(value && value.__CANCEL__);
+};
+
+},{}],"node_modules/axios/lib/helpers/normalizeHeaderName.js":[function(require,module,exports) {
+'use strict';
+
+var utils = require('../utils');
+
+module.exports = function normalizeHeaderName(headers, normalizedName) {
+  utils.forEach(headers, function processHeader(value, name) {
+    if (name !== normalizedName && name.toUpperCase() === normalizedName.toUpperCase()) {
+      headers[normalizedName] = value;
+      delete headers[name];
+    }
+  });
+};
+
+},{"../utils":"node_modules/axios/lib/utils.js"}],"node_modules/axios/lib/core/enhanceError.js":[function(require,module,exports) {
+'use strict';
+
+/**
+ * Update an Error with the specified config, error code, and response.
+ *
+ * @param {Error} error The error to update.
+ * @param {Object} config The config.
+ * @param {string} [code] The error code (for example, 'ECONNABORTED').
+ * @param {Object} [request] The request.
+ * @param {Object} [response] The response.
+ * @returns {Error} The error.
+ */
+module.exports = function enhanceError(error, config, code, request, response) {
+  error.config = config;
+  if (code) {
+    error.code = code;
+  }
+
+  error.request = request;
+  error.response = response;
+  error.isAxiosError = true;
+
+  error.toJSON = function() {
+    return {
+      // Standard
+      message: this.message,
+      name: this.name,
+      // Microsoft
+      description: this.description,
+      number: this.number,
+      // Mozilla
+      fileName: this.fileName,
+      lineNumber: this.lineNumber,
+      columnNumber: this.columnNumber,
+      stack: this.stack,
+      // Axios
+      config: this.config,
+      code: this.code
+    };
+  };
+  return error;
+};
+
+},{}],"node_modules/axios/lib/core/createError.js":[function(require,module,exports) {
+'use strict';
+
+var enhanceError = require('./enhanceError');
+
+/**
+ * Create an Error with the specified message, config, error code, request and response.
+ *
+ * @param {string} message The error message.
+ * @param {Object} config The config.
+ * @param {string} [code] The error code (for example, 'ECONNABORTED').
+ * @param {Object} [request] The request.
+ * @param {Object} [response] The response.
+ * @returns {Error} The created error.
+ */
+module.exports = function createError(message, config, code, request, response) {
+  var error = new Error(message);
+  return enhanceError(error, config, code, request, response);
+};
+
+},{"./enhanceError":"node_modules/axios/lib/core/enhanceError.js"}],"node_modules/axios/lib/core/settle.js":[function(require,module,exports) {
+'use strict';
+
+var createError = require('./createError');
+
+/**
+ * Resolve or reject a Promise based on response status.
+ *
+ * @param {Function} resolve A function that resolves the promise.
+ * @param {Function} reject A function that rejects the promise.
+ * @param {object} response The response.
+ */
+module.exports = function settle(resolve, reject, response) {
+  var validateStatus = response.config.validateStatus;
+  if (!validateStatus || validateStatus(response.status)) {
+    resolve(response);
+  } else {
+    reject(createError(
+      'Request failed with status code ' + response.status,
+      response.config,
+      null,
+      response.request,
+      response
+    ));
+  }
+};
+
+},{"./createError":"node_modules/axios/lib/core/createError.js"}],"node_modules/axios/lib/helpers/isAbsoluteURL.js":[function(require,module,exports) {
+'use strict';
+
+/**
+ * Determines whether the specified URL is absolute
+ *
+ * @param {string} url The URL to test
+ * @returns {boolean} True if the specified URL is absolute, otherwise false
+ */
+module.exports = function isAbsoluteURL(url) {
+  // A URL is considered absolute if it begins with "<scheme>://" or "//" (protocol-relative URL).
+  // RFC 3986 defines scheme name as a sequence of characters beginning with a letter and followed
+  // by any combination of letters, digits, plus, period, or hyphen.
+  return /^([a-z][a-z\d\+\-\.]*:)?\/\//i.test(url);
+};
+
+},{}],"node_modules/axios/lib/helpers/combineURLs.js":[function(require,module,exports) {
+'use strict';
+
+/**
+ * Creates a new URL by combining the specified URLs
+ *
+ * @param {string} baseURL The base URL
+ * @param {string} relativeURL The relative URL
+ * @returns {string} The combined URL
+ */
+module.exports = function combineURLs(baseURL, relativeURL) {
+  return relativeURL
+    ? baseURL.replace(/\/+$/, '') + '/' + relativeURL.replace(/^\/+/, '')
+    : baseURL;
+};
+
+},{}],"node_modules/axios/lib/core/buildFullPath.js":[function(require,module,exports) {
+'use strict';
+
+var isAbsoluteURL = require('../helpers/isAbsoluteURL');
+var combineURLs = require('../helpers/combineURLs');
+
+/**
+ * Creates a new URL by combining the baseURL with the requestedURL,
+ * only when the requestedURL is not already an absolute URL.
+ * If the requestURL is absolute, this function returns the requestedURL untouched.
+ *
+ * @param {string} baseURL The base URL
+ * @param {string} requestedURL Absolute or relative URL to combine
+ * @returns {string} The combined full path
+ */
+module.exports = function buildFullPath(baseURL, requestedURL) {
+  if (baseURL && !isAbsoluteURL(requestedURL)) {
+    return combineURLs(baseURL, requestedURL);
+  }
+  return requestedURL;
+};
+
+},{"../helpers/isAbsoluteURL":"node_modules/axios/lib/helpers/isAbsoluteURL.js","../helpers/combineURLs":"node_modules/axios/lib/helpers/combineURLs.js"}],"node_modules/axios/lib/helpers/parseHeaders.js":[function(require,module,exports) {
+'use strict';
+
+var utils = require('./../utils');
+
+// Headers whose duplicates are ignored by node
+// c.f. https://nodejs.org/api/http.html#http_message_headers
+var ignoreDuplicateOf = [
+  'age', 'authorization', 'content-length', 'content-type', 'etag',
+  'expires', 'from', 'host', 'if-modified-since', 'if-unmodified-since',
+  'last-modified', 'location', 'max-forwards', 'proxy-authorization',
+  'referer', 'retry-after', 'user-agent'
+];
+
+/**
+ * Parse headers into an object
+ *
+ * ```
+ * Date: Wed, 27 Aug 2014 08:58:49 GMT
+ * Content-Type: application/json
+ * Connection: keep-alive
+ * Transfer-Encoding: chunked
+ * ```
+ *
+ * @param {String} headers Headers needing to be parsed
+ * @returns {Object} Headers parsed into an object
+ */
+module.exports = function parseHeaders(headers) {
+  var parsed = {};
+  var key;
+  var val;
+  var i;
+
+  if (!headers) { return parsed; }
+
+  utils.forEach(headers.split('\n'), function parser(line) {
+    i = line.indexOf(':');
+    key = utils.trim(line.substr(0, i)).toLowerCase();
+    val = utils.trim(line.substr(i + 1));
+
+    if (key) {
+      if (parsed[key] && ignoreDuplicateOf.indexOf(key) >= 0) {
+        return;
+      }
+      if (key === 'set-cookie') {
+        parsed[key] = (parsed[key] ? parsed[key] : []).concat([val]);
+      } else {
+        parsed[key] = parsed[key] ? parsed[key] + ', ' + val : val;
+      }
+    }
+  });
+
+  return parsed;
+};
+
+},{"./../utils":"node_modules/axios/lib/utils.js"}],"node_modules/axios/lib/helpers/isURLSameOrigin.js":[function(require,module,exports) {
+'use strict';
+
+var utils = require('./../utils');
+
+module.exports = (
+  utils.isStandardBrowserEnv() ?
+
+  // Standard browser envs have full support of the APIs needed to test
+  // whether the request URL is of the same origin as current location.
+    (function standardBrowserEnv() {
+      var msie = /(msie|trident)/i.test(navigator.userAgent);
+      var urlParsingNode = document.createElement('a');
+      var originURL;
+
+      /**
+    * Parse a URL to discover it's components
+    *
+    * @param {String} url The URL to be parsed
+    * @returns {Object}
+    */
+      function resolveURL(url) {
+        var href = url;
+
+        if (msie) {
+        // IE needs attribute set twice to normalize properties
+          urlParsingNode.setAttribute('href', href);
+          href = urlParsingNode.href;
+        }
+
+        urlParsingNode.setAttribute('href', href);
+
+        // urlParsingNode provides the UrlUtils interface - http://url.spec.whatwg.org/#urlutils
+        return {
+          href: urlParsingNode.href,
+          protocol: urlParsingNode.protocol ? urlParsingNode.protocol.replace(/:$/, '') : '',
+          host: urlParsingNode.host,
+          search: urlParsingNode.search ? urlParsingNode.search.replace(/^\?/, '') : '',
+          hash: urlParsingNode.hash ? urlParsingNode.hash.replace(/^#/, '') : '',
+          hostname: urlParsingNode.hostname,
+          port: urlParsingNode.port,
+          pathname: (urlParsingNode.pathname.charAt(0) === '/') ?
+            urlParsingNode.pathname :
+            '/' + urlParsingNode.pathname
+        };
+      }
+
+      originURL = resolveURL(window.location.href);
+
+      /**
+    * Determine if a URL shares the same origin as the current location
+    *
+    * @param {String} requestURL The URL to test
+    * @returns {boolean} True if URL shares the same origin, otherwise false
+    */
+      return function isURLSameOrigin(requestURL) {
+        var parsed = (utils.isString(requestURL)) ? resolveURL(requestURL) : requestURL;
+        return (parsed.protocol === originURL.protocol &&
+            parsed.host === originURL.host);
+      };
+    })() :
+
+  // Non standard browser envs (web workers, react-native) lack needed support.
+    (function nonStandardBrowserEnv() {
+      return function isURLSameOrigin() {
+        return true;
+      };
+    })()
+);
+
+},{"./../utils":"node_modules/axios/lib/utils.js"}],"node_modules/axios/lib/helpers/cookies.js":[function(require,module,exports) {
+'use strict';
+
+var utils = require('./../utils');
+
+module.exports = (
+  utils.isStandardBrowserEnv() ?
+
+  // Standard browser envs support document.cookie
+    (function standardBrowserEnv() {
+      return {
+        write: function write(name, value, expires, path, domain, secure) {
+          var cookie = [];
+          cookie.push(name + '=' + encodeURIComponent(value));
+
+          if (utils.isNumber(expires)) {
+            cookie.push('expires=' + new Date(expires).toGMTString());
+          }
+
+          if (utils.isString(path)) {
+            cookie.push('path=' + path);
+          }
+
+          if (utils.isString(domain)) {
+            cookie.push('domain=' + domain);
+          }
+
+          if (secure === true) {
+            cookie.push('secure');
+          }
+
+          document.cookie = cookie.join('; ');
+        },
+
+        read: function read(name) {
+          var match = document.cookie.match(new RegExp('(^|;\\s*)(' + name + ')=([^;]*)'));
+          return (match ? decodeURIComponent(match[3]) : null);
+        },
+
+        remove: function remove(name) {
+          this.write(name, '', Date.now() - 86400000);
+        }
+      };
+    })() :
+
+  // Non standard browser env (web workers, react-native) lack needed support.
+    (function nonStandardBrowserEnv() {
+      return {
+        write: function write() {},
+        read: function read() { return null; },
+        remove: function remove() {}
+      };
+    })()
+);
+
+},{"./../utils":"node_modules/axios/lib/utils.js"}],"node_modules/axios/lib/adapters/xhr.js":[function(require,module,exports) {
+'use strict';
+
+var utils = require('./../utils');
+var settle = require('./../core/settle');
+var buildURL = require('./../helpers/buildURL');
+var buildFullPath = require('../core/buildFullPath');
+var parseHeaders = require('./../helpers/parseHeaders');
+var isURLSameOrigin = require('./../helpers/isURLSameOrigin');
+var createError = require('../core/createError');
+
+module.exports = function xhrAdapter(config) {
+  return new Promise(function dispatchXhrRequest(resolve, reject) {
+    var requestData = config.data;
+    var requestHeaders = config.headers;
+
+    if (utils.isFormData(requestData)) {
+      delete requestHeaders['Content-Type']; // Let the browser set it
+    }
+
+    var request = new XMLHttpRequest();
+
+    // HTTP basic authentication
+    if (config.auth) {
+      var username = config.auth.username || '';
+      var password = config.auth.password || '';
+      requestHeaders.Authorization = 'Basic ' + btoa(username + ':' + password);
+    }
+
+    var fullPath = buildFullPath(config.baseURL, config.url);
+    request.open(config.method.toUpperCase(), buildURL(fullPath, config.params, config.paramsSerializer), true);
+
+    // Set the request timeout in MS
+    request.timeout = config.timeout;
+
+    // Listen for ready state
+    request.onreadystatechange = function handleLoad() {
+      if (!request || request.readyState !== 4) {
+        return;
+      }
+
+      // The request errored out and we didn't get a response, this will be
+      // handled by onerror instead
+      // With one exception: request that using file: protocol, most browsers
+      // will return status as 0 even though it's a successful request
+      if (request.status === 0 && !(request.responseURL && request.responseURL.indexOf('file:') === 0)) {
+        return;
+      }
+
+      // Prepare the response
+      var responseHeaders = 'getAllResponseHeaders' in request ? parseHeaders(request.getAllResponseHeaders()) : null;
+      var responseData = !config.responseType || config.responseType === 'text' ? request.responseText : request.response;
+      var response = {
+        data: responseData,
+        status: request.status,
+        statusText: request.statusText,
+        headers: responseHeaders,
+        config: config,
+        request: request
+      };
+
+      settle(resolve, reject, response);
+
+      // Clean up request
+      request = null;
+    };
+
+    // Handle browser request cancellation (as opposed to a manual cancellation)
+    request.onabort = function handleAbort() {
+      if (!request) {
+        return;
+      }
+
+      reject(createError('Request aborted', config, 'ECONNABORTED', request));
+
+      // Clean up request
+      request = null;
+    };
+
+    // Handle low level network errors
+    request.onerror = function handleError() {
+      // Real errors are hidden from us by the browser
+      // onerror should only fire if it's a network error
+      reject(createError('Network Error', config, null, request));
+
+      // Clean up request
+      request = null;
+    };
+
+    // Handle timeout
+    request.ontimeout = function handleTimeout() {
+      var timeoutErrorMessage = 'timeout of ' + config.timeout + 'ms exceeded';
+      if (config.timeoutErrorMessage) {
+        timeoutErrorMessage = config.timeoutErrorMessage;
+      }
+      reject(createError(timeoutErrorMessage, config, 'ECONNABORTED',
+        request));
+
+      // Clean up request
+      request = null;
+    };
+
+    // Add xsrf header
+    // This is only done if running in a standard browser environment.
+    // Specifically not if we're in a web worker, or react-native.
+    if (utils.isStandardBrowserEnv()) {
+      var cookies = require('./../helpers/cookies');
+
+      // Add xsrf header
+      var xsrfValue = (config.withCredentials || isURLSameOrigin(fullPath)) && config.xsrfCookieName ?
+        cookies.read(config.xsrfCookieName) :
+        undefined;
+
+      if (xsrfValue) {
+        requestHeaders[config.xsrfHeaderName] = xsrfValue;
+      }
+    }
+
+    // Add headers to the request
+    if ('setRequestHeader' in request) {
+      utils.forEach(requestHeaders, function setRequestHeader(val, key) {
+        if (typeof requestData === 'undefined' && key.toLowerCase() === 'content-type') {
+          // Remove Content-Type if data is undefined
+          delete requestHeaders[key];
+        } else {
+          // Otherwise add header to the request
+          request.setRequestHeader(key, val);
+        }
+      });
+    }
+
+    // Add withCredentials to request if needed
+    if (!utils.isUndefined(config.withCredentials)) {
+      request.withCredentials = !!config.withCredentials;
+    }
+
+    // Add responseType to request if needed
+    if (config.responseType) {
+      try {
+        request.responseType = config.responseType;
+      } catch (e) {
+        // Expected DOMException thrown by browsers not compatible XMLHttpRequest Level 2.
+        // But, this can be suppressed for 'json' type as it can be parsed by default 'transformResponse' function.
+        if (config.responseType !== 'json') {
+          throw e;
+        }
+      }
+    }
+
+    // Handle progress if needed
+    if (typeof config.onDownloadProgress === 'function') {
+      request.addEventListener('progress', config.onDownloadProgress);
+    }
+
+    // Not all browsers support upload events
+    if (typeof config.onUploadProgress === 'function' && request.upload) {
+      request.upload.addEventListener('progress', config.onUploadProgress);
+    }
+
+    if (config.cancelToken) {
+      // Handle cancellation
+      config.cancelToken.promise.then(function onCanceled(cancel) {
+        if (!request) {
+          return;
+        }
+
+        request.abort();
+        reject(cancel);
+        // Clean up request
+        request = null;
+      });
+    }
+
+    if (requestData === undefined) {
+      requestData = null;
+    }
+
+    // Send the request
+    request.send(requestData);
+  });
+};
+
+},{"./../utils":"node_modules/axios/lib/utils.js","./../core/settle":"node_modules/axios/lib/core/settle.js","./../helpers/buildURL":"node_modules/axios/lib/helpers/buildURL.js","../core/buildFullPath":"node_modules/axios/lib/core/buildFullPath.js","./../helpers/parseHeaders":"node_modules/axios/lib/helpers/parseHeaders.js","./../helpers/isURLSameOrigin":"node_modules/axios/lib/helpers/isURLSameOrigin.js","../core/createError":"node_modules/axios/lib/core/createError.js","./../helpers/cookies":"node_modules/axios/lib/helpers/cookies.js"}],"node_modules/process/browser.js":[function(require,module,exports) {
+
+// shim for using process in browser
+var process = module.exports = {}; // cached from whatever global is present so that test runners that stub it
+// don't break things.  But we need to wrap it in a try catch in case it is
+// wrapped in strict mode code which doesn't define any globals.  It's inside a
+// function because try/catches deoptimize in certain engines.
+
+var cachedSetTimeout;
+var cachedClearTimeout;
+
+function defaultSetTimout() {
+  throw new Error('setTimeout has not been defined');
+}
+
+function defaultClearTimeout() {
+  throw new Error('clearTimeout has not been defined');
+}
+
+(function () {
+  try {
+    if (typeof setTimeout === 'function') {
+      cachedSetTimeout = setTimeout;
+    } else {
+      cachedSetTimeout = defaultSetTimout;
+    }
+  } catch (e) {
+    cachedSetTimeout = defaultSetTimout;
+  }
+
+  try {
+    if (typeof clearTimeout === 'function') {
+      cachedClearTimeout = clearTimeout;
+    } else {
+      cachedClearTimeout = defaultClearTimeout;
+    }
+  } catch (e) {
+    cachedClearTimeout = defaultClearTimeout;
+  }
+})();
+
+function runTimeout(fun) {
+  if (cachedSetTimeout === setTimeout) {
+    //normal enviroments in sane situations
+    return setTimeout(fun, 0);
+  } // if setTimeout wasn't available but was latter defined
+
+
+  if ((cachedSetTimeout === defaultSetTimout || !cachedSetTimeout) && setTimeout) {
+    cachedSetTimeout = setTimeout;
+    return setTimeout(fun, 0);
+  }
+
+  try {
+    // when when somebody has screwed with setTimeout but no I.E. maddness
+    return cachedSetTimeout(fun, 0);
+  } catch (e) {
+    try {
+      // When we are in I.E. but the script has been evaled so I.E. doesn't trust the global object when called normally
+      return cachedSetTimeout.call(null, fun, 0);
+    } catch (e) {
+      // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error
+      return cachedSetTimeout.call(this, fun, 0);
+    }
+  }
+}
+
+function runClearTimeout(marker) {
+  if (cachedClearTimeout === clearTimeout) {
+    //normal enviroments in sane situations
+    return clearTimeout(marker);
+  } // if clearTimeout wasn't available but was latter defined
+
+
+  if ((cachedClearTimeout === defaultClearTimeout || !cachedClearTimeout) && clearTimeout) {
+    cachedClearTimeout = clearTimeout;
+    return clearTimeout(marker);
+  }
+
+  try {
+    // when when somebody has screwed with setTimeout but no I.E. maddness
+    return cachedClearTimeout(marker);
+  } catch (e) {
+    try {
+      // When we are in I.E. but the script has been evaled so I.E. doesn't  trust the global object when called normally
+      return cachedClearTimeout.call(null, marker);
+    } catch (e) {
+      // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error.
+      // Some versions of I.E. have different rules for clearTimeout vs setTimeout
+      return cachedClearTimeout.call(this, marker);
+    }
+  }
+}
+
+var queue = [];
+var draining = false;
+var currentQueue;
+var queueIndex = -1;
+
+function cleanUpNextTick() {
+  if (!draining || !currentQueue) {
+    return;
+  }
+
+  draining = false;
+
+  if (currentQueue.length) {
+    queue = currentQueue.concat(queue);
+  } else {
+    queueIndex = -1;
+  }
+
+  if (queue.length) {
+    drainQueue();
+  }
+}
+
+function drainQueue() {
+  if (draining) {
+    return;
+  }
+
+  var timeout = runTimeout(cleanUpNextTick);
+  draining = true;
+  var len = queue.length;
+
+  while (len) {
+    currentQueue = queue;
+    queue = [];
+
+    while (++queueIndex < len) {
+      if (currentQueue) {
+        currentQueue[queueIndex].run();
+      }
+    }
+
+    queueIndex = -1;
+    len = queue.length;
+  }
+
+  currentQueue = null;
+  draining = false;
+  runClearTimeout(timeout);
+}
+
+process.nextTick = function (fun) {
+  var args = new Array(arguments.length - 1);
+
+  if (arguments.length > 1) {
+    for (var i = 1; i < arguments.length; i++) {
+      args[i - 1] = arguments[i];
+    }
+  }
+
+  queue.push(new Item(fun, args));
+
+  if (queue.length === 1 && !draining) {
+    runTimeout(drainQueue);
+  }
+}; // v8 likes predictible objects
+
+
+function Item(fun, array) {
+  this.fun = fun;
+  this.array = array;
+}
+
+Item.prototype.run = function () {
+  this.fun.apply(null, this.array);
+};
+
+process.title = 'browser';
+process.env = {};
+process.argv = [];
+process.version = ''; // empty string to avoid regexp issues
+
+process.versions = {};
+
+function noop() {}
+
+process.on = noop;
+process.addListener = noop;
+process.once = noop;
+process.off = noop;
+process.removeListener = noop;
+process.removeAllListeners = noop;
+process.emit = noop;
+process.prependListener = noop;
+process.prependOnceListener = noop;
+
+process.listeners = function (name) {
+  return [];
+};
+
+process.binding = function (name) {
+  throw new Error('process.binding is not supported');
+};
+
+process.cwd = function () {
+  return '/';
+};
+
+process.chdir = function (dir) {
+  throw new Error('process.chdir is not supported');
+};
+
+process.umask = function () {
+  return 0;
+};
+},{}],"node_modules/axios/lib/defaults.js":[function(require,module,exports) {
+var process = require("process");
+'use strict';
+
+var utils = require('./utils');
+var normalizeHeaderName = require('./helpers/normalizeHeaderName');
+
+var DEFAULT_CONTENT_TYPE = {
+  'Content-Type': 'application/x-www-form-urlencoded'
+};
+
+function setContentTypeIfUnset(headers, value) {
+  if (!utils.isUndefined(headers) && utils.isUndefined(headers['Content-Type'])) {
+    headers['Content-Type'] = value;
+  }
+}
+
+function getDefaultAdapter() {
+  var adapter;
+  if (typeof XMLHttpRequest !== 'undefined') {
+    // For browsers use XHR adapter
+    adapter = require('./adapters/xhr');
+  } else if (typeof process !== 'undefined' && Object.prototype.toString.call(process) === '[object process]') {
+    // For node use HTTP adapter
+    adapter = require('./adapters/http');
+  }
+  return adapter;
+}
+
+var defaults = {
+  adapter: getDefaultAdapter(),
+
+  transformRequest: [function transformRequest(data, headers) {
+    normalizeHeaderName(headers, 'Accept');
+    normalizeHeaderName(headers, 'Content-Type');
+    if (utils.isFormData(data) ||
+      utils.isArrayBuffer(data) ||
+      utils.isBuffer(data) ||
+      utils.isStream(data) ||
+      utils.isFile(data) ||
+      utils.isBlob(data)
+    ) {
+      return data;
+    }
+    if (utils.isArrayBufferView(data)) {
+      return data.buffer;
+    }
+    if (utils.isURLSearchParams(data)) {
+      setContentTypeIfUnset(headers, 'application/x-www-form-urlencoded;charset=utf-8');
+      return data.toString();
+    }
+    if (utils.isObject(data)) {
+      setContentTypeIfUnset(headers, 'application/json;charset=utf-8');
+      return JSON.stringify(data);
+    }
+    return data;
+  }],
+
+  transformResponse: [function transformResponse(data) {
+    /*eslint no-param-reassign:0*/
+    if (typeof data === 'string') {
+      try {
+        data = JSON.parse(data);
+      } catch (e) { /* Ignore */ }
+    }
+    return data;
+  }],
+
+  /**
+   * A timeout in milliseconds to abort a request. If set to 0 (default) a
+   * timeout is not created.
+   */
+  timeout: 0,
+
+  xsrfCookieName: 'XSRF-TOKEN',
+  xsrfHeaderName: 'X-XSRF-TOKEN',
+
+  maxContentLength: -1,
+
+  validateStatus: function validateStatus(status) {
+    return status >= 200 && status < 300;
+  }
+};
+
+defaults.headers = {
+  common: {
+    'Accept': 'application/json, text/plain, */*'
+  }
+};
+
+utils.forEach(['delete', 'get', 'head'], function forEachMethodNoData(method) {
+  defaults.headers[method] = {};
+});
+
+utils.forEach(['post', 'put', 'patch'], function forEachMethodWithData(method) {
+  defaults.headers[method] = utils.merge(DEFAULT_CONTENT_TYPE);
+});
+
+module.exports = defaults;
+
+},{"./utils":"node_modules/axios/lib/utils.js","./helpers/normalizeHeaderName":"node_modules/axios/lib/helpers/normalizeHeaderName.js","./adapters/xhr":"node_modules/axios/lib/adapters/xhr.js","./adapters/http":"node_modules/axios/lib/adapters/xhr.js","process":"node_modules/process/browser.js"}],"node_modules/axios/lib/core/dispatchRequest.js":[function(require,module,exports) {
+'use strict';
+
+var utils = require('./../utils');
+var transformData = require('./transformData');
+var isCancel = require('../cancel/isCancel');
+var defaults = require('../defaults');
+
+/**
+ * Throws a `Cancel` if cancellation has been requested.
+ */
+function throwIfCancellationRequested(config) {
+  if (config.cancelToken) {
+    config.cancelToken.throwIfRequested();
+  }
+}
+
+/**
+ * Dispatch a request to the server using the configured adapter.
+ *
+ * @param {object} config The config that is to be used for the request
+ * @returns {Promise} The Promise to be fulfilled
+ */
+module.exports = function dispatchRequest(config) {
+  throwIfCancellationRequested(config);
+
+  // Ensure headers exist
+  config.headers = config.headers || {};
+
+  // Transform request data
+  config.data = transformData(
+    config.data,
+    config.headers,
+    config.transformRequest
+  );
+
+  // Flatten headers
+  config.headers = utils.merge(
+    config.headers.common || {},
+    config.headers[config.method] || {},
+    config.headers
+  );
+
+  utils.forEach(
+    ['delete', 'get', 'head', 'post', 'put', 'patch', 'common'],
+    function cleanHeaderConfig(method) {
+      delete config.headers[method];
+    }
+  );
+
+  var adapter = config.adapter || defaults.adapter;
+
+  return adapter(config).then(function onAdapterResolution(response) {
+    throwIfCancellationRequested(config);
+
+    // Transform response data
+    response.data = transformData(
+      response.data,
+      response.headers,
+      config.transformResponse
+    );
+
+    return response;
+  }, function onAdapterRejection(reason) {
+    if (!isCancel(reason)) {
+      throwIfCancellationRequested(config);
+
+      // Transform response data
+      if (reason && reason.response) {
+        reason.response.data = transformData(
+          reason.response.data,
+          reason.response.headers,
+          config.transformResponse
+        );
+      }
+    }
+
+    return Promise.reject(reason);
+  });
+};
+
+},{"./../utils":"node_modules/axios/lib/utils.js","./transformData":"node_modules/axios/lib/core/transformData.js","../cancel/isCancel":"node_modules/axios/lib/cancel/isCancel.js","../defaults":"node_modules/axios/lib/defaults.js"}],"node_modules/axios/lib/core/mergeConfig.js":[function(require,module,exports) {
+'use strict';
+
+var utils = require('../utils');
+
+/**
+ * Config-specific merge-function which creates a new config-object
+ * by merging two configuration objects together.
+ *
+ * @param {Object} config1
+ * @param {Object} config2
+ * @returns {Object} New object resulting from merging config2 to config1
+ */
+module.exports = function mergeConfig(config1, config2) {
+  // eslint-disable-next-line no-param-reassign
+  config2 = config2 || {};
+  var config = {};
+
+  var valueFromConfig2Keys = ['url', 'method', 'params', 'data'];
+  var mergeDeepPropertiesKeys = ['headers', 'auth', 'proxy'];
+  var defaultToConfig2Keys = [
+    'baseURL', 'url', 'transformRequest', 'transformResponse', 'paramsSerializer',
+    'timeout', 'withCredentials', 'adapter', 'responseType', 'xsrfCookieName',
+    'xsrfHeaderName', 'onUploadProgress', 'onDownloadProgress',
+    'maxContentLength', 'validateStatus', 'maxRedirects', 'httpAgent',
+    'httpsAgent', 'cancelToken', 'socketPath'
+  ];
+
+  utils.forEach(valueFromConfig2Keys, function valueFromConfig2(prop) {
+    if (typeof config2[prop] !== 'undefined') {
+      config[prop] = config2[prop];
+    }
+  });
+
+  utils.forEach(mergeDeepPropertiesKeys, function mergeDeepProperties(prop) {
+    if (utils.isObject(config2[prop])) {
+      config[prop] = utils.deepMerge(config1[prop], config2[prop]);
+    } else if (typeof config2[prop] !== 'undefined') {
+      config[prop] = config2[prop];
+    } else if (utils.isObject(config1[prop])) {
+      config[prop] = utils.deepMerge(config1[prop]);
+    } else if (typeof config1[prop] !== 'undefined') {
+      config[prop] = config1[prop];
+    }
+  });
+
+  utils.forEach(defaultToConfig2Keys, function defaultToConfig2(prop) {
+    if (typeof config2[prop] !== 'undefined') {
+      config[prop] = config2[prop];
+    } else if (typeof config1[prop] !== 'undefined') {
+      config[prop] = config1[prop];
+    }
+  });
+
+  var axiosKeys = valueFromConfig2Keys
+    .concat(mergeDeepPropertiesKeys)
+    .concat(defaultToConfig2Keys);
+
+  var otherKeys = Object
+    .keys(config2)
+    .filter(function filterAxiosKeys(key) {
+      return axiosKeys.indexOf(key) === -1;
+    });
+
+  utils.forEach(otherKeys, function otherKeysDefaultToConfig2(prop) {
+    if (typeof config2[prop] !== 'undefined') {
+      config[prop] = config2[prop];
+    } else if (typeof config1[prop] !== 'undefined') {
+      config[prop] = config1[prop];
+    }
+  });
+
+  return config;
+};
+
+},{"../utils":"node_modules/axios/lib/utils.js"}],"node_modules/axios/lib/core/Axios.js":[function(require,module,exports) {
+'use strict';
+
+var utils = require('./../utils');
+var buildURL = require('../helpers/buildURL');
+var InterceptorManager = require('./InterceptorManager');
+var dispatchRequest = require('./dispatchRequest');
+var mergeConfig = require('./mergeConfig');
+
+/**
+ * Create a new instance of Axios
+ *
+ * @param {Object} instanceConfig The default config for the instance
+ */
+function Axios(instanceConfig) {
+  this.defaults = instanceConfig;
+  this.interceptors = {
+    request: new InterceptorManager(),
+    response: new InterceptorManager()
+  };
+}
+
+/**
+ * Dispatch a request
+ *
+ * @param {Object} config The config specific for this request (merged with this.defaults)
+ */
+Axios.prototype.request = function request(config) {
+  /*eslint no-param-reassign:0*/
+  // Allow for axios('example/url'[, config]) a la fetch API
+  if (typeof config === 'string') {
+    config = arguments[1] || {};
+    config.url = arguments[0];
+  } else {
+    config = config || {};
+  }
+
+  config = mergeConfig(this.defaults, config);
+
+  // Set config.method
+  if (config.method) {
+    config.method = config.method.toLowerCase();
+  } else if (this.defaults.method) {
+    config.method = this.defaults.method.toLowerCase();
+  } else {
+    config.method = 'get';
+  }
+
+  // Hook up interceptors middleware
+  var chain = [dispatchRequest, undefined];
+  var promise = Promise.resolve(config);
+
+  this.interceptors.request.forEach(function unshiftRequestInterceptors(interceptor) {
+    chain.unshift(interceptor.fulfilled, interceptor.rejected);
+  });
+
+  this.interceptors.response.forEach(function pushResponseInterceptors(interceptor) {
+    chain.push(interceptor.fulfilled, interceptor.rejected);
+  });
+
+  while (chain.length) {
+    promise = promise.then(chain.shift(), chain.shift());
+  }
+
+  return promise;
+};
+
+Axios.prototype.getUri = function getUri(config) {
+  config = mergeConfig(this.defaults, config);
+  return buildURL(config.url, config.params, config.paramsSerializer).replace(/^\?/, '');
+};
+
+// Provide aliases for supported request methods
+utils.forEach(['delete', 'get', 'head', 'options'], function forEachMethodNoData(method) {
+  /*eslint func-names:0*/
+  Axios.prototype[method] = function(url, config) {
+    return this.request(utils.merge(config || {}, {
+      method: method,
+      url: url
+    }));
+  };
+});
+
+utils.forEach(['post', 'put', 'patch'], function forEachMethodWithData(method) {
+  /*eslint func-names:0*/
+  Axios.prototype[method] = function(url, data, config) {
+    return this.request(utils.merge(config || {}, {
+      method: method,
+      url: url,
+      data: data
+    }));
+  };
+});
+
+module.exports = Axios;
+
+},{"./../utils":"node_modules/axios/lib/utils.js","../helpers/buildURL":"node_modules/axios/lib/helpers/buildURL.js","./InterceptorManager":"node_modules/axios/lib/core/InterceptorManager.js","./dispatchRequest":"node_modules/axios/lib/core/dispatchRequest.js","./mergeConfig":"node_modules/axios/lib/core/mergeConfig.js"}],"node_modules/axios/lib/cancel/Cancel.js":[function(require,module,exports) {
+'use strict';
+
+/**
+ * A `Cancel` is an object that is thrown when an operation is canceled.
+ *
+ * @class
+ * @param {string=} message The message.
+ */
+function Cancel(message) {
+  this.message = message;
+}
+
+Cancel.prototype.toString = function toString() {
+  return 'Cancel' + (this.message ? ': ' + this.message : '');
+};
+
+Cancel.prototype.__CANCEL__ = true;
+
+module.exports = Cancel;
+
+},{}],"node_modules/axios/lib/cancel/CancelToken.js":[function(require,module,exports) {
+'use strict';
+
+var Cancel = require('./Cancel');
+
+/**
+ * A `CancelToken` is an object that can be used to request cancellation of an operation.
+ *
+ * @class
+ * @param {Function} executor The executor function.
+ */
+function CancelToken(executor) {
+  if (typeof executor !== 'function') {
+    throw new TypeError('executor must be a function.');
+  }
+
+  var resolvePromise;
+  this.promise = new Promise(function promiseExecutor(resolve) {
+    resolvePromise = resolve;
+  });
+
+  var token = this;
+  executor(function cancel(message) {
+    if (token.reason) {
+      // Cancellation has already been requested
+      return;
+    }
+
+    token.reason = new Cancel(message);
+    resolvePromise(token.reason);
+  });
+}
+
+/**
+ * Throws a `Cancel` if cancellation has been requested.
+ */
+CancelToken.prototype.throwIfRequested = function throwIfRequested() {
+  if (this.reason) {
+    throw this.reason;
+  }
+};
+
+/**
+ * Returns an object that contains a new `CancelToken` and a function that, when called,
+ * cancels the `CancelToken`.
+ */
+CancelToken.source = function source() {
+  var cancel;
+  var token = new CancelToken(function executor(c) {
+    cancel = c;
+  });
+  return {
+    token: token,
+    cancel: cancel
+  };
+};
+
+module.exports = CancelToken;
+
+},{"./Cancel":"node_modules/axios/lib/cancel/Cancel.js"}],"node_modules/axios/lib/helpers/spread.js":[function(require,module,exports) {
+'use strict';
+
+/**
+ * Syntactic sugar for invoking a function and expanding an array for arguments.
+ *
+ * Common use case would be to use `Function.prototype.apply`.
+ *
+ *  ```js
+ *  function f(x, y, z) {}
+ *  var args = [1, 2, 3];
+ *  f.apply(null, args);
+ *  ```
+ *
+ * With `spread` this example can be re-written.
+ *
+ *  ```js
+ *  spread(function(x, y, z) {})([1, 2, 3]);
+ *  ```
+ *
+ * @param {Function} callback
+ * @returns {Function}
+ */
+module.exports = function spread(callback) {
+  return function wrap(arr) {
+    return callback.apply(null, arr);
+  };
+};
+
+},{}],"node_modules/axios/lib/axios.js":[function(require,module,exports) {
+'use strict';
+
+var utils = require('./utils');
+var bind = require('./helpers/bind');
+var Axios = require('./core/Axios');
+var mergeConfig = require('./core/mergeConfig');
+var defaults = require('./defaults');
+
+/**
+ * Create an instance of Axios
+ *
+ * @param {Object} defaultConfig The default config for the instance
+ * @return {Axios} A new instance of Axios
+ */
+function createInstance(defaultConfig) {
+  var context = new Axios(defaultConfig);
+  var instance = bind(Axios.prototype.request, context);
+
+  // Copy axios.prototype to instance
+  utils.extend(instance, Axios.prototype, context);
+
+  // Copy context to instance
+  utils.extend(instance, context);
+
+  return instance;
+}
+
+// Create the default instance to be exported
+var axios = createInstance(defaults);
+
+// Expose Axios class to allow class inheritance
+axios.Axios = Axios;
+
+// Factory for creating new instances
+axios.create = function create(instanceConfig) {
+  return createInstance(mergeConfig(axios.defaults, instanceConfig));
+};
+
+// Expose Cancel & CancelToken
+axios.Cancel = require('./cancel/Cancel');
+axios.CancelToken = require('./cancel/CancelToken');
+axios.isCancel = require('./cancel/isCancel');
+
+// Expose all/spread
+axios.all = function all(promises) {
+  return Promise.all(promises);
+};
+axios.spread = require('./helpers/spread');
+
+module.exports = axios;
+
+// Allow use of default import syntax in TypeScript
+module.exports.default = axios;
+
+},{"./utils":"node_modules/axios/lib/utils.js","./helpers/bind":"node_modules/axios/lib/helpers/bind.js","./core/Axios":"node_modules/axios/lib/core/Axios.js","./core/mergeConfig":"node_modules/axios/lib/core/mergeConfig.js","./defaults":"node_modules/axios/lib/defaults.js","./cancel/Cancel":"node_modules/axios/lib/cancel/Cancel.js","./cancel/CancelToken":"node_modules/axios/lib/cancel/CancelToken.js","./cancel/isCancel":"node_modules/axios/lib/cancel/isCancel.js","./helpers/spread":"node_modules/axios/lib/helpers/spread.js"}],"node_modules/axios/index.js":[function(require,module,exports) {
+module.exports = require('./lib/axios');
+},{"./lib/axios":"node_modules/axios/lib/axios.js"}],"modules/vuex/user.js":[function(require,module,exports) {
+>>>>>>> master
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+<<<<<<< HEAD
+Object.defineProperty(exports, "AbortError", {
+  enumerable: true,
+  get: function () {
+    return _Errors.AbortError;
+  }
+});
+Object.defineProperty(exports, "HttpError", {
+  enumerable: true,
+  get: function () {
+    return _Errors.HttpError;
+  }
+});
+Object.defineProperty(exports, "TimeoutError", {
+  enumerable: true,
+  get: function () {
+    return _Errors.TimeoutError;
+  }
+});
+Object.defineProperty(exports, "HttpClient", {
+  enumerable: true,
+  get: function () {
+    return _HttpClient.HttpClient;
+  }
+});
+Object.defineProperty(exports, "HttpResponse", {
+  enumerable: true,
+  get: function () {
+    return _HttpClient.HttpResponse;
+  }
+});
+Object.defineProperty(exports, "DefaultHttpClient", {
+  enumerable: true,
+  get: function () {
+    return _DefaultHttpClient.DefaultHttpClient;
+  }
+});
+Object.defineProperty(exports, "HubConnection", {
+  enumerable: true,
+  get: function () {
+    return _HubConnection.HubConnection;
+  }
+});
+Object.defineProperty(exports, "HubConnectionState", {
+  enumerable: true,
+  get: function () {
+    return _HubConnection.HubConnectionState;
+  }
+});
+Object.defineProperty(exports, "HubConnectionBuilder", {
+  enumerable: true,
+  get: function () {
+    return _HubConnectionBuilder.HubConnectionBuilder;
+  }
+});
+Object.defineProperty(exports, "MessageType", {
+  enumerable: true,
+  get: function () {
+    return _IHubProtocol.MessageType;
+  }
+});
+Object.defineProperty(exports, "LogLevel", {
+  enumerable: true,
+  get: function () {
+    return _ILogger.LogLevel;
+  }
+});
+Object.defineProperty(exports, "HttpTransportType", {
+  enumerable: true,
+  get: function () {
+    return _ITransport.HttpTransportType;
+  }
+});
+Object.defineProperty(exports, "TransferFormat", {
+  enumerable: true,
+  get: function () {
+    return _ITransport.TransferFormat;
+  }
+});
+Object.defineProperty(exports, "NullLogger", {
+  enumerable: true,
+  get: function () {
+    return _Loggers.NullLogger;
+  }
+});
+Object.defineProperty(exports, "JsonHubProtocol", {
+  enumerable: true,
+  get: function () {
+    return _JsonHubProtocol.JsonHubProtocol;
+  }
+});
+Object.defineProperty(exports, "Subject", {
+  enumerable: true,
+  get: function () {
+    return _Subject.Subject;
+  }
+});
+exports.VERSION = void 0;
+
+var _Errors = require("./Errors");
+
+var _HttpClient = require("./HttpClient");
+
+var _DefaultHttpClient = require("./DefaultHttpClient");
+
+var _HubConnection = require("./HubConnection");
+
+var _HubConnectionBuilder = require("./HubConnectionBuilder");
+
+var _IHubProtocol = require("./IHubProtocol");
+
+var _ILogger = require("./ILogger");
+
+var _ITransport = require("./ITransport");
+
+var _Loggers = require("./Loggers");
+
+var _JsonHubProtocol = require("./JsonHubProtocol");
+
+var _Subject = require("./Subject");
+
+// Copyright (c) .NET Foundation. All rights reserved.
+// Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
+// Version token that will be replaced by the prepack command
+
+/** The version of the SignalR client. */
+var VERSION = "3.1.4";
+exports.VERSION = VERSION;
 },{"./Errors":"node_modules/@microsoft/signalr/dist/esm/Errors.js","./HttpClient":"node_modules/@microsoft/signalr/dist/esm/HttpClient.js","./DefaultHttpClient":"node_modules/@microsoft/signalr/dist/esm/DefaultHttpClient.js","./HubConnection":"node_modules/@microsoft/signalr/dist/esm/HubConnection.js","./HubConnectionBuilder":"node_modules/@microsoft/signalr/dist/esm/HubConnectionBuilder.js","./IHubProtocol":"node_modules/@microsoft/signalr/dist/esm/IHubProtocol.js","./ILogger":"node_modules/@microsoft/signalr/dist/esm/ILogger.js","./ITransport":"node_modules/@microsoft/signalr/dist/esm/ITransport.js","./Loggers":"node_modules/@microsoft/signalr/dist/esm/Loggers.js","./JsonHubProtocol":"node_modules/@microsoft/signalr/dist/esm/JsonHubProtocol.js","./Subject":"node_modules/@microsoft/signalr/dist/esm/Subject.js"}],"modules/store.js":[function(require,module,exports) {
+=======
+exports.default = void 0;
+
+var _axios = _interopRequireDefault(require("axios"));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+const user = {
+  state: () => ({
+    user: {},
+    plan: {}
+  }),
+  mutations: {
+    setUserData(state, data) {
+      state.user = data;
+    },
+
+    setPlanData(state, data) {
+      state.plan = data;
+    }
+
+  },
+  actions: {
+    async changePlan(context, {
+      planName
+    }) {
+      try {
+        await (0, _axios.default)({
+          method: 'PUT',
+          url: '/api/accounts/role',
+          data: JSON.stringify({
+            plan: planName
+          }),
+          headers: {
+            'content-type': 'application/json'
+          }
+        });
+        await context.dispatch('getPlan');
+      } catch (error) {
+        throw error;
+      }
+    },
+
+    async getPlan(context) {
+      try {
+        const response = await (0, _axios.default)({
+          method: "GET",
+          url: "api/accounts/plan"
+        });
+        context.commit('setPlanData', response.data);
+      } catch (error) {
+        throw error;
+      }
+    }
+
+  },
+  getters: {
+    user(state) {
+      return state.user;
+    },
+
+    plan(state) {
+      return state.plan;
+    },
+
+    planName(state) {
+      return state.plan.name;
+    }
+
+  }
+};
+var _default = user;
+exports.default = _default;
+},{"axios":"node_modules/axios/index.js"}],"modules/vuex/todoLists.js":[function(require,module,exports) {
+>>>>>>> master
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -18986,6 +27977,7 @@ exports.default = void 0;
 
 var _vue = _interopRequireDefault(require("vue"));
 
+<<<<<<< HEAD
 var _vuex = _interopRequireDefault(require("vuex"));
 
 var _axios = _interopRequireDefault(require("axios"));
@@ -19046,10 +28038,86 @@ const store = new _vuex.default.Store({
       completed
     }) {
       state.todoLists[state.todoLists.findIndex(t => t.id === todoListId)].completed = completed;
+=======
+var _axios = _interopRequireDefault(require("axios"));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+const todoLists = {
+  state: () => ({
+    todoLists: [],
+    contributors: [],
+    loading: false
+  }),
+  mutations: {
+    updateTodoLists(state, data) {
+      state.todoLists = data.todoLists;
+      state.contributors = data.contributors;
+    },
+
+    setTodoListCompletedState(state, {
+      listId,
+      listCompletedState
+    }) {
+      let index = state.todoLists.findIndex(x => x.id === listId);
+      let updatedList = state.todoLists[index];
+      updatedList.completed = listCompletedState;
+
+      _vue.default.set(state.todoLists, index, updatedList);
+    },
+
+    updateListTitle(state, {
+      listId,
+      listTitle
+    }) {
+      const index = state.todoLists.findIndex(x => x.id === listId);
+      state.todoLists[index].listTitle = listTitle;
+    },
+
+    updateLoadingState(state, {
+      loadingState
+    }) {
+      state.loading = loadingState;
+    },
+
+    changeUserRoleByListId(state, {
+      listId,
+      role
+    }) {
+      const index = state.todoLists.findIndex(x => x.id === listId);
+      state.todoLists[index].role = role;
+    },
+
+    addTodoList(state, {
+      list
+    }) {
+      state.todoLists.push(list);
+    },
+
+    removeTodoList(state, {
+      listId
+    }) {
+      const index = state.todoLists.findIndex(x => x.id === listId);
+      state.todoLists.splice(index, 1);
+    },
+
+    updateAccountContributors(state, {
+      contributors
+    }) {
+      state.contributors = contributors;
+    },
+
+    updateListContributors(state, {
+      list
+    }) {
+      const index = state.todoLists.findIndex(x => x.id === list.id);
+      state.todoLists[index].contributors = list.contributors;
+>>>>>>> master
     }
 
   },
   actions: {
+<<<<<<< HEAD
     async changePlan(context, {
       planName
     }) {
@@ -19059,10 +28127,62 @@ const store = new _vuex.default.Store({
           url: '/api/accounts/role',
           data: JSON.stringify({
             plan: planName
+=======
+    async loadTodoLists(context) {
+      context.commit('updateLoadingState', {
+        loadingState: true
+      });
+      const response = await (0, _axios.default)({
+        method: 'GET',
+        url: 'api/lists'
+      });
+      context.commit('updateTodoLists', response.data);
+      context.commit('updateLoadingState', {
+        loadingState: false
+      });
+    },
+
+    async addTodoList(context, payload) {
+      await (0, _axios.default)({
+        method: 'POST',
+        url: 'api/lists',
+        data: JSON.stringify(payload),
+        headers: {
+          'content-type': 'application/json'
+        }
+      });
+      await context.dispatch('loadTodoLists');
+    },
+
+    deleteTodoList(context, payload) {
+      return new Promise((resolve, reject) => {
+        (0, _axios.default)({
+          method: 'DELETE',
+          url: "api/lists/".concat(payload.listId)
+        }).then(() => {
+          context.dispatch('loadTodoLists');
+        }).finally(() => {
+          resolve();
+        });
+      });
+    },
+
+    inviteContributorToList(context, {
+      listId,
+      email
+    }) {
+      return new Promise((resolve, reject) => {
+        (0, _axios.default)({
+          method: 'POST',
+          url: "api/lists/".concat(listId, "/email"),
+          data: JSON.stringify({
+            email
+>>>>>>> master
           }),
           headers: {
             'content-type': 'application/json'
           }
+<<<<<<< HEAD
         });
         await context.dispatch('getPlan');
       } catch (error) {
@@ -19133,15 +28253,282 @@ const store = new _vuex.default.Store({
         url: "api/lists/".concat(todoListId),
         data: JSON.stringify({
           listTitle
+=======
+        }).finally(() => {
+          resolve();
+        });
+      });
+    },
+
+    async updateListTitle(context, {
+      listId,
+      listTitle
+    }) {
+      context.commit('updateListTitle', {
+        listId,
+        listTitle
+      });
+      await (0, _axios.default)({
+        method: 'PUT',
+        url: "api/lists/".concat(listId),
+        data: JSON.stringify({
+          listTitle
         }),
         headers: {
           'content-type': 'application/json'
         }
       });
+    },
+
+    async acceptInvitation(context, {
+      listId
+    }) {
+      try {
+        await (0, _axios.default)({
+          method: 'POST',
+          url: "api/lists/".concat(listId, "/accept")
+        });
+        context.commit('changeUserRoleByListId', {
+          listId,
+          role: 2
+        });
+      } catch (error) {
+        console.log(error);
+      }
+    },
+
+    async declineInvitation(context, {
+      listId
+    }) {
+      try {
+        await (0, _axios.default)({
+          method: 'POST',
+          url: "api/lists/".concat(listId, "/decline")
+        });
+        context.commit('removeTodoList', {
+          listId
+        });
+      } catch (error) {
+        console.log(error);
+      }
+    },
+
+    async leaveTodoList(context, {
+      listId
+    }) {
+      try {
+        await (0, _axios.default)({
+          method: 'POST',
+          url: "api/lists/".concat(listId, "/removeself")
+        });
+        context.commit('removeTodoList', {
+          listId
+        });
+      } catch (error) {
+        console.log(error);
+      }
+    },
+
+    async refreshContributors(context, {
+      list
+    }) {
+      try {
+        const response = await (0, _axios.default)({
+          method: 'GET',
+          url: "api/accounts/contributors"
+        });
+        const contributors = response.data;
+        context.commit('updateAccountContributors', {
+          contributors
+        });
+        context.commit('updateListContributors', {
+          list
+        });
+      } catch (error) {
+        console.log(error);
+      }
     }
 
   },
   getters: {
+    todoLists(state) {
+      return state.todoLists;
+    },
+
+    contributors(state) {
+      return state.contributors;
+    },
+
+    getTodoListById: state => todoListId => {
+      return state.todoLists.find(list => list.id === todoListId);
+    },
+    getTodoListTitle: state => todoListId => {
+      let title = state.todoLists.find(list => list.id === todoListId).listTitle;
+      return title;
+    },
+
+    getLoadingState(state) {
+      return state.loading;
+    }
+
+  }
+};
+var _default = todoLists;
+exports.default = _default;
+},{"vue":"node_modules/vue/dist/vue.runtime.esm.js","axios":"node_modules/axios/index.js"}],"modules/vuex/todoListItems.js":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = void 0;
+
+var _vue = _interopRequireDefault(require("vue"));
+
+var _axios = _interopRequireDefault(require("axios"));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+const todoLists = {
+  state: () => ({
+    items: {}
+  }),
+  mutations: {
+    setItems(state, {
+      listId,
+      items
+    }) {
+      _vue.default.set(state.items, listId, items);
+    },
+
+    addItem(state, {
+      listId,
+      item
+    }) {
+      state.items[listId].unshift(item);
+    },
+
+    deleteItem(state, {
+      listId,
+      itemId
+    }) {
+      const index = state.items[listId].findIndex(i => i.itemId === itemId);
+      state.items[listId].splice(index, 1);
+    },
+
+    updateItemCompletedState(state, {
+      item
+    }) {
+      let index = state.items[item.listId].findIndex(i => i.id === item.id);
+      state.items[item.listId][index].completed = item.completed;
+    },
+
+    updateItem(state, {
+      item
+    }) {
+      let index = state.items[item.listId].findIndex(i => i.id === item.id);
+
+      _vue.default.set(state.items[item.listId], index, item);
+    }
+
+  },
+  actions: {
+    async loadItemsByListId(context, payload) {
+      const response = await (0, _axios.default)({
+        method: 'GET',
+        url: "api/lists/".concat(payload.todoListId, "/todos")
+      });
+      context.commit('setItems', {
+        listId: payload.todoListId,
+        items: response.data
+      });
+      response.data.forEach(async item => {
+        await context.dispatch("loadSubItems", {
+          listId: item.listId,
+          todoItemId: item.id
+        });
+      });
+    },
+
+    async addItem(context, item) {
+      const response = await (0, _axios.default)({
+        method: 'POST',
+        url: "api/lists/".concat(item.listId, "/todos"),
+        data: JSON.stringify(item),
+        headers: {
+          'content-type': 'application/json'
+        }
+      });
+      const itemAdded = response.data;
+      context.commit('addItem', {
+        listId: itemAdded.listId,
+        item: itemAdded
+      }); // Set initial state for sub items in new item
+
+      context.commit('setSubItems', {
+        todoItemId: itemAdded.id,
+        subItems: []
+      });
+    },
+
+    toggleItemCompletedState(context, {
+      item
+    }) {
+      (0, _axios.default)({
+        method: 'PUT',
+        url: "api/lists/".concat(item.listId, "/todos/").concat(item.id, "/completed"),
+        data: JSON.stringify({
+          completed: item.completed
+        }),
+        headers: {
+          'content-type': 'application/json'
+        }
+      });
+      context.commit('updateItemCompletedState', {
+        item
+      });
+    },
+
+    async updateItem(context, {
+      item
+    }) {
+      context.commit('updateItem', {
+        item
+      });
+      await (0, _axios.default)({
+        method: 'PUT',
+        url: "api/lists/".concat(item.listId, "/todos/").concat(item.id),
+        data: JSON.stringify({
+          name: item.name,
+          notes: item.notes,
+          dueDate: item.dueDate
+>>>>>>> master
+        }),
+        headers: {
+          'content-type': 'application/json'
+        }
+      });
+<<<<<<< HEAD
+=======
+    },
+
+    async deleteItem(context, {
+      item
+    }) {
+      await (0, _axios.default)({
+        method: 'DELETE',
+        url: "api/lists/".concat(item.listId, "/todos/").concat(item.id)
+      });
+      context.commit('deleteItem', {
+        listId: item.listId,
+        itemId: item.id
+      });
+>>>>>>> master
+    }
+
+  },
+  getters: {
+<<<<<<< HEAD
     user(state) {
       return state.user;
     },
@@ -19157,11 +28544,261 @@ const store = new _vuex.default.Store({
     getTodoListById: state => todoListId => {
       return state.todoLists.find(t => t.id === todoListId);
     }
+=======
+    getItemsByListId: state => listId => {
+      return state.items[listId];
+    },
+    getItemName: state => (listId, itemId) => {
+      return state.items[listId].find(i => i.id === itemId).name;
+    },
+    getItemCompletedState: state => (listId, itemId) => {
+      return state.items[listId].find(i => i.id === itemId).completed;
+    }
+  }
+};
+var _default = todoLists;
+exports.default = _default;
+},{"vue":"node_modules/vue/dist/vue.runtime.esm.js","axios":"node_modules/axios/index.js"}],"modules/vuex/subItems.js":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = void 0;
+
+var _vue = _interopRequireDefault(require("vue"));
+
+var _axios = _interopRequireDefault(require("axios"));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+const subItems = {
+  state: () => ({
+    subItems: {}
+  }),
+  mutations: {
+    setSubItems(state, {
+      todoItemId,
+      subItems
+    }) {
+      state.subItems[todoItemId] = subItems;
+    },
+
+    addSubItem(state, {
+      subItem
+    }) {
+      state.subItems[subItem.listItemId].unshift(subItem);
+    },
+
+    updateSubItem(state, {
+      subItem
+    }) {
+      const index = state.subItems[subItem.listItemId].findIndex(i => i.id == subItem.id);
+
+      _vue.default.set(state.subItems[subItem.listItemId], index, subItem);
+    },
+
+    trashSubItem(state, {
+      todoItemId,
+      subItemId
+    }) {
+      const index = state.subItems[todoItemId].findIndex(i => i.id == subItemId);
+      state.subItems[todoItemId].splice(index, 1);
+    },
+
+    updateSubItemCompletedState(state, {
+      todoItemId,
+      subItemId,
+      completed
+    }) {
+      const index = state.subItems[todoItemId].findIndex(i => i.id == subItemId);
+      state.subItems[todoItemId][index].completed = completed;
+    }
+
+  },
+  actions: {
+    async loadSubItems(context, {
+      listId,
+      todoItemId
+    }) {
+      try {
+        const response = await (0, _axios.default)({
+          method: 'GET',
+          url: "api/lists/".concat(listId, "/todos/").concat(todoItemId, "/subitems")
+        });
+        context.commit('setSubItems', {
+          todoItemId: todoItemId,
+          subItems: response.data
+        });
+      } catch (error) {
+        console.log(error);
+      }
+    },
+
+    async addSubItem(context, {
+      listId,
+      todoItemId,
+      name
+    }) {
+      try {
+        const response = await (0, _axios.default)({
+          method: 'POST',
+          url: "api/lists/".concat(listId, "/todos/").concat(todoItemId, "/subitems"),
+          headers: {
+            'content-type': 'application/json'
+          },
+          data: JSON.stringify({
+            name
+          })
+        });
+        context.commit('addSubItem', {
+          subItem: response.data
+        });
+      } catch (error) {
+        console.log(error);
+      }
+    },
+
+    async updateSubItem(context, {
+      listId,
+      subItem
+    }) {
+      try {
+        context.commit('updateSubItem', {
+          listId,
+          subItem
+        });
+        await (0, _axios.default)({
+          method: 'PUT',
+          url: "api/lists/".concat(listId, "/todos/").concat(subItem.listItemId, "/subitems/").concat(subItem.id),
+          headers: {
+            'content-type': 'application/json'
+          },
+          data: JSON.stringify({
+            name: subItem.name
+          })
+        });
+      } catch (error) {
+        console.log(error);
+      }
+    },
+
+    async trashSubItem(context, {
+      listId,
+      todoItemId,
+      subItemId
+    }) {
+      try {
+        await (0, _axios.default)({
+          method: 'DELETE',
+          url: "api/lists/".concat(listId, "/todos/").concat(todoItemId, "/subitems/").concat(subItemId)
+        });
+        context.commit('trashSubItem', {
+          todoItemId,
+          subItemId
+        });
+      } catch (error) {
+        console.log(error);
+      }
+    },
+
+    async toggleSubItemCompletedState(context, {
+      listId,
+      todoItemId,
+      subItemId,
+      completed
+    }) {
+      context.commit('updateSubItemCompletedState', {
+        todoItemId,
+        subItemId,
+        completed
+      });
+
+      try {
+        await (0, _axios.default)({
+          method: 'PUT',
+          url: "api/lists/".concat(listId, "/todos/").concat(todoItemId, "/subitems/").concat(subItemId, "/completed"),
+          headers: {
+            'content-type': 'application/json'
+          },
+          data: completed
+        });
+      } catch (error) {
+        console.log(error);
+      }
+    }
+
+  },
+  getters: {
+    getSubItemsByItemId: state => itemId => {
+      return state.subItems[itemId];
+    },
+    getSubItemCompletedState: state => (itemId, subItemId) => {
+      var _state$subItems$itemI;
+
+      return (_state$subItems$itemI = state.subItems[itemId]) === null || _state$subItems$itemI === void 0 ? void 0 : _state$subItems$itemI.find(i => i.id === subItemId).completed;
+    },
+    subItemCountByItemId: state => itemId => {
+      return state.subItems[itemId].length;
+    },
+
+    getSubItemsLoadingState(state) {
+      return state.loadingSubItems;
+    }
+
+  }
+};
+var _default = subItems;
+exports.default = _default;
+},{"vue":"node_modules/vue/dist/vue.runtime.esm.js","axios":"node_modules/axios/index.js"}],"modules/store.js":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = void 0;
+
+var _vue = _interopRequireDefault(require("vue"));
+
+var _vuex = _interopRequireDefault(require("vuex"));
+
+var signalR = _interopRequireWildcard(require("@microsoft/signalr"));
+
+var _user = _interopRequireDefault(require("./vuex/user"));
+
+var _todoLists = _interopRequireDefault(require("./vuex/todoLists"));
+
+var _todoListItems = _interopRequireDefault(require("./vuex/todoListItems"));
+
+var _subItems = _interopRequireDefault(require("./vuex/subItems"));
+
+function _getRequireWildcardCache() { if (typeof WeakMap !== "function") return null; var cache = new WeakMap(); _getRequireWildcardCache = function () { return cache; }; return cache; }
+
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+_vue.default.use(_vuex.default);
+
+const store = new _vuex.default.Store({
+  modules: {
+    user: _user.default,
+    todoLists: _todoLists.default,
+    todoListItems: _todoListItems.default,
+    subItems: _subItems.default
+  },
+  state: {
+    connection: new signalR.HubConnectionBuilder().withUrl("/notifications").build()
+>>>>>>> master
   }
 });
 var _default = store;
 exports.default = _default;
+<<<<<<< HEAD
 },{"vue":"node_modules/vue/dist/vue.runtime.esm.js","vuex":"node_modules/vuex/dist/vuex.esm.js","axios":"node_modules/axios/index.js","@microsoft/signalr":"node_modules/@microsoft/signalr/dist/esm/index.js"}],"node_modules/vue-router/dist/vue-router.esm.js":[function(require,module,exports) {
+=======
+},{"vue":"node_modules/vue/dist/vue.runtime.esm.js","vuex":"node_modules/vuex/dist/vuex.esm.js","@microsoft/signalr":"node_modules/@microsoft/signalr/dist/esm/index.js","./vuex/user":"modules/vuex/user.js","./vuex/todoLists":"modules/vuex/todoLists.js","./vuex/todoListItems":"modules/vuex/todoListItems.js","./vuex/subItems":"modules/vuex/subItems.js"}],"node_modules/vue-router/dist/vue-router.esm.js":[function(require,module,exports) {
+>>>>>>> master
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -22416,6 +32053,7 @@ var _default = {
   props: ['todoListContributors', 'accountContributors']
 };
 exports.default = _default;
+<<<<<<< HEAD
         var $370f63 = exports.default || module.exports;
       
       if (typeof $370f63 === 'function') {
@@ -22424,6 +32062,16 @@ exports.default = _default;
     
         /* template */
         Object.assign($370f63, (function () {
+=======
+        var $c44f16 = exports.default || module.exports;
+      
+      if (typeof $c44f16 === 'function') {
+        $c44f16 = $c44f16.options;
+      }
+    
+        /* template */
+        Object.assign($c44f16, (function () {
+>>>>>>> master
           var render = function() {
   var _vm = this
   var _h = _vm.$createElement
@@ -22459,7 +32107,11 @@ render._withStripped = true
             render: render,
             staticRenderFns: staticRenderFns,
             _compiled: true,
+<<<<<<< HEAD
             _scopeId: "data-v-370f63",
+=======
+            _scopeId: "data-v-c44f16",
+>>>>>>> master
             functional: undefined
           };
         })());
@@ -22472,9 +32124,15 @@ render._withStripped = true
         if (api.compatible) {
           module.hot.accept();
           if (!module.hot.data) {
+<<<<<<< HEAD
             api.createRecord('$370f63', $370f63);
           } else {
             api.reload('$370f63', $370f63);
+=======
+            api.createRecord('$c44f16', $c44f16);
+          } else {
+            api.reload('$c44f16', $c44f16);
+>>>>>>> master
           }
         }
 
@@ -22549,7 +32207,13 @@ var _default = {
   },
   methods: {
     deleteTodoList() {
+<<<<<<< HEAD
       this.$emit("delete-todo-list", this.todoList.id);
+=======
+      this.$store.dispatch("deleteTodoList", {
+        listId: this.todoList.id
+      });
+>>>>>>> master
     },
 
     async acceptInvitation() {
@@ -22573,6 +32237,7 @@ var _default = {
   }
 };
 exports.default = _default;
+<<<<<<< HEAD
         var $2d7314 = exports.default || module.exports;
       
       if (typeof $2d7314 === 'function') {
@@ -22581,6 +32246,16 @@ exports.default = _default;
     
         /* template */
         Object.assign($2d7314, (function () {
+=======
+        var $77e2d2 = exports.default || module.exports;
+      
+      if (typeof $77e2d2 === 'function') {
+        $77e2d2 = $77e2d2.options;
+      }
+    
+        /* template */
+        Object.assign($77e2d2, (function () {
+>>>>>>> master
           var render = function() {
   var _vm = this
   var _h = _vm.$createElement
@@ -22738,7 +32413,10 @@ render._withStripped = true
             render: render,
             staticRenderFns: staticRenderFns,
             _compiled: true,
+<<<<<<< HEAD
             _scopeId: "data-v-2d7314",
+=======
+            _scopeId: "data-v-77e2d2",
             functional: undefined
           };
         })());
@@ -22751,9 +32429,9 @@ render._withStripped = true
         if (api.compatible) {
           module.hot.accept();
           if (!module.hot.data) {
-            api.createRecord('$2d7314', $2d7314);
+            api.createRecord('$77e2d2', $77e2d2);
           } else {
-            api.reload('$2d7314', $2d7314);
+            api.reload('$77e2d2', $77e2d2);
           }
         }
 
@@ -22764,7 +32442,122 @@ render._withStripped = true
       
       }
     })();
+},{"./Contributors":"vue/components/Contributors.vue","_css_loader":"node_modules/parcel-bundler/src/builtins/css-loader.js","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/components/TodoLists.vue":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = void 0;
+
+var _TodoListPreview = _interopRequireDefault(require("./TodoListPreview"));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+var _default = {
+  data() {
+    return {};
+  },
+
+  computed: {
+    todoLists() {
+      return this.$store.getters.todoLists;
+    },
+
+    contributors() {
+      return this.$store.getters.contributors;
+    }
+
+  },
+  components: {
+    TodoListPreview: _TodoListPreview.default
+  }
+};
+exports.default = _default;
+        var $b12203 = exports.default || module.exports;
+      
+      if (typeof $b12203 === 'function') {
+        $b12203 = $b12203.options;
+      }
+    
+        /* template */
+        Object.assign($b12203, (function () {
+          var render = function() {
+  var _vm = this
+  var _h = _vm.$createElement
+  var _c = _vm._self._c || _h
+  return _c(
+    "div",
+    { staticClass: "todo-lists-wrapper" },
+    _vm._l(_vm.todoLists, function(todoList) {
+      return _c("todo-list-preview", {
+        key: todoList.id,
+        attrs: { todoList: todoList, contributors: _vm.contributors }
+      })
+    }),
+    1
+  )
+}
+var staticRenderFns = []
+render._withStripped = true
+
+          return {
+            render: render,
+            staticRenderFns: staticRenderFns,
+            _compiled: true,
+            _scopeId: "data-v-b12203",
+>>>>>>> master
+            functional: undefined
+          };
+        })());
+      
+    /* hot reload */
+    (function () {
+      if (module.hot) {
+        var api = require('vue-hot-reload-api');
+        api.install(require('vue'));
+        if (api.compatible) {
+          module.hot.accept();
+          if (!module.hot.data) {
+<<<<<<< HEAD
+            api.createRecord('$2d7314', $2d7314);
+          } else {
+            api.reload('$2d7314', $2d7314);
+=======
+            api.createRecord('$b12203', $b12203);
+          } else {
+            api.reload('$b12203', $b12203);
+>>>>>>> master
+          }
+        }
+
+        
+        var reloadCSS = require('_css_loader');
+        module.hot.dispose(reloadCSS);
+        module.hot.accept(reloadCSS);
+      
+      }
+    })();
+<<<<<<< HEAD
 },{"./Contributors":"vue/components/Contributors.vue","_css_loader":"node_modules/parcel-bundler/src/builtins/css-loader.js","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/components/AddTodoListForm.vue":[function(require,module,exports) {
+=======
+},{"./TodoListPreview":"vue/components/TodoListPreview.vue","_css_loader":"node_modules/parcel-bundler/src/builtins/css-loader.js","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/components/AddTodoListForm.vue":[function(require,module,exports) {
+>>>>>>> master
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -22798,13 +32591,30 @@ var _default = {
     };
   },
 
+<<<<<<< HEAD
+=======
+  computed: {
+    user() {
+      return this.$store.getters.user;
+    }
+
+  },
+>>>>>>> master
   methods: {
     focusOnForm() {
       this.$refs.listTitle.focus();
     },
 
+<<<<<<< HEAD
     addTodoListRequest() {
       this.$emit("add-todo-list", this.form.listTitle);
+=======
+    async addTodoList() {
+      await this.$store.dispatch("addTodoList", {
+        listTitle: this.form.listTitle,
+        email: this.user.email
+      });
+>>>>>>> master
       this.form.listTitle = "";
       this.$bvModal.hide("modal-add-todo-list");
     }
@@ -22812,6 +32622,7 @@ var _default = {
   }
 };
 exports.default = _default;
+<<<<<<< HEAD
         var $baacd1 = exports.default || module.exports;
       
       if (typeof $baacd1 === 'function') {
@@ -22820,6 +32631,16 @@ exports.default = _default;
     
         /* template */
         Object.assign($baacd1, (function () {
+=======
+        var $999c84 = exports.default || module.exports;
+      
+      if (typeof $999c84 === 'function') {
+        $999c84 = $999c84.options;
+      }
+    
+        /* template */
+        Object.assign($999c84, (function () {
+>>>>>>> master
           var render = function() {
   var _vm = this
   var _h = _vm.$createElement
@@ -22853,7 +32674,11 @@ exports.default = _default;
               on: {
                 submit: function($event) {
                   $event.preventDefault()
+<<<<<<< HEAD
                   return _vm.addTodoListRequest($event)
+=======
+                  return _vm.addTodoList($event)
+>>>>>>> master
                 }
               }
             },
@@ -22914,16 +32739,26 @@ render._withStripped = true
         if (api.compatible) {
           module.hot.accept();
           if (!module.hot.data) {
+<<<<<<< HEAD
             api.createRecord('$baacd1', $baacd1);
           } else {
             api.reload('$baacd1', $baacd1);
+=======
+            api.createRecord('$999c84', $999c84);
+          } else {
+            api.reload('$999c84', $999c84);
+>>>>>>> master
           }
         }
 
         
       }
     })();
+<<<<<<< HEAD
 },{"vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/components/TodoLists.vue":[function(require,module,exports) {
+=======
+},{"vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/views/Home.vue":[function(require,module,exports) {
+>>>>>>> master
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -22931,11 +32766,15 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.default = void 0;
 
+<<<<<<< HEAD
 var _axios = _interopRequireDefault(require("axios"));
 
 var _vuex = require("vuex");
 
 var _TodoListPreview = _interopRequireDefault(require("./TodoListPreview"));
+=======
+var _TodoLists = _interopRequireDefault(require("../components/TodoLists"));
+>>>>>>> master
 
 var _AddTodoListForm = _interopRequireDefault(require("../components/AddTodoListForm"));
 
@@ -22951,6 +32790,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 //
 //
 //
+<<<<<<< HEAD
 //
 //
 //
@@ -22990,10 +32830,40 @@ exports.default = _default;
     
         /* template */
         Object.assign($f31e3f, (function () {
+=======
+var _default = {
+  name: "Home",
+
+  data() {
+    return {};
+  },
+
+  computed: {
+    user() {
+      return this.$store.getters.user;
+    }
+
+  },
+  components: {
+    TodoLists: _TodoLists.default,
+    AddTodoListForm: _AddTodoListForm.default
+  }
+};
+exports.default = _default;
+        var $5072a3 = exports.default || module.exports;
+      
+      if (typeof $5072a3 === 'function') {
+        $5072a3 = $5072a3.options;
+      }
+    
+        /* template */
+        Object.assign($5072a3, (function () {
+>>>>>>> master
           var render = function() {
   var _vm = this
   var _h = _vm.$createElement
   var _c = _vm._self._c || _h
+<<<<<<< HEAD
   return _c(
     "div",
     [
@@ -23015,6 +32885,21 @@ exports.default = _default;
     ],
     1
   )
+=======
+  return _vm.user.email
+    ? _c(
+        "b-container",
+        [
+          _c("h1", { staticClass: "mb-4" }, [_vm._v("My Lists")]),
+          _vm._v(" "),
+          _c("TodoLists"),
+          _vm._v(" "),
+          _c("AddTodoListForm")
+        ],
+        1
+      )
+    : _vm._e()
+>>>>>>> master
 }
 var staticRenderFns = []
 render._withStripped = true
@@ -23036,27 +32921,60 @@ render._withStripped = true
         if (api.compatible) {
           module.hot.accept();
           if (!module.hot.data) {
+<<<<<<< HEAD
             api.createRecord('$f31e3f', $f31e3f);
           } else {
             api.reload('$f31e3f', $f31e3f);
+=======
+            api.createRecord('$5072a3', $5072a3);
+          } else {
+            api.reload('$5072a3', $5072a3);
+>>>>>>> master
           }
         }
 
         
       }
     })();
+<<<<<<< HEAD
 },{"axios":"node_modules/axios/index.js","vuex":"node_modules/vuex/dist/vuex.esm.js","./TodoListPreview":"vue/components/TodoListPreview.vue","../components/AddTodoListForm":"vue/components/AddTodoListForm.vue","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/views/Home.vue":[function(require,module,exports) {
+=======
+},{"../components/TodoLists":"vue/components/TodoLists.vue","../components/AddTodoListForm":"vue/components/AddTodoListForm.vue","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/components/AddTodoListItemForm.vue":[function(require,module,exports) {
+>>>>>>> master
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.default = void 0;
+<<<<<<< HEAD
 
 var _TodoLists = _interopRequireDefault(require("../components/TodoLists"));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
+=======
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+>>>>>>> master
 //
 //
 //
@@ -23065,6 +32983,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 //
 //
 var _default = {
+<<<<<<< HEAD
   name: "Home",
   computed: {
     user() {
@@ -23085,10 +33004,57 @@ exports.default = _default;
     
         /* template */
         Object.assign($254769, (function () {
+=======
+  name: "AddTodoListItemForm",
+  props: ["todoListId"],
+
+  data() {
+    return {
+      form: {
+        listId: this.todoListId,
+        name: null,
+        notes: null,
+        dueDate: null
+      }
+    };
+  },
+
+  computed: {
+    plan() {
+      return this.$store.getters.plan;
+    }
+
+  },
+  methods: {
+    focusOnForm() {
+      this.$refs.title.focus();
+    },
+
+    async addItem() {
+      await this.$store.dispatch("addItem", this.form);
+      this.form.name = null;
+      this.form.notes = null;
+      this.form.dueDate = null;
+      this.$bvModal.hide("modal-add-todo-list-item");
+    }
+
+  }
+};
+exports.default = _default;
+        var $38fd75 = exports.default || module.exports;
+      
+      if (typeof $38fd75 === 'function') {
+        $38fd75 = $38fd75.options;
+      }
+    
+        /* template */
+        Object.assign($38fd75, (function () {
+>>>>>>> master
           var render = function() {
   var _vm = this
   var _h = _vm.$createElement
   var _c = _vm._self._c || _h
+<<<<<<< HEAD
   return _vm.user.email
     ? _c(
         "b-container",
@@ -23100,6 +33066,115 @@ exports.default = _default;
         1
       )
     : _vm._e()
+=======
+  return _c(
+    "div",
+    { attrs: { id: "add-todo-list-item" } },
+    [
+      _c(
+        "b-button",
+        {
+          on: {
+            click: function($event) {
+              return _vm.$bvModal.show("modal-add-todo-list-item")
+            }
+          }
+        },
+        [_vm._v("Add item")]
+      ),
+      _vm._v(" "),
+      _c(
+        "b-modal",
+        {
+          attrs: { id: "modal-add-todo-list-item", title: "Add item" },
+          on: { shown: _vm.focusOnForm }
+        },
+        [
+          _c(
+            "b-form",
+            {
+              on: {
+                submit: function($event) {
+                  $event.preventDefault()
+                  return _vm.addItem($event)
+                }
+              }
+            },
+            [
+              _c(
+                "b-form-group",
+                { attrs: { label: "Name" } },
+                [
+                  _c("b-form-input", {
+                    ref: "title",
+                    attrs: { maxlength: "50", required: "" },
+                    model: {
+                      value: _vm.form.name,
+                      callback: function($$v) {
+                        _vm.$set(_vm.form, "name", $$v)
+                      },
+                      expression: "form.name"
+                    }
+                  })
+                ],
+                1
+              ),
+              _vm._v(" "),
+              _c(
+                "b-form-group",
+                { attrs: { label: "Notes" } },
+                [
+                  _c("b-form-textarea", {
+                    attrs: { rows: "3", maxlength: "200" },
+                    model: {
+                      value: _vm.form.notes,
+                      callback: function($$v) {
+                        _vm.$set(_vm.form, "notes", $$v)
+                      },
+                      expression: "form.notes"
+                    }
+                  })
+                ],
+                1
+              ),
+              _vm._v(" "),
+              _vm.plan.canAddDueDates
+                ? _c(
+                    "b-form-group",
+                    { attrs: { label: "Due Date" } },
+                    [
+                      _c("b-form-datepicker", {
+                        model: {
+                          value: _vm.form.dueDate,
+                          callback: function($$v) {
+                            _vm.$set(_vm.form, "dueDate", $$v)
+                          },
+                          expression: "form.dueDate"
+                        }
+                      })
+                    ],
+                    1
+                  )
+                : _vm._e(),
+              _vm._v(" "),
+              _c(
+                "b-button",
+                {
+                  staticClass: "ml-auto d-block",
+                  attrs: { type: "submit", variant: "success" }
+                },
+                [_vm._v("Add")]
+              )
+            ],
+            1
+          )
+        ],
+        1
+      )
+    ],
+    1
+  )
+>>>>>>> master
 }
 var staticRenderFns = []
 render._withStripped = true
@@ -23121,16 +33196,26 @@ render._withStripped = true
         if (api.compatible) {
           module.hot.accept();
           if (!module.hot.data) {
+<<<<<<< HEAD
             api.createRecord('$254769', $254769);
           } else {
             api.reload('$254769', $254769);
+=======
+            api.createRecord('$38fd75', $38fd75);
+          } else {
+            api.reload('$38fd75', $38fd75);
+>>>>>>> master
           }
         }
 
         
       }
     })();
+<<<<<<< HEAD
 },{"../components/TodoLists":"vue/components/TodoLists.vue","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"node_modules/sortablejs/modular/sortable.esm.js":[function(require,module,exports) {
+=======
+},{"vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"node_modules/sortablejs/modular/sortable.esm.js":[function(require,module,exports) {
+>>>>>>> master
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -23433,6 +33518,7 @@ function getWindowScrollingElement() {
     return document.documentElement;
   }
 }
+<<<<<<< HEAD
 /**
  * Returns the "bounding client rect" of given element
  * @param  {HTMLElement} el                       The element whose boundingClientRect is wanted
@@ -23441,6 +33527,16 @@ function getWindowScrollingElement() {
  * @param  {[Boolean]} undoScale                  Whether the container's scale() should be undone
  * @param  {[HTMLElement]} container              The parent the element will be placed in
  * @return {Object}                               The boundingClientRect of el, with specified adjustments
+=======
+/**
+ * Returns the "bounding client rect" of given element
+ * @param  {HTMLElement} el                       The element whose boundingClientRect is wanted
+ * @param  {[Boolean]} relativeToContainingBlock  Whether the rect should be relative to the containing block of (including) the container
+ * @param  {[Boolean]} relativeToNonStaticParent  Whether the rect should be relative to the relative parent of (including) the contaienr
+ * @param  {[Boolean]} undoScale                  Whether the container's scale() should be undone
+ * @param  {[HTMLElement]} container              The parent the element will be placed in
+ * @return {Object}                               The boundingClientRect of el, with specified adjustments
+>>>>>>> master
  */
 
 
@@ -23512,12 +33608,21 @@ function getRect(el, relativeToContainingBlock, relativeToNonStaticParent, undoS
     height: height
   };
 }
+<<<<<<< HEAD
 /**
  * Checks if a side of an element is scrolled past a side of its parents
  * @param  {HTMLElement}  el           The element who's side being scrolled out of view is in question
  * @param  {String}       elSide       Side of the element in question ('top', 'left', 'right', 'bottom')
  * @param  {String}       parentSide   Side of the parent in question ('top', 'left', 'right', 'bottom')
  * @return {HTMLElement}               The parent scroll element that the el's side is scrolled past, or null if there is no such element
+=======
+/**
+ * Checks if a side of an element is scrolled past a side of its parents
+ * @param  {HTMLElement}  el           The element who's side being scrolled out of view is in question
+ * @param  {String}       elSide       Side of the element in question ('top', 'left', 'right', 'bottom')
+ * @param  {String}       parentSide   Side of the parent in question ('top', 'left', 'right', 'bottom')
+ * @return {HTMLElement}               The parent scroll element that the el's side is scrolled past, or null if there is no such element
+>>>>>>> master
  */
 
 
@@ -23543,6 +33648,7 @@ function isScrolledPast(el, elSide, parentSide) {
 
   return false;
 }
+<<<<<<< HEAD
 /**
  * Gets nth child of el, ignoring hidden children, sortable's elements (does not ignore clone if it's visible)
  * and non-draggable elements
@@ -23550,6 +33656,15 @@ function isScrolledPast(el, elSide, parentSide) {
  * @param  {Number} childNum      The index of the child
  * @param  {Object} options       Parent Sortable's options
  * @return {HTMLElement}          The child at index childNum, or null if not found
+=======
+/**
+ * Gets nth child of el, ignoring hidden children, sortable's elements (does not ignore clone if it's visible)
+ * and non-draggable elements
+ * @param  {HTMLElement} el       The parent element
+ * @param  {Number} childNum      The index of the child
+ * @param  {Object} options       Parent Sortable's options
+ * @return {HTMLElement}          The child at index childNum, or null if not found
+>>>>>>> master
  */
 
 
@@ -23572,11 +33687,19 @@ function getChild(el, childNum, options) {
 
   return null;
 }
+<<<<<<< HEAD
 /**
  * Gets the last child in the el, ignoring ghostEl or invisible elements (clones)
  * @param  {HTMLElement} el       Parent element
  * @param  {selector} selector    Any other elements that should be ignored
  * @return {HTMLElement}          The last child, ignoring ghostEl
+=======
+/**
+ * Gets the last child in the el, ignoring ghostEl or invisible elements (clones)
+ * @param  {HTMLElement} el       Parent element
+ * @param  {selector} selector    Any other elements that should be ignored
+ * @return {HTMLElement}          The last child, ignoring ghostEl
+>>>>>>> master
  */
 
 
@@ -23589,12 +33712,21 @@ function lastChild(el, selector) {
 
   return last || null;
 }
+<<<<<<< HEAD
 /**
  * Returns the index of an element within its parent for a selected set of
  * elements
  * @param  {HTMLElement} el
  * @param  {selector} selector
  * @return {number}
+=======
+/**
+ * Returns the index of an element within its parent for a selected set of
+ * elements
+ * @param  {HTMLElement} el
+ * @param  {selector} selector
+ * @return {number}
+>>>>>>> master
  */
 
 
@@ -23615,11 +33747,19 @@ function index(el, selector) {
 
   return index;
 }
+<<<<<<< HEAD
 /**
  * Returns the scroll offset of the given element, added with all the scroll offsets of parent elements.
  * The value is returned in real pixels.
  * @param  {HTMLElement} el
  * @return {Array}             Offsets in the format of [left, top]
+=======
+/**
+ * Returns the scroll offset of the given element, added with all the scroll offsets of parent elements.
+ * The value is returned in real pixels.
+ * @param  {HTMLElement} el
+ * @return {Array}             Offsets in the format of [left, top]
+>>>>>>> master
  */
 
 
@@ -23640,11 +33780,19 @@ function getRelativeScrollOffset(el) {
 
   return [offsetLeft, offsetTop];
 }
+<<<<<<< HEAD
 /**
  * Returns the index of the object within the given array
  * @param  {Array} arr   Array that may or may not hold the object
  * @param  {Object} obj  An object that has a key-value pair unique to and identical to a key-value pair in the object you want to find
  * @return {Number}      The index of the object in the array, or -1
+=======
+/**
+ * Returns the index of the object within the given array
+ * @param  {Array} arr   Array that may or may not hold the object
+ * @param  {Object} obj  An object that has a key-value pair unique to and identical to a key-value pair in the object you want to find
+ * @return {Number}      The index of the object in the array, or -1
+>>>>>>> master
  */
 
 
@@ -26713,9 +36861,15 @@ function MultiDragPlugin() {
     // Static methods & properties
     pluginName: 'multiDrag',
     utils: {
+<<<<<<< HEAD
       /**
        * Selects the provided multi-drag item
        * @param  {HTMLElement} el    The element to be selected
+=======
+      /**
+       * Selects the provided multi-drag item
+       * @param  {HTMLElement} el    The element to be selected
+>>>>>>> master
        */
       select: function select(el) {
         var sortable = el.parentNode[expando];
@@ -26731,9 +36885,15 @@ function MultiDragPlugin() {
         multiDragElements.push(el);
       },
 
+<<<<<<< HEAD
       /**
        * Deselects the provided multi-drag item
        * @param  {HTMLElement} el    The element to be deselected
+=======
+      /**
+       * Deselects the provided multi-drag item
+       * @param  {HTMLElement} el    The element to be deselected
+>>>>>>> master
        */
       deselect: function deselect(el) {
         var sortable = el.parentNode[expando],
@@ -26803,10 +36963,17 @@ function insertMultiDragElements(clonesInserted, rootEl) {
     }
   });
 }
+<<<<<<< HEAD
 /**
  * Insert multi-drag clones
  * @param  {[Boolean]} elementsInserted  Whether the multi-drag elements are inserted
  * @param  {HTMLElement} rootEl
+=======
+/**
+ * Insert multi-drag clones
+ * @param  {[Boolean]} elementsInserted  Whether the multi-drag elements are inserted
+ * @param  {HTMLElement} rootEl
+>>>>>>> master
  */
 
 
@@ -36480,6 +46647,26 @@ exports.default = void 0;
 //
 var _default = {
   props: ["listId", "subItem"],
+<<<<<<< HEAD
+=======
+  computed: {
+    completedState: {
+      get() {
+        return this.$store.getters.getSubItemCompletedState(this.subItem.listItemId, this.subItem.id);
+      },
+
+      set(value) {
+        this.$store.dispatch("toggleSubItemCompletedState", {
+          listId: this.listId,
+          todoItemId: this.subItem.listItemId,
+          subItemId: this.subItem.id,
+          completed: value
+        });
+      }
+
+    }
+  },
+>>>>>>> master
 
   data() {
     return {
@@ -36490,6 +46677,7 @@ var _default = {
     };
   },
 
+<<<<<<< HEAD
   computed: {
     subItemCompletedState: {
       get() {
@@ -36502,6 +46690,8 @@ var _default = {
 
     }
   },
+=======
+>>>>>>> master
   methods: {
     focusForm() {
       this.editingSubItem = true;
@@ -36510,6 +46700,7 @@ var _default = {
       });
     },
 
+<<<<<<< HEAD
     sendDeleteSubItemEvent() {
       this.$emit("delete-sub-item", this.subItem.id);
     },
@@ -36518,12 +46709,29 @@ var _default = {
       this.$emit("checkbox-clicked", {
         subItemId: this.subItem.id,
         completed: completed
+=======
+    async updateSubItem() {
+      this.subItem.name = this.form.name;
+      await this.$store.dispatch("updateSubItem", {
+        listId: this.listId,
+        subItem: this.subItem
+      });
+      this.editingSubItem = false;
+    },
+
+    async deleteSubItem() {
+      await this.$store.dispatch("trashSubItem", {
+        listId: this.listId,
+        todoItemId: this.subItem.listItemId,
+        subItemId: this.subItem.id
+>>>>>>> master
       });
     }
 
   }
 };
 exports.default = _default;
+<<<<<<< HEAD
         var $7b87e9 = exports.default || module.exports;
       
       if (typeof $7b87e9 === 'function') {
@@ -36532,6 +46740,16 @@ exports.default = _default;
     
         /* template */
         Object.assign($7b87e9, (function () {
+=======
+        var $2fc84d = exports.default || module.exports;
+      
+      if (typeof $2fc84d === 'function') {
+        $2fc84d = $2fc84d.options;
+      }
+    
+        /* template */
+        Object.assign($2fc84d, (function () {
+>>>>>>> master
           var render = function() {
   var _vm = this
   var _h = _vm.$createElement
@@ -36556,11 +46774,19 @@ exports.default = _default;
             [
               _c("b-form-checkbox", {
                 model: {
+<<<<<<< HEAD
                   value: _vm.subItemCompletedState,
                   callback: function($$v) {
                     _vm.subItemCompletedState = $$v
                   },
                   expression: "subItemCompletedState"
+=======
+                  value: _vm.completedState,
+                  callback: function($$v) {
+                    _vm.completedState = $$v
+                  },
+                  expression: "completedState"
+>>>>>>> master
                 }
               })
             ],
@@ -36585,7 +46811,11 @@ exports.default = _default;
                 "b-button",
                 {
                   attrs: { size: "sm", variant: "danger" },
+<<<<<<< HEAD
                   on: { click: _vm.sendDeleteSubItemEvent }
+=======
+                  on: { click: _vm.deleteSubItem }
+>>>>>>> master
                 },
                 [_vm._v("Delete")]
               )
@@ -36602,7 +46832,11 @@ exports.default = _default;
               on: {
                 submit: function($event) {
                   $event.preventDefault()
+<<<<<<< HEAD
                   return null($event)
+=======
+                  return _vm.updateSubItem($event)
+>>>>>>> master
                 }
               }
             },
@@ -36683,9 +46917,15 @@ render._withStripped = true
         if (api.compatible) {
           module.hot.accept();
           if (!module.hot.data) {
+<<<<<<< HEAD
             api.createRecord('$7b87e9', $7b87e9);
           } else {
             api.reload('$7b87e9', $7b87e9);
+=======
+            api.createRecord('$2fc84d', $2fc84d);
+          } else {
+            api.reload('$2fc84d', $2fc84d);
+>>>>>>> master
           }
         }
 
@@ -36696,13 +46936,18 @@ render._withStripped = true
       
       }
     })();
+<<<<<<< HEAD
 },{"_css_loader":"node_modules/parcel-bundler/src/builtins/css-loader.js","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/components/AddSubItemForm.vue":[function(require,module,exports) {
+=======
+},{"_css_loader":"node_modules/parcel-bundler/src/builtins/css-loader.js","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/components/SubItems.vue":[function(require,module,exports) {
+>>>>>>> master
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.default = void 0;
+<<<<<<< HEAD
 //
 //
 //
@@ -36710,6 +46955,17 @@ exports.default = void 0;
 //
 //
 //
+=======
+
+var _axios = _interopRequireDefault(require("axios"));
+
+var _SubItem = _interopRequireDefault(require("./SubItem"));
+
+var _vuedraggable = _interopRequireDefault(require("vuedraggable"));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+>>>>>>> master
 //
 //
 //
@@ -36725,6 +46981,7 @@ exports.default = void 0;
 //
 //
 var _default = {
+<<<<<<< HEAD
   name: "AddSubItemForm",
   props: ["todoListItem"],
 
@@ -36734,10 +46991,41 @@ var _default = {
         name: ""
       },
       formActive: false
+=======
+  props: ["todoListItem"],
+  components: {
+    Draggable: _vuedraggable.default,
+    SubItem: _SubItem.default
+  },
+
+  async created() {
+    await this.getLayout();
+    this.items = this.setSubItems();
+    this.loadingSubItems = false;
+  },
+
+  mounted() {
+    this.$store.state.connection.on("ItemLayoutUpdated", async itemId => await this.refreshSubItemLayout(itemId));
+    this.$store.state.connection.on("SubItemTrashed", async (todoItemId, subItem) => {
+      this.$store.commit("trashSubItem", {
+        todoItemId,
+        subItemId: subItem.id
+      });
+      await this.refreshSubItemLayout(todoItemId);
+    });
+  },
+
+  data() {
+    return {
+      items: [],
+      layout: [],
+      loadingSubItems: true
+>>>>>>> master
     };
   },
 
   methods: {
+<<<<<<< HEAD
     focusForm() {
       this.formActive = true;
       this.$nextTick(() => {
@@ -36770,10 +47058,93 @@ exports.default = _default;
     
         /* template */
         Object.assign($efb0d1, (function () {
+=======
+    async getLayout() {
+      try {
+        const response = await (0, _axios.default)({
+          method: "GET",
+          url: "api/lists/".concat(this.todoListItem.listId, "/todos/").concat(this.todoListItem.id, "/layout")
+        });
+        this.layout = response.data.layout;
+      } catch (error) {
+        console.log(error);
+      }
+    },
+
+    async updateSubItemPosition(event) {
+      const subItemId = event.item.getAttribute("data-id");
+      const position = event.newIndex;
+
+      try {
+        await (0, _axios.default)({
+          method: "PUT",
+          url: "api/lists/".concat(this.todoListItem.listId, "/todos/").concat(this.todoListItem.id, "/layout"),
+          headers: {
+            "content-type": "application/json"
+          },
+          data: JSON.stringify({
+            subItemId,
+            position
+          })
+        });
+      } catch (error) {
+        console.log(error);
+      }
+    },
+
+    async refreshSubItemLayout(todoItemId) {
+      if (todoItemId === this.todoListItem.id) {
+        await this.getLayout();
+      }
+    },
+
+    setSubItems() {
+      return this.$store.getters.getSubItemsByItemId(this.todoListItem.id);
+    }
+
+  },
+  computed: {
+    subItemsCompleted() {
+      var _this$items;
+
+      return this.items.every(item => item.completed) && ((_this$items = this.items) === null || _this$items === void 0 ? void 0 : _this$items.length) > 0;
+    }
+
+  },
+  watch: {
+    items: async function () {
+      await this.getLayout();
+    },
+    subItemsCompleted: function () {
+      if (this.subItemsCompleted && !this.todoListItem.completed) {
+        this.todoListItem.completed = true;
+        this.$store.commit("updateItemCompletedState", {
+          item: this.todoListItem
+        });
+      } else if (!this.subItemsCompleted && this.todoListItem.completed) {
+        this.todoListItem.completed = false;
+        this.$store.commit("updateItemCompletedState", {
+          item: this.todoListItem
+        });
+      }
+    }
+  }
+};
+exports.default = _default;
+        var $4fbb86 = exports.default || module.exports;
+      
+      if (typeof $4fbb86 === 'function') {
+        $4fbb86 = $4fbb86.options;
+      }
+    
+        /* template */
+        Object.assign($4fbb86, (function () {
+>>>>>>> master
           var render = function() {
   var _vm = this
   var _h = _vm.$createElement
   var _c = _vm._self._c || _h
+<<<<<<< HEAD
   return _c(
     "b-form",
     {
@@ -36841,6 +47212,48 @@ exports.default = _default;
     ],
     1
   )
+=======
+  return !_vm.loadingSubItems
+    ? _c(
+        "b-list-group",
+        [
+          _c(
+            "Draggable",
+            {
+              attrs: { handle: ".sub-item-handle" },
+              on: { end: _vm.updateSubItemPosition },
+              model: {
+                value: _vm.layout,
+                callback: function($$v) {
+                  _vm.layout = $$v
+                },
+                expression: "layout"
+              }
+            },
+            [
+              _vm._l(_vm.layout, function(itemId) {
+                return _c("SubItem", {
+                  key: itemId,
+                  attrs: {
+                    subItem: _vm.items.find(function(x) {
+                      return x.id === itemId
+                    }),
+                    listId: _vm.todoListItem.listId
+                  }
+                })
+              }),
+              _vm._v(" "),
+              _vm.layout.length < 1
+                ? _c("b-list-group-item", [_vm._v("There are no sub-items.")])
+                : _vm._e()
+            ],
+            2
+          )
+        ],
+        1
+      )
+    : _vm._e()
+>>>>>>> master
 }
 var staticRenderFns = []
 render._withStripped = true
@@ -36862,22 +47275,33 @@ render._withStripped = true
         if (api.compatible) {
           module.hot.accept();
           if (!module.hot.data) {
+<<<<<<< HEAD
             api.createRecord('$efb0d1', $efb0d1);
           } else {
             api.reload('$efb0d1', $efb0d1);
+=======
+            api.createRecord('$4fbb86', $4fbb86);
+          } else {
+            api.reload('$4fbb86', $4fbb86);
+>>>>>>> master
           }
         }
 
         
       }
     })();
+<<<<<<< HEAD
 },{"vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/components/SubItems.vue":[function(require,module,exports) {
+=======
+},{"axios":"node_modules/axios/index.js","./SubItem":"vue/components/SubItem.vue","vuedraggable":"node_modules/vuedraggable/dist/vuedraggable.common.js","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/components/AddSubItemForm.vue":[function(require,module,exports) {
+>>>>>>> master
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.default = void 0;
+<<<<<<< HEAD
 
 var _axios = _interopRequireDefault(require("axios"));
 
@@ -36889,6 +47313,18 @@ var _AddSubItemForm = _interopRequireDefault(require("./AddSubItemForm"));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
+=======
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+>>>>>>> master
 //
 //
 //
@@ -36913,6 +47349,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 //
 //
 var _default = {
+<<<<<<< HEAD
   props: ["todoListItem"],
   components: {
     Draggable: _vuedraggable.default,
@@ -37031,11 +47468,49 @@ var _default = {
     subItems() {
       this.triggerSubItemCountChangedEvent();
       this.triggerSubItemsCompletedEvent();
+=======
+  name: 'AddSubItemForm',
+  props: ['todoListItem'],
+
+  data() {
+    return {
+      form: {
+        name: ''
+      },
+      formActive: false
+    };
+  },
+
+  methods: {
+    focusForm() {
+      this.formActive = true;
+      this.$nextTick(() => {
+        this.$refs.subItemName.focus();
+      });
+    },
+
+    blurForm() {
+      this.formActive = false;
+      this.$nextTick(() => {
+        this.$refs.addItemBtn.focus();
+      });
+    },
+
+    async addSubItem() {
+      await this.$store.dispatch('addSubItem', {
+        listId: this.todoListItem.listId,
+        todoItemId: this.todoListItem.id,
+        name: this.form.name
+      });
+      this.blurForm();
+      this.form.name = '';
+>>>>>>> master
     }
 
   }
 };
 exports.default = _default;
+<<<<<<< HEAD
         var $9ad823 = exports.default || module.exports;
       
       if (typeof $9ad823 === 'function') {
@@ -37044,11 +47519,22 @@ exports.default = _default;
     
         /* template */
         Object.assign($9ad823, (function () {
+=======
+        var $fab093 = exports.default || module.exports;
+      
+      if (typeof $fab093 === 'function') {
+        $fab093 = $fab093.options;
+      }
+    
+        /* template */
+        Object.assign($fab093, (function () {
+>>>>>>> master
           var render = function() {
   var _vm = this
   var _h = _vm.$createElement
   var _c = _vm._self._c || _h
   return _c(
+<<<<<<< HEAD
     "div",
     { staticClass: "sub-items-wrapper" },
     [
@@ -37092,16 +47578,80 @@ exports.default = _default;
                     : _vm._e()
                 ],
                 2
+=======
+    "b-form",
+    {
+      attrs: { id: "add-sub-item-form" },
+      on: {
+        submit: function($event) {
+          $event.preventDefault()
+          return _vm.addSubItem($event)
+        }
+      }
+    },
+    [
+      !_vm.formActive
+        ? _c(
+            "b-button",
+            {
+              ref: "addItemBtn",
+              staticClass: "mt-3",
+              attrs: { size: "sm" },
+              on: { click: _vm.focusForm }
+            },
+            [_vm._v("\r\n        Add an item\r\n    ")]
+          )
+        : _vm._e(),
+      _vm._v(" "),
+      _vm.formActive
+        ? _c(
+            "div",
+            { staticClass: "add-sub-item-input-wrapper mt-3" },
+            [
+              _c(
+                "b-form-group",
+                { attrs: { label: "Name" } },
+                [
+                  _c("b-form-input", {
+                    ref: "subItemName",
+                    attrs: { maxlength: "50", minlength: "1", required: "" },
+                    model: {
+                      value: _vm.form.name,
+                      callback: function($$v) {
+                        _vm.$set(_vm.form, "name", $$v)
+                      },
+                      expression: "form.name"
+                    }
+                  })
+                ],
+                1
+              ),
+              _vm._v(" "),
+              _c(
+                "b-button",
+                { attrs: { size: "sm", variant: "success", type: "submit" } },
+                [_vm._v("\r\n            Add\r\n        ")]
+              ),
+              _vm._v(" "),
+              _c(
+                "b-button",
+                { attrs: { size: "sm" }, on: { click: _vm.blurForm } },
+                [_vm._v("\r\n            Cancel\r\n        ")]
+>>>>>>> master
               )
             ],
             1
           )
+<<<<<<< HEAD
         : _vm._e(),
       _vm._v(" "),
       _c("AddSubItemForm", {
         attrs: { todoListItem: _vm.todoListItem },
         on: { "add-sub-item": _vm.dispatchAddSubItem }
       })
+=======
+        : _vm._e()
+>>>>>>> master
     ],
     1
   )
@@ -37126,16 +47676,26 @@ render._withStripped = true
         if (api.compatible) {
           module.hot.accept();
           if (!module.hot.data) {
+<<<<<<< HEAD
             api.createRecord('$9ad823', $9ad823);
           } else {
             api.reload('$9ad823', $9ad823);
+=======
+            api.createRecord('$fab093', $fab093);
+          } else {
+            api.reload('$fab093', $fab093);
+>>>>>>> master
           }
         }
 
         
       }
     })();
+<<<<<<< HEAD
 },{"axios":"node_modules/axios/index.js","vuedraggable":"node_modules/vuedraggable/dist/vuedraggable.common.js","./SubItem":"vue/components/SubItem.vue","./AddSubItemForm":"vue/components/AddSubItemForm.vue","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/components/EditTodoItemForm.vue":[function(require,module,exports) {
+=======
+},{"vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/components/EditTodoItemForm.vue":[function(require,module,exports) {
+>>>>>>> master
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -37143,12 +47703,20 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.default = void 0;
 
+<<<<<<< HEAD
 var _vuex = require("vuex");
 
+=======
+>>>>>>> master
 var _moment = _interopRequireDefault(require("moment"));
 
 var _SubItems = _interopRequireDefault(require("./SubItems"));
 
+<<<<<<< HEAD
+=======
+var _AddSubItemForm = _interopRequireDefault(require("./AddSubItemForm"));
+
+>>>>>>> master
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 //
@@ -37212,9 +47780,36 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 //
 //
 //
+<<<<<<< HEAD
 var _default = {
   name: "EditTodoItemForm",
   props: ["todoListItem"],
+=======
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+var _default = {
+  name: 'EditTodoItemForm',
+  props: ['todoListItem'],
+>>>>>>> master
 
   data() {
     return {
@@ -37229,13 +47824,19 @@ var _default = {
   },
 
   components: {
+<<<<<<< HEAD
     SubItems: _SubItems.default
+=======
+    SubItems: _SubItems.default,
+    AddSubItemForm: _AddSubItemForm.default
+>>>>>>> master
   },
   computed: {
     dueDate() {
       return this.form.dueDate;
     },
 
+<<<<<<< HEAD
     ...(0, _vuex.mapState)({
       plan: state => state.plan
     })
@@ -37243,6 +47844,16 @@ var _default = {
   watch: {
     dueDate: function () {
       this.sendItemEditedEvent();
+=======
+    plan() {
+      return this.$store.getters.plan;
+    }
+
+  },
+  watch: {
+    dueDate: function () {
+      this.updateItem();
+>>>>>>> master
     }
   },
   methods: {
@@ -37262,7 +47873,11 @@ var _default = {
       this.editingNotes = false;
     },
 
+<<<<<<< HEAD
     sendItemEditedEvent() {
+=======
+    updateItem() {
+>>>>>>> master
       this.editingName = false;
       this.editingNotes = false;
       let item = {
@@ -37272,6 +47887,7 @@ var _default = {
         notes: this.form.notes,
         dueDate: this.form.dueDate
       };
+<<<<<<< HEAD
       this.$emit("item-edited", item);
     },
 
@@ -37280,17 +47896,26 @@ var _default = {
     }) {
       this.$emit("sub-item-count-changed", {
         disabled
+=======
+      this.$store.dispatch('updateItem', {
+        item
+>>>>>>> master
       });
     }
 
   },
   filters: {
     formatDate: function (value) {
+<<<<<<< HEAD
       return (0, _moment.default)(value).format("MM/D/YYYY");
+=======
+      return (0, _moment.default)(value).format('MM/D/YYYY');
+>>>>>>> master
     }
   }
 };
 exports.default = _default;
+<<<<<<< HEAD
         var $1d8a45 = exports.default || module.exports;
       
       if (typeof $1d8a45 === 'function') {
@@ -37299,6 +47924,16 @@ exports.default = _default;
     
         /* template */
         Object.assign($1d8a45, (function () {
+=======
+        var $ec928f = exports.default || module.exports;
+      
+      if (typeof $ec928f === 'function') {
+        $ec928f = $ec928f.options;
+      }
+    
+        /* template */
+        Object.assign($ec928f, (function () {
+>>>>>>> master
           var render = function() {
   var _vm = this
   var _h = _vm.$createElement
@@ -37319,7 +47954,11 @@ exports.default = _default;
           on: {
             submit: function($event) {
               $event.preventDefault()
+<<<<<<< HEAD
               return _vm.sendItemEditedEvent($event)
+=======
+              return _vm.updateItem($event)
+>>>>>>> master
             }
           }
         },
@@ -37355,7 +47994,11 @@ exports.default = _default;
                   staticClass: "mb-2",
                   attrs: { type: "submit", variant: "success", size: "sm" }
                 },
+<<<<<<< HEAD
                 [_vm._v("Save")]
+=======
+                [_vm._v("\n            Save\n        ")]
+>>>>>>> master
               )
             : _vm._e(),
           _vm._v(" "),
@@ -37367,7 +48010,11 @@ exports.default = _default;
                   attrs: { variant: "secondary", size: "sm" },
                   on: { click: _vm.cancelChangesToName }
                 },
+<<<<<<< HEAD
                 [_vm._v("Cancel")]
+=======
+                [_vm._v("\n            Cancel\n        ")]
+>>>>>>> master
               )
             : _vm._e()
         ],
@@ -37380,7 +48027,11 @@ exports.default = _default;
           on: {
             submit: function($event) {
               $event.preventDefault()
+<<<<<<< HEAD
               return _vm.sendItemEditedEvent($event)
+=======
+              return _vm.updateItem($event)
+>>>>>>> master
             }
           }
         },
@@ -37415,7 +48066,11 @@ exports.default = _default;
                   staticClass: "mb-2",
                   attrs: { type: "submit", variant: "success", size: "sm" }
                 },
+<<<<<<< HEAD
                 [_vm._v("Save")]
+=======
+                [_vm._v("\n            Save\n        ")]
+>>>>>>> master
               )
             : _vm._e(),
           _vm._v(" "),
@@ -37427,7 +48082,11 @@ exports.default = _default;
                   attrs: { variant: "secondary", size: "sm" },
                   on: { click: _vm.cancelChangesToNotes }
                 },
+<<<<<<< HEAD
                 [_vm._v("Cancel")]
+=======
+                [_vm._v("\n            Cancel\n        ")]
+>>>>>>> master
               )
             : _vm._e()
         ],
@@ -37449,7 +48108,11 @@ exports.default = _default;
                 "b-form-group",
                 [
                   _c("label", { attrs: { for: "due-date" } }, [
+<<<<<<< HEAD
                     _vm._v("\n        Due Date:\n        "),
+=======
+                    _vm._v("Due Date: "),
+>>>>>>> master
                     _vm.form.dueDate
                       ? _c("span", [
                           _vm._v(_vm._s(_vm._f("formatDate")(_vm.form.dueDate)))
@@ -37480,6 +48143,7 @@ exports.default = _default;
         attrs: { label: "Sub-items" }
       }),
       _vm._v(" "),
+<<<<<<< HEAD
       _c("SubItems", {
         attrs: { todoListItem: _vm.todoListItem },
         on: {
@@ -37492,6 +48156,11 @@ exports.default = _default;
           "sub-item-count-changed": _vm.sendSubItemCountChangedEvent
         }
       })
+=======
+      _c("SubItems", { attrs: { todoListItem: _vm.todoListItem } }),
+      _vm._v(" "),
+      _c("AddSubItemForm", { attrs: { todoListItem: _vm.todoListItem } })
+>>>>>>> master
     ],
     1
   )
@@ -37503,7 +48172,11 @@ render._withStripped = true
             render: render,
             staticRenderFns: staticRenderFns,
             _compiled: true,
+<<<<<<< HEAD
             _scopeId: "data-v-1d8a45",
+=======
+            _scopeId: "data-v-ec928f",
+>>>>>>> master
             functional: undefined
           };
         })());
@@ -37516,9 +48189,15 @@ render._withStripped = true
         if (api.compatible) {
           module.hot.accept();
           if (!module.hot.data) {
+<<<<<<< HEAD
             api.createRecord('$1d8a45', $1d8a45);
           } else {
             api.reload('$1d8a45', $1d8a45);
+=======
+            api.createRecord('$ec928f', $ec928f);
+          } else {
+            api.reload('$ec928f', $ec928f);
+>>>>>>> master
           }
         }
 
@@ -37529,7 +48208,11 @@ render._withStripped = true
       
       }
     })();
+<<<<<<< HEAD
 },{"vuex":"node_modules/vuex/dist/vuex.esm.js","moment":"node_modules/moment/moment.js","./SubItems":"vue/components/SubItems.vue","_css_loader":"node_modules/parcel-bundler/src/builtins/css-loader.js","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/components/TodoListItem.vue":[function(require,module,exports) {
+=======
+},{"moment":"node_modules/moment/moment.js","./SubItems":"vue/components/SubItems.vue","./AddSubItemForm":"vue/components/AddSubItemForm.vue","_css_loader":"node_modules/parcel-bundler/src/builtins/css-loader.js","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/components/TodoListItem.vue":[function(require,module,exports) {
+>>>>>>> master
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -37589,11 +48272,19 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 //
 var _default = {
   name: "TodoListItem",
+<<<<<<< HEAD
   props: ["item"],
 
   data() {
     return {
       checkboxDisabled: false
+=======
+  props: ["todoListItem"],
+
+  data() {
+    return {
+      subItems: this.$store.getters.getSubItemsByItemId(this.todoListItem.id)
+>>>>>>> master
     };
   },
 
@@ -37603,11 +48294,22 @@ var _default = {
   computed: {
     itemCompletedState: {
       get() {
+<<<<<<< HEAD
         return this.item.completed;
       },
 
       set(val) {
         this.sendCheckboxClickedEvent(val);
+=======
+        return this.$store.getters.getItemCompletedState(this.todoListItem.listId, this.todoListItem.id);
+      },
+
+      set(value) {
+        this.todoListItem.completed = value;
+        this.$store.dispatch("toggleItemCompletedState", {
+          item: this.todoListItem
+        });
+>>>>>>> master
       }
 
     }
@@ -37619,6 +48321,7 @@ var _default = {
     truncate: function (text, length, suffix) {
       return text.substring(0, length) + suffix;
     }
+<<<<<<< HEAD
   },
   methods: {
     sendItemEditedEvent(item) {
@@ -37649,6 +48352,19 @@ exports.default = _default;
     
         /* template */
         Object.assign($71ea3c, (function () {
+=======
+  }
+};
+exports.default = _default;
+        var $b8ebde = exports.default || module.exports;
+      
+      if (typeof $b8ebde === 'function') {
+        $b8ebde = $b8ebde.options;
+      }
+    
+        /* template */
+        Object.assign($b8ebde, (function () {
+>>>>>>> master
           var render = function() {
   var _vm = this
   var _h = _vm.$createElement
@@ -37657,15 +48373,27 @@ exports.default = _default;
     "b-list-group-item",
     {
       staticClass: "todo-item bg-light",
+<<<<<<< HEAD
       class: { "align-items-center": !_vm.item.dueDate && !_vm.item.notes },
       attrs: { "data-id": _vm.item.id }
+=======
+      class: {
+        "align-items-center":
+          !_vm.todoListItem.dueDate && !_vm.todoListItem.notes
+      },
+      attrs: { "data-id": _vm.todoListItem.id }
+>>>>>>> master
     },
     [
       _c("div", { staticClass: "item-handle mr-2" }, [_c("b-icon-list")], 1),
       _vm._v(" "),
       _c("b-form-checkbox", {
         staticClass: "todo-item-checkbox",
+<<<<<<< HEAD
         attrs: { disabled: _vm.checkboxDisabled },
+=======
+        attrs: { disabled: _vm.subItems && _vm.subItems.length > 0 },
+>>>>>>> master
         model: {
           value: _vm.itemCompletedState,
           callback: function($$v) {
@@ -37680,12 +48408,23 @@ exports.default = _default;
           "div",
           {
             staticClass: "todo-item-name",
+<<<<<<< HEAD
             class: { "mb-0": !_vm.item.dueDate && !_vm.item.notes }
           },
           [_vm._v(_vm._s(_vm.item.name))]
         ),
         _vm._v(" "),
         _vm.item.dueDate
+=======
+            class: {
+              "mb-0": !_vm.todoListItem.dueDate && !_vm.todoListItem.notes
+            }
+          },
+          [_vm._v(_vm._s(_vm.todoListItem.name))]
+        ),
+        _vm._v(" "),
+        _vm.todoListItem.dueDate
+>>>>>>> master
           ? _c(
               "div",
               { staticClass: "todo-item-due-date" },
@@ -37693,7 +48432,11 @@ exports.default = _default;
                 _c("b-icon-calendar"),
                 _vm._v(
                   "\n      " +
+<<<<<<< HEAD
                     _vm._s(_vm._f("formatDate")(_vm.item.dueDate)) +
+=======
+                    _vm._s(_vm._f("formatDate")(_vm.todoListItem.dueDate)) +
+>>>>>>> master
                     "\n    "
                 )
               ],
@@ -37701,7 +48444,11 @@ exports.default = _default;
             )
           : _vm._e(),
         _vm._v(" "),
+<<<<<<< HEAD
         _vm.item.notes
+=======
+        _vm.todoListItem.notes
+>>>>>>> master
           ? _c(
               "div",
               { staticClass: "todo-item-notes" },
@@ -37709,7 +48456,13 @@ exports.default = _default;
                 _c("b-icon-text-left"),
                 _vm._v(
                   "\n      " +
+<<<<<<< HEAD
                     _vm._s(_vm._f("truncate")(_vm.item.notes, 30, "...")) +
+=======
+                    _vm._s(
+                      _vm._f("truncate")(_vm.todoListItem.notes, 30, "...")
+                    ) +
+>>>>>>> master
                     "\n    "
                 )
               ],
@@ -37731,7 +48484,11 @@ exports.default = _default;
                   attrs: { variant: "info" },
                   on: {
                     click: function($event) {
+<<<<<<< HEAD
                       return _vm.$bvModal.show("modal-" + _vm.item.id)
+=======
+                      return _vm.$bvModal.show("modal-" + _vm.todoListItem.id)
+>>>>>>> master
                     }
                   }
                 },
@@ -37744,7 +48501,13 @@ exports.default = _default;
                   attrs: { variant: "danger" },
                   on: {
                     click: function($event) {
+<<<<<<< HEAD
                       return _vm.$emit("delete-item", _vm.item.id)
+=======
+                      return _vm.$store.dispatch("deleteItem", {
+                        item: _vm.todoListItem
+                      })
+>>>>>>> master
                     }
                   }
                 },
@@ -37754,6 +48517,7 @@ exports.default = _default;
             1
           ),
           _vm._v(" "),
+<<<<<<< HEAD
           _c("EditTodoItemForm", {
             attrs: { todoListItem: _vm.item },
             on: {
@@ -37767,6 +48531,9 @@ exports.default = _default;
               "sub-item-count-changed": _vm.commitUpdateItemDisabledState
             }
           })
+=======
+          _c("EditTodoItemForm", { attrs: { todoListItem: _vm.todoListItem } })
+>>>>>>> master
         ],
         1
       )
@@ -37781,7 +48548,11 @@ render._withStripped = true
             render: render,
             staticRenderFns: staticRenderFns,
             _compiled: true,
+<<<<<<< HEAD
             _scopeId: "data-v-71ea3c",
+=======
+            _scopeId: "data-v-b8ebde",
+>>>>>>> master
             functional: undefined
           };
         })());
@@ -37794,9 +48565,15 @@ render._withStripped = true
         if (api.compatible) {
           module.hot.accept();
           if (!module.hot.data) {
+<<<<<<< HEAD
             api.createRecord('$71ea3c', $71ea3c);
           } else {
             api.reload('$71ea3c', $71ea3c);
+=======
+            api.createRecord('$b8ebde', $b8ebde);
+          } else {
+            api.reload('$b8ebde', $b8ebde);
+>>>>>>> master
           }
         }
 
@@ -37807,6 +48584,7 @@ render._withStripped = true
       
       }
     })();
+<<<<<<< HEAD
 },{"moment":"node_modules/moment/moment.js","./EditTodoItemForm":"vue/components/EditTodoItemForm.vue","_css_loader":"node_modules/parcel-bundler/src/builtins/css-loader.js","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/components/AddTodoListItemForm.vue":[function(require,module,exports) {
 "use strict";
 
@@ -38030,6 +48808,9 @@ render._withStripped = true
       }
     })();
 },{"vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/components/TodoListItems.vue":[function(require,module,exports) {
+=======
+},{"moment":"node_modules/moment/moment.js","./EditTodoItemForm":"vue/components/EditTodoItemForm.vue","_css_loader":"node_modules/parcel-bundler/src/builtins/css-loader.js","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/components/TodoListItems.vue":[function(require,module,exports) {
+>>>>>>> master
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -38037,16 +48818,22 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.default = void 0;
 
+<<<<<<< HEAD
 var _vue = _interopRequireDefault(require("vue"));
 
+=======
+>>>>>>> master
 var _axios = _interopRequireDefault(require("axios"));
 
 var _vuedraggable = _interopRequireDefault(require("vuedraggable"));
 
 var _TodoListItem = _interopRequireDefault(require("./TodoListItem"));
 
+<<<<<<< HEAD
 var _AddTodoListItemForm = _interopRequireDefault(require("./AddTodoListItemForm.vue"));
 
+=======
+>>>>>>> master
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 //
@@ -38062,6 +48849,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 //
 //
 //
+<<<<<<< HEAD
 //
 //
 //
@@ -38140,6 +48928,45 @@ var _default = {
           name: item.name,
           notes: item.notes,
           dueDate: item.dueDate
+=======
+var _default = {
+  name: "TodoListItems",
+  props: ["listId", "todoListItems"],
+
+  data() {
+    return {
+      layout: []
+    };
+  },
+
+  async created() {
+    await this.getLayout();
+  },
+
+  mounted() {
+    this.$store.state.connection.on("ListLayoutChanged", listId => this.refreshLayout(listId));
+    this.$store.state.connection.on("ItemTrashed", (listId, item) => this.refreshLayout(listId));
+  },
+
+  methods: {
+    async getLayout() {
+      const response = await (0, _axios.default)({
+        method: "GET",
+        url: "api/lists/".concat(this.listId, "/layout")
+      });
+      this.layout = response.data;
+    },
+
+    updateLayout(e) {
+      let position = e.newIndex;
+      let itemId = e.item.getAttribute("data-id");
+      (0, _axios.default)({
+        method: "PUT",
+        url: "api/lists/".concat(this.listId, "/layout"),
+        data: JSON.stringify({
+          itemId,
+          position
+>>>>>>> master
         }),
         headers: {
           "content-type": "application/json"
@@ -38147,6 +48974,7 @@ var _default = {
       });
     },
 
+<<<<<<< HEAD
     async dispatchDeleteItem(itemId) {
       this.commitDeleteItem(itemId);
       await (0, _axios.default)({
@@ -38191,10 +49019,16 @@ var _default = {
         this.$emit("todo-list-completed");
       } else {
         this.$emit("todo-list-uncompleted");
+=======
+    refreshLayout(listId) {
+      if (this.listId === listId) {
+        this.getLayout();
+>>>>>>> master
       }
     }
 
   },
+<<<<<<< HEAD
 
   async created() {
     await this.dispatchGetItems();
@@ -38216,6 +49050,27 @@ exports.default = _default;
     
         /* template */
         Object.assign($642124, (function () {
+=======
+  watch: {
+    todoListItems: function () {
+      this.refreshLayout(this.listId);
+    }
+  },
+  components: {
+    Draggable: _vuedraggable.default,
+    TodoListItem: _TodoListItem.default
+  }
+};
+exports.default = _default;
+        var $2b69d1 = exports.default || module.exports;
+      
+      if (typeof $2b69d1 === 'function') {
+        $2b69d1 = $2b69d1.options;
+      }
+    
+        /* template */
+        Object.assign($2b69d1, (function () {
+>>>>>>> master
           var render = function() {
   var _vm = this
   var _h = _vm.$createElement
@@ -38224,6 +49079,7 @@ exports.default = _default;
     "b-list-group",
     { staticClass: "todo-list-items" },
     [
+<<<<<<< HEAD
       !_vm.loadingItems
         ? _c(
             "Draggable",
@@ -38262,6 +49118,34 @@ exports.default = _default;
         attrs: { todoListId: _vm.todoListId },
         on: { "add-item": _vm.dispatchAddItem }
       })
+=======
+      _c(
+        "Draggable",
+        {
+          attrs: { handle: ".item-handle" },
+          on: { end: _vm.updateLayout },
+          model: {
+            value: _vm.layout,
+            callback: function($$v) {
+              _vm.layout = $$v
+            },
+            expression: "layout"
+          }
+        },
+        _vm._l(_vm.layout, function(position) {
+          return _c("TodoListItem", {
+            key: position,
+            staticClass: "todo-list-item",
+            attrs: {
+              todoListItem: _vm.todoListItems.find(function(x) {
+                return x.id === position
+              })
+            }
+          })
+        }),
+        1
+      )
+>>>>>>> master
     ],
     1
   )
@@ -38286,16 +49170,26 @@ render._withStripped = true
         if (api.compatible) {
           module.hot.accept();
           if (!module.hot.data) {
+<<<<<<< HEAD
             api.createRecord('$642124', $642124);
           } else {
             api.reload('$642124', $642124);
+=======
+            api.createRecord('$2b69d1', $2b69d1);
+          } else {
+            api.reload('$2b69d1', $2b69d1);
+>>>>>>> master
           }
         }
 
         
       }
     })();
+<<<<<<< HEAD
 },{"vue":"node_modules/vue/dist/vue.runtime.esm.js","axios":"node_modules/axios/index.js","vuedraggable":"node_modules/vuedraggable/dist/vuedraggable.common.js","./TodoListItem":"vue/components/TodoListItem.vue","./AddTodoListItemForm.vue":"vue/components/AddTodoListItemForm.vue","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js"}],"vue/components/InviteContributorsForm.vue":[function(require,module,exports) {
+=======
+},{"axios":"node_modules/axios/index.js","vuedraggable":"node_modules/vuedraggable/dist/vuedraggable.common.js","./TodoListItem":"vue/components/TodoListItem.vue","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/components/InviteContributorsForm.vue":[function(require,module,exports) {
+>>>>>>> master
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -38365,6 +49259,7 @@ var _default = {
   }
 };
 exports.default = _default;
+<<<<<<< HEAD
         var $3f1240 = exports.default || module.exports;
       
       if (typeof $3f1240 === 'function') {
@@ -38373,6 +49268,16 @@ exports.default = _default;
     
         /* template */
         Object.assign($3f1240, (function () {
+=======
+        var $e8e650 = exports.default || module.exports;
+      
+      if (typeof $e8e650 === 'function') {
+        $e8e650 = $e8e650.options;
+      }
+    
+        /* template */
+        Object.assign($e8e650, (function () {
+>>>>>>> master
           var render = function() {
   var _vm = this
   var _h = _vm.$createElement
@@ -38449,7 +49354,11 @@ render._withStripped = true
             render: render,
             staticRenderFns: staticRenderFns,
             _compiled: true,
+<<<<<<< HEAD
             _scopeId: "data-v-3f1240",
+=======
+            _scopeId: "data-v-e8e650",
+>>>>>>> master
             functional: undefined
           };
         })());
@@ -38462,9 +49371,15 @@ render._withStripped = true
         if (api.compatible) {
           module.hot.accept();
           if (!module.hot.data) {
+<<<<<<< HEAD
             api.createRecord('$3f1240', $3f1240);
           } else {
             api.reload('$3f1240', $3f1240);
+=======
+            api.createRecord('$e8e650', $e8e650);
+          } else {
+            api.reload('$e8e650', $e8e650);
+>>>>>>> master
           }
         }
 
@@ -38478,7 +49393,11 @@ render._withStripped = true
 },{"_css_loader":"node_modules/parcel-bundler/src/builtins/css-loader.js","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"node_modules/vue-confetti/dist/vue-confetti.js":[function(require,module,exports) {
 var define;
 !function(t,e){"object"==typeof exports&&"object"==typeof module?module.exports=e():"function"==typeof define&&define.amd?define([],e):"object"==typeof exports?exports["vue-confetti"]=e():t["vue-confetti"]=e()}(window,(function(){return function(t){var e={};function n(i){if(e[i])return e[i].exports;var r=e[i]={i:i,l:!1,exports:{}};return t[i].call(r.exports,r,r.exports,n),r.l=!0,r.exports}return n.m=t,n.c=e,n.d=function(t,e,i){n.o(t,e)||Object.defineProperty(t,e,{enumerable:!0,get:i})},n.r=function(t){"undefined"!=typeof Symbol&&Symbol.toStringTag&&Object.defineProperty(t,Symbol.toStringTag,{value:"Module"}),Object.defineProperty(t,"__esModule",{value:!0})},n.t=function(t,e){if(1&e&&(t=n(t)),8&e)return t;if(4&e&&"object"==typeof t&&t&&t.__esModule)return t;var i=Object.create(null);if(n.r(i),Object.defineProperty(i,"default",{enumerable:!0,value:t}),2&e&&"string"!=typeof t)for(var r in t)n.d(i,r,function(e){return t[e]}.bind(null,r));return i},n.n=function(t){var e=t&&t.__esModule?function(){return t.default}:function(){return t};return n.d(e,"a",e),e},n.o=function(t,e){return Object.prototype.hasOwnProperty.call(t,e)},n.p="",n(n.s=3)}([function(t,e,n){"use strict";n.r(e);var i=function(){var t=arguments.length>0&&void 0!==arguments[0]?arguments[0]:1,e=arguments.length>1&&void 0!==arguments[1]?arguments[1]:t+1,n=arguments.length>2&&void 0!==arguments[2]&&arguments[2],i=parseFloat(t),r=parseFloat(e),o=Math.random()*(r-i)+i;return n?Math.round(o):o};function r(t,e){for(var n=0;n<e.length;n++){var i=e[n];i.enumerable=i.enumerable||!1,i.configurable=!0,"value"in i&&(i.writable=!0),Object.defineProperty(t,i.key,i)}}var o=function(){function t(){var e=arguments.length>0&&void 0!==arguments[0]?arguments[0]:{},n=e.color,i=void 0===n?"blue":n,r=e.size,o=void 0===r?10:r,a=e.dropRate,c=void 0===a?10:a;!function(t,e){if(!(t instanceof e))throw new TypeError("Cannot call a class as a function")}(this,t),this.color=i,this.size=o,this.dropRate=c}var e,n,o;return e=t,(n=[{key:"setup",value:function(t){var e=t.canvas,n=t.wind,r=t.windPosCoef,o=t.windSpeedMax,a=t.count;return this.canvas=e,this.wind=n,this.windPosCoef=r,this.windSpeedMax=o,this.x=i(-35,this.canvas.width+35),this.y=i(-30,-35),this.d=i(150)+10,this.particleSize=i(this.size,2*this.size),this.tilt=i(10),this.tiltAngleIncremental=(i(0,.08)+.04)*(i()<.5?-1:1),this.tiltAngle=0,this.angle=i(2*Math.PI),this.count=a+1,this.remove=!1,this}},{key:"update",value:function(){this.tiltAngle+=this.tiltAngleIncremental*(.2*Math.cos(this.wind+(this.d+this.x+this.y)*this.windPosCoef)+1),this.y+=(Math.cos(this.angle+this.d)+parseInt(this.dropRate,10))/2,this.x+=Math.sin(this.angle),this.x+=Math.cos(this.wind+(this.d+this.x+this.y)*this.windPosCoef)*this.windSpeedMax,this.y+=Math.sin(this.wind+(this.d+this.x+this.y)*this.windPosCoef)*this.windSpeedMax,this.tilt=15*Math.sin(this.tiltAngle-this.count/3)}},{key:"pastBottom",value:function(){return this.y>this.canvas.height}},{key:"draw",value:function(){this.canvas.ctx.fillStyle=this.color,this.canvas.ctx.beginPath(),this.canvas.ctx.setTransform(Math.cos(this.tiltAngle),Math.sin(this.tiltAngle),0,1,this.x,this.y)}},{key:"kill",value:function(){this.remove=!0}}])&&r(e.prototype,n),o&&r(e,o),t}();function a(t){return(a="function"==typeof Symbol&&"symbol"==typeof Symbol.iterator?function(t){return typeof t}:function(t){return t&&"function"==typeof Symbol&&t.constructor===Symbol&&t!==Symbol.prototype?"symbol":typeof t})(t)}function c(t,e){for(var n=0;n<e.length;n++){var i=e[n];i.enumerable=i.enumerable||!1,i.configurable=!0,"value"in i&&(i.writable=!0),Object.defineProperty(t,i.key,i)}}function s(t,e){return!e||"object"!==a(e)&&"function"!=typeof e?function(t){if(void 0===t)throw new ReferenceError("this hasn't been initialised - super() hasn't been called");return t}(t):e}function l(t,e,n){return(l="undefined"!=typeof Reflect&&Reflect.get?Reflect.get:function(t,e,n){var i=function(t,e){for(;!Object.prototype.hasOwnProperty.call(t,e)&&null!==(t=u(t)););return t}(t,e);if(i){var r=Object.getOwnPropertyDescriptor(i,e);return r.get?r.get.call(n):r.value}})(t,e,n||t)}function u(t){return(u=Object.setPrototypeOf?Object.getPrototypeOf:function(t){return t.__proto__||Object.getPrototypeOf(t)})(t)}function f(t,e){return(f=Object.setPrototypeOf||function(t,e){return t.__proto__=e,t})(t,e)}var h=function(t){function e(){return function(t,e){if(!(t instanceof e))throw new TypeError("Cannot call a class as a function")}(this,e),s(this,u(e).apply(this,arguments))}var n,i,r;return function(t,e){if("function"!=typeof e&&null!==e)throw new TypeError("Super expression must either be null or a function");t.prototype=Object.create(e&&e.prototype,{constructor:{value:t,writable:!0,configurable:!0}}),e&&f(t,e)}(e,t),n=e,(i=[{key:"draw",value:function(){l(u(e.prototype),"draw",this).call(this),this.canvas.ctx.arc(0,0,this.particleSize/2,0,2*Math.PI,!1),this.canvas.ctx.fill()}}])&&c(n.prototype,i),r&&c(n,r),e}(o);function p(t){return(p="function"==typeof Symbol&&"symbol"==typeof Symbol.iterator?function(t){return typeof t}:function(t){return t&&"function"==typeof Symbol&&t.constructor===Symbol&&t!==Symbol.prototype?"symbol":typeof t})(t)}function y(t,e){for(var n=0;n<e.length;n++){var i=e[n];i.enumerable=i.enumerable||!1,i.configurable=!0,"value"in i&&(i.writable=!0),Object.defineProperty(t,i.key,i)}}function d(t,e){return!e||"object"!==p(e)&&"function"!=typeof e?function(t){if(void 0===t)throw new ReferenceError("this hasn't been initialised - super() hasn't been called");return t}(t):e}function v(t,e,n){return(v="undefined"!=typeof Reflect&&Reflect.get?Reflect.get:function(t,e,n){var i=function(t,e){for(;!Object.prototype.hasOwnProperty.call(t,e)&&null!==(t=b(t)););return t}(t,e);if(i){var r=Object.getOwnPropertyDescriptor(i,e);return r.get?r.get.call(n):r.value}})(t,e,n||t)}function b(t){return(b=Object.setPrototypeOf?Object.getPrototypeOf:function(t){return t.__proto__||Object.getPrototypeOf(t)})(t)}function m(t,e){return(m=Object.setPrototypeOf||function(t,e){return t.__proto__=e,t})(t,e)}var w=function(t){function e(){return function(t,e){if(!(t instanceof e))throw new TypeError("Cannot call a class as a function")}(this,e),d(this,b(e).apply(this,arguments))}var n,i,r;return function(t,e){if("function"!=typeof e&&null!==e)throw new TypeError("Super expression must either be null or a function");t.prototype=Object.create(e&&e.prototype,{constructor:{value:t,writable:!0,configurable:!0}}),e&&m(t,e)}(e,t),n=e,(i=[{key:"draw",value:function(){v(b(e.prototype),"draw",this).call(this),this.canvas.ctx.fillRect(0,0,this.particleSize,this.particleSize/2)}}])&&y(n.prototype,i),r&&y(n,r),e}(o);function g(t){return(g="function"==typeof Symbol&&"symbol"==typeof Symbol.iterator?function(t){return typeof t}:function(t){return t&&"function"==typeof Symbol&&t.constructor===Symbol&&t!==Symbol.prototype?"symbol":typeof t})(t)}function O(t,e){for(var n=0;n<e.length;n++){var i=e[n];i.enumerable=i.enumerable||!1,i.configurable=!0,"value"in i&&(i.writable=!0),Object.defineProperty(t,i.key,i)}}function P(t,e){return!e||"object"!==g(e)&&"function"!=typeof e?function(t){if(void 0===t)throw new ReferenceError("this hasn't been initialised - super() hasn't been called");return t}(t):e}function S(t,e,n){return(S="undefined"!=typeof Reflect&&Reflect.get?Reflect.get:function(t,e,n){var i=function(t,e){for(;!Object.prototype.hasOwnProperty.call(t,e)&&null!==(t=j(t)););return t}(t,e);if(i){var r=Object.getOwnPropertyDescriptor(i,e);return r.get?r.get.call(n):r.value}})(t,e,n||t)}function j(t){return(j=Object.setPrototypeOf?Object.getPrototypeOf:function(t){return t.__proto__||Object.getPrototypeOf(t)})(t)}function k(t,e){return(k=Object.setPrototypeOf||function(t,e){return t.__proto__=e,t})(t,e)}var x=function(t){function e(){return function(t,e){if(!(t instanceof e))throw new TypeError("Cannot call a class as a function")}(this,e),P(this,j(e).apply(this,arguments))}var n,i,r;return function(t,e){if("function"!=typeof e&&null!==e)throw new TypeError("Super expression must either be null or a function");t.prototype=Object.create(e&&e.prototype,{constructor:{value:t,writable:!0,configurable:!0}}),e&&k(t,e)}(e,t),n=e,(i=[{key:"draw",value:function(){var t=this;S(j(e.prototype),"draw",this).call(this);var n=function(e,n,i,r,o,a){t.canvas.ctx.bezierCurveTo(e*(t.particleSize/200),n*(t.particleSize/200),i*(t.particleSize/200),r*(t.particleSize/200),o*(t.particleSize/200),a*(t.particleSize/200))};this.canvas.ctx.moveTo(37.5/this.particleSize,20/this.particleSize),n(75,37,70,25,50,25),n(20,25,20,62.5,20,62.5),n(20,80,40,102,75,120),n(110,102,130,80,130,62.5),n(130,62.5,130,25,100,25),n(85,25,75,37,75,40),this.canvas.ctx.fill()}}])&&O(n.prototype,i),r&&O(n,r),e}(o);function M(t){return(M="function"==typeof Symbol&&"symbol"==typeof Symbol.iterator?function(t){return typeof t}:function(t){return t&&"function"==typeof Symbol&&t.constructor===Symbol&&t!==Symbol.prototype?"symbol":typeof t})(t)}function _(t,e){for(var n=0;n<e.length;n++){var i=e[n];i.enumerable=i.enumerable||!1,i.configurable=!0,"value"in i&&(i.writable=!0),Object.defineProperty(t,i.key,i)}}function E(t,e){return!e||"object"!==M(e)&&"function"!=typeof e?function(t){if(void 0===t)throw new ReferenceError("this hasn't been initialised - super() hasn't been called");return t}(t):e}function I(t,e,n){return(I="undefined"!=typeof Reflect&&Reflect.get?Reflect.get:function(t,e,n){var i=function(t,e){for(;!Object.prototype.hasOwnProperty.call(t,e)&&null!==(t=C(t)););return t}(t,e);if(i){var r=Object.getOwnPropertyDescriptor(i,e);return r.get?r.get.call(n):r.value}})(t,e,n||t)}function C(t){return(C=Object.setPrototypeOf?Object.getPrototypeOf:function(t){return t.__proto__||Object.getPrototypeOf(t)})(t)}function D(t,e){return(D=Object.setPrototypeOf||function(t,e){return t.__proto__=e,t})(t,e)}var R=function(t){function e(t,n){var i;return function(t,e){if(!(t instanceof e))throw new TypeError("Cannot call a class as a function")}(this,e),(i=E(this,C(e).call(this,t))).imgEl=n,i}var n,i,r;return function(t,e){if("function"!=typeof e&&null!==e)throw new TypeError("Super expression must either be null or a function");t.prototype=Object.create(e&&e.prototype,{constructor:{value:t,writable:!0,configurable:!0}}),e&&D(t,e)}(e,t),n=e,(i=[{key:"draw",value:function(){I(C(e.prototype),"draw",this).call(this),this.canvas.ctx.drawImage(this.imgEl,0,0,this.particleSize,this.particleSize)}}])&&_(n.prototype,i),r&&_(n,r),e}(o);function T(t,e){for(var n=0;n<e.length;n++){var i=e[n];i.enumerable=i.enumerable||!1,i.configurable=!0,"value"in i&&(i.writable=!0),Object.defineProperty(t,i.key,i)}}var z=function(){function t(){!function(t,e){if(!(t instanceof e))throw new TypeError("Cannot call a class as a function")}(this,t),this.cachedImage=null}var e,n,r;return e=t,(n=[{key:"createImageElement",value:function(t){var e=document.createElement("img");return e.setAttribute("src",t),e}},{key:"getImageElement",value:function(t){return this.cachedImage&&t===this.cachedImage.getAttribute("src")||(this.cachedImage=this.createImageElement(t)),this.cachedImage}},{key:"getRandomParticle",value:function(){var t=arguments.length>0&&void 0!==arguments[0]?arguments[0]:{},e=t.particles||[];return e.length<1?{}:e[Math.floor(Math.random()*e.length)]}},{key:"getDefaults",value:function(){var t=arguments.length>0&&void 0!==arguments[0]?arguments[0]:{};return{type:t.defaultType||"circle",size:t.defaultSize||10,dropRate:t.defaultDropRate||10,colors:t.defaultColors||["DodgerBlue","OliveDrab","Gold","pink","SlateBlue","lightblue","Violet","PaleGreen","SteelBlue","SandyBrown","Chocolate","Crimson"],url:null}}},{key:"create",value:function(t){var e=this.getDefaults(t),n=this.getRandomParticle(t),r=Object.assign(e,n),o=i(0,r.colors.length-1,!0);if(r.color=r.colors[o],"circle"===r.type)return new h(r);if("rect"===r.type)return new w(r);if("heart"===r.type)return new x(r);if("image"===r.type)return new R(r,this.getImageElement(r.url));throw Error('Unknown particle type: "'.concat(r.type,'"'))}}])&&T(e.prototype,n),r&&T(e,r),t}();function F(t,e){for(var n=0;n<e.length;n++){var i=e[n];i.enumerable=i.enumerable||!1,i.configurable=!0,"value"in i&&(i.writable=!0),Object.defineProperty(t,i.key,i)}}var A=function(){function t(e){!function(t,e){if(!(t instanceof e))throw new TypeError("Cannot call a class as a function")}(this,t),this.items=[],this.pool=[],this.particleOptions=e,this.particleFactory=new z}var e,n,i;return e=t,(n=[{key:"update",value:function(){var t,e=this,n=[],i=[];this.items.forEach((function(t){t.update(),t.pastBottom()?t.remove||(t.setup(e.particleOptions),n.push(t)):i.push(t)})),(t=this.pool).push.apply(t,n),this.items=i}},{key:"draw",value:function(){this.items.forEach((function(t){return t.draw()}))}},{key:"add",value:function(){this.pool.length>0?this.items.push(this.pool.pop().setup(this.particleOptions)):this.items.push(this.particleFactory.create(this.particleOptions).setup(this.particleOptions))}},{key:"refresh",value:function(){this.items.forEach((function(t){t.kill()})),this.pool=[]}}])&&F(e.prototype,n),i&&F(e,i),t}();function B(t,e){for(var n=0;n<e.length;n++){var i=e[n];i.enumerable=i.enumerable||!1,i.configurable=!0,"value"in i&&(i.writable=!0),Object.defineProperty(t,i.key,i)}}var H=function(){function t(e){!function(t,e){if(!(t instanceof e))throw new TypeError("Cannot call a class as a function")}(this,t);var n=document.getElementById(e);if(this.isDefault=null==e,!this.isDefault&&!n)throw new Error('No element found with ID "'.concat(e,'"'));if(this.canvas=n||t.createDefaultCanvas("confetti-canvas"),!(this.canvas instanceof HTMLCanvasElement))throw new Error('Element with ID "'.concat("confetti-canvas",'" is not a valid HTMLCanvasElement'));this.ctx=this.canvas.getContext("2d")}var e,n,i;return e=t,i=[{key:"createDefaultCanvas",value:function(t){var e=document.createElement("canvas");return e.style.display="block",e.style.position="fixed",e.style.pointerEvents="none",e.style.top=0,e.style.width="100vw",e.style.height="100vh",e.id=t,document.querySelector("body").appendChild(e),e}}],(n=[{key:"clear",value:function(){this.ctx.setTransform(1,0,0,1,0,0),this.ctx.clearRect(0,0,this.width,this.height)}},{key:"updateDimensions",value:function(){this.isDefault&&(this.width===window.innerWidth&&this.height===window.innerHeight||(this.canvas.width=window.innerWidth,this.canvas.height=window.innerHeight))}},{key:"width",get:function(){return this.canvas.width}},{key:"height",get:function(){return this.canvas.height}}])&&B(e.prototype,n),i&&B(e,i),t}();function L(t,e){for(var n=0;n<e.length;n++){var i=e[n];i.enumerable=i.enumerable||!1,i.configurable=!0,"value"in i&&(i.writable=!0),Object.defineProperty(t,i.key,i)}}var W=function(){function t(){!function(t,e){if(!(t instanceof e))throw new TypeError("Cannot call a class as a function")}(this,t),this.setDefaults()}var e,n,i;return e=t,(n=[{key:"setDefaults",value:function(){this.killed=!1,this.framesSinceDrop=0,this.canvas=null,this.canvasId=null,this.W=0,this.H=0,this.particleManager=null,this.particlesPerFrame=0,this.wind=0,this.windSpeed=1,this.windSpeedMax=1,this.windChange=.01,this.windPosCoef=.002,this.animationId=null}},{key:"getParticleOptions",value:function(t){var e={canvas:this.canvas,W:this.W,H:this.H,wind:this.wind,windPosCoef:this.windPosCoef,windSpeedMax:this.windSpeedMax,count:0};return Object.assign(e,t),e}},{key:"createParticles",value:function(){var t=arguments.length>0&&void 0!==arguments[0]?arguments[0]:{},e=this.getParticleOptions(t);this.particleManager=new A(e)}},{key:"start",value:function(){var t=arguments.length>0&&void 0!==arguments[0]?arguments[0]:{};this.canvas&&t.canvasId===this.canvasId||(this.canvas=new H(t.canvasId),this.canvasId=t.canvasId),this.animationId&&cancelAnimationFrame(this.animationId),this.createParticles(t),this.canvas.updateDimensions(),this.setParticlesPerFrame(t),this.animationId=requestAnimationFrame(this.mainLoop.bind(this))}},{key:"setParticlesPerFrame",value:function(t){this.particlesPerFrame=t.particlesPerFrame||2}},{key:"stop",value:function(){this.killed=!0,this.particlesPerFrame=0}},{key:"update",value:function(t){this.canvas&&t.canvasId!==this.canvasId&&(this.stop(),this.canvas.clear(),this.start(t)),this.setParticlesPerFrame(t),this.particleManager&&(this.particleManager.particleOptions=this.getParticleOptions(t),this.particleManager.refresh())}},{key:"remove",value:function(){this.stop(),this.animationId&&cancelAnimationFrame(this.animationId),this.canvas.clear(),this.setDefaults()}},{key:"mainLoop",value:function(t){this.canvas.updateDimensions(),this.canvas.clear(),this.windSpeed=Math.sin(t/8e3)*this.windSpeedMax,this.wind=this.particleManager.particleOptions.wind+=this.windChange;for(var e=this.framesSinceDrop*this.particlesPerFrame;e>=1;)this.particleManager.add(),e-=1,this.framesSinceDrop=0;this.particleManager.update(),this.particleManager.draw(),this.killed&&!this.particleManager.items.length||(this.animationId=requestAnimationFrame(this.mainLoop.bind(this))),this.framesSinceDrop+=1}}])&&L(e.prototype,n),i&&L(e,i),t}();n.d(e,"Confetti",(function(){return W}));e.default={install:function(t,e){this.installed||(this.installed=!0,t.prototype.$confetti=new W(e))}}},,,function(t,e,n){t.exports=n(0)}])}));
+<<<<<<< HEAD
 },{}],"vue/components/Confetti.vue":[function(require,module,exports) {
+=======
+},{}],"vue/components/TodoList.vue":[function(require,module,exports) {
+>>>>>>> master
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -38488,6 +49407,7 @@ exports.default = void 0;
 
 var _vue = _interopRequireDefault(require("vue"));
 
+<<<<<<< HEAD
 var _vueConfetti = _interopRequireDefault(require("vue-confetti"));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
@@ -38569,6 +49489,9 @@ Object.defineProperty(exports, "__esModule", {
 exports.default = void 0;
 
 var _vuex = require("vuex");
+=======
+var _AddTodoListItemForm = _interopRequireDefault(require("./AddTodoListItemForm"));
+>>>>>>> master
 
 var _TodoListItems = _interopRequireDefault(require("./TodoListItems"));
 
@@ -38576,7 +49499,11 @@ var _Contributors = _interopRequireDefault(require("./Contributors"));
 
 var _InviteContributorsForm = _interopRequireDefault(require("./InviteContributorsForm"));
 
+<<<<<<< HEAD
 var _Confetti = _interopRequireDefault(require("./Confetti"));
+=======
+var _vueConfetti = _interopRequireDefault(require("vue-confetti"));
+>>>>>>> master
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -38624,16 +49551,22 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 //
 //
 //
+<<<<<<< HEAD
 //
 //
 //
 //
+=======
+_vue.default.use(_vueConfetti.default);
+
+>>>>>>> master
 var _default = {
   name: "TodoList",
   props: ["todoListId"],
 
   data() {
     return {
+<<<<<<< HEAD
       editingTitle: false,
       todoListForm: {
         listTitle: ""
@@ -38657,6 +49590,77 @@ var _default = {
     Confetti: _Confetti.default
   },
   methods: {
+=======
+      items: [],
+      editingTitle: false,
+      form: {
+        title: ""
+      },
+      loadingItems: true
+    };
+  },
+
+  async created() {
+    await this.$store.dispatch("loadItemsByListId", {
+      todoListId: this.todoListId
+    });
+    this.items = this.getItems();
+    this.loadingItems = false;
+  },
+
+  destroyed() {
+    this.$confetti.stop();
+  },
+
+  computed: {
+    list() {
+      return this.$store.getters.getTodoListById(this.todoListId);
+    },
+
+    contributors() {
+      return this.$store.getters.contributors;
+    },
+
+    allItemsCompleted() {
+      return this.items.every(item => item.completed) && this.items.length > 0;
+    }
+
+  },
+  watch: {
+    allItemsCompleted: function () {
+      if (this.allItemsCompleted) {
+        this.$confetti.start({
+          particles: [{
+            type: "rect"
+          }],
+          particlesPerFrame: 0.5,
+          dropRate: 8
+        });
+        this.$store.commit("setTodoListCompletedState", {
+          listId: this.todoListId,
+          listCompletedState: true
+        });
+      } else {
+        this.$confetti.stop();
+        this.$store.commit("setTodoListCompletedState", {
+          listId: this.todoListId,
+          listCompletedState: false
+        });
+      }
+    }
+  },
+  components: {
+    AddTodoListItemForm: _AddTodoListItemForm.default,
+    TodoListItems: _TodoListItems.default,
+    Contributors: _Contributors.default,
+    InviteContributorsForm: _InviteContributorsForm.default
+  },
+  methods: {
+    getItems() {
+      return this.$store.getters.getItemsByListId(this.todoListId);
+    },
+
+>>>>>>> master
     showTitleEditor() {
       this.editingTitle = true;
       this.$nextTick(() => {
@@ -38667,6 +49671,7 @@ var _default = {
 
     async updateListTitle() {
       this.editingTitle = false;
+<<<<<<< HEAD
       await this.$store.dispatch("updateTodoListTitle", {
         todoListId: this.todoListId,
         listTitle: this.form.title
@@ -38686,11 +49691,19 @@ var _default = {
         todoListId: this.todoListId,
         completed: false
       });
+=======
+      await this.$store.dispatch("updateListTitle", {
+        listId: this.todoListId,
+        listTitle: this.form.title
+      });
+      this.form.title = "";
+>>>>>>> master
     }
 
   }
 };
 exports.default = _default;
+<<<<<<< HEAD
         var $98e7b1 = exports.default || module.exports;
       
       if (typeof $98e7b1 === 'function') {
@@ -38699,10 +49712,21 @@ exports.default = _default;
     
         /* template */
         Object.assign($98e7b1, (function () {
+=======
+        var $20d7fb = exports.default || module.exports;
+      
+      if (typeof $20d7fb === 'function') {
+        $20d7fb = $20d7fb.options;
+      }
+    
+        /* template */
+        Object.assign($20d7fb, (function () {
+>>>>>>> master
           var render = function() {
   var _vm = this
   var _h = _vm.$createElement
   var _c = _vm._self._c || _h
+<<<<<<< HEAD
   return _c(
     "div",
     { staticClass: "todo-list-wrapper" },
@@ -38818,6 +49842,128 @@ exports.default = _default;
     ],
     1
   )
+=======
+  return _c("div", { staticClass: "todo-list-wrapper" }, [
+    _c(
+      "div",
+      { staticClass: "todo-list" },
+      [
+        !_vm.editingTitle
+          ? _c(
+              "h1",
+              {
+                staticClass: "todo-list-title mb-2",
+                on: { click: _vm.showTitleEditor }
+              },
+              [_vm._v(_vm._s(_vm.list.listTitle))]
+            )
+          : _vm._e(),
+        _vm._v(" "),
+        _vm.editingTitle
+          ? _c(
+              "b-form",
+              {
+                staticClass: "list-title-editor",
+                on: {
+                  submit: function($event) {
+                    $event.preventDefault()
+                    return _vm.updateListTitle($event)
+                  }
+                }
+              },
+              [
+                _c(
+                  "b-form-group",
+                  [
+                    _c("b-form-input", {
+                      ref: "listTitleInput",
+                      attrs: { id: "title", maxlength: "50", required: "" },
+                      model: {
+                        value: _vm.form.title,
+                        callback: function($$v) {
+                          _vm.$set(_vm.form, "title", $$v)
+                        },
+                        expression: "form.title"
+                      }
+                    })
+                  ],
+                  1
+                ),
+                _vm._v(" "),
+                _c(
+                  "b-button",
+                  {
+                    staticClass: "mb-3",
+                    attrs: { variant: "success", type: "submit" }
+                  },
+                  [_vm._v("Save")]
+                )
+              ],
+              1
+            )
+          : _vm._e(),
+        _vm._v(" "),
+        _c("Contributors", {
+          staticClass: "mb-4",
+          attrs: {
+            todoListContributors: _vm.list.contributors,
+            accountContributors: _vm.contributors
+          }
+        }),
+        _vm._v(" "),
+        _c(
+          "b-row",
+          [
+            _c(
+              "b-col",
+              {
+                staticClass: "mb-3",
+                class: { "col-md-8": _vm.list.role == 3 }
+              },
+              [
+                !_vm.loadingItems
+                  ? _c("TodoListItems", {
+                      attrs: {
+                        listId: _vm.todoListId,
+                        todoListItems: _vm.items
+                      }
+                    })
+                  : _vm._e(),
+                _vm._v(" "),
+                _vm.items && _vm.items.length < 1
+                  ? _c("b-list-group-item", [
+                      _vm._v("Add an item to get started.")
+                    ])
+                  : _vm._e(),
+                _vm._v(" "),
+                _c("AddTodoListItemForm", {
+                  staticClass: "mt-3",
+                  attrs: { todoListId: _vm.todoListId }
+                })
+              ],
+              1
+            ),
+            _vm._v(" "),
+            _vm.list.role == 3
+              ? _c(
+                  "b-col",
+                  { attrs: { md: "4" } },
+                  [
+                    _c("InviteContributorsForm", {
+                      attrs: { listId: this.todoListId }
+                    })
+                  ],
+                  1
+                )
+              : _vm._e()
+          ],
+          1
+        )
+      ],
+      1
+    )
+  ])
+>>>>>>> master
 }
 var staticRenderFns = []
 render._withStripped = true
@@ -38839,16 +49985,26 @@ render._withStripped = true
         if (api.compatible) {
           module.hot.accept();
           if (!module.hot.data) {
+<<<<<<< HEAD
             api.createRecord('$98e7b1', $98e7b1);
           } else {
             api.reload('$98e7b1', $98e7b1);
+=======
+            api.createRecord('$20d7fb', $20d7fb);
+          } else {
+            api.reload('$20d7fb', $20d7fb);
+>>>>>>> master
           }
         }
 
         
       }
     })();
+<<<<<<< HEAD
 },{"vuex":"node_modules/vuex/dist/vuex.esm.js","./TodoListItems":"vue/components/TodoListItems.vue","./Contributors":"vue/components/Contributors.vue","./InviteContributorsForm":"vue/components/InviteContributorsForm.vue","./Confetti":"vue/components/Confetti.vue","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/views/TodoListView.vue":[function(require,module,exports) {
+=======
+},{"vue":"node_modules/vue/dist/vue.runtime.esm.js","./AddTodoListItemForm":"vue/components/AddTodoListItemForm.vue","./TodoListItems":"vue/components/TodoListItems.vue","./Contributors":"vue/components/Contributors.vue","./InviteContributorsForm":"vue/components/InviteContributorsForm.vue","vue-confetti":"node_modules/vue-confetti/dist/vue-confetti.js","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js"}],"vue/views/TodoListView.vue":[function(require,module,exports) {
+>>>>>>> master
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -38856,8 +50012,11 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.default = void 0;
 
+<<<<<<< HEAD
 var _vuex = require("vuex");
 
+=======
+>>>>>>> master
 var _TodoList = _interopRequireDefault(require("../components/TodoList"));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
@@ -38872,6 +50031,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 //
 //
 //
+<<<<<<< HEAD
 var _default = {
   name: "TodoListView",
   props: ["todoListId"],
@@ -38891,6 +50051,32 @@ exports.default = _default;
     
         /* template */
         Object.assign($2f27a4, (function () {
+=======
+//
+//
+var _default = {
+  name: 'TodoListView',
+  props: ['todoListId'],
+  components: {
+    TodoList: _TodoList.default
+  },
+  computed: {
+    loading() {
+      return this.$store.getters.getLoadingState;
+    }
+
+  }
+};
+exports.default = _default;
+        var $090fa3 = exports.default || module.exports;
+      
+      if (typeof $090fa3 === 'function') {
+        $090fa3 = $090fa3.options;
+      }
+    
+        /* template */
+        Object.assign($090fa3, (function () {
+>>>>>>> master
           var render = function() {
   var _vm = this
   var _h = _vm.$createElement
@@ -38906,12 +50092,20 @@ exports.default = _default;
         },
         [
           _c("b-icon", { attrs: { icon: "chevron-left" } }),
+<<<<<<< HEAD
           _vm._v("My Lists\n  ")
+=======
+          _vm._v(" My Lists\n  ")
+>>>>>>> master
         ],
         1
       ),
       _vm._v(" "),
+<<<<<<< HEAD
       !_vm.loadingTodoLists
+=======
+      !_vm.loading
+>>>>>>> master
         ? _c("TodoList", { attrs: { todoListId: _vm.todoListId } })
         : _vm._e()
     ],
@@ -38925,7 +50119,11 @@ render._withStripped = true
             render: render,
             staticRenderFns: staticRenderFns,
             _compiled: true,
+<<<<<<< HEAD
             _scopeId: "data-v-2f27a4",
+=======
+            _scopeId: "data-v-090fa3",
+>>>>>>> master
             functional: undefined
           };
         })());
@@ -38938,9 +50136,15 @@ render._withStripped = true
         if (api.compatible) {
           module.hot.accept();
           if (!module.hot.data) {
+<<<<<<< HEAD
             api.createRecord('$2f27a4', $2f27a4);
           } else {
             api.reload('$2f27a4', $2f27a4);
+=======
+            api.createRecord('$090fa3', $090fa3);
+          } else {
+            api.reload('$090fa3', $090fa3);
+>>>>>>> master
           }
         }
 
@@ -38951,7 +50155,11 @@ render._withStripped = true
       
       }
     })();
+<<<<<<< HEAD
 },{"vuex":"node_modules/vuex/dist/vuex.esm.js","../components/TodoList":"vue/components/TodoList.vue","_css_loader":"node_modules/parcel-bundler/src/builtins/css-loader.js","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/views/Login.vue":[function(require,module,exports) {
+=======
+},{"../components/TodoList":"vue/components/TodoList.vue","_css_loader":"node_modules/parcel-bundler/src/builtins/css-loader.js","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/views/Login.vue":[function(require,module,exports) {
+>>>>>>> master
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -38991,6 +50199,7 @@ var _default = {
   }
 };
 exports.default = _default;
+<<<<<<< HEAD
         var $d02f84 = exports.default || module.exports;
       
       if (typeof $d02f84 === 'function') {
@@ -38999,6 +50208,16 @@ exports.default = _default;
     
         /* template */
         Object.assign($d02f84, (function () {
+=======
+        var $76be99 = exports.default || module.exports;
+      
+      if (typeof $76be99 === 'function') {
+        $76be99 = $76be99.options;
+      }
+    
+        /* template */
+        Object.assign($76be99, (function () {
+>>>>>>> master
           var render = function() {
   var _vm = this
   var _h = _vm.$createElement
@@ -39050,9 +50269,15 @@ render._withStripped = true
         if (api.compatible) {
           module.hot.accept();
           if (!module.hot.data) {
+<<<<<<< HEAD
             api.createRecord('$d02f84', $d02f84);
           } else {
             api.reload('$d02f84', $d02f84);
+=======
+            api.createRecord('$76be99', $76be99);
+          } else {
+            api.reload('$76be99', $76be99);
+>>>>>>> master
           }
         }
 
@@ -39087,6 +50312,7 @@ var _default = {
   }
 };
 exports.default = _default;
+<<<<<<< HEAD
         var $5e4d3b = exports.default || module.exports;
       
       if (typeof $5e4d3b === 'function') {
@@ -39095,6 +50321,16 @@ exports.default = _default;
     
         /* template */
         Object.assign($5e4d3b, (function () {
+=======
+        var $a848c0 = exports.default || module.exports;
+      
+      if (typeof $a848c0 === 'function') {
+        $a848c0 = $a848c0.options;
+      }
+    
+        /* template */
+        Object.assign($a848c0, (function () {
+>>>>>>> master
           var render = function() {
   var _vm = this
   var _h = _vm.$createElement
@@ -39143,9 +50379,15 @@ render._withStripped = true
         if (api.compatible) {
           module.hot.accept();
           if (!module.hot.data) {
+<<<<<<< HEAD
             api.createRecord('$5e4d3b', $5e4d3b);
           } else {
             api.reload('$5e4d3b', $5e4d3b);
+=======
+            api.createRecord('$a848c0', $a848c0);
+          } else {
+            api.reload('$a848c0', $a848c0);
+>>>>>>> master
           }
         }
 
@@ -46472,6 +57714,7 @@ var _default = {
   }
 };
 exports.default = _default;
+<<<<<<< HEAD
         var $8dae8a = exports.default || module.exports;
       
       if (typeof $8dae8a === 'function') {
@@ -46480,6 +57723,16 @@ exports.default = _default;
     
         /* template */
         Object.assign($8dae8a, (function () {
+=======
+        var $81fc0e = exports.default || module.exports;
+      
+      if (typeof $81fc0e === 'function') {
+        $81fc0e = $81fc0e.options;
+      }
+    
+        /* template */
+        Object.assign($81fc0e, (function () {
+>>>>>>> master
           var render = function() {
   var _vm = this
   var _h = _vm.$createElement
@@ -46598,9 +57851,15 @@ render._withStripped = true
         if (api.compatible) {
           module.hot.accept();
           if (!module.hot.data) {
+<<<<<<< HEAD
             api.createRecord('$8dae8a', $8dae8a);
           } else {
             api.reload('$8dae8a', $8dae8a);
+=======
+            api.createRecord('$81fc0e', $81fc0e);
+          } else {
+            api.reload('$81fc0e', $81fc0e);
+>>>>>>> master
           }
         }
 
@@ -46693,6 +57952,7 @@ var _default = {
   }
 };
 exports.default = _default;
+<<<<<<< HEAD
         var $96dd18 = exports.default || module.exports;
       
       if (typeof $96dd18 === 'function') {
@@ -46701,6 +57961,16 @@ exports.default = _default;
     
         /* template */
         Object.assign($96dd18, (function () {
+=======
+        var $77fbb6 = exports.default || module.exports;
+      
+      if (typeof $77fbb6 === 'function') {
+        $77fbb6 = $77fbb6.options;
+      }
+    
+        /* template */
+        Object.assign($77fbb6, (function () {
+>>>>>>> master
           var render = function() {
   var _vm = this
   var _h = _vm.$createElement
@@ -46842,9 +58112,15 @@ render._withStripped = true
         if (api.compatible) {
           module.hot.accept();
           if (!module.hot.data) {
+<<<<<<< HEAD
             api.createRecord('$96dd18', $96dd18);
           } else {
             api.reload('$96dd18', $96dd18);
+=======
+            api.createRecord('$77fbb6', $77fbb6);
+          } else {
+            api.reload('$77fbb6', $77fbb6);
+>>>>>>> master
           }
         }
 
@@ -46926,6 +58202,7 @@ var _default = {
   }
 };
 exports.default = _default;
+<<<<<<< HEAD
         var $1c308f = exports.default || module.exports;
       
       if (typeof $1c308f === 'function') {
@@ -46934,6 +58211,16 @@ exports.default = _default;
     
         /* template */
         Object.assign($1c308f, (function () {
+=======
+        var $e2b67e = exports.default || module.exports;
+      
+      if (typeof $e2b67e === 'function') {
+        $e2b67e = $e2b67e.options;
+      }
+    
+        /* template */
+        Object.assign($e2b67e, (function () {
+>>>>>>> master
           var render = function() {
   var _vm = this
   var _h = _vm.$createElement
@@ -46990,9 +58277,15 @@ render._withStripped = true
         if (api.compatible) {
           module.hot.accept();
           if (!module.hot.data) {
+<<<<<<< HEAD
             api.createRecord('$1c308f', $1c308f);
           } else {
             api.reload('$1c308f', $1c308f);
+=======
+            api.createRecord('$e2b67e', $e2b67e);
+          } else {
+            api.reload('$e2b67e', $e2b67e);
+>>>>>>> master
           }
         }
 
@@ -47034,6 +58327,7 @@ var _default = {
   }
 };
 exports.default = _default;
+<<<<<<< HEAD
         var $a8fd0e = exports.default || module.exports;
       
       if (typeof $a8fd0e === 'function') {
@@ -47042,6 +58336,16 @@ exports.default = _default;
     
         /* template */
         Object.assign($a8fd0e, (function () {
+=======
+        var $7cc9c9 = exports.default || module.exports;
+      
+      if (typeof $7cc9c9 === 'function') {
+        $7cc9c9 = $7cc9c9.options;
+      }
+    
+        /* template */
+        Object.assign($7cc9c9, (function () {
+>>>>>>> master
           var render = function() {
   var _vm = this
   var _h = _vm.$createElement
@@ -47101,9 +58405,15 @@ render._withStripped = true
         if (api.compatible) {
           module.hot.accept();
           if (!module.hot.data) {
+<<<<<<< HEAD
             api.createRecord('$a8fd0e', $a8fd0e);
           } else {
             api.reload('$a8fd0e', $a8fd0e);
+=======
+            api.createRecord('$7cc9c9', $7cc9c9);
+          } else {
+            api.reload('$7cc9c9', $7cc9c9);
+>>>>>>> master
           }
         }
 
@@ -47244,9 +58554,13 @@ var _default = {
       await this.checkAuthState();
       await this.getPlan();
       this.user = this.$store.getters.user;
+<<<<<<< HEAD
     } catch (error) {
       console.error(error);
     }
+=======
+    } catch (error) {}
+>>>>>>> master
   },
 
   methods: {
@@ -47257,9 +58571,13 @@ var _default = {
           url: "api/accounts"
         });
         this.$store.commit("setUserData", user.data);
+<<<<<<< HEAD
       } catch (error) {
         console.error(error);
       }
+=======
+      } catch (error) {}
+>>>>>>> master
     },
 
     async getPlan() {
@@ -47279,6 +58597,7 @@ var _default = {
   }
 };
 exports.default = _default;
+<<<<<<< HEAD
         var $f4778d = exports.default || module.exports;
       
       if (typeof $f4778d === 'function') {
@@ -47287,6 +58606,16 @@ exports.default = _default;
     
         /* template */
         Object.assign($f4778d, (function () {
+=======
+        var $85f3a2 = exports.default || module.exports;
+      
+      if (typeof $85f3a2 === 'function') {
+        $85f3a2 = $85f3a2.options;
+      }
+    
+        /* template */
+        Object.assign($85f3a2, (function () {
+>>>>>>> master
           var render = function() {
   var _vm = this
   var _h = _vm.$createElement
@@ -47382,9 +58711,15 @@ render._withStripped = true
         if (api.compatible) {
           module.hot.accept();
           if (!module.hot.data) {
+<<<<<<< HEAD
             api.createRecord('$f4778d', $f4778d);
           } else {
             api.reload('$f4778d', $f4778d);
+=======
+            api.createRecord('$85f3a2', $85f3a2);
+          } else {
+            api.reload('$85f3a2', $85f3a2);
+>>>>>>> master
           }
         }
 
@@ -47420,16 +58755,71 @@ var _default = {
     Header: _Header.default
   },
 
+<<<<<<< HEAD
   async created() {
     await this.$store.dispatch("getTodoLists");
+=======
+  async beforeCreate() {
+    try {
+      await this.$store.dispatch("loadTodoLists");
+    } catch (error) {}
+>>>>>>> master
   },
 
   mounted() {
     this.$store.state.connection.start().catch(err => console.error(err.toString()));
+<<<<<<< HEAD
+=======
+    this.$store.state.connection.on("InvitationSent", list => this.$store.commit("addTodoList", {
+      list
+    }));
+    this.$store.state.connection.on("InvitationAccepted", list => this.$store.dispatch("refreshContributors", {
+      list
+    }));
+    this.$store.state.connection.on("ContributorLeft", list => this.$store.dispatch("refreshContributors", {
+      list
+    }));
+    this.$store.state.connection.on("ListNameUpdated", (listId, listTitle) => this.$store.commit("updateListTitle", {
+      listId,
+      listTitle
+    }));
+    this.$store.state.connection.on("ListCompletedStateChanged", (listId, listCompletedState) => this.$store.commit("setTodoListCompletedState", {
+      listId,
+      listCompletedState
+    }));
+    this.$store.state.connection.on("ItemCreated", (listId, item) => {
+      this.$store.commit("addItem", {
+        listId,
+        item
+      });
+      this.$store.commit("setSubItems", {
+        todoItemId: item.id,
+        subItems: []
+      });
+    });
+    this.$store.state.connection.on("ItemCompleted", item => this.$store.commit("updateItemCompletedState", {
+      item
+    }));
+    this.$store.state.connection.on("ItemUpdated", item => this.$store.commit("updateItem", {
+      item
+    }));
+    this.$store.state.connection.on("SubItemCreated", subItem => this.$store.commit("addSubItem", {
+      subItem
+    }));
+    this.$store.state.connection.on("SubItemCompletedStateChanged", subItem => this.$store.commit("updateSubItemCompletedState", {
+      todoItemId: subItem.listItemId,
+      subItemId: subItem.id,
+      completed: subItem.completed
+    }));
+    this.$store.state.connection.on("SubItemUpdated", subItem => this.$store.commit("updateSubItem", {
+      subItem
+    }));
+>>>>>>> master
   }
 
 };
 exports.default = _default;
+<<<<<<< HEAD
         var $fcc03e = exports.default || module.exports;
       
       if (typeof $fcc03e === 'function') {
@@ -47438,6 +58828,16 @@ exports.default = _default;
     
         /* template */
         Object.assign($fcc03e, (function () {
+=======
+        var $06aed4 = exports.default || module.exports;
+      
+      if (typeof $06aed4 === 'function') {
+        $06aed4 = $06aed4.options;
+      }
+    
+        /* template */
+        Object.assign($06aed4, (function () {
+>>>>>>> master
           var render = function() {
   var _vm = this
   var _h = _vm.$createElement
@@ -47469,9 +58869,15 @@ render._withStripped = true
         if (api.compatible) {
           module.hot.accept();
           if (!module.hot.data) {
+<<<<<<< HEAD
             api.createRecord('$fcc03e', $fcc03e);
           } else {
             api.reload('$fcc03e', $fcc03e);
+=======
+            api.createRecord('$06aed4', $06aed4);
+          } else {
+            api.reload('$06aed4', $06aed4);
+>>>>>>> master
           }
         }
 
@@ -91459,9 +102865,15 @@ var PortalTarget = Vue.extend({
       this.$emit('change', this.children().length > 0);
     },
     name: function name(newVal, oldVal) {
+<<<<<<< HEAD
       /**
        * TODO
        * This should warn as well ...
+=======
+      /**
+       * TODO
+       * This should warn as well ...
+>>>>>>> master
        */
       wormhole.unregisterTarget(oldVal);
       wormhole.registerTarget(newVal, this);
@@ -96812,7 +108224,11 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
+<<<<<<< HEAD
   var ws = new WebSocket(protocol + '://' + hostname + ':' + "59034" + '/');
+=======
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "55880" + '/');
+>>>>>>> master
 
   ws.onmessage = function (event) {
     checkedAssets = {};

@@ -8,10 +8,9 @@ Create Table [Accounts]
     [FullName] VARCHAR(50),
     [PictureUrl] VARCHAR(255),
     [Email] VARCHAR(50) NOT NULL,
-    [PlanID] INT NOT NULL,
-    [PaymentID] VARCHAR(9) NOT NULL,
+    [CustomerID] VARCHAR(9) NOT NULL,
+    [PaymentMethodID] VARCHAR(50),
     [SubscriptionID] VARCHAR(50),
-    FOREIGN KEY ([PlanID]) REFERENCES Plans([ID])
 )
 
 GO

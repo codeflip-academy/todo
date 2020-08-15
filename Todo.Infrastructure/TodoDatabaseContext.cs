@@ -8,6 +8,7 @@ using Todo.Domain;
 using Todo.Domain.Repositories;
 using Newtonsoft.Json;
 using System.Collections.Generic;
+using Todo.Core;
 
 namespace Todo.Infrastructure
 {
@@ -81,11 +82,12 @@ namespace Todo.Infrastructure
                     .IsUnicode(false);
 
                 entity
-                    .Property(e => e.PlanId)
-                    .HasColumnName("PlanID");
+                    .Property(e => e.CustomerId)
+                    .HasColumnName("CustomerID");
+
                 entity
-                    .Property(e => e.PaymentId)
-                    .HasColumnName("PaymentID");
+                    .Property(e => e.PaymentMethodId)
+                    .HasColumnName("PaymentMethodID");
 
                 entity
                 .Property(e => e.SubscriptionId)

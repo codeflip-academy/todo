@@ -2,7 +2,7 @@
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using TodoWebAPI.Models;
-using TodoWebAPI.Presentation;
+using Todo.Infrastructure.Dto;
 using MediatR;
 using TodoWebAPI.UserStories.ListLayout;
 using Microsoft.AspNetCore.Authorization;
@@ -11,6 +11,7 @@ using TodoWebAPI.UserStories.SendInvitation;
 using Todo.Domain;
 using Todo.Domain.Repositories;
 using TodoWebAPI.UserStories;
+using TodoWebAPI.ViewModels;
 
 namespace TodoWebAPI.Controllers
 {
@@ -61,7 +62,7 @@ namespace TodoWebAPI.Controllers
         {
             var lists = await _dapperQuery.GetListsAsync(User.ReadClaimAsGuidValue("urn:codefliptodo:accountid"));
             var accountContributors = await _dapperQuery.GetContributorsAsync(User.ReadClaimAsGuidValue("urn:codefliptodo:accountid"));
-            var todoListsPresentation = new TodoListsPresentation(lists, accountContributors);
+            var todoListsPresentation = new TodoListsDto(lists, accountContributors);
 
             return Ok(todoListsPresentation);
         }
@@ -98,7 +99,7 @@ namespace TodoWebAPI.Controllers
             if (todoListAuthorizationValidator.IsUserAuthorized())
             {
                 var mediator = await _mediator.Send(updatedList);
-                if(mediator == null)
+                if (mediator == null)
                 {
                     return BadRequest("Can't rename list because you're not an owner.");
                 }

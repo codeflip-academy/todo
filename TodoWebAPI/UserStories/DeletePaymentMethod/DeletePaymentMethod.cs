@@ -6,6 +6,7 @@ namespace TodoWebAPI.UserStories.DeletePaymentMethod
 {
     public class DeletePaymentMethod : IRequest
     {
-        public Payment Method {get; set;}
+        public string PaymentMethodId { get; set; }
+        public Guid AccountId { get; set; }
     }
 }

@@ -3,6 +3,7 @@
   font-family: "Nunito", sans-serif;
 }
 .contributors[data-v-370f63] {
+
   display: flex;
   list-style: none;
   padding: 0;
@@ -81,7 +82,11 @@
   margin-left: 31px;
 }
 @media screen and (min-width: 521px) {
+<<<<<<< HEAD
 .todo-item .todo-item-options[data-v-71ea3c] {
+=======
+.todo-item .todo-item-options[data-v-b8ebde] {
+>>>>>>> master
     margin: 0;
 }
 }
@@ -117,10 +122,17 @@
   padding: 12px;
   width: 100%;
 }
+<<<<<<< HEAD
 h3[data-v-3f1240] {
   font-size: 24px;
 }
 .invitation-form .email-group[data-v-3f1240] {
+=======
+h3[data-v-e8e650] {
+  font-size: 24px;
+}
+.invitation-form .email-group[data-v-e8e650] {
+>>>>>>> master
   font-family: "Nunito", sans-serif;
   font-weight: bold;
 }
@@ -353,7 +365,8 @@ h1 {
   text-align: center;
   overflow: visible;
   position: relative;
-  transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+  transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out,
+ box-shadow 0.15s ease-in-out;
 }
 
 .b-avatar:focus {
