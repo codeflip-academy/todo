@@ -210,6 +210,13 @@ export default {
         this.commitDeleteItem(item.id);
       }
     });
+
+    // Item updated
+    this.$store.state.connection.on("ItemUpdated", (item) => {
+      if (this.itemBelongsToList(item.listId)) {
+        this.commitUpdateItem(item);
+      }
+    });
   },
   watch: {
     items() {
