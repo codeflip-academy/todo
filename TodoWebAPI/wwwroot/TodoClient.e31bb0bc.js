@@ -38366,6 +38366,12 @@ var _default = {
       if (this.itemBelongsToList(item.listId)) {
         this.commitUpdateItem(item);
       }
+    }); // Item completed state changed
+
+    this.$store.state.connection.on("ItemCompleted", item => {
+      if (this.itemBelongsToList(item.listId)) {
+        this.commitSetItemCompletedState(item.id, item.completed);
+      }
     });
   },
 
