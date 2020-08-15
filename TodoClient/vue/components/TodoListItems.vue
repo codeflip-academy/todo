@@ -189,9 +189,20 @@ export default {
         this.$emit("todo-list-uncompleted");
       }
     },
+    itemBelongsToList(todoListId) {
+      return this.todoListId === todoListId;
+    },
   },
   async created() {
     await this.dispatchGetItemsAndLayout();
+  },
+  mounted() {
+    // Item created
+    this.$store.state.connection.on("ItemCreated", (todoListId, item) => {
+      if (this.itemBelongsToList(todoListId)) {
+        this.commitAddItem(item);
+      }
+    });
   },
   watch: {
     items() {
