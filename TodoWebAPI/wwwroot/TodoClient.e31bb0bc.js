@@ -38128,6 +38128,14 @@ var _default = {
   },
 
   methods: {
+    async dispatchGetItemsLayout() {
+      const response = await (0, _axios.default)({
+        method: "GET",
+        url: "api/lists/".concat(this.todoListId, "/layout")
+      });
+      this.commitSetItemsLayout(response.data);
+    },
+
     async dispatchGetItems() {
       this.commitSetLoadingItemsState(true);
       const response = await (0, _axios.default)({
@@ -38191,7 +38199,21 @@ var _default = {
       });
     },
 
-    async dispatchUpdateItemsLayout() {},
+    async dispatchUpdateItemPosition(event) {
+      let itemId = event.item.getAttribute("data-id");
+      let position = event.newIndex;
+      await (0, _axios.default)({
+        method: "PUT",
+        url: "api/lists/".concat(this.todoListId, "/layout"),
+        data: JSON.stringify({
+          itemId,
+          position
+        }),
+        headers: {
+          "content-type": "application/json"
+        }
+      });
+    },
 
     commitSetLoadingItemsState(state) {
       this.loadingItems = state;
@@ -38203,6 +38225,11 @@ var _default = {
 
     commitAddItem(item) {
       this.items.unshift(item);
+      this.commitAddItemLayoutPosition(item.id);
+    },
+
+    commitAddItemLayoutPosition(itemId) {
+      this.itemsLayout.unshift(itemId);
     },
 
     commitSetItemCompletedState(itemId, completed) {
@@ -38217,7 +38244,12 @@ var _default = {
     },
 
     commitDeleteItem(itemId) {
-      this.items.splice(this.items.findIndex(i => i.id == itemId), 1);
+      this.commitRemoveItemLayoutPosition(itemId);
+      this.items.splice(this.items.findIndex(i => i.id === itemId), 1);
+    },
+
+    commitRemoveItemLayoutPosition(itemId) {
+      this.itemsLayout.splice(this.itemsLayout.findIndex(l => l === itemId), 1);
     },
 
     commitUpdateHasSubItems({
@@ -38225,6 +38257,10 @@ var _default = {
       hasSubItems
     }) {
       this.items[this.items.findIndex(i => i.id == itemId)].hasSubItems = hasSubItems;
+    },
+
+    commitSetItemsLayout(itemsLayout) {
+      this.itemsLayout = itemsLayout;
     },
 
     triggerTodoListCompletedEvent() {
@@ -38240,6 +38276,7 @@ var _default = {
   },
 
   async created() {
+    await this.dispatchGetItemsLayout();
     await this.dispatchGetItems();
   },
 
@@ -38272,7 +38309,7 @@ exports.default = _default;
             "Draggable",
             {
               attrs: { handle: ".item-handle" },
-              on: { end: _vm.dispatchUpdateItemsLayout },
+              on: { end: _vm.dispatchUpdateItemPosition },
               model: {
                 value: _vm.itemsLayout,
                 callback: function($$v) {
@@ -38281,10 +38318,14 @@ exports.default = _default;
                 expression: "itemsLayout"
               }
             },
-            _vm._l(_vm.items, function(item) {
+            _vm._l(_vm.itemsLayout, function(itemId) {
               return _c("TodoListItem", {
-                key: item.id,
-                attrs: { item: item },
+                key: itemId,
+                attrs: {
+                  item: _vm.items.find(function(i) {
+                    return i.id === itemId
+                  })
+                },
                 on: {
                   "checkbox-clicked": _vm.dispatchSetItemCompletedState,
                   "item-edited": _vm.dispatchUpdateItem,

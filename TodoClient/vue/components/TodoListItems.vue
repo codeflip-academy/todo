@@ -2,15 +2,15 @@
   <b-list-group class="todo-list-items">
     <Draggable
       v-model="itemsLayout"
-      @end="dispatchUpdateItemsLayout"
+      @end="dispatchUpdateItemPosition"
       handle=".item-handle"
       v-if="!loadingItems"
     >
       <!-- Replace items loop with itemsLayout and find items with items.find(i => i.id === position) -->
       <TodoListItem
-        v-for="item in items"
-        :key="item.id"
-        :item="item"
+        v-for="itemId in itemsLayout"
+        :key="itemId"
+        :item="items.find(i => i.id === itemId)"
         @checkbox-clicked="dispatchSetItemCompletedState"
         @item-edited="dispatchUpdateItem"
         @delete-item="dispatchDeleteItem"
@@ -48,6 +48,14 @@ export default {
     };
   },
   methods: {
+    async dispatchGetItemsLayout() {
+      const response = await axios({
+        method: "GET",
+        url: `api/lists/${this.todoListId}/layout`,
+      });
+
+      this.commitSetItemsLayout(response.data);
+    },
     async dispatchGetItems() {
       this.commitSetLoadingItemsState(true);
 
@@ -108,7 +116,19 @@ export default {
         url: `api/lists/${this.todoListId}/todos/${itemId}`,
       });
     },
-    async dispatchUpdateItemsLayout() {},
+    async dispatchUpdateItemPosition(event) {
+      let itemId = event.item.getAttribute("data-id");
+      let position = event.newIndex;
+
+      await axios({
+        method: "PUT",
+        url: `api/lists/${this.todoListId}/layout`,
+        data: JSON.stringify({ itemId, position }),
+        headers: {
+          "content-type": "application/json",
+        },
+      });
+    },
     commitSetLoadingItemsState(state) {
       this.loadingItems = state;
     },
@@ -117,6 +137,10 @@ export default {
     },
     commitAddItem(item) {
       this.items.unshift(item);
+      this.commitAddItemLayoutPosition(item.id);
+    },
+    commitAddItemLayoutPosition(itemId) {
+      this.itemsLayout.unshift(itemId);
     },
     commitSetItemCompletedState(itemId, completed) {
       this.items[
@@ -131,8 +155,16 @@ export default {
       Vue.set(this.items, itemIndex, item);
     },
     commitDeleteItem(itemId) {
+      this.commitRemoveItemLayoutPosition(itemId);
+
       this.items.splice(
-        this.items.findIndex((i) => i.id == itemId),
+        this.items.findIndex((i) => i.id === itemId),
+        1
+      );
+    },
+    commitRemoveItemLayoutPosition(itemId) {
+      this.itemsLayout.splice(
+        this.itemsLayout.findIndex((l) => l === itemId),
         1
       );
     },
@@ -140,6 +172,9 @@ export default {
       this.items[
         this.items.findIndex((i) => i.id == itemId)
       ].hasSubItems = hasSubItems;
+    },
+    commitSetItemsLayout(itemsLayout) {
+      this.itemsLayout = itemsLayout;
     },
     triggerTodoListCompletedEvent() {
       const listCompleted =
@@ -153,6 +188,7 @@ export default {
     },
   },
   async created() {
+    await this.dispatchGetItemsLayout();
     await this.dispatchGetItems();
   },
   watch: {
