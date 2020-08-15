@@ -5,28 +5,45 @@ using MediatR;
 using Todo.Domain;
 using Todo.Domain.Repositories;
 using Todo.Infrastructure;
+using TodoWebAPI.BraintreeService;
 
 namespace TodoWebAPI.UserStories.RoleChanges
 {
     public class PlanChangeUserStory : IRequestHandler<ChangePlan, bool>
     {
+        private readonly IAccountRepository _accountRepository;
         private readonly IAccountPlanRepository _accountPlan;
+        private readonly IDowngradeRepository _downgradeRepository;
+        private readonly IBraintreeConfiguration _braintreeConfiguration;
 
-        public PlanChangeUserStory(IAccountPlanRepository accountPlan)
+        public PlanChangeUserStory(
+            IAccountRepository accountRepository,
+            IAccountPlanRepository accountPlan,
+            IDowngradeRepository downgradeRepository,
+            IBraintreeConfiguration braintreeConfiguration)
         {
+            _accountRepository = accountRepository;
             _accountPlan = accountPlan;
+            _downgradeRepository = downgradeRepository;
+            _braintreeConfiguration = braintreeConfiguration;
         }
 
         public async Task<bool> Handle(ChangePlan request, CancellationToken cancellationToken)
         {
+            var account = await _accountRepository.FindAccountByIdAsync(request.AccountId);
             var accountPlan = await _accountPlan.FindAccountPlanByAccountIdAsync(request.AccountId);
+
+            var gateway = _braintreeConfiguration.GetGateway();
+            var currentSubscription = await gateway.Subscription.FindAsync(account.SubscriptionId);
 
             if (request.Plan == "Free")
             {
                 if (accountPlan.IsNewPlanLessThanCurrentPlan(PlanTiers.Free) == true)
                 {
-                    if (accountPlan.ListCount > PlanTiers.FreeMaxLists)
-                        return false;
+                    await _downgradeRepository.Add(
+                        accountId: request.AccountId,
+                        billingCycleEnd: currentSubscription.BillingPeriodEndDate,
+                        planId: Int32.Parse(SubscriptionHelper.ConvertPlanToBrainTreeType(request.Plan)));
                 }
                 accountPlan.PlanId = PlanTiers.Free;
             }
@@ -34,8 +51,10 @@ namespace TodoWebAPI.UserStories.RoleChanges
             {
                 if (accountPlan.IsNewPlanLessThanCurrentPlan(PlanTiers.Basic) == true)
                 {
-                    if (accountPlan.ListCount > PlanTiers.BasisMaxLists)
-                        return false;
+                    await _downgradeRepository.Add(
+                        accountId: request.AccountId,
+                        billingCycleEnd: currentSubscription.BillingPeriodEndDate,
+                        planId: Int32.Parse(SubscriptionHelper.ConvertPlanToBrainTreeType(request.Plan)));
                 }
                 accountPlan.PlanId = PlanTiers.Basic;
             }

@@ -121,7 +121,6 @@ namespace TodoWebAPI.Controllers
         public async Task<IActionResult> ChangePaymentSubscription([FromBody] ChangePaymentSubscription changePayment)
         {
             changePayment.AccountId = Guid.Parse(User.FindFirst(c => c.Type == "urn:codefliptodo:accountid").Value);
-            var gateway = _braintreeConfiguration.GetGateway();
 
             var createSubscription = new CreateSubscription
             {
@@ -133,26 +132,17 @@ namespace TodoWebAPI.Controllers
 
             if (result)
             {
+                await _mediator.Send(changePayment);
+
                 var planChange = new ChangePlan
                 {
                     AccountId = changePayment.AccountId,
                     Plan = changePayment.Plan
                 };
 
-                var response = await _mediator.Send(planChange);
+                await _mediator.Send(planChange);
 
-                if (response == true)
-                {
-                    var brainTreeResponse = await _mediator.Send(changePayment);
-                    if (brainTreeResponse == true)
-                    {
-                        return Ok();
-                    }
-                }
-                else
-                {
-                    return Forbid();
-                }
+                return Ok();
             }
 
             return BadRequest();

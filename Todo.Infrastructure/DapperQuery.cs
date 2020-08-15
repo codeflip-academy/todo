@@ -177,5 +177,16 @@ namespace TodoWebAPI
                 return result.ToList();
             }
         }
+
+        public async Task<List<DowngradeDto>> GetDowngradesAsync()
+        {
+            using (var connection = new SqlConnection(_connectionString))
+            {
+                await connection.OpenAsync();
+
+                var result = await connection.QueryAsync<DowngradeDto>("SELECT AccountID, BillingCycleEnd, PlanID From Downgrades");
+                return result.ToList();
+            }
+        }
     }
 }
