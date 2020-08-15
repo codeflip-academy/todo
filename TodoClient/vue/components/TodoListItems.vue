@@ -14,6 +14,7 @@
         @checkbox-clicked="dispatchSetItemCompletedState"
         @item-edited="dispatchUpdateItem"
         @delete-item="dispatchDeleteItem"
+        @sub-item-count-changed="commitUpdateHasSubItems"
       ></TodoListItem>
     </Draggable>
 
@@ -134,6 +135,11 @@ export default {
         this.items.findIndex((i) => i.id == itemId),
         1
       );
+    },
+    commitUpdateHasSubItems({ itemId, hasSubItems }) {
+      this.items[
+        this.items.findIndex((i) => i.id == itemId)
+      ].hasSubItems = hasSubItems;
     },
     triggerTodoListCompletedEvent() {
       const listCompleted =

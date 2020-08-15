@@ -114,12 +114,13 @@ export default {
       this.triggerSubItemsCompletedEvent();
     },
     triggerSubItemsCompletedEvent() {
+      const hasSubItems = this.subItems.length > 0;
       const subItemsCompleted =
-        this.subItems.length > 0 && this.subItems.every((s) => s.completed);
+        hasSubItems && this.subItems.every((s) => s.completed);
 
       if (subItemsCompleted) {
         this.$emit("sub-items-completed");
-      } else {
+      } else if (hasSubItems) {
         this.$emit("sub-items-uncompleted");
       }
     },

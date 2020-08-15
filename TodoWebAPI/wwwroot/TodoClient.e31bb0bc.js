@@ -19101,7 +19101,7 @@ const store = new _vuex.default.Store({
         url: "api/lists",
         data: JSON.stringify({
           listTitle: listTitle,
-          email: state.user.email
+          email: context.state.user.email
         }),
         headers: {
           "content-type": "application/json"
@@ -37005,11 +37005,12 @@ var _default = {
     },
 
     triggerSubItemsCompletedEvent() {
-      const subItemsCompleted = this.subItems.length > 0 && this.subItems.every(s => s.completed);
+      const hasSubItems = this.subItems.length > 0;
+      const subItemsCompleted = hasSubItems && this.subItems.every(s => s.completed);
 
       if (subItemsCompleted) {
         this.$emit("sub-items-completed");
-      } else {
+      } else if (hasSubItems) {
         this.$emit("sub-items-uncompleted");
       }
     },
@@ -37590,13 +37591,6 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 var _default = {
   name: "TodoListItem",
   props: ["item"],
-
-  data() {
-    return {
-      checkboxDisabled: false
-    };
-  },
-
   components: {
     EditTodoItemForm: _EditTodoItemForm.default
   },
@@ -37632,10 +37626,13 @@ var _default = {
       });
     },
 
-    commitUpdateItemDisabledState({
+    sendSubItemCountChangedEvent({
       disabled
     }) {
-      this.checkboxDisabled = disabled;
+      this.$emit("sub-item-count-changed", {
+        itemId: this.item.id,
+        hasSubItems: disabled
+      });
     }
 
   }
@@ -37665,7 +37662,7 @@ exports.default = _default;
       _vm._v(" "),
       _c("b-form-checkbox", {
         staticClass: "todo-item-checkbox",
-        attrs: { disabled: _vm.checkboxDisabled },
+        attrs: { disabled: _vm.item.hasSubItems },
         model: {
           value: _vm.itemCompletedState,
           callback: function($$v) {
@@ -37764,7 +37761,7 @@ exports.default = _default;
               "sub-items-uncompleted": function($event) {
                 return _vm.sendCheckboxClickedEvent(false)
               },
-              "sub-item-count-changed": _vm.commitUpdateItemDisabledState
+              "sub-item-count-changed": _vm.sendSubItemCountChangedEvent
             }
           })
         ],
@@ -38074,6 +38071,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 //
 //
 //
+//
 var _default = {
   name: "TodoListItems",
   props: ["todoListId"],
@@ -38184,6 +38182,13 @@ var _default = {
       this.items.splice(this.items.findIndex(i => i.id == itemId), 1);
     },
 
+    commitUpdateHasSubItems({
+      itemId,
+      hasSubItems
+    }) {
+      this.items[this.items.findIndex(i => i.id == itemId)].hasSubItems = hasSubItems;
+    },
+
     triggerTodoListCompletedEvent() {
       const listCompleted = this.items.length > 0 && this.items.every(item => item.completed);
 
@@ -38245,7 +38250,8 @@ exports.default = _default;
                 on: {
                   "checkbox-clicked": _vm.dispatchSetItemCompletedState,
                   "item-edited": _vm.dispatchUpdateItem,
-                  "delete-item": _vm.dispatchDeleteItem
+                  "delete-item": _vm.dispatchDeleteItem,
+                  "sub-item-count-changed": _vm.commitUpdateHasSubItems
                 }
               })
             }),
@@ -96812,7 +96818,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "57168" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "57281" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};

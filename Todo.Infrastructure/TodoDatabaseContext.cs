@@ -45,8 +45,6 @@ namespace Todo.Infrastructure
         public virtual DbSet<RoleLeft> AccountsListsLeft { get; set; }
         public virtual DbSet<Plan> Plans { get; set; }
         public virtual DbSet<Payment> PaymentMethods { get; set; }
-
-
         public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         {
             var saveChanges = await base.SaveChangesAsync(cancellationToken);
@@ -66,8 +64,6 @@ namespace Todo.Infrastructure
 
             return saveChanges;
         }
-
-
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<Account>(entity =>
@@ -138,6 +134,9 @@ namespace Todo.Infrastructure
                     .Property(e => e.DueDate)
                     .HasColumnType("datetime");
 
+                entity
+                    .Property(e => e.HasSubItems)
+                    .HasColumnType("HasSubItems");
             });
 
             modelBuilder.Entity<TodoListLayout>(entity =>

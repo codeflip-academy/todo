@@ -2,15 +2,17 @@ USE [ToDo]
 
 GO
 
-CREATE TABLE [TodoListItems](
+CREATE TABLE [TodoListItems]
+(
     [ID] UNIQUEIDENTIFIER PRIMARY KEY,
     [Notes] VARCHAR(200),
     [Completed] BIT NOT NULL DEFAULT(0),
     [Name] VARCHAR(50),
-	[DueDate] DATETIME,
+    [DueDate] DATETIME,
     [ListID] UNIQUEIDENTIFIER,
+    [HasSubItems] BIT NOT NULL DEFAULT(0)
 
-    FOREIGN KEY (ListID) REFERENCES TodoLists (ID) ON DELETE CASCADE
+        FOREIGN KEY (ListID) REFERENCES TodoLists (ID) ON DELETE CASCADE
 )
 
 GO

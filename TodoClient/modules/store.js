@@ -92,7 +92,7 @@ const store = new Vuex.Store({
       await axios({
         method: "POST",
         url: "api/lists",
-        data: JSON.stringify({ listTitle: listTitle, email: state.user.email }),
+        data: JSON.stringify({ listTitle: listTitle, email: context.state.user.email }),
         headers: {
           "content-type": "application/json",
         },

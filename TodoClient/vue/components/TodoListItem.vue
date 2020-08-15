@@ -9,7 +9,7 @@
     </div>
 
     <b-form-checkbox
-      :disabled="checkboxDisabled"
+      :disabled="item.hasSubItems"
       class="todo-item-checkbox"
       v-model="itemCompletedState"
     ></b-form-checkbox>
@@ -36,7 +36,7 @@
         @item-edited="sendItemEditedEvent"
         @sub-items-completed="sendCheckboxClickedEvent(true)"
         @sub-items-uncompleted="sendCheckboxClickedEvent(false)"
-        @sub-item-count-changed="commitUpdateItemDisabledState"
+        @sub-item-count-changed="sendSubItemCountChangedEvent"
       ></EditTodoItemForm>
     </div>
   </b-list-group-item>
@@ -49,11 +49,6 @@ import EditTodoItemForm from "./EditTodoItemForm";
 export default {
   name: "TodoListItem",
   props: ["item"],
-  data() {
-    return {
-      checkboxDisabled: false,
-    };
-  },
   components: {
     EditTodoItemForm,
   },
@@ -85,8 +80,11 @@ export default {
         completed: completed,
       });
     },
-    commitUpdateItemDisabledState({ disabled }) {
-      this.checkboxDisabled = disabled;
+    sendSubItemCountChangedEvent({ disabled }) {
+      this.$emit("sub-item-count-changed", {
+        itemId: this.item.id,
+        hasSubItems: disabled,
+      });
     },
   },
 };
