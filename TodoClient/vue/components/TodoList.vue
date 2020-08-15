@@ -85,14 +85,14 @@ export default {
       this.$nextTick(() => {
         this.$refs.listTitleInput.focus();
       });
-      this.form.title = this.list.listTitle;
+      this.todoListForm.listTitle = this.todoList.listTitle;
     },
     async updateListTitle() {
       this.editingTitle = false;
 
       await this.$store.dispatch("updateTodoListTitle", {
         todoListId: this.todoListId,
-        listTitle: this.form.title,
+        listTitle: this.todoListForm.listTitle,
       });
 
       this.todoListForm.listTitle = "";
