@@ -31,6 +31,16 @@ export default {
           completed,
         })
     );
+
+    // Todo list name changed
+    this.$store.state.connection.on(
+      "ListNameUpdated",
+      (todoListId, listTitle) =>
+        this.$store.commit("updateTodoListTitle", {
+          todoListId,
+          listTitle,
+        })
+    );
   },
 };
 </script>

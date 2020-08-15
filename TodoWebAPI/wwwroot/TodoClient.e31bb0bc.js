@@ -47585,6 +47585,11 @@ var _default = {
     this.$store.state.connection.on("ListCompletedStateChanged", (todoListId, completed) => this.$store.commit("setTodoListCompletedState", {
       todoListId,
       completed
+    })); // Todo list name changed
+
+    this.$store.state.connection.on("ListNameUpdated", (todoListId, listTitle) => this.$store.commit("updateTodoListTitle", {
+      todoListId,
+      listTitle
     }));
   }
 
