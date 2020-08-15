@@ -54,6 +54,7 @@
       :todoListItem="todoListItem"
       @sub-items-completed="$emit('sub-items-completed')"
       @sub-items-uncompleted="$emit('sub-items-uncompleted')"
+      @sub-item-count-changed="sendSubItemCountChangedEvent"
     ></SubItems>
   </b-modal>
 </template>
@@ -121,6 +122,9 @@ export default {
       };
 
       this.$emit("item-edited", item);
+    },
+    sendSubItemCountChangedEvent({ disabled }) {
+      this.$emit("sub-item-count-changed", { disabled });
     },
   },
   filters: {

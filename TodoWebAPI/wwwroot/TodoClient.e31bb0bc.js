@@ -37012,6 +37012,25 @@ var _default = {
       } else {
         this.$emit("sub-items-uncompleted");
       }
+    },
+
+    triggerSubItemCountChangedEvent() {
+      if (this.subItems.length > 0) {
+        this.$emit("sub-item-count-changed", {
+          disabled: true
+        });
+      } else {
+        this.$emit("sub-item-count-changed", {
+          disabled: false
+        });
+      }
+    }
+
+  },
+  watch: {
+    subItems() {
+      this.triggerSubItemCountChangedEvent();
+      this.triggerSubItemsCompletedEvent();
     }
 
   }
@@ -37192,6 +37211,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 //
 //
 //
+//
 var _default = {
   name: "EditTodoItemForm",
   props: ["todoListItem"],
@@ -37253,6 +37273,14 @@ var _default = {
         dueDate: this.form.dueDate
       };
       this.$emit("item-edited", item);
+    },
+
+    sendSubItemCountChangedEvent({
+      disabled
+    }) {
+      this.$emit("sub-item-count-changed", {
+        disabled
+      });
     }
 
   },
@@ -37460,7 +37488,8 @@ exports.default = _default;
           },
           "sub-items-uncompleted": function($event) {
             return _vm.$emit("sub-items-uncompleted")
-          }
+          },
+          "sub-item-count-changed": _vm.sendSubItemCountChangedEvent
         }
       })
     ],
@@ -37557,9 +37586,17 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 //
 //
 //
+//
 var _default = {
   name: "TodoListItem",
   props: ["item"],
+
+  data() {
+    return {
+      checkboxDisabled: false
+    };
+  },
+
   components: {
     EditTodoItemForm: _EditTodoItemForm.default
   },
@@ -37593,6 +37630,12 @@ var _default = {
         itemId: this.item.id,
         completed: completed
       });
+    },
+
+    commitUpdateItemDisabledState({
+      disabled
+    }) {
+      this.checkboxDisabled = disabled;
     }
 
   }
@@ -37622,7 +37665,7 @@ exports.default = _default;
       _vm._v(" "),
       _c("b-form-checkbox", {
         staticClass: "todo-item-checkbox",
-        attrs: { disabled: /* subItems && subItems.length > 0 */ false },
+        attrs: { disabled: _vm.checkboxDisabled },
         model: {
           value: _vm.itemCompletedState,
           callback: function($$v) {
@@ -37720,7 +37763,8 @@ exports.default = _default;
               },
               "sub-items-uncompleted": function($event) {
                 return _vm.sendCheckboxClickedEvent(false)
-              }
+              },
+              "sub-item-count-changed": _vm.commitUpdateItemDisabledState
             }
           })
         ],

@@ -123,6 +123,19 @@ export default {
         this.$emit("sub-items-uncompleted");
       }
     },
+    triggerSubItemCountChangedEvent() {
+      if (this.subItems.length > 0) {
+        this.$emit("sub-item-count-changed", { disabled: true });
+      } else {
+        this.$emit("sub-item-count-changed", { disabled: false });
+      }
+    },
+  },
+  watch: {
+    subItems() {
+      this.triggerSubItemCountChangedEvent();
+      this.triggerSubItemsCompletedEvent();
+    },
   },
 };
 </script>
