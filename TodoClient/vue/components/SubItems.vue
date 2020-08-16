@@ -70,6 +70,13 @@ export default {
         }
       }
     );
+
+    // Sub-item updated
+    this.$store.state.connection.on("SubItemUpdated", (subItem) => {
+      if (this.subItemsBelongToItem(subItem.listItemId)) {
+        this.commitUpdateSubItemName(subItem.id, subItem.name);
+      }
+    });
   },
   methods: {
     async dispatchGetSubItemsAndLayout() {
