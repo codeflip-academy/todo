@@ -47701,7 +47701,9 @@ var _default = {
     this.$store.state.connection.on("ListNameUpdated", (todoListId, listTitle) => this.$store.commit("updateTodoListTitle", {
       todoListId,
       listTitle
-    }));
+    })); // Invitation sent
+
+    this.$store.state.connection.on("InvitationSent", async () => await this.$store.dispatch("getTodoLists"));
   }
 
 };
