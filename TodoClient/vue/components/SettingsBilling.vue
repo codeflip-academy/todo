@@ -1,21 +1,27 @@
 <template>
   <section id="settings-plan">
-    <PaymentMethod
-      v-if="paymentMethod.cardType && !updatingPaymentInfo"
-      @updatePaymentInfo="updatingPaymentInfo = true"
-      :paymentMethod="paymentMethod"
-      class="mb-3"
-    ></PaymentMethod>
-    <CheckoutForm v-else @formSubmitted="getPaymentMethod(); updatingPaymentInfo = false;" class="mb-3"
-    @formCancelled="updatingPaymentInfo = false;">
-    </CheckoutForm>
-      
-    <ChangePlan class="mb-3"></ChangePlan>
+    <PaymentMethod v-if="!loadingPaymentInfo" :paymentMethod="paymentMethod" class="mb-3"></PaymentMethod>
+
+    <b-overlay
+      :show="loading"
+      blur="5px"
+      spinner-variant="primary"
+      spinner-type="grow"
+      spinner-small
+    >
+      <CheckoutForm
+        @form-submitted="getPaymentMethod"
+        @form-ready="loadingCheckoutForm = false;"
+        class="mb-3"
+      ></CheckoutForm>
+    </b-overlay>
+
+    <ChangePlan></ChangePlan>
   </section>
 </template>
 
 <script>
-import axios from 'axios';
+import axios from "axios";
 
 import PaymentMethod from "../components/PaymentMethod";
 import CheckoutForm from "../components/CheckoutForm";
@@ -26,9 +32,9 @@ export default {
   data() {
     return {
       plan: {},
-      errorMessage: "",
       paymentMethod: {},
-      updatingPaymentInfo: false,
+      loadingPaymentInfo: true,
+      loadingCheckoutForm: true,
     };
   },
   async created() {
@@ -36,23 +42,34 @@ export default {
   },
   methods: {
     async getPaymentMethod() {
-      try {
-        const response = await axios({
-          method: 'GET',
-          url: 'api/payments'
-        });
+      this.loadingPaymentInfo = true;
 
-        this.paymentMethod = response.data;
-      }
-      catch (err) {
-        console.log(err);
-      }
-    }
+      const response = await axios({
+        method: "GET",
+        url: "api/payments",
+      });
+
+      this.paymentMethod = response.data;
+
+      this.loadingPaymentInfo = false;
+    },
   },
   components: {
     PaymentMethod,
     CheckoutForm,
     ChangePlan,
   },
+  computed: {
+    loading() {
+      return this.loadingCheckoutForm || this.loadingPaymentInfo;
+    },
+  },
 };
 </script>
+
+<style lang="scss" scoped>
+.showing-overlay {
+  min-height: 133px;
+  margin-bottom: 16px;
+}
+</style>
