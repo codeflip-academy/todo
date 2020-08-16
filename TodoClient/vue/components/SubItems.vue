@@ -46,6 +46,14 @@ export default {
   async created() {
     await this.dispatchGetSubItemsAndLayout();
   },
+  mounted() {
+    // Sub-item created
+    this.$store.state.connection.on("SubItemCreated", (subItem) => {
+      if (this.subItemsBelongToItem(subItem.listItemId)) {
+        this.commitAddSubItem(subItem);
+      }
+    });
+  },
   methods: {
     async dispatchGetSubItemsAndLayout() {
       await this.dispatchGetSubItemsLayout();
@@ -190,6 +198,9 @@ export default {
       } else {
         this.$emit("sub-item-count-changed", { disabled: false });
       }
+    },
+    subItemsBelongToItem(itemId) {
+      return this.todoListItem.id === itemId;
     },
   },
   watch: {

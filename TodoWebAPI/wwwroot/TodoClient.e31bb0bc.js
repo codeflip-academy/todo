@@ -36963,6 +36963,15 @@ var _default = {
     await this.dispatchGetSubItemsAndLayout();
   },
 
+  mounted() {
+    // Sub-item created
+    this.$store.state.connection.on("SubItemCreated", subItem => {
+      if (this.subItemsBelongToItem(subItem.listItemId)) {
+        this.commitAddSubItem(subItem);
+      }
+    });
+  },
+
   methods: {
     async dispatchGetSubItemsAndLayout() {
       await this.dispatchGetSubItemsLayout();
@@ -37120,6 +37129,10 @@ var _default = {
           disabled: false
         });
       }
+    },
+
+    subItemsBelongToItem(itemId) {
+      return this.todoListItem.id === itemId;
     }
 
   },
@@ -38338,7 +38351,7 @@ var _default = {
       }
     },
 
-    itemsBelongsToList(todoListId) {
+    itemsBelongToList(todoListId) {
       return this.todoListId === todoListId;
     }
 
@@ -38351,31 +38364,31 @@ var _default = {
   mounted() {
     // Item created
     this.$store.state.connection.on("ItemCreated", (todoListId, item) => {
-      if (this.itemsBelongsToList(todoListId)) {
+      if (this.itemsBelongToList(todoListId)) {
         this.commitAddItem(item);
       }
     }); // Item trashed
 
     this.$store.state.connection.on("ItemTrashed", (todoListId, item) => {
-      if (this.itemsBelongsToList(todoListId)) {
+      if (this.itemsBelongToList(todoListId)) {
         this.commitDeleteItem(item.id);
       }
     }); // Item updated
 
     this.$store.state.connection.on("ItemUpdated", item => {
-      if (this.itemsBelongsToList(item.listId)) {
+      if (this.itemsBelongToList(item.listId)) {
         this.commitUpdateItem(item);
       }
     }); // Item completed state changed
 
     this.$store.state.connection.on("ItemCompleted", item => {
-      if (this.itemsBelongsToList(item.listId)) {
+      if (this.itemsBelongToList(item.listId)) {
         this.commitSetItemCompletedState(item.id, item.completed);
       }
     }); // Layout changed
 
     this.$store.state.connection.on("ListLayoutChanged", async todoListId => {
-      if (this.itemsBelongsToList(todoListId)) {
+      if (this.itemsBelongToList(todoListId)) {
         await this.dispatchGetItemsLayout();
       }
     });
