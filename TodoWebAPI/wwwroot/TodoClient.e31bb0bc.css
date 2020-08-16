@@ -164,6 +164,13 @@ h3[data-v-3f1240] {
 }
 #navbar {
   z-index: 50;
+  border-bottom: solid 1px #eee;
+  padding: 15px 20px;
+}
+
+.brand-text {
+  font-family: "Nunito", sans-serif;
+  font-weight: bold;
 }
 
 .account-dropdown .btn {
@@ -183,8 +190,16 @@ h3[data-v-3f1240] {
 }
 
 #content {
-  padding: 75px 20px;
+  padding: 85px 20px;
   height: 100vh;
+}
+@media screen and (min-width: 768px) {
+  #content {
+    padding: 100px 20px;
+  }
+  #content h1 {
+    font-size: 50px;
+  }
 }
 #content h1,
 #content h2,

@@ -69,8 +69,16 @@ export default {
 }
 
 #content {
-  padding: 75px 20px;
+  padding: 85px 20px;
   height: 100vh;
+
+  @media screen and (min-width: 768px) {
+    padding: 100px 20px;
+
+    h1 {
+      font-size: 50px;
+    }
+  }
 
   h1,
   h2,
