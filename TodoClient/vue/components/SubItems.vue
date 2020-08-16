@@ -60,6 +60,16 @@ export default {
         this.commitDeleteSubItem(subItem.id);
       }
     });
+
+    // Sub-item completed state changed
+    this.$store.state.connection.on(
+      "SubItemCompletedStateChanged",
+      (subItem) => {
+        if (this.subItemsBelongToItem(subItem.listItemId)) {
+          this.commitSetSubItemCompletedState(subItem.id, subItem.completed);
+        }
+      }
+    );
   },
   methods: {
     async dispatchGetSubItemsAndLayout() {

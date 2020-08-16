@@ -36975,6 +36975,12 @@ var _default = {
       if (this.subItemsBelongToItem(itemId)) {
         this.commitDeleteSubItem(subItem.id);
       }
+    }); // Sub-item completed state changed
+
+    this.$store.state.connection.on("SubItemCompletedStateChanged", subItem => {
+      if (this.subItemsBelongToItem(subItem.listItemId)) {
+        this.commitSetSubItemCompletedState(subItem.id, subItem.completed);
+      }
     });
   },
 
