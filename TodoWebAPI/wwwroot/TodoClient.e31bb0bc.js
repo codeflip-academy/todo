@@ -47703,7 +47703,11 @@ var _default = {
       listTitle
     })); // Invitation sent
 
-    this.$store.state.connection.on("InvitationSent", async () => await this.$store.dispatch("getTodoLists"));
+    this.$store.state.connection.on("InvitationSent", async () => await this.$store.dispatch("getTodoLists")); // Invitation accepted
+
+    this.$store.state.connection.on("InvitationAccepted", async () => await this.$store.dispatch("getTodoLists")); // Contributor left
+
+    this.$store.state.connection.on("ContributorLeft", async () => await this.$store.dispatch("getTodoLists"));
   }
 
 };

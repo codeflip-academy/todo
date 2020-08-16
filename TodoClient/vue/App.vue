@@ -47,6 +47,18 @@ export default {
       "InvitationSent",
       async () => await this.$store.dispatch("getTodoLists")
     );
+
+    // Invitation accepted
+    this.$store.state.connection.on(
+      "InvitationAccepted",
+      async () => await this.$store.dispatch("getTodoLists")
+    );
+
+    // Contributor left
+    this.$store.state.connection.on(
+      "ContributorLeft",
+      async () => await this.$store.dispatch("getTodoLists")
+    );
   },
 };
 </script>
