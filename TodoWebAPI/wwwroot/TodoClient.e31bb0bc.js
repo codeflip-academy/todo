@@ -23087,6 +23087,11 @@ var _default = {
   computed: {
     user() {
       return this.$store.getters.user;
+    },
+
+    firstName() {
+      const fullName = this.user.fullName.split(" ");
+      return fullName[0];
     }
 
   },
@@ -47612,7 +47617,6 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 //
 //
 //
-//
 var _default = {
   name: "Header",
 
@@ -47679,67 +47683,82 @@ exports.default = _default;
         "b-navbar",
         {
           staticClass: "fixed-top",
-          attrs: {
-            toggleable: "sm",
-            type: "light",
-            variant: "light",
-            id: "navbar"
-          }
+          attrs: { toggleable: "sm", type: "light", id: "navbar" }
         },
         [
-          _c("b-navbar-brand", [_vm._v("Todo")]),
-          _vm._v(" "),
-          _vm.user.id
-            ? _c(
-                "div",
-                { staticClass: "user-info ml-auto" },
-                [
-                  _c(
-                    "b-dropdown",
-                    {
-                      staticClass: "account-dropdown",
-                      attrs: { right: "" },
-                      scopedSlots: _vm._u(
-                        [
-                          {
-                            key: "button-content",
-                            fn: function() {
-                              return [
-                                _c("b-avatar", {
-                                  attrs: { src: _vm.user.pictureUrl }
-                                })
-                              ]
-                            },
-                            proxy: true
-                          }
-                        ],
-                        null,
-                        false,
-                        2889888370
-                      )
-                    },
+          _c(
+            "b-container",
+            [
+              _c("b-navbar-brand", [
+                _c(
+                  "div",
+                  { staticClass: "brand-text" },
+                  [
+                    _c("b-icon-check-circle-fill", {
+                      staticStyle: { "margin-right": "7px" }
+                    }),
+                    _vm._v("Todo\n      ")
+                  ],
+                  1
+                )
+              ]),
+              _vm._v(" "),
+              _vm.user.id
+                ? _c(
+                    "div",
+                    { staticClass: "user-info ml-auto" },
                     [
-                      _vm._v(" "),
-                      _c("b-dropdown-item", { attrs: { to: "/lists" } }, [
-                        _vm._v("My Lists")
-                      ]),
-                      _vm._v(" "),
-                      _c("b-dropdown-divider"),
-                      _vm._v(" "),
-                      _c("b-dropdown-item", { attrs: { to: "/settings" } }, [
-                        _vm._v("Settings")
-                      ]),
-                      _vm._v(" "),
-                      _c("b-dropdown-item", { on: { click: _vm.logout } }, [
-                        _vm._v("Sign Out")
-                      ])
+                      _c(
+                        "b-dropdown",
+                        {
+                          staticClass: "account-dropdown",
+                          attrs: { right: "" },
+                          scopedSlots: _vm._u(
+                            [
+                              {
+                                key: "button-content",
+                                fn: function() {
+                                  return [
+                                    _c("b-avatar", {
+                                      attrs: { src: _vm.user.pictureUrl }
+                                    })
+                                  ]
+                                },
+                                proxy: true
+                              }
+                            ],
+                            null,
+                            false,
+                            2889888370
+                          )
+                        },
+                        [
+                          _vm._v(" "),
+                          _c("b-dropdown-item", { attrs: { to: "/lists" } }, [
+                            _vm._v("My Lists")
+                          ]),
+                          _vm._v(" "),
+                          _c("b-dropdown-divider"),
+                          _vm._v(" "),
+                          _c(
+                            "b-dropdown-item",
+                            { attrs: { to: "/settings" } },
+                            [_vm._v("Settings")]
+                          ),
+                          _vm._v(" "),
+                          _c("b-dropdown-item", { on: { click: _vm.logout } }, [
+                            _vm._v("Sign Out")
+                          ])
+                        ],
+                        1
+                      )
                     ],
                     1
                   )
-                ],
-                1
-              )
-            : _vm._e()
+                : _vm._e()
+            ],
+            1
+          )
         ],
         1
       )
@@ -97212,7 +97231,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "57281" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "49836" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};

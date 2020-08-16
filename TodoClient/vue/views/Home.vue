@@ -14,6 +14,10 @@ export default {
     user() {
       return this.$store.getters.user;
     },
+    firstName() {
+      const fullName = this.user.fullName.split(" ");
+      return fullName[0];
+    },
   },
   components: {
     TodoLists,
