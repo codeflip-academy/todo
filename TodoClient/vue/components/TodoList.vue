@@ -1,17 +1,19 @@
 <template>
   <div class="todo-list-wrapper">
+    <Confetti v-if="todoList.completed"></Confetti>
+
     <div class="todo-list">
       <h1
         class="todo-list-title mb-2"
         @click="showTitleEditor"
         v-if="!editingTitle"
-      >{{ list.listTitle }}</h1>
+      >{{ todoList.listTitle }}</h1>
 
       <b-form class="list-title-editor" v-if="editingTitle" @submit.prevent="updateListTitle">
         <b-form-group>
           <b-form-input
             ref="listTitleInput"
-            v-model="form.title"
+            v-model="todoListForm.listTitle"
             id="title"
             maxlength="50"
             required
@@ -23,18 +25,20 @@
 
       <Contributors
         class="mb-4"
-        :todoListContributors="list.contributors"
+        :todoListContributors="todoList.contributors"
         :accountContributors="contributors"
       ></Contributors>
 
       <b-row>
-        <b-col class="mb-3" :class="{ 'col-md-8': list.role == 3 }">
-          <TodoListItems :listId="todoListId" :todoListItems="items" v-if="!loadingItems"></TodoListItems>
-          <b-list-group-item v-if="items && items.length < 1">Add an item to get started.</b-list-group-item>
-          <AddTodoListItemForm class="mt-3" :todoListId="todoListId"></AddTodoListItemForm>
+        <b-col class="mb-3" :class="{ 'col-md-8': todoList.role == 3 }">
+          <TodoListItems
+            :todoListId="todoListId"
+            @todo-list-completed="setTodoListCompleted"
+            @todo-list-uncompleted="setTodoListUncompleted"
+          ></TodoListItems>
         </b-col>
 
-        <b-col md="4" v-if="list.role == 3">
+        <b-col md="4" v-if="todoList.role == 3">
           <InviteContributorsForm :listId="this.todoListId"></InviteContributorsForm>
         </b-col>
       </b-row>
@@ -43,98 +47,67 @@
 </template>
 
 <script>
-import Vue from "vue";
-import AddTodoListItemForm from "./AddTodoListItemForm";
+import { mapState, mapGetters } from "vuex";
+
 import TodoListItems from "./TodoListItems";
 import Contributors from "./Contributors";
 import InviteContributorsForm from "./InviteContributorsForm";
-import VueConfetti from "vue-confetti";
-
-Vue.use(VueConfetti);
+import Confetti from "./Confetti";
 
 export default {
   name: "TodoList",
   props: ["todoListId"],
   data() {
     return {
-      items: [],
       editingTitle: false,
-      form: {
-        title: "",
+      todoListForm: {
+        listTitle: "",
       },
-      loadingItems: true,
     };
   },
-  async created() {
-    await this.$store.dispatch("loadItemsByListId", {
-      todoListId: this.todoListId,
-    });
-
-    this.items = this.getItems();
-    this.loadingItems = false;
-  },
-  destroyed() {
-    this.$confetti.stop();
-  },
   computed: {
-    list() {
+    todoList() {
       return this.$store.getters.getTodoListById(this.todoListId);
     },
-    contributors() {
-      return this.$store.getters.contributors;
-    },
-    allItemsCompleted() {
-      return (
-        this.items.every((item) => item.completed) && this.items.length > 0
-      );
-    },
-  },
-  watch: {
-    allItemsCompleted: function () {
-      if (this.allItemsCompleted) {
-        this.$confetti.start({
-          particles: [{ type: "rect" }],
-          particlesPerFrame: 0.5,
-          dropRate: 8,
-        });
-
-        this.$store.commit("setTodoListCompletedState", {
-          listId: this.todoListId,
-          listCompletedState: true,
-        });
-      } else {
-        this.$confetti.stop();
-        this.$store.commit("setTodoListCompletedState", {
-          listId: this.todoListId,
-          listCompletedState: false,
-        });
-      }
-    },
+    ...mapState({
+      contributors: (state) => state.contributors,
+    }),
   },
   components: {
-    AddTodoListItemForm,
     TodoListItems,
     Contributors,
     InviteContributorsForm,
+    Confetti,
   },
   methods: {
-    getItems() {
-      return this.$store.getters.getItemsByListId(this.todoListId);
+    async updateListTitle() {
+      this.editingTitle = false;
+
+      await this.$store.dispatch("updateTodoListTitle", {
+        todoListId: this.todoListId,
+        listTitle: this.todoListForm.listTitle,
+      });
+
+      this.todoListForm.listTitle = "";
     },
     showTitleEditor() {
       this.editingTitle = true;
       this.$nextTick(() => {
         this.$refs.listTitleInput.focus();
       });
-      this.form.title = this.list.listTitle;
+      this.todoListForm.listTitle = this.todoList.listTitle;
     },
-    async updateListTitle() {
-      this.editingTitle = false;
-      await this.$store.dispatch("updateListTitle", {
-        listId: this.todoListId,
-        listTitle: this.form.title,
+    setTodoListCompleted() {
+      this.$store.commit("setTodoListCompletedState", {
+        todoListId: this.todoListId,
+        completed: true,
       });
-      this.form.title = "";
+    },
+    setTodoListUncompleted() {
+      this.$store.commit("setTodoListCompletedState", {
+        todoListId: this.todoListId,
+        completed: false,
+      });
     },
   },
 };

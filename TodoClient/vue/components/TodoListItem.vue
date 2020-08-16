@@ -1,43 +1,43 @@
 <template>
   <b-list-group-item
     class="todo-item bg-light"
-    :class="{ 'align-items-center': !todoListItem.dueDate && !todoListItem.notes }"
-    :data-id="todoListItem.id"
+    :class="{ 'align-items-center': !item.dueDate && !item.notes }"
+    :data-id="item.id"
   >
     <div class="item-handle mr-2">
       <b-icon-list></b-icon-list>
     </div>
 
     <b-form-checkbox
-      :disabled="subItems && subItems.length > 0"
+      :disabled="item.hasSubItems"
       class="todo-item-checkbox"
       v-model="itemCompletedState"
     ></b-form-checkbox>
 
     <div class="todo-item-details">
-      <div
-        class="todo-item-name"
-        :class="{ 'mb-0': !todoListItem.dueDate && !todoListItem.notes }"
-      >{{ todoListItem.name }}</div>
-      <div class="todo-item-due-date" v-if="todoListItem.dueDate">
+      <div class="todo-item-name" :class="{ 'mb-0': !item.dueDate && !item.notes }">{{ item.name }}</div>
+      <div class="todo-item-due-date" v-if="item.dueDate">
         <b-icon-calendar></b-icon-calendar>
-        {{ todoListItem.dueDate | formatDate }}
+        {{ item.dueDate | formatDate }}
       </div>
-      <div class="todo-item-notes" v-if="todoListItem.notes">
+      <div class="todo-item-notes" v-if="item.notes">
         <b-icon-text-left></b-icon-text-left>
-        {{ todoListItem.notes | truncate(30, '...') }}
+        {{ item.notes | truncate(30, '...') }}
       </div>
     </div>
 
     <div class="todo-item-options">
       <b-button-group>
-        <b-button variant="info" @click="$bvModal.show(`modal-${todoListItem.id}`)">View</b-button>
-        <b-button
-          variant="danger"
-          @click="$store.dispatch('deleteItem', { item: todoListItem })"
-        >Delete</b-button>
+        <b-button variant="info" @click="$bvModal.show(`modal-${item.id}`)">View</b-button>
+        <b-button variant="danger" @click="$emit('delete-item', item.id)">Delete</b-button>
       </b-button-group>
-      <EditTodoItemForm :todoListItem="todoListItem"></EditTodoItemForm>
+      <EditTodoItemForm
+        :todoListItem="item"
+        @item-edited="sendItemEditedEvent"
+        @sub-items-completed="sendCheckboxClickedEvent(true)"
+        @sub-items-uncompleted="sendCheckboxClickedEvent(false)"
+        @sub-item-count-changed="sendSubItemCountChangedEvent"
+      ></EditTodoItemForm>
     </div>
   </b-list-group-item>
 </template>
@@ -48,29 +48,19 @@ import EditTodoItemForm from "./EditTodoItemForm";
 
 export default {
   name: "TodoListItem",
-  props: ["todoListItem"],
-  data() {
-    return {
-      subItems: this.$store.getters.getSubItemsByItemId(this.todoListItem.id),
-    };
-  },
+  props: ["item"],
   components: {
     EditTodoItemForm,
   },
   computed: {
     itemCompletedState: {
       get() {
-        return this.$store.getters.getItemCompletedState(
-          this.todoListItem.listId,
-          this.todoListItem.id
-        );
+        return this.item.completed;
       },
-      set(value) {
-        this.todoListItem.completed = value;
-
-        this.$store.dispatch("toggleItemCompletedState", {
-          item: this.todoListItem,
-        });
+      set(val) {
+        if (val !== null) {
+          this.sendCheckboxClickedEvent(val);
+        }
       },
     },
   },
@@ -80,6 +70,23 @@ export default {
     },
     truncate: function (text, length, suffix) {
       return text.substring(0, length) + suffix;
+    },
+  },
+  methods: {
+    sendItemEditedEvent(item) {
+      this.$emit("item-edited", item);
+    },
+    sendCheckboxClickedEvent(completed) {
+      this.$emit("checkbox-clicked", {
+        itemId: this.item.id,
+        completed: completed,
+      });
+    },
+    sendSubItemCountChangedEvent({ disabled }) {
+      this.$emit("sub-item-count-changed", {
+        itemId: this.item.id,
+        hasSubItems: disabled,
+      });
     },
   },
 };

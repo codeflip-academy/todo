@@ -37,7 +37,9 @@ export default {
       await this.checkAuthState();
       await this.getPlan();
       this.user = this.$store.getters.user;
-    } catch (error) {}
+    } catch (error) {
+      console.error(error);
+    }
   },
   methods: {
     async checkAuthState() {
@@ -47,7 +49,9 @@ export default {
           url: "api/accounts",
         });
         this.$store.commit("setUserData", user.data);
-      } catch (error) {}
+      } catch (error) {
+        console.error(error);
+      }
     },
     async getPlan() {
       await this.$store.dispatch("getPlan");

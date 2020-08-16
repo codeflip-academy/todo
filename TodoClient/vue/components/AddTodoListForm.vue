@@ -3,7 +3,7 @@
     <b-button @click="$bvModal.show('modal-add-todo-list')">Add list</b-button>
 
     <b-modal id="modal-add-todo-list" title="Add list" @shown="focusOnForm">
-      <b-form @submit.prevent="addTodoList">
+      <b-form @submit.prevent="addTodoListRequest">
         <b-form-group label="List Title">
           <b-form-input ref="listTitle" v-model="form.listTitle"></b-form-input>
         </b-form-group>
@@ -24,20 +24,13 @@ export default {
       },
     };
   },
-  computed: {
-    user() {
-      return this.$store.getters.user;
-    },
-  },
   methods: {
     focusOnForm() {
       this.$refs.listTitle.focus();
     },
-    async addTodoList() {
-      await this.$store.dispatch("addTodoList", {
-        listTitle: this.form.listTitle,
-        email: this.user.email,
-      });
+    addTodoListRequest() {
+      this.$emit("add-todo-list", this.form.listTitle);
+
       this.form.listTitle = "";
       this.$bvModal.hide("modal-add-todo-list");
     },

@@ -82,6 +82,25 @@ namespace TodoWebAPI.Controllers
             return Forbid();
         }
 
+        [HttpGet("api/lists/{listId}/todos/{itemId}")]
+        public async Task<IActionResult> GetTodoItemById(Guid listId, Guid itemId)
+        {
+            var accountId = User.ReadClaimAsGuidValue("urn:codefliptodo:accountid");
+            var userEmail = User.FindFirst(c => c.Type == "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress").Value;
+
+            var list = await _dapperQuery.GetListAsync(listId);
+
+            var todoListAuthorization = new TodoListAuthorizationValidator(list.Contributors, userEmail);
+
+            if (todoListAuthorization.IsUserAuthorized())
+            {
+                var item = await _dapperQuery.GetTodoItemByIdAsync(itemId);
+                return Ok(item);
+            }
+
+            return Forbid();
+        }
+
         [HttpPut("api/lists/{listId}/todos/{itemId}")]
         public async Task<IActionResult> EditTodo(Guid listId, Guid itemId, [FromBody] EditItemViewModel editItem)
         {

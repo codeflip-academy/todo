@@ -15,8 +15,16 @@ namespace Todo.Domain
         public string Name { get; set; }
         public Guid? ListId { get; set; }
         public DateTime? DueDate { get; set; }
+        public bool HasSubItems { get; private set; }
         public void SetCompleted(List<SubItem> items)
         {
+            if (items.Count == 0)
+            {
+                Completed = false;
+                DomainEvents.Add(new TodoListItemCompletedStateChanged { Item = this });
+                return;
+            }
+
             if (!items.All(item => item.ListItemId == Id))
                 return;
 
@@ -33,18 +41,16 @@ namespace Todo.Domain
                 DomainEvents.Add(new TodoListItemCompletedStateChanged { Item = this });
             }
         }
-
         public void SetCompleted()
         {
             CheckIfListItemIsTrashed();
-            
+
             if (Completed)
                 return;
 
             Completed = true;
             DomainEvents.Add(new TodoListItemCompletedStateChanged { Item = this });
         }
-
         public void SetNotCompleted()
         {
             CheckIfListItemIsTrashed();
@@ -55,20 +61,18 @@ namespace Todo.Domain
             Completed = false;
             DomainEvents.Add(new TodoListItemCompletedStateChanged { Item = this });
         }
-
         public SubItem CreateSubItem(string name)
         {
             var item = new SubItem
             {
-              ListItemId = this.Id,
-              Name = name,
+                ListItemId = this.Id,
+                Name = name,
             };
 
             DomainEvents.Add(new SubItemCreated { SubItem = item });
 
             return item;
         }
-
         public void MoveToTrash()
         {
             var listId = this.ListId;
@@ -76,15 +80,18 @@ namespace Todo.Domain
 
             DomainEvents.Add(new ItemMovedToTrash { ListId = listId, Item = this });
         }
-
         private void CheckIfListItemIsTrashed()
         {
-            if(this.ListId == null)
+            if (this.ListId == null)
                 throw new InvalidOperationException("Item is in the trash!");
         }
         public void EditItem(TodoListItem item)
         {
             DomainEvents.Add(new ItemChanged { Item = item });
+        }
+        public void SetHasSubItems(bool hasSubItems)
+        {
+            HasSubItems = hasSubItems;
         }
     }
 }
