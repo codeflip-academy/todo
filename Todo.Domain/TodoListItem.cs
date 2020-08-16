@@ -18,6 +18,13 @@ namespace Todo.Domain
         public bool HasSubItems { get; private set; }
         public void SetCompleted(List<SubItem> items)
         {
+            if (items.Count == 0)
+            {
+                Completed = false;
+                DomainEvents.Add(new TodoListItemCompletedStateChanged { Item = this });
+                return;
+            }
+
             if (!items.All(item => item.ListItemId == Id))
                 return;
 
