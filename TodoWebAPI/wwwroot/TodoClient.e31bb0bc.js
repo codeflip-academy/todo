@@ -39450,6 +39450,9 @@ exports.default = void 0;
 //
 //
 //
+//
+//
+//
 var _default = {
   name: "PaymentMethod",
   props: ["paymentMethod"],
@@ -39478,21 +39481,24 @@ exports.default = _default;
     {
       attrs: {
         title:
-          _vm.paymentMethod.cardType +
+          (_vm.paymentMethod.cardType
+            ? _vm.paymentMethod.cardType
+            : "Loading") +
           " ••••" +
-          _vm.paymentMethod.lastFourDigits,
-        "sub-title": "Expires on: " + _vm.paymentMethod.expirationDate
+          (_vm.paymentMethod.lastFourDigits
+            ? _vm.paymentMethod.lastFourDigits
+            : "1111"),
+        "sub-title":
+          "Expires on: " +
+          (_vm.paymentMethod.expirationDate
+            ? _vm.paymentMethod.expirationDate
+            : "...")
       }
     },
     [
-      _c(
-        "b-link",
-        {
-          staticClass: "card-link mt-3 d-block",
-          on: { click: _vm.updatePaymentInfo }
-        },
-        [_vm._v("Update payment method")]
-      )
+      _c("b-link", { staticClass: "card-link mt-3 d-block" }, [
+        _vm._v("Remove card")
+      ])
     ],
     1
   )
@@ -46740,19 +46746,6 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 //
 //
 //
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
 const braintree = require("braintree-web/client");
 
 const hostedFields = require("braintree-web/hosted-fields");
@@ -46764,8 +46757,7 @@ var _default = {
     return {
       clientToken: "",
       brainTreeClient: null,
-      hostedFieldsClient: null,
-      allowFormSubmissions: false
+      hostedFieldsClient: null
     };
   },
 
@@ -46773,7 +46765,7 @@ var _default = {
     await this.generateClientToken();
     await this.createBrainTreeClient();
     await this.createHostedFieldsClient();
-    this.allowFormSubmissions = true;
+    this.$emit("form-ready");
   },
 
   methods: {
@@ -46800,18 +46792,10 @@ var _default = {
             selector: "#cc-number",
             placeholder: "4111 1111 1111 1111"
           },
-          // cvv: {
-          //   selector: "#cc-cvv",
-          //   placeholder: "123",
-          // },
           expirationDate: {
             selector: "#cc-expiration",
             placeholder: "MM / YY"
-          } // postalCode: {
-          //   selector: "#cc-postal-code",
-          //   placeholder: "11111",
-          // },
-
+          }
         }
       });
     },
@@ -46833,7 +46817,7 @@ var _default = {
             "content-type": "application/json"
           }
         });
-        this.$emit("formSubmitted");
+        this.$emit("form-submitted");
       });
     }
 
@@ -46920,27 +46904,8 @@ exports.default = _default;
             [
               _c(
                 "b-button",
-                {
-                  attrs: {
-                    type: "submit",
-                    variant: "success",
-                    disabled: !_vm.allowFormSubmissions
-                  }
-                },
+                { attrs: { type: "submit", variant: "success" } },
                 [_vm._v("Submit")]
-              ),
-              _vm._v(" "),
-              _c(
-                "b-button",
-                {
-                  attrs: { variant: "secondary" },
-                  on: {
-                    click: function($event) {
-                      return _vm.$emit("formCancelled")
-                    }
-                  }
-                },
-                [_vm._v("Cancel")]
               )
             ],
             1
@@ -47056,12 +47021,22 @@ var _default = {
           "content-type": "application/json"
         }
       });
+    },
+
+    setSelectedPlan(planName) {
+      this.selectedPlan = planName;
     }
 
   },
   computed: {
     currentPlan() {
       return this.$store.getters.planName;
+    }
+
+  },
+  watch: {
+    currentPlan() {
+      this.setSelectedPlan(this.currentPlan);
     }
 
   }
@@ -47263,15 +47238,21 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 //
 //
 //
+//
+//
+//
+//
+//
+//
 var _default = {
   name: "SettingsBilling",
 
   data() {
     return {
       plan: {},
-      errorMessage: "",
       paymentMethod: {},
-      updatingPaymentInfo: false
+      loadingPaymentInfo: true,
+      loadingCheckoutForm: true
     };
   },
 
@@ -47281,15 +47262,13 @@ var _default = {
 
   methods: {
     async getPaymentMethod() {
-      try {
-        const response = await (0, _axios.default)({
-          method: 'GET',
-          url: 'api/payments'
-        });
-        this.paymentMethod = response.data;
-      } catch (err) {
-        console.log(err);
-      }
+      this.loadingPaymentInfo = true;
+      const response = await (0, _axios.default)({
+        method: "GET",
+        url: "api/payments"
+      });
+      this.paymentMethod = response.data;
+      this.loadingPaymentInfo = false;
     }
 
   },
@@ -47297,6 +47276,12 @@ var _default = {
     PaymentMethod: _PaymentMethod.default,
     CheckoutForm: _CheckoutForm.default,
     ChangePlan: _ChangePlan.default
+  },
+  computed: {
+    loading() {
+      return this.loadingCheckoutForm || this.loadingPaymentInfo;
+    }
+
   }
 };
 exports.default = _default;
@@ -47316,30 +47301,39 @@ exports.default = _default;
     "section",
     { attrs: { id: "settings-plan" } },
     [
-      _vm.paymentMethod.cardType && !_vm.updatingPaymentInfo
+      !_vm.loadingPaymentInfo
         ? _c("PaymentMethod", {
             staticClass: "mb-3",
-            attrs: { paymentMethod: _vm.paymentMethod },
+            attrs: { paymentMethod: _vm.paymentMethod }
+          })
+        : _vm._e(),
+      _vm._v(" "),
+      _c(
+        "b-overlay",
+        {
+          attrs: {
+            show: _vm.loading,
+            blur: "5px",
+            "spinner-variant": "primary",
+            "spinner-type": "grow",
+            "spinner-small": ""
+          }
+        },
+        [
+          _c("CheckoutForm", {
+            staticClass: "mb-3",
             on: {
-              updatePaymentInfo: function($event) {
-                _vm.updatingPaymentInfo = true
+              "form-submitted": _vm.getPaymentMethod,
+              "form-ready": function($event) {
+                _vm.loadingCheckoutForm = false
               }
             }
           })
-        : _c("CheckoutForm", {
-            staticClass: "mb-3",
-            on: {
-              formSubmitted: function($event) {
-                _vm.getPaymentMethod()
-                _vm.updatingPaymentInfo = false
-              },
-              formCancelled: function($event) {
-                _vm.updatingPaymentInfo = false
-              }
-            }
-          }),
+        ],
+        1
+      ),
       _vm._v(" "),
-      _c("ChangePlan", { staticClass: "mb-3" })
+      _c("ChangePlan")
     ],
     1
   )
@@ -47351,7 +47345,7 @@ render._withStripped = true
             render: render,
             staticRenderFns: staticRenderFns,
             _compiled: true,
-            _scopeId: null,
+            _scopeId: "data-v-1c308f",
             functional: undefined
           };
         })());
@@ -47371,9 +47365,13 @@ render._withStripped = true
         }
 
         
+        var reloadCSS = require('_css_loader');
+        module.hot.dispose(reloadCSS);
+        module.hot.accept(reloadCSS);
+      
       }
     })();
-},{"axios":"node_modules/axios/index.js","../components/PaymentMethod":"vue/components/PaymentMethod.vue","../components/CheckoutForm":"vue/components/CheckoutForm.vue","../components/ChangePlan":"vue/components/ChangePlan.vue","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/views/Settings.vue":[function(require,module,exports) {
+},{"axios":"node_modules/axios/index.js","../components/PaymentMethod":"vue/components/PaymentMethod.vue","../components/CheckoutForm":"vue/components/CheckoutForm.vue","../components/ChangePlan":"vue/components/ChangePlan.vue","_css_loader":"node_modules/parcel-bundler/src/builtins/css-loader.js","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/views/Settings.vue":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {

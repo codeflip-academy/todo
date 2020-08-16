@@ -1,6 +1,9 @@
 <template>
-  <b-card :title="`${paymentMethod.cardType} ••••${paymentMethod.lastFourDigits}`" :sub-title="`Expires on: ${paymentMethod.expirationDate}`">
-    <b-link class="card-link mt-3 d-block" @click="updatePaymentInfo">Update payment method</b-link>
+  <b-card
+    :title="`${paymentMethod.cardType ? paymentMethod.cardType : 'Loading'} ••••${paymentMethod.lastFourDigits ? paymentMethod.lastFourDigits : '1111'}`"
+    :sub-title="`Expires on: ${paymentMethod.expirationDate ? paymentMethod.expirationDate : '...'}`"
+  >
+    <b-link class="card-link mt-3 d-block">Remove card</b-link>
   </b-card>
 </template>
 

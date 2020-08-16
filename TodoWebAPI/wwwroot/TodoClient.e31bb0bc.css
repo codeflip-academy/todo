@@ -142,6 +142,15 @@ h3[data-v-3f1240] {
 .form-control[data-v-6ce1f6] {
   margin-bottom: 0;
 }
+.current-plan {
+  font-family: "Nunito", sans-serif;
+  font-weight: bold;
+  line-height: 1;
+}
+.showing-overlay[data-v-1c308f] {
+  min-height: 133px;
+  margin-bottom: 16px;
+}
 #settings-page .nav-link {
   margin-bottom: 10px;
 }
@@ -152,11 +161,6 @@ h3[data-v-3f1240] {
 }
 #settings-page .tab-content {
   padding-left: 30px;
-}
-.current-plan {
-  font-family: "Nunito", sans-serif;
-  font-weight: bold;
-  line-height: 1;
 }
 #navbar {
   z-index: 50;
