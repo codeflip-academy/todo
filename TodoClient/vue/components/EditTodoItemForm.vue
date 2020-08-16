@@ -119,6 +119,7 @@ export default {
         name: this.form.name,
         notes: this.form.notes,
         dueDate: this.form.dueDate,
+        hasSubItems: this.todoListItem.hasSubItems,
       };
 
       this.$emit("item-edited", item);
