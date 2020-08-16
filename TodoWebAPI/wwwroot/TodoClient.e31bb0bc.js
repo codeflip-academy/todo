@@ -36969,6 +36969,12 @@ var _default = {
       if (this.subItemsBelongToItem(subItem.listItemId)) {
         this.commitAddSubItem(subItem);
       }
+    }); // Sub-item trashed
+
+    this.$store.state.connection.on("SubItemTrashed", (itemId, subItem) => {
+      if (this.subItemsBelongToItem(itemId)) {
+        this.commitDeleteSubItem(subItem.id);
+      }
     });
   },
 
