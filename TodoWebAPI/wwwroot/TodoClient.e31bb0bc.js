@@ -39330,7 +39330,114 @@ render._withStripped = true
       
       }
     })();
-},{"axios":"node_modules/axios/index.js","_css_loader":"node_modules/parcel-bundler/src/builtins/css-loader.js","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/components/PaymentMethod.vue":[function(require,module,exports) {
+},{"axios":"node_modules/axios/index.js","_css_loader":"node_modules/parcel-bundler/src/builtins/css-loader.js","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/components/SettingsAccount.vue":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = void 0;
+
+var _vuex = require("vuex");
+
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+var _default = {
+  name: "SettingsAccount",
+  computed: (0, _vuex.mapState)({
+    user: state => state.user
+  })
+};
+exports.default = _default;
+        var $6ce1f6 = exports.default || module.exports;
+      
+      if (typeof $6ce1f6 === 'function') {
+        $6ce1f6 = $6ce1f6.options;
+      }
+    
+        /* template */
+        Object.assign($6ce1f6, (function () {
+          var render = function() {
+  var _vm = this
+  var _h = _vm.$createElement
+  var _c = _vm._self._c || _h
+  return _c(
+    "div",
+    { staticClass: "account-settings-wrapper" },
+    [
+      _vm.user.fullName
+        ? _c("b-form-group", { attrs: { label: "Full Name" } }, [
+            _c("p", { staticClass: "form-control" }, [
+              _vm._v(_vm._s(_vm.user.fullName))
+            ])
+          ])
+        : _vm._e(),
+      _vm._v(" "),
+      _vm.user.username
+        ? _c("b-form-group", { attrs: { label: "Username" } }, [
+            _c("p", { staticClass: "form-control" }, [
+              _vm._v(_vm._s(_vm.user.username))
+            ])
+          ])
+        : _vm._e(),
+      _vm._v(" "),
+      _vm.user.email
+        ? _c("b-form-group", { attrs: { label: "Email" } }, [
+            _c("p", { staticClass: "form-control" }, [
+              _vm._v(_vm._s(_vm.user.email))
+            ])
+          ])
+        : _vm._e()
+    ],
+    1
+  )
+}
+var staticRenderFns = []
+render._withStripped = true
+
+          return {
+            render: render,
+            staticRenderFns: staticRenderFns,
+            _compiled: true,
+            _scopeId: "data-v-6ce1f6",
+            functional: undefined
+          };
+        })());
+      
+    /* hot reload */
+    (function () {
+      if (module.hot) {
+        var api = require('vue-hot-reload-api');
+        api.install(require('vue'));
+        if (api.compatible) {
+          module.hot.accept();
+          if (!module.hot.data) {
+            api.createRecord('$6ce1f6', $6ce1f6);
+          } else {
+            api.reload('$6ce1f6', $6ce1f6);
+          }
+        }
+
+        
+        var reloadCSS = require('_css_loader');
+        module.hot.dispose(reloadCSS);
+        module.hot.accept(reloadCSS);
+      
+      }
+    })();
+},{"vuex":"node_modules/vuex/dist/vuex.esm.js","_css_loader":"node_modules/parcel-bundler/src/builtins/css-loader.js","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/components/PaymentMethod.vue":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -47274,6 +47381,8 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.default = void 0;
 
+var _SettingsAccount = _interopRequireDefault(require("../components/SettingsAccount"));
+
 var _SettingsBilling = _interopRequireDefault(require("../components/SettingsBilling"));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
@@ -47294,9 +47403,11 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 //
 //
 //
+//
 var _default = {
   name: "Settings",
   components: {
+    SettingsAccount: _SettingsAccount.default,
     SettingsBilling: _SettingsBilling.default
   }
 };
@@ -47324,13 +47435,20 @@ exports.default = _default;
             "b-tabs",
             { attrs: { pills: "", vertical: "", "nav-wrapper-class": "w-25" } },
             [
-              _c("b-tab", { attrs: { title: "Account" } }, [
-                _c("h2", [_vm._v("Account")])
-              ]),
+              _c(
+                "b-tab",
+                { attrs: { title: "Account", active: "" } },
+                [
+                  _c("h2", [_vm._v("Account")]),
+                  _vm._v(" "),
+                  _c("SettingsAccount")
+                ],
+                1
+              ),
               _vm._v(" "),
               _c(
                 "b-tab",
-                { attrs: { title: "Billing", active: "" } },
+                { attrs: { title: "Billing" } },
                 [
                   _c("h2", [_vm._v("Billing")]),
                   _vm._v(" "),
@@ -47381,7 +47499,7 @@ render._withStripped = true
       
       }
     })();
-},{"../components/SettingsBilling":"vue/components/SettingsBilling.vue","_css_loader":"node_modules/parcel-bundler/src/builtins/css-loader.js","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"modules/router.js":[function(require,module,exports) {
+},{"../components/SettingsAccount":"vue/components/SettingsAccount.vue","../components/SettingsBilling":"vue/components/SettingsBilling.vue","_css_loader":"node_modules/parcel-bundler/src/builtins/css-loader.js","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"modules/router.js":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {

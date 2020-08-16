@@ -134,6 +134,14 @@ h3[data-v-3f1240] {
   max-width: 420px;
   line-height: 1.2;
 }
+.account-avatar[data-v-6ce1f6] {
+  width: 100%;
+  max-width: 100px;
+  border-radius: 100px;
+}
+.form-control[data-v-6ce1f6] {
+  margin-bottom: 0;
+}
 #settings-page .nav-link {
   margin-bottom: 10px;
 }
