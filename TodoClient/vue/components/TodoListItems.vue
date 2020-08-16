@@ -189,7 +189,7 @@ export default {
         this.$emit("todo-list-uncompleted");
       }
     },
-    itemBelongsToList(todoListId) {
+    itemsBelongsToList(todoListId) {
       return this.todoListId === todoListId;
     },
   },
@@ -199,29 +199,36 @@ export default {
   mounted() {
     // Item created
     this.$store.state.connection.on("ItemCreated", (todoListId, item) => {
-      if (this.itemBelongsToList(todoListId)) {
+      if (this.itemsBelongsToList(todoListId)) {
         this.commitAddItem(item);
       }
     });
 
     // Item trashed
     this.$store.state.connection.on("ItemTrashed", (todoListId, item) => {
-      if (this.itemBelongsToList(todoListId)) {
+      if (this.itemsBelongsToList(todoListId)) {
         this.commitDeleteItem(item.id);
       }
     });
 
     // Item updated
     this.$store.state.connection.on("ItemUpdated", (item) => {
-      if (this.itemBelongsToList(item.listId)) {
+      if (this.itemsBelongsToList(item.listId)) {
         this.commitUpdateItem(item);
       }
     });
 
     // Item completed state changed
     this.$store.state.connection.on("ItemCompleted", (item) => {
-      if (this.itemBelongsToList(item.listId)) {
+      if (this.itemsBelongsToList(item.listId)) {
         this.commitSetItemCompletedState(item.id, item.completed);
+      }
+    });
+
+    // Layout changed
+    this.$store.state.connection.on("ListLayoutChanged", async (todoListId) => {
+      if (this.itemsBelongsToList(todoListId)) {
+        await this.dispatchGetItemsLayout();
       }
     });
   },
