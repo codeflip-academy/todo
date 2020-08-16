@@ -38319,6 +38319,14 @@ var _default = {
       });
     },
 
+    async dispatchGetItem(itemId) {
+      const response = await (0, _axios.default)({
+        method: "GET",
+        url: "api/lists/".concat(this.todoListId, "/todos/").concat(itemId)
+      });
+      return response.data;
+    },
+
     commitSetLoadingItemsState(state) {
       this.loadingItems = state;
     },
@@ -38416,6 +38424,33 @@ var _default = {
     this.$store.state.connection.on("ListLayoutChanged", async todoListId => {
       if (this.itemsBelongToList(todoListId)) {
         await this.dispatchGetItemsLayout();
+      }
+    }); // Sub-item created
+
+    this.$store.state.connection.on("SubItemCreated", async subItem => {
+      const itemIndex = this.items.findIndex(i => i.id === subItem.listItemId);
+      const item = this.items[itemIndex];
+
+      if (itemIndex !== -1) {
+        if (!item.hasSubItems) {
+          this.commitUpdateHasSubItems({
+            itemId: item.id,
+            hasSubItems: true
+          });
+        }
+      }
+    }); // Sub-item trashed
+
+    this.$store.state.connection.on("SubItemTrashed", async (itemId, subItem) => {
+      if (this.items.findIndex(i => i.id === itemId) !== -1) {
+        const item = await this.dispatchGetItem(itemId);
+
+        if (!item.hasSubItems) {
+          this.commitUpdateHasSubItems({
+            itemId: item.id,
+            hasSubItems: false
+          });
+        }
       }
     });
   },
