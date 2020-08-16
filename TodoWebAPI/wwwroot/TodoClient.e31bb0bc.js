@@ -37408,7 +37408,8 @@ var _default = {
         name: this.form.name,
         notes: this.form.notes,
         dueDate: this.form.dueDate,
-        hasSubItems: this.todoListItem.hasSubItems
+        hasSubItems: this.todoListItem.hasSubItems,
+        completed: this.todoListItem.completed
       };
       this.$emit("item-edited", item);
     },
