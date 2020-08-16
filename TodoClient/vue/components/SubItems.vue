@@ -77,6 +77,13 @@ export default {
         this.commitUpdateSubItemName(subItem.id, subItem.name);
       }
     });
+
+    // Layout updated
+    this.$store.state.connection.on("ItemLayoutUpdated", async (itemId) => {
+      if (this.subItemsBelongToItem(itemId)) {
+        await this.dispatchGetSubItemsLayout();
+      }
+    });
   },
   methods: {
     async dispatchGetSubItemsAndLayout() {

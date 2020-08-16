@@ -36987,6 +36987,12 @@ var _default = {
       if (this.subItemsBelongToItem(subItem.listItemId)) {
         this.commitUpdateSubItemName(subItem.id, subItem.name);
       }
+    }); // Layout updated
+
+    this.$store.state.connection.on("ItemLayoutUpdated", async itemId => {
+      if (this.subItemsBelongToItem(itemId)) {
+        await this.dispatchGetSubItemsLayout();
+      }
     });
   },
 
