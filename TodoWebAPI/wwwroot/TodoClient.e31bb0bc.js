@@ -37140,6 +37140,8 @@ var _default = {
         this.$emit("sub-items-completed");
       } else if (hasSubItems) {
         this.$emit("sub-items-uncompleted");
+      } else {
+        this.$emit("sub-items-uncompleted");
       }
     },
 
