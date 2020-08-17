@@ -2,10 +2,11 @@
   <section id="settings-page">
     <b-container>
       <b-tabs pills vertical nav-wrapper-class="w-25">
-        <b-tab title="Account">
+        <b-tab title="Account" active>
           <h2>Account</h2>
+          <SettingsAccount></SettingsAccount>
         </b-tab>
-        <b-tab title="Billing" active>
+        <b-tab title="Billing">
           <h2>Billing</h2>
           <SettingsBilling></SettingsBilling>
         </b-tab>
@@ -15,11 +16,13 @@
 </template>
 
 <script>
+import SettingsAccount from "../components/SettingsAccount";
 import SettingsBilling from "../components/SettingsBilling";
 
 export default {
   name: "Settings",
   components: {
+    SettingsAccount,
     SettingsBilling,
   },
 };

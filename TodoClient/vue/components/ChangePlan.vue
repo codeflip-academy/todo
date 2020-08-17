@@ -62,10 +62,18 @@ export default {
         },
       });
     },
+    setSelectedPlan(planName) {
+      this.selectedPlan = planName;
+    },
   },
   computed: {
     currentPlan() {
       return this.$store.getters.planName;
+    },
+  },
+  watch: {
+    currentPlan() {
+      this.setSelectedPlan(this.currentPlan);
     },
   },
 };

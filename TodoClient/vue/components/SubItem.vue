@@ -5,16 +5,20 @@
     </div>
 
     <div class="sub-item-checkbox-wrapper" v-if="!editingSubItem">
-      <b-form-checkbox v-model="completedState"></b-form-checkbox>
+      <b-form-checkbox v-model="subItemCompletedState"></b-form-checkbox>
     </div>
 
     <div class="sub-item-name" @click="focusForm" v-if="!editingSubItem">{{ subItem.name }}</div>
 
     <div class="sub-item-controls pr-3" v-if="!editingSubItem">
-      <b-button size="sm" variant="danger" @click="deleteSubItem">Delete</b-button>
+      <b-button size="sm" variant="danger" @click="sendDeleteSubItemEvent">Delete</b-button>
     </div>
 
-    <b-form @submit.prevent="updateSubItem" v-if="editingSubItem" class="edit-sub-item-form">
+    <b-form
+      @submit.prevent="sendUpdateSubItemNameEvent"
+      v-if="editingSubItem"
+      class="edit-sub-item-form"
+    >
       <b-form-group>
         <b-form-input
           ref="subItemName"
@@ -42,24 +46,6 @@
 <script>
 export default {
   props: ["listId", "subItem"],
-  computed: {
-    completedState: {
-      get() {
-        return this.$store.getters.getSubItemCompletedState(
-          this.subItem.listItemId,
-          this.subItem.id
-        );
-      },
-      set(value) {
-        this.$store.dispatch("toggleSubItemCompletedState", {
-          listId: this.listId,
-          todoItemId: this.subItem.listItemId,
-          subItemId: this.subItem.id,
-          completed: value,
-        });
-      },
-    },
-  },
   data() {
     return {
       editingSubItem: false,
@@ -67,6 +53,16 @@ export default {
         name: this.subItem.name,
       },
     };
+  },
+  computed: {
+    subItemCompletedState: {
+      get() {
+        return this.subItem.completed;
+      },
+      set(val) {
+        this.sendCheckboxClickedEvent(val);
+      },
+    },
   },
   methods: {
     focusForm() {
@@ -76,22 +72,22 @@ export default {
         this.$refs.subItemName.focus();
       });
     },
-    async updateSubItem() {
-      this.subItem.name = this.form.name;
-
-      await this.$store.dispatch("updateSubItem", {
-        listId: this.listId,
-        subItem: this.subItem,
+    sendDeleteSubItemEvent() {
+      this.$emit("delete-sub-item", this.subItem.id);
+    },
+    sendCheckboxClickedEvent(completed) {
+      this.$emit("checkbox-clicked", {
+        subItemId: this.subItem.id,
+        completed: completed,
+      });
+    },
+    sendUpdateSubItemNameEvent() {
+      this.$emit("update-sub-item-name", {
+        subItemId: this.subItem.id,
+        subItemName: this.form.name,
       });
 
       this.editingSubItem = false;
-    },
-    async deleteSubItem() {
-      await this.$store.dispatch("trashSubItem", {
-        listId: this.listId,
-        todoItemId: this.subItem.listItemId,
-        subItemId: this.subItem.id,
-      });
     },
   },
 };

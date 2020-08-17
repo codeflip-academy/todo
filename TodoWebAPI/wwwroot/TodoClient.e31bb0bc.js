@@ -9747,7 +9747,1770 @@ var index = {
 };
 var _default = index;
 exports.default = _default;
-},{}],"node_modules/@microsoft/signalr/dist/esm/Errors.js":[function(require,module,exports) {
+},{}],"node_modules/axios/lib/helpers/bind.js":[function(require,module,exports) {
+'use strict';
+
+module.exports = function bind(fn, thisArg) {
+  return function wrap() {
+    var args = new Array(arguments.length);
+    for (var i = 0; i < args.length; i++) {
+      args[i] = arguments[i];
+    }
+    return fn.apply(thisArg, args);
+  };
+};
+
+},{}],"node_modules/axios/lib/utils.js":[function(require,module,exports) {
+'use strict';
+
+var bind = require('./helpers/bind');
+
+/*global toString:true*/
+
+// utils is a library of generic helper functions non-specific to axios
+
+var toString = Object.prototype.toString;
+
+/**
+ * Determine if a value is an Array
+ *
+ * @param {Object} val The value to test
+ * @returns {boolean} True if value is an Array, otherwise false
+ */
+function isArray(val) {
+  return toString.call(val) === '[object Array]';
+}
+
+/**
+ * Determine if a value is undefined
+ *
+ * @param {Object} val The value to test
+ * @returns {boolean} True if the value is undefined, otherwise false
+ */
+function isUndefined(val) {
+  return typeof val === 'undefined';
+}
+
+/**
+ * Determine if a value is a Buffer
+ *
+ * @param {Object} val The value to test
+ * @returns {boolean} True if value is a Buffer, otherwise false
+ */
+function isBuffer(val) {
+  return val !== null && !isUndefined(val) && val.constructor !== null && !isUndefined(val.constructor)
+    && typeof val.constructor.isBuffer === 'function' && val.constructor.isBuffer(val);
+}
+
+/**
+ * Determine if a value is an ArrayBuffer
+ *
+ * @param {Object} val The value to test
+ * @returns {boolean} True if value is an ArrayBuffer, otherwise false
+ */
+function isArrayBuffer(val) {
+  return toString.call(val) === '[object ArrayBuffer]';
+}
+
+/**
+ * Determine if a value is a FormData
+ *
+ * @param {Object} val The value to test
+ * @returns {boolean} True if value is an FormData, otherwise false
+ */
+function isFormData(val) {
+  return (typeof FormData !== 'undefined') && (val instanceof FormData);
+}
+
+/**
+ * Determine if a value is a view on an ArrayBuffer
+ *
+ * @param {Object} val The value to test
+ * @returns {boolean} True if value is a view on an ArrayBuffer, otherwise false
+ */
+function isArrayBufferView(val) {
+  var result;
+  if ((typeof ArrayBuffer !== 'undefined') && (ArrayBuffer.isView)) {
+    result = ArrayBuffer.isView(val);
+  } else {
+    result = (val) && (val.buffer) && (val.buffer instanceof ArrayBuffer);
+  }
+  return result;
+}
+
+/**
+ * Determine if a value is a String
+ *
+ * @param {Object} val The value to test
+ * @returns {boolean} True if value is a String, otherwise false
+ */
+function isString(val) {
+  return typeof val === 'string';
+}
+
+/**
+ * Determine if a value is a Number
+ *
+ * @param {Object} val The value to test
+ * @returns {boolean} True if value is a Number, otherwise false
+ */
+function isNumber(val) {
+  return typeof val === 'number';
+}
+
+/**
+ * Determine if a value is an Object
+ *
+ * @param {Object} val The value to test
+ * @returns {boolean} True if value is an Object, otherwise false
+ */
+function isObject(val) {
+  return val !== null && typeof val === 'object';
+}
+
+/**
+ * Determine if a value is a Date
+ *
+ * @param {Object} val The value to test
+ * @returns {boolean} True if value is a Date, otherwise false
+ */
+function isDate(val) {
+  return toString.call(val) === '[object Date]';
+}
+
+/**
+ * Determine if a value is a File
+ *
+ * @param {Object} val The value to test
+ * @returns {boolean} True if value is a File, otherwise false
+ */
+function isFile(val) {
+  return toString.call(val) === '[object File]';
+}
+
+/**
+ * Determine if a value is a Blob
+ *
+ * @param {Object} val The value to test
+ * @returns {boolean} True if value is a Blob, otherwise false
+ */
+function isBlob(val) {
+  return toString.call(val) === '[object Blob]';
+}
+
+/**
+ * Determine if a value is a Function
+ *
+ * @param {Object} val The value to test
+ * @returns {boolean} True if value is a Function, otherwise false
+ */
+function isFunction(val) {
+  return toString.call(val) === '[object Function]';
+}
+
+/**
+ * Determine if a value is a Stream
+ *
+ * @param {Object} val The value to test
+ * @returns {boolean} True if value is a Stream, otherwise false
+ */
+function isStream(val) {
+  return isObject(val) && isFunction(val.pipe);
+}
+
+/**
+ * Determine if a value is a URLSearchParams object
+ *
+ * @param {Object} val The value to test
+ * @returns {boolean} True if value is a URLSearchParams object, otherwise false
+ */
+function isURLSearchParams(val) {
+  return typeof URLSearchParams !== 'undefined' && val instanceof URLSearchParams;
+}
+
+/**
+ * Trim excess whitespace off the beginning and end of a string
+ *
+ * @param {String} str The String to trim
+ * @returns {String} The String freed of excess whitespace
+ */
+function trim(str) {
+  return str.replace(/^\s*/, '').replace(/\s*$/, '');
+}
+
+/**
+ * Determine if we're running in a standard browser environment
+ *
+ * This allows axios to run in a web worker, and react-native.
+ * Both environments support XMLHttpRequest, but not fully standard globals.
+ *
+ * web workers:
+ *  typeof window -> undefined
+ *  typeof document -> undefined
+ *
+ * react-native:
+ *  navigator.product -> 'ReactNative'
+ * nativescript
+ *  navigator.product -> 'NativeScript' or 'NS'
+ */
+function isStandardBrowserEnv() {
+  if (typeof navigator !== 'undefined' && (navigator.product === 'ReactNative' ||
+                                           navigator.product === 'NativeScript' ||
+                                           navigator.product === 'NS')) {
+    return false;
+  }
+  return (
+    typeof window !== 'undefined' &&
+    typeof document !== 'undefined'
+  );
+}
+
+/**
+ * Iterate over an Array or an Object invoking a function for each item.
+ *
+ * If `obj` is an Array callback will be called passing
+ * the value, index, and complete array for each item.
+ *
+ * If 'obj' is an Object callback will be called passing
+ * the value, key, and complete object for each property.
+ *
+ * @param {Object|Array} obj The object to iterate
+ * @param {Function} fn The callback to invoke for each item
+ */
+function forEach(obj, fn) {
+  // Don't bother if no value provided
+  if (obj === null || typeof obj === 'undefined') {
+    return;
+  }
+
+  // Force an array if not already something iterable
+  if (typeof obj !== 'object') {
+    /*eslint no-param-reassign:0*/
+    obj = [obj];
+  }
+
+  if (isArray(obj)) {
+    // Iterate over array values
+    for (var i = 0, l = obj.length; i < l; i++) {
+      fn.call(null, obj[i], i, obj);
+    }
+  } else {
+    // Iterate over object keys
+    for (var key in obj) {
+      if (Object.prototype.hasOwnProperty.call(obj, key)) {
+        fn.call(null, obj[key], key, obj);
+      }
+    }
+  }
+}
+
+/**
+ * Accepts varargs expecting each argument to be an object, then
+ * immutably merges the properties of each object and returns result.
+ *
+ * When multiple objects contain the same key the later object in
+ * the arguments list will take precedence.
+ *
+ * Example:
+ *
+ * ```js
+ * var result = merge({foo: 123}, {foo: 456});
+ * console.log(result.foo); // outputs 456
+ * ```
+ *
+ * @param {Object} obj1 Object to merge
+ * @returns {Object} Result of all merge properties
+ */
+function merge(/* obj1, obj2, obj3, ... */) {
+  var result = {};
+  function assignValue(val, key) {
+    if (typeof result[key] === 'object' && typeof val === 'object') {
+      result[key] = merge(result[key], val);
+    } else {
+      result[key] = val;
+    }
+  }
+
+  for (var i = 0, l = arguments.length; i < l; i++) {
+    forEach(arguments[i], assignValue);
+  }
+  return result;
+}
+
+/**
+ * Function equal to merge with the difference being that no reference
+ * to original objects is kept.
+ *
+ * @see merge
+ * @param {Object} obj1 Object to merge
+ * @returns {Object} Result of all merge properties
+ */
+function deepMerge(/* obj1, obj2, obj3, ... */) {
+  var result = {};
+  function assignValue(val, key) {
+    if (typeof result[key] === 'object' && typeof val === 'object') {
+      result[key] = deepMerge(result[key], val);
+    } else if (typeof val === 'object') {
+      result[key] = deepMerge({}, val);
+    } else {
+      result[key] = val;
+    }
+  }
+
+  for (var i = 0, l = arguments.length; i < l; i++) {
+    forEach(arguments[i], assignValue);
+  }
+  return result;
+}
+
+/**
+ * Extends object a by mutably adding to it the properties of object b.
+ *
+ * @param {Object} a The object to be extended
+ * @param {Object} b The object to copy properties from
+ * @param {Object} thisArg The object to bind function to
+ * @return {Object} The resulting value of object a
+ */
+function extend(a, b, thisArg) {
+  forEach(b, function assignValue(val, key) {
+    if (thisArg && typeof val === 'function') {
+      a[key] = bind(val, thisArg);
+    } else {
+      a[key] = val;
+    }
+  });
+  return a;
+}
+
+module.exports = {
+  isArray: isArray,
+  isArrayBuffer: isArrayBuffer,
+  isBuffer: isBuffer,
+  isFormData: isFormData,
+  isArrayBufferView: isArrayBufferView,
+  isString: isString,
+  isNumber: isNumber,
+  isObject: isObject,
+  isUndefined: isUndefined,
+  isDate: isDate,
+  isFile: isFile,
+  isBlob: isBlob,
+  isFunction: isFunction,
+  isStream: isStream,
+  isURLSearchParams: isURLSearchParams,
+  isStandardBrowserEnv: isStandardBrowserEnv,
+  forEach: forEach,
+  merge: merge,
+  deepMerge: deepMerge,
+  extend: extend,
+  trim: trim
+};
+
+},{"./helpers/bind":"node_modules/axios/lib/helpers/bind.js"}],"node_modules/axios/lib/helpers/buildURL.js":[function(require,module,exports) {
+'use strict';
+
+var utils = require('./../utils');
+
+function encode(val) {
+  return encodeURIComponent(val).
+    replace(/%40/gi, '@').
+    replace(/%3A/gi, ':').
+    replace(/%24/g, '$').
+    replace(/%2C/gi, ',').
+    replace(/%20/g, '+').
+    replace(/%5B/gi, '[').
+    replace(/%5D/gi, ']');
+}
+
+/**
+ * Build a URL by appending params to the end
+ *
+ * @param {string} url The base of the url (e.g., http://www.google.com)
+ * @param {object} [params] The params to be appended
+ * @returns {string} The formatted url
+ */
+module.exports = function buildURL(url, params, paramsSerializer) {
+  /*eslint no-param-reassign:0*/
+  if (!params) {
+    return url;
+  }
+
+  var serializedParams;
+  if (paramsSerializer) {
+    serializedParams = paramsSerializer(params);
+  } else if (utils.isURLSearchParams(params)) {
+    serializedParams = params.toString();
+  } else {
+    var parts = [];
+
+    utils.forEach(params, function serialize(val, key) {
+      if (val === null || typeof val === 'undefined') {
+        return;
+      }
+
+      if (utils.isArray(val)) {
+        key = key + '[]';
+      } else {
+        val = [val];
+      }
+
+      utils.forEach(val, function parseValue(v) {
+        if (utils.isDate(v)) {
+          v = v.toISOString();
+        } else if (utils.isObject(v)) {
+          v = JSON.stringify(v);
+        }
+        parts.push(encode(key) + '=' + encode(v));
+      });
+    });
+
+    serializedParams = parts.join('&');
+  }
+
+  if (serializedParams) {
+    var hashmarkIndex = url.indexOf('#');
+    if (hashmarkIndex !== -1) {
+      url = url.slice(0, hashmarkIndex);
+    }
+
+    url += (url.indexOf('?') === -1 ? '?' : '&') + serializedParams;
+  }
+
+  return url;
+};
+
+},{"./../utils":"node_modules/axios/lib/utils.js"}],"node_modules/axios/lib/core/InterceptorManager.js":[function(require,module,exports) {
+'use strict';
+
+var utils = require('./../utils');
+
+function InterceptorManager() {
+  this.handlers = [];
+}
+
+/**
+ * Add a new interceptor to the stack
+ *
+ * @param {Function} fulfilled The function to handle `then` for a `Promise`
+ * @param {Function} rejected The function to handle `reject` for a `Promise`
+ *
+ * @return {Number} An ID used to remove interceptor later
+ */
+InterceptorManager.prototype.use = function use(fulfilled, rejected) {
+  this.handlers.push({
+    fulfilled: fulfilled,
+    rejected: rejected
+  });
+  return this.handlers.length - 1;
+};
+
+/**
+ * Remove an interceptor from the stack
+ *
+ * @param {Number} id The ID that was returned by `use`
+ */
+InterceptorManager.prototype.eject = function eject(id) {
+  if (this.handlers[id]) {
+    this.handlers[id] = null;
+  }
+};
+
+/**
+ * Iterate over all the registered interceptors
+ *
+ * This method is particularly useful for skipping over any
+ * interceptors that may have become `null` calling `eject`.
+ *
+ * @param {Function} fn The function to call for each interceptor
+ */
+InterceptorManager.prototype.forEach = function forEach(fn) {
+  utils.forEach(this.handlers, function forEachHandler(h) {
+    if (h !== null) {
+      fn(h);
+    }
+  });
+};
+
+module.exports = InterceptorManager;
+
+},{"./../utils":"node_modules/axios/lib/utils.js"}],"node_modules/axios/lib/core/transformData.js":[function(require,module,exports) {
+'use strict';
+
+var utils = require('./../utils');
+
+/**
+ * Transform the data for a request or a response
+ *
+ * @param {Object|String} data The data to be transformed
+ * @param {Array} headers The headers for the request or response
+ * @param {Array|Function} fns A single function or Array of functions
+ * @returns {*} The resulting transformed data
+ */
+module.exports = function transformData(data, headers, fns) {
+  /*eslint no-param-reassign:0*/
+  utils.forEach(fns, function transform(fn) {
+    data = fn(data, headers);
+  });
+
+  return data;
+};
+
+},{"./../utils":"node_modules/axios/lib/utils.js"}],"node_modules/axios/lib/cancel/isCancel.js":[function(require,module,exports) {
+'use strict';
+
+module.exports = function isCancel(value) {
+  return !!(value && value.__CANCEL__);
+};
+
+},{}],"node_modules/axios/lib/helpers/normalizeHeaderName.js":[function(require,module,exports) {
+'use strict';
+
+var utils = require('../utils');
+
+module.exports = function normalizeHeaderName(headers, normalizedName) {
+  utils.forEach(headers, function processHeader(value, name) {
+    if (name !== normalizedName && name.toUpperCase() === normalizedName.toUpperCase()) {
+      headers[normalizedName] = value;
+      delete headers[name];
+    }
+  });
+};
+
+},{"../utils":"node_modules/axios/lib/utils.js"}],"node_modules/axios/lib/core/enhanceError.js":[function(require,module,exports) {
+'use strict';
+
+/**
+ * Update an Error with the specified config, error code, and response.
+ *
+ * @param {Error} error The error to update.
+ * @param {Object} config The config.
+ * @param {string} [code] The error code (for example, 'ECONNABORTED').
+ * @param {Object} [request] The request.
+ * @param {Object} [response] The response.
+ * @returns {Error} The error.
+ */
+module.exports = function enhanceError(error, config, code, request, response) {
+  error.config = config;
+  if (code) {
+    error.code = code;
+  }
+
+  error.request = request;
+  error.response = response;
+  error.isAxiosError = true;
+
+  error.toJSON = function() {
+    return {
+      // Standard
+      message: this.message,
+      name: this.name,
+      // Microsoft
+      description: this.description,
+      number: this.number,
+      // Mozilla
+      fileName: this.fileName,
+      lineNumber: this.lineNumber,
+      columnNumber: this.columnNumber,
+      stack: this.stack,
+      // Axios
+      config: this.config,
+      code: this.code
+    };
+  };
+  return error;
+};
+
+},{}],"node_modules/axios/lib/core/createError.js":[function(require,module,exports) {
+'use strict';
+
+var enhanceError = require('./enhanceError');
+
+/**
+ * Create an Error with the specified message, config, error code, request and response.
+ *
+ * @param {string} message The error message.
+ * @param {Object} config The config.
+ * @param {string} [code] The error code (for example, 'ECONNABORTED').
+ * @param {Object} [request] The request.
+ * @param {Object} [response] The response.
+ * @returns {Error} The created error.
+ */
+module.exports = function createError(message, config, code, request, response) {
+  var error = new Error(message);
+  return enhanceError(error, config, code, request, response);
+};
+
+},{"./enhanceError":"node_modules/axios/lib/core/enhanceError.js"}],"node_modules/axios/lib/core/settle.js":[function(require,module,exports) {
+'use strict';
+
+var createError = require('./createError');
+
+/**
+ * Resolve or reject a Promise based on response status.
+ *
+ * @param {Function} resolve A function that resolves the promise.
+ * @param {Function} reject A function that rejects the promise.
+ * @param {object} response The response.
+ */
+module.exports = function settle(resolve, reject, response) {
+  var validateStatus = response.config.validateStatus;
+  if (!validateStatus || validateStatus(response.status)) {
+    resolve(response);
+  } else {
+    reject(createError(
+      'Request failed with status code ' + response.status,
+      response.config,
+      null,
+      response.request,
+      response
+    ));
+  }
+};
+
+},{"./createError":"node_modules/axios/lib/core/createError.js"}],"node_modules/axios/lib/helpers/isAbsoluteURL.js":[function(require,module,exports) {
+'use strict';
+
+/**
+ * Determines whether the specified URL is absolute
+ *
+ * @param {string} url The URL to test
+ * @returns {boolean} True if the specified URL is absolute, otherwise false
+ */
+module.exports = function isAbsoluteURL(url) {
+  // A URL is considered absolute if it begins with "<scheme>://" or "//" (protocol-relative URL).
+  // RFC 3986 defines scheme name as a sequence of characters beginning with a letter and followed
+  // by any combination of letters, digits, plus, period, or hyphen.
+  return /^([a-z][a-z\d\+\-\.]*:)?\/\//i.test(url);
+};
+
+},{}],"node_modules/axios/lib/helpers/combineURLs.js":[function(require,module,exports) {
+'use strict';
+
+/**
+ * Creates a new URL by combining the specified URLs
+ *
+ * @param {string} baseURL The base URL
+ * @param {string} relativeURL The relative URL
+ * @returns {string} The combined URL
+ */
+module.exports = function combineURLs(baseURL, relativeURL) {
+  return relativeURL
+    ? baseURL.replace(/\/+$/, '') + '/' + relativeURL.replace(/^\/+/, '')
+    : baseURL;
+};
+
+},{}],"node_modules/axios/lib/core/buildFullPath.js":[function(require,module,exports) {
+'use strict';
+
+var isAbsoluteURL = require('../helpers/isAbsoluteURL');
+var combineURLs = require('../helpers/combineURLs');
+
+/**
+ * Creates a new URL by combining the baseURL with the requestedURL,
+ * only when the requestedURL is not already an absolute URL.
+ * If the requestURL is absolute, this function returns the requestedURL untouched.
+ *
+ * @param {string} baseURL The base URL
+ * @param {string} requestedURL Absolute or relative URL to combine
+ * @returns {string} The combined full path
+ */
+module.exports = function buildFullPath(baseURL, requestedURL) {
+  if (baseURL && !isAbsoluteURL(requestedURL)) {
+    return combineURLs(baseURL, requestedURL);
+  }
+  return requestedURL;
+};
+
+},{"../helpers/isAbsoluteURL":"node_modules/axios/lib/helpers/isAbsoluteURL.js","../helpers/combineURLs":"node_modules/axios/lib/helpers/combineURLs.js"}],"node_modules/axios/lib/helpers/parseHeaders.js":[function(require,module,exports) {
+'use strict';
+
+var utils = require('./../utils');
+
+// Headers whose duplicates are ignored by node
+// c.f. https://nodejs.org/api/http.html#http_message_headers
+var ignoreDuplicateOf = [
+  'age', 'authorization', 'content-length', 'content-type', 'etag',
+  'expires', 'from', 'host', 'if-modified-since', 'if-unmodified-since',
+  'last-modified', 'location', 'max-forwards', 'proxy-authorization',
+  'referer', 'retry-after', 'user-agent'
+];
+
+/**
+ * Parse headers into an object
+ *
+ * ```
+ * Date: Wed, 27 Aug 2014 08:58:49 GMT
+ * Content-Type: application/json
+ * Connection: keep-alive
+ * Transfer-Encoding: chunked
+ * ```
+ *
+ * @param {String} headers Headers needing to be parsed
+ * @returns {Object} Headers parsed into an object
+ */
+module.exports = function parseHeaders(headers) {
+  var parsed = {};
+  var key;
+  var val;
+  var i;
+
+  if (!headers) { return parsed; }
+
+  utils.forEach(headers.split('\n'), function parser(line) {
+    i = line.indexOf(':');
+    key = utils.trim(line.substr(0, i)).toLowerCase();
+    val = utils.trim(line.substr(i + 1));
+
+    if (key) {
+      if (parsed[key] && ignoreDuplicateOf.indexOf(key) >= 0) {
+        return;
+      }
+      if (key === 'set-cookie') {
+        parsed[key] = (parsed[key] ? parsed[key] : []).concat([val]);
+      } else {
+        parsed[key] = parsed[key] ? parsed[key] + ', ' + val : val;
+      }
+    }
+  });
+
+  return parsed;
+};
+
+},{"./../utils":"node_modules/axios/lib/utils.js"}],"node_modules/axios/lib/helpers/isURLSameOrigin.js":[function(require,module,exports) {
+'use strict';
+
+var utils = require('./../utils');
+
+module.exports = (
+  utils.isStandardBrowserEnv() ?
+
+  // Standard browser envs have full support of the APIs needed to test
+  // whether the request URL is of the same origin as current location.
+    (function standardBrowserEnv() {
+      var msie = /(msie|trident)/i.test(navigator.userAgent);
+      var urlParsingNode = document.createElement('a');
+      var originURL;
+
+      /**
+    * Parse a URL to discover it's components
+    *
+    * @param {String} url The URL to be parsed
+    * @returns {Object}
+    */
+      function resolveURL(url) {
+        var href = url;
+
+        if (msie) {
+        // IE needs attribute set twice to normalize properties
+          urlParsingNode.setAttribute('href', href);
+          href = urlParsingNode.href;
+        }
+
+        urlParsingNode.setAttribute('href', href);
+
+        // urlParsingNode provides the UrlUtils interface - http://url.spec.whatwg.org/#urlutils
+        return {
+          href: urlParsingNode.href,
+          protocol: urlParsingNode.protocol ? urlParsingNode.protocol.replace(/:$/, '') : '',
+          host: urlParsingNode.host,
+          search: urlParsingNode.search ? urlParsingNode.search.replace(/^\?/, '') : '',
+          hash: urlParsingNode.hash ? urlParsingNode.hash.replace(/^#/, '') : '',
+          hostname: urlParsingNode.hostname,
+          port: urlParsingNode.port,
+          pathname: (urlParsingNode.pathname.charAt(0) === '/') ?
+            urlParsingNode.pathname :
+            '/' + urlParsingNode.pathname
+        };
+      }
+
+      originURL = resolveURL(window.location.href);
+
+      /**
+    * Determine if a URL shares the same origin as the current location
+    *
+    * @param {String} requestURL The URL to test
+    * @returns {boolean} True if URL shares the same origin, otherwise false
+    */
+      return function isURLSameOrigin(requestURL) {
+        var parsed = (utils.isString(requestURL)) ? resolveURL(requestURL) : requestURL;
+        return (parsed.protocol === originURL.protocol &&
+            parsed.host === originURL.host);
+      };
+    })() :
+
+  // Non standard browser envs (web workers, react-native) lack needed support.
+    (function nonStandardBrowserEnv() {
+      return function isURLSameOrigin() {
+        return true;
+      };
+    })()
+);
+
+},{"./../utils":"node_modules/axios/lib/utils.js"}],"node_modules/axios/lib/helpers/cookies.js":[function(require,module,exports) {
+'use strict';
+
+var utils = require('./../utils');
+
+module.exports = (
+  utils.isStandardBrowserEnv() ?
+
+  // Standard browser envs support document.cookie
+    (function standardBrowserEnv() {
+      return {
+        write: function write(name, value, expires, path, domain, secure) {
+          var cookie = [];
+          cookie.push(name + '=' + encodeURIComponent(value));
+
+          if (utils.isNumber(expires)) {
+            cookie.push('expires=' + new Date(expires).toGMTString());
+          }
+
+          if (utils.isString(path)) {
+            cookie.push('path=' + path);
+          }
+
+          if (utils.isString(domain)) {
+            cookie.push('domain=' + domain);
+          }
+
+          if (secure === true) {
+            cookie.push('secure');
+          }
+
+          document.cookie = cookie.join('; ');
+        },
+
+        read: function read(name) {
+          var match = document.cookie.match(new RegExp('(^|;\\s*)(' + name + ')=([^;]*)'));
+          return (match ? decodeURIComponent(match[3]) : null);
+        },
+
+        remove: function remove(name) {
+          this.write(name, '', Date.now() - 86400000);
+        }
+      };
+    })() :
+
+  // Non standard browser env (web workers, react-native) lack needed support.
+    (function nonStandardBrowserEnv() {
+      return {
+        write: function write() {},
+        read: function read() { return null; },
+        remove: function remove() {}
+      };
+    })()
+);
+
+},{"./../utils":"node_modules/axios/lib/utils.js"}],"node_modules/axios/lib/adapters/xhr.js":[function(require,module,exports) {
+'use strict';
+
+var utils = require('./../utils');
+var settle = require('./../core/settle');
+var buildURL = require('./../helpers/buildURL');
+var buildFullPath = require('../core/buildFullPath');
+var parseHeaders = require('./../helpers/parseHeaders');
+var isURLSameOrigin = require('./../helpers/isURLSameOrigin');
+var createError = require('../core/createError');
+
+module.exports = function xhrAdapter(config) {
+  return new Promise(function dispatchXhrRequest(resolve, reject) {
+    var requestData = config.data;
+    var requestHeaders = config.headers;
+
+    if (utils.isFormData(requestData)) {
+      delete requestHeaders['Content-Type']; // Let the browser set it
+    }
+
+    var request = new XMLHttpRequest();
+
+    // HTTP basic authentication
+    if (config.auth) {
+      var username = config.auth.username || '';
+      var password = config.auth.password || '';
+      requestHeaders.Authorization = 'Basic ' + btoa(username + ':' + password);
+    }
+
+    var fullPath = buildFullPath(config.baseURL, config.url);
+    request.open(config.method.toUpperCase(), buildURL(fullPath, config.params, config.paramsSerializer), true);
+
+    // Set the request timeout in MS
+    request.timeout = config.timeout;
+
+    // Listen for ready state
+    request.onreadystatechange = function handleLoad() {
+      if (!request || request.readyState !== 4) {
+        return;
+      }
+
+      // The request errored out and we didn't get a response, this will be
+      // handled by onerror instead
+      // With one exception: request that using file: protocol, most browsers
+      // will return status as 0 even though it's a successful request
+      if (request.status === 0 && !(request.responseURL && request.responseURL.indexOf('file:') === 0)) {
+        return;
+      }
+
+      // Prepare the response
+      var responseHeaders = 'getAllResponseHeaders' in request ? parseHeaders(request.getAllResponseHeaders()) : null;
+      var responseData = !config.responseType || config.responseType === 'text' ? request.responseText : request.response;
+      var response = {
+        data: responseData,
+        status: request.status,
+        statusText: request.statusText,
+        headers: responseHeaders,
+        config: config,
+        request: request
+      };
+
+      settle(resolve, reject, response);
+
+      // Clean up request
+      request = null;
+    };
+
+    // Handle browser request cancellation (as opposed to a manual cancellation)
+    request.onabort = function handleAbort() {
+      if (!request) {
+        return;
+      }
+
+      reject(createError('Request aborted', config, 'ECONNABORTED', request));
+
+      // Clean up request
+      request = null;
+    };
+
+    // Handle low level network errors
+    request.onerror = function handleError() {
+      // Real errors are hidden from us by the browser
+      // onerror should only fire if it's a network error
+      reject(createError('Network Error', config, null, request));
+
+      // Clean up request
+      request = null;
+    };
+
+    // Handle timeout
+    request.ontimeout = function handleTimeout() {
+      var timeoutErrorMessage = 'timeout of ' + config.timeout + 'ms exceeded';
+      if (config.timeoutErrorMessage) {
+        timeoutErrorMessage = config.timeoutErrorMessage;
+      }
+      reject(createError(timeoutErrorMessage, config, 'ECONNABORTED',
+        request));
+
+      // Clean up request
+      request = null;
+    };
+
+    // Add xsrf header
+    // This is only done if running in a standard browser environment.
+    // Specifically not if we're in a web worker, or react-native.
+    if (utils.isStandardBrowserEnv()) {
+      var cookies = require('./../helpers/cookies');
+
+      // Add xsrf header
+      var xsrfValue = (config.withCredentials || isURLSameOrigin(fullPath)) && config.xsrfCookieName ?
+        cookies.read(config.xsrfCookieName) :
+        undefined;
+
+      if (xsrfValue) {
+        requestHeaders[config.xsrfHeaderName] = xsrfValue;
+      }
+    }
+
+    // Add headers to the request
+    if ('setRequestHeader' in request) {
+      utils.forEach(requestHeaders, function setRequestHeader(val, key) {
+        if (typeof requestData === 'undefined' && key.toLowerCase() === 'content-type') {
+          // Remove Content-Type if data is undefined
+          delete requestHeaders[key];
+        } else {
+          // Otherwise add header to the request
+          request.setRequestHeader(key, val);
+        }
+      });
+    }
+
+    // Add withCredentials to request if needed
+    if (!utils.isUndefined(config.withCredentials)) {
+      request.withCredentials = !!config.withCredentials;
+    }
+
+    // Add responseType to request if needed
+    if (config.responseType) {
+      try {
+        request.responseType = config.responseType;
+      } catch (e) {
+        // Expected DOMException thrown by browsers not compatible XMLHttpRequest Level 2.
+        // But, this can be suppressed for 'json' type as it can be parsed by default 'transformResponse' function.
+        if (config.responseType !== 'json') {
+          throw e;
+        }
+      }
+    }
+
+    // Handle progress if needed
+    if (typeof config.onDownloadProgress === 'function') {
+      request.addEventListener('progress', config.onDownloadProgress);
+    }
+
+    // Not all browsers support upload events
+    if (typeof config.onUploadProgress === 'function' && request.upload) {
+      request.upload.addEventListener('progress', config.onUploadProgress);
+    }
+
+    if (config.cancelToken) {
+      // Handle cancellation
+      config.cancelToken.promise.then(function onCanceled(cancel) {
+        if (!request) {
+          return;
+        }
+
+        request.abort();
+        reject(cancel);
+        // Clean up request
+        request = null;
+      });
+    }
+
+    if (requestData === undefined) {
+      requestData = null;
+    }
+
+    // Send the request
+    request.send(requestData);
+  });
+};
+
+},{"./../utils":"node_modules/axios/lib/utils.js","./../core/settle":"node_modules/axios/lib/core/settle.js","./../helpers/buildURL":"node_modules/axios/lib/helpers/buildURL.js","../core/buildFullPath":"node_modules/axios/lib/core/buildFullPath.js","./../helpers/parseHeaders":"node_modules/axios/lib/helpers/parseHeaders.js","./../helpers/isURLSameOrigin":"node_modules/axios/lib/helpers/isURLSameOrigin.js","../core/createError":"node_modules/axios/lib/core/createError.js","./../helpers/cookies":"node_modules/axios/lib/helpers/cookies.js"}],"node_modules/process/browser.js":[function(require,module,exports) {
+
+// shim for using process in browser
+var process = module.exports = {}; // cached from whatever global is present so that test runners that stub it
+// don't break things.  But we need to wrap it in a try catch in case it is
+// wrapped in strict mode code which doesn't define any globals.  It's inside a
+// function because try/catches deoptimize in certain engines.
+
+var cachedSetTimeout;
+var cachedClearTimeout;
+
+function defaultSetTimout() {
+  throw new Error('setTimeout has not been defined');
+}
+
+function defaultClearTimeout() {
+  throw new Error('clearTimeout has not been defined');
+}
+
+(function () {
+  try {
+    if (typeof setTimeout === 'function') {
+      cachedSetTimeout = setTimeout;
+    } else {
+      cachedSetTimeout = defaultSetTimout;
+    }
+  } catch (e) {
+    cachedSetTimeout = defaultSetTimout;
+  }
+
+  try {
+    if (typeof clearTimeout === 'function') {
+      cachedClearTimeout = clearTimeout;
+    } else {
+      cachedClearTimeout = defaultClearTimeout;
+    }
+  } catch (e) {
+    cachedClearTimeout = defaultClearTimeout;
+  }
+})();
+
+function runTimeout(fun) {
+  if (cachedSetTimeout === setTimeout) {
+    //normal enviroments in sane situations
+    return setTimeout(fun, 0);
+  } // if setTimeout wasn't available but was latter defined
+
+
+  if ((cachedSetTimeout === defaultSetTimout || !cachedSetTimeout) && setTimeout) {
+    cachedSetTimeout = setTimeout;
+    return setTimeout(fun, 0);
+  }
+
+  try {
+    // when when somebody has screwed with setTimeout but no I.E. maddness
+    return cachedSetTimeout(fun, 0);
+  } catch (e) {
+    try {
+      // When we are in I.E. but the script has been evaled so I.E. doesn't trust the global object when called normally
+      return cachedSetTimeout.call(null, fun, 0);
+    } catch (e) {
+      // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error
+      return cachedSetTimeout.call(this, fun, 0);
+    }
+  }
+}
+
+function runClearTimeout(marker) {
+  if (cachedClearTimeout === clearTimeout) {
+    //normal enviroments in sane situations
+    return clearTimeout(marker);
+  } // if clearTimeout wasn't available but was latter defined
+
+
+  if ((cachedClearTimeout === defaultClearTimeout || !cachedClearTimeout) && clearTimeout) {
+    cachedClearTimeout = clearTimeout;
+    return clearTimeout(marker);
+  }
+
+  try {
+    // when when somebody has screwed with setTimeout but no I.E. maddness
+    return cachedClearTimeout(marker);
+  } catch (e) {
+    try {
+      // When we are in I.E. but the script has been evaled so I.E. doesn't  trust the global object when called normally
+      return cachedClearTimeout.call(null, marker);
+    } catch (e) {
+      // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error.
+      // Some versions of I.E. have different rules for clearTimeout vs setTimeout
+      return cachedClearTimeout.call(this, marker);
+    }
+  }
+}
+
+var queue = [];
+var draining = false;
+var currentQueue;
+var queueIndex = -1;
+
+function cleanUpNextTick() {
+  if (!draining || !currentQueue) {
+    return;
+  }
+
+  draining = false;
+
+  if (currentQueue.length) {
+    queue = currentQueue.concat(queue);
+  } else {
+    queueIndex = -1;
+  }
+
+  if (queue.length) {
+    drainQueue();
+  }
+}
+
+function drainQueue() {
+  if (draining) {
+    return;
+  }
+
+  var timeout = runTimeout(cleanUpNextTick);
+  draining = true;
+  var len = queue.length;
+
+  while (len) {
+    currentQueue = queue;
+    queue = [];
+
+    while (++queueIndex < len) {
+      if (currentQueue) {
+        currentQueue[queueIndex].run();
+      }
+    }
+
+    queueIndex = -1;
+    len = queue.length;
+  }
+
+  currentQueue = null;
+  draining = false;
+  runClearTimeout(timeout);
+}
+
+process.nextTick = function (fun) {
+  var args = new Array(arguments.length - 1);
+
+  if (arguments.length > 1) {
+    for (var i = 1; i < arguments.length; i++) {
+      args[i - 1] = arguments[i];
+    }
+  }
+
+  queue.push(new Item(fun, args));
+
+  if (queue.length === 1 && !draining) {
+    runTimeout(drainQueue);
+  }
+}; // v8 likes predictible objects
+
+
+function Item(fun, array) {
+  this.fun = fun;
+  this.array = array;
+}
+
+Item.prototype.run = function () {
+  this.fun.apply(null, this.array);
+};
+
+process.title = 'browser';
+process.env = {};
+process.argv = [];
+process.version = ''; // empty string to avoid regexp issues
+
+process.versions = {};
+
+function noop() {}
+
+process.on = noop;
+process.addListener = noop;
+process.once = noop;
+process.off = noop;
+process.removeListener = noop;
+process.removeAllListeners = noop;
+process.emit = noop;
+process.prependListener = noop;
+process.prependOnceListener = noop;
+
+process.listeners = function (name) {
+  return [];
+};
+
+process.binding = function (name) {
+  throw new Error('process.binding is not supported');
+};
+
+process.cwd = function () {
+  return '/';
+};
+
+process.chdir = function (dir) {
+  throw new Error('process.chdir is not supported');
+};
+
+process.umask = function () {
+  return 0;
+};
+},{}],"node_modules/axios/lib/defaults.js":[function(require,module,exports) {
+var process = require("process");
+'use strict';
+
+var utils = require('./utils');
+var normalizeHeaderName = require('./helpers/normalizeHeaderName');
+
+var DEFAULT_CONTENT_TYPE = {
+  'Content-Type': 'application/x-www-form-urlencoded'
+};
+
+function setContentTypeIfUnset(headers, value) {
+  if (!utils.isUndefined(headers) && utils.isUndefined(headers['Content-Type'])) {
+    headers['Content-Type'] = value;
+  }
+}
+
+function getDefaultAdapter() {
+  var adapter;
+  if (typeof XMLHttpRequest !== 'undefined') {
+    // For browsers use XHR adapter
+    adapter = require('./adapters/xhr');
+  } else if (typeof process !== 'undefined' && Object.prototype.toString.call(process) === '[object process]') {
+    // For node use HTTP adapter
+    adapter = require('./adapters/http');
+  }
+  return adapter;
+}
+
+var defaults = {
+  adapter: getDefaultAdapter(),
+
+  transformRequest: [function transformRequest(data, headers) {
+    normalizeHeaderName(headers, 'Accept');
+    normalizeHeaderName(headers, 'Content-Type');
+    if (utils.isFormData(data) ||
+      utils.isArrayBuffer(data) ||
+      utils.isBuffer(data) ||
+      utils.isStream(data) ||
+      utils.isFile(data) ||
+      utils.isBlob(data)
+    ) {
+      return data;
+    }
+    if (utils.isArrayBufferView(data)) {
+      return data.buffer;
+    }
+    if (utils.isURLSearchParams(data)) {
+      setContentTypeIfUnset(headers, 'application/x-www-form-urlencoded;charset=utf-8');
+      return data.toString();
+    }
+    if (utils.isObject(data)) {
+      setContentTypeIfUnset(headers, 'application/json;charset=utf-8');
+      return JSON.stringify(data);
+    }
+    return data;
+  }],
+
+  transformResponse: [function transformResponse(data) {
+    /*eslint no-param-reassign:0*/
+    if (typeof data === 'string') {
+      try {
+        data = JSON.parse(data);
+      } catch (e) { /* Ignore */ }
+    }
+    return data;
+  }],
+
+  /**
+   * A timeout in milliseconds to abort a request. If set to 0 (default) a
+   * timeout is not created.
+   */
+  timeout: 0,
+
+  xsrfCookieName: 'XSRF-TOKEN',
+  xsrfHeaderName: 'X-XSRF-TOKEN',
+
+  maxContentLength: -1,
+
+  validateStatus: function validateStatus(status) {
+    return status >= 200 && status < 300;
+  }
+};
+
+defaults.headers = {
+  common: {
+    'Accept': 'application/json, text/plain, */*'
+  }
+};
+
+utils.forEach(['delete', 'get', 'head'], function forEachMethodNoData(method) {
+  defaults.headers[method] = {};
+});
+
+utils.forEach(['post', 'put', 'patch'], function forEachMethodWithData(method) {
+  defaults.headers[method] = utils.merge(DEFAULT_CONTENT_TYPE);
+});
+
+module.exports = defaults;
+
+},{"./utils":"node_modules/axios/lib/utils.js","./helpers/normalizeHeaderName":"node_modules/axios/lib/helpers/normalizeHeaderName.js","./adapters/xhr":"node_modules/axios/lib/adapters/xhr.js","./adapters/http":"node_modules/axios/lib/adapters/xhr.js","process":"node_modules/process/browser.js"}],"node_modules/axios/lib/core/dispatchRequest.js":[function(require,module,exports) {
+'use strict';
+
+var utils = require('./../utils');
+var transformData = require('./transformData');
+var isCancel = require('../cancel/isCancel');
+var defaults = require('../defaults');
+
+/**
+ * Throws a `Cancel` if cancellation has been requested.
+ */
+function throwIfCancellationRequested(config) {
+  if (config.cancelToken) {
+    config.cancelToken.throwIfRequested();
+  }
+}
+
+/**
+ * Dispatch a request to the server using the configured adapter.
+ *
+ * @param {object} config The config that is to be used for the request
+ * @returns {Promise} The Promise to be fulfilled
+ */
+module.exports = function dispatchRequest(config) {
+  throwIfCancellationRequested(config);
+
+  // Ensure headers exist
+  config.headers = config.headers || {};
+
+  // Transform request data
+  config.data = transformData(
+    config.data,
+    config.headers,
+    config.transformRequest
+  );
+
+  // Flatten headers
+  config.headers = utils.merge(
+    config.headers.common || {},
+    config.headers[config.method] || {},
+    config.headers
+  );
+
+  utils.forEach(
+    ['delete', 'get', 'head', 'post', 'put', 'patch', 'common'],
+    function cleanHeaderConfig(method) {
+      delete config.headers[method];
+    }
+  );
+
+  var adapter = config.adapter || defaults.adapter;
+
+  return adapter(config).then(function onAdapterResolution(response) {
+    throwIfCancellationRequested(config);
+
+    // Transform response data
+    response.data = transformData(
+      response.data,
+      response.headers,
+      config.transformResponse
+    );
+
+    return response;
+  }, function onAdapterRejection(reason) {
+    if (!isCancel(reason)) {
+      throwIfCancellationRequested(config);
+
+      // Transform response data
+      if (reason && reason.response) {
+        reason.response.data = transformData(
+          reason.response.data,
+          reason.response.headers,
+          config.transformResponse
+        );
+      }
+    }
+
+    return Promise.reject(reason);
+  });
+};
+
+},{"./../utils":"node_modules/axios/lib/utils.js","./transformData":"node_modules/axios/lib/core/transformData.js","../cancel/isCancel":"node_modules/axios/lib/cancel/isCancel.js","../defaults":"node_modules/axios/lib/defaults.js"}],"node_modules/axios/lib/core/mergeConfig.js":[function(require,module,exports) {
+'use strict';
+
+var utils = require('../utils');
+
+/**
+ * Config-specific merge-function which creates a new config-object
+ * by merging two configuration objects together.
+ *
+ * @param {Object} config1
+ * @param {Object} config2
+ * @returns {Object} New object resulting from merging config2 to config1
+ */
+module.exports = function mergeConfig(config1, config2) {
+  // eslint-disable-next-line no-param-reassign
+  config2 = config2 || {};
+  var config = {};
+
+  var valueFromConfig2Keys = ['url', 'method', 'params', 'data'];
+  var mergeDeepPropertiesKeys = ['headers', 'auth', 'proxy'];
+  var defaultToConfig2Keys = [
+    'baseURL', 'url', 'transformRequest', 'transformResponse', 'paramsSerializer',
+    'timeout', 'withCredentials', 'adapter', 'responseType', 'xsrfCookieName',
+    'xsrfHeaderName', 'onUploadProgress', 'onDownloadProgress',
+    'maxContentLength', 'validateStatus', 'maxRedirects', 'httpAgent',
+    'httpsAgent', 'cancelToken', 'socketPath'
+  ];
+
+  utils.forEach(valueFromConfig2Keys, function valueFromConfig2(prop) {
+    if (typeof config2[prop] !== 'undefined') {
+      config[prop] = config2[prop];
+    }
+  });
+
+  utils.forEach(mergeDeepPropertiesKeys, function mergeDeepProperties(prop) {
+    if (utils.isObject(config2[prop])) {
+      config[prop] = utils.deepMerge(config1[prop], config2[prop]);
+    } else if (typeof config2[prop] !== 'undefined') {
+      config[prop] = config2[prop];
+    } else if (utils.isObject(config1[prop])) {
+      config[prop] = utils.deepMerge(config1[prop]);
+    } else if (typeof config1[prop] !== 'undefined') {
+      config[prop] = config1[prop];
+    }
+  });
+
+  utils.forEach(defaultToConfig2Keys, function defaultToConfig2(prop) {
+    if (typeof config2[prop] !== 'undefined') {
+      config[prop] = config2[prop];
+    } else if (typeof config1[prop] !== 'undefined') {
+      config[prop] = config1[prop];
+    }
+  });
+
+  var axiosKeys = valueFromConfig2Keys
+    .concat(mergeDeepPropertiesKeys)
+    .concat(defaultToConfig2Keys);
+
+  var otherKeys = Object
+    .keys(config2)
+    .filter(function filterAxiosKeys(key) {
+      return axiosKeys.indexOf(key) === -1;
+    });
+
+  utils.forEach(otherKeys, function otherKeysDefaultToConfig2(prop) {
+    if (typeof config2[prop] !== 'undefined') {
+      config[prop] = config2[prop];
+    } else if (typeof config1[prop] !== 'undefined') {
+      config[prop] = config1[prop];
+    }
+  });
+
+  return config;
+};
+
+},{"../utils":"node_modules/axios/lib/utils.js"}],"node_modules/axios/lib/core/Axios.js":[function(require,module,exports) {
+'use strict';
+
+var utils = require('./../utils');
+var buildURL = require('../helpers/buildURL');
+var InterceptorManager = require('./InterceptorManager');
+var dispatchRequest = require('./dispatchRequest');
+var mergeConfig = require('./mergeConfig');
+
+/**
+ * Create a new instance of Axios
+ *
+ * @param {Object} instanceConfig The default config for the instance
+ */
+function Axios(instanceConfig) {
+  this.defaults = instanceConfig;
+  this.interceptors = {
+    request: new InterceptorManager(),
+    response: new InterceptorManager()
+  };
+}
+
+/**
+ * Dispatch a request
+ *
+ * @param {Object} config The config specific for this request (merged with this.defaults)
+ */
+Axios.prototype.request = function request(config) {
+  /*eslint no-param-reassign:0*/
+  // Allow for axios('example/url'[, config]) a la fetch API
+  if (typeof config === 'string') {
+    config = arguments[1] || {};
+    config.url = arguments[0];
+  } else {
+    config = config || {};
+  }
+
+  config = mergeConfig(this.defaults, config);
+
+  // Set config.method
+  if (config.method) {
+    config.method = config.method.toLowerCase();
+  } else if (this.defaults.method) {
+    config.method = this.defaults.method.toLowerCase();
+  } else {
+    config.method = 'get';
+  }
+
+  // Hook up interceptors middleware
+  var chain = [dispatchRequest, undefined];
+  var promise = Promise.resolve(config);
+
+  this.interceptors.request.forEach(function unshiftRequestInterceptors(interceptor) {
+    chain.unshift(interceptor.fulfilled, interceptor.rejected);
+  });
+
+  this.interceptors.response.forEach(function pushResponseInterceptors(interceptor) {
+    chain.push(interceptor.fulfilled, interceptor.rejected);
+  });
+
+  while (chain.length) {
+    promise = promise.then(chain.shift(), chain.shift());
+  }
+
+  return promise;
+};
+
+Axios.prototype.getUri = function getUri(config) {
+  config = mergeConfig(this.defaults, config);
+  return buildURL(config.url, config.params, config.paramsSerializer).replace(/^\?/, '');
+};
+
+// Provide aliases for supported request methods
+utils.forEach(['delete', 'get', 'head', 'options'], function forEachMethodNoData(method) {
+  /*eslint func-names:0*/
+  Axios.prototype[method] = function(url, config) {
+    return this.request(utils.merge(config || {}, {
+      method: method,
+      url: url
+    }));
+  };
+});
+
+utils.forEach(['post', 'put', 'patch'], function forEachMethodWithData(method) {
+  /*eslint func-names:0*/
+  Axios.prototype[method] = function(url, data, config) {
+    return this.request(utils.merge(config || {}, {
+      method: method,
+      url: url,
+      data: data
+    }));
+  };
+});
+
+module.exports = Axios;
+
+},{"./../utils":"node_modules/axios/lib/utils.js","../helpers/buildURL":"node_modules/axios/lib/helpers/buildURL.js","./InterceptorManager":"node_modules/axios/lib/core/InterceptorManager.js","./dispatchRequest":"node_modules/axios/lib/core/dispatchRequest.js","./mergeConfig":"node_modules/axios/lib/core/mergeConfig.js"}],"node_modules/axios/lib/cancel/Cancel.js":[function(require,module,exports) {
+'use strict';
+
+/**
+ * A `Cancel` is an object that is thrown when an operation is canceled.
+ *
+ * @class
+ * @param {string=} message The message.
+ */
+function Cancel(message) {
+  this.message = message;
+}
+
+Cancel.prototype.toString = function toString() {
+  return 'Cancel' + (this.message ? ': ' + this.message : '');
+};
+
+Cancel.prototype.__CANCEL__ = true;
+
+module.exports = Cancel;
+
+},{}],"node_modules/axios/lib/cancel/CancelToken.js":[function(require,module,exports) {
+'use strict';
+
+var Cancel = require('./Cancel');
+
+/**
+ * A `CancelToken` is an object that can be used to request cancellation of an operation.
+ *
+ * @class
+ * @param {Function} executor The executor function.
+ */
+function CancelToken(executor) {
+  if (typeof executor !== 'function') {
+    throw new TypeError('executor must be a function.');
+  }
+
+  var resolvePromise;
+  this.promise = new Promise(function promiseExecutor(resolve) {
+    resolvePromise = resolve;
+  });
+
+  var token = this;
+  executor(function cancel(message) {
+    if (token.reason) {
+      // Cancellation has already been requested
+      return;
+    }
+
+    token.reason = new Cancel(message);
+    resolvePromise(token.reason);
+  });
+}
+
+/**
+ * Throws a `Cancel` if cancellation has been requested.
+ */
+CancelToken.prototype.throwIfRequested = function throwIfRequested() {
+  if (this.reason) {
+    throw this.reason;
+  }
+};
+
+/**
+ * Returns an object that contains a new `CancelToken` and a function that, when called,
+ * cancels the `CancelToken`.
+ */
+CancelToken.source = function source() {
+  var cancel;
+  var token = new CancelToken(function executor(c) {
+    cancel = c;
+  });
+  return {
+    token: token,
+    cancel: cancel
+  };
+};
+
+module.exports = CancelToken;
+
+},{"./Cancel":"node_modules/axios/lib/cancel/Cancel.js"}],"node_modules/axios/lib/helpers/spread.js":[function(require,module,exports) {
+'use strict';
+
+/**
+ * Syntactic sugar for invoking a function and expanding an array for arguments.
+ *
+ * Common use case would be to use `Function.prototype.apply`.
+ *
+ *  ```js
+ *  function f(x, y, z) {}
+ *  var args = [1, 2, 3];
+ *  f.apply(null, args);
+ *  ```
+ *
+ * With `spread` this example can be re-written.
+ *
+ *  ```js
+ *  spread(function(x, y, z) {})([1, 2, 3]);
+ *  ```
+ *
+ * @param {Function} callback
+ * @returns {Function}
+ */
+module.exports = function spread(callback) {
+  return function wrap(arr) {
+    return callback.apply(null, arr);
+  };
+};
+
+},{}],"node_modules/axios/lib/axios.js":[function(require,module,exports) {
+'use strict';
+
+var utils = require('./utils');
+var bind = require('./helpers/bind');
+var Axios = require('./core/Axios');
+var mergeConfig = require('./core/mergeConfig');
+var defaults = require('./defaults');
+
+/**
+ * Create an instance of Axios
+ *
+ * @param {Object} defaultConfig The default config for the instance
+ * @return {Axios} A new instance of Axios
+ */
+function createInstance(defaultConfig) {
+  var context = new Axios(defaultConfig);
+  var instance = bind(Axios.prototype.request, context);
+
+  // Copy axios.prototype to instance
+  utils.extend(instance, Axios.prototype, context);
+
+  // Copy context to instance
+  utils.extend(instance, context);
+
+  return instance;
+}
+
+// Create the default instance to be exported
+var axios = createInstance(defaults);
+
+// Expose Axios class to allow class inheritance
+axios.Axios = Axios;
+
+// Factory for creating new instances
+axios.create = function create(instanceConfig) {
+  return createInstance(mergeConfig(axios.defaults, instanceConfig));
+};
+
+// Expose Cancel & CancelToken
+axios.Cancel = require('./cancel/Cancel');
+axios.CancelToken = require('./cancel/CancelToken');
+axios.isCancel = require('./cancel/isCancel');
+
+// Expose all/spread
+axios.all = function all(promises) {
+  return Promise.all(promises);
+};
+axios.spread = require('./helpers/spread');
+
+module.exports = axios;
+
+// Allow use of default import syntax in TypeScript
+module.exports.default = axios;
+
+},{"./utils":"node_modules/axios/lib/utils.js","./helpers/bind":"node_modules/axios/lib/helpers/bind.js","./core/Axios":"node_modules/axios/lib/core/Axios.js","./core/mergeConfig":"node_modules/axios/lib/core/mergeConfig.js","./defaults":"node_modules/axios/lib/defaults.js","./cancel/Cancel":"node_modules/axios/lib/cancel/Cancel.js","./cancel/CancelToken":"node_modules/axios/lib/cancel/CancelToken.js","./cancel/isCancel":"node_modules/axios/lib/cancel/isCancel.js","./helpers/spread":"node_modules/axios/lib/helpers/spread.js"}],"node_modules/axios/index.js":[function(require,module,exports) {
+module.exports = require('./lib/axios');
+},{"./lib/axios":"node_modules/axios/lib/axios.js"}],"node_modules/@microsoft/signalr/dist/esm/Errors.js":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -17213,1770 +18976,7 @@ var _Subject = require("./Subject");
 /** The version of the SignalR client. */
 var VERSION = "3.1.4";
 exports.VERSION = VERSION;
-},{"./Errors":"node_modules/@microsoft/signalr/dist/esm/Errors.js","./HttpClient":"node_modules/@microsoft/signalr/dist/esm/HttpClient.js","./DefaultHttpClient":"node_modules/@microsoft/signalr/dist/esm/DefaultHttpClient.js","./HubConnection":"node_modules/@microsoft/signalr/dist/esm/HubConnection.js","./HubConnectionBuilder":"node_modules/@microsoft/signalr/dist/esm/HubConnectionBuilder.js","./IHubProtocol":"node_modules/@microsoft/signalr/dist/esm/IHubProtocol.js","./ILogger":"node_modules/@microsoft/signalr/dist/esm/ILogger.js","./ITransport":"node_modules/@microsoft/signalr/dist/esm/ITransport.js","./Loggers":"node_modules/@microsoft/signalr/dist/esm/Loggers.js","./JsonHubProtocol":"node_modules/@microsoft/signalr/dist/esm/JsonHubProtocol.js","./Subject":"node_modules/@microsoft/signalr/dist/esm/Subject.js"}],"node_modules/axios/lib/helpers/bind.js":[function(require,module,exports) {
-'use strict';
-
-module.exports = function bind(fn, thisArg) {
-  return function wrap() {
-    var args = new Array(arguments.length);
-    for (var i = 0; i < args.length; i++) {
-      args[i] = arguments[i];
-    }
-    return fn.apply(thisArg, args);
-  };
-};
-
-},{}],"node_modules/axios/lib/utils.js":[function(require,module,exports) {
-'use strict';
-
-var bind = require('./helpers/bind');
-
-/*global toString:true*/
-
-// utils is a library of generic helper functions non-specific to axios
-
-var toString = Object.prototype.toString;
-
-/**
- * Determine if a value is an Array
- *
- * @param {Object} val The value to test
- * @returns {boolean} True if value is an Array, otherwise false
- */
-function isArray(val) {
-  return toString.call(val) === '[object Array]';
-}
-
-/**
- * Determine if a value is undefined
- *
- * @param {Object} val The value to test
- * @returns {boolean} True if the value is undefined, otherwise false
- */
-function isUndefined(val) {
-  return typeof val === 'undefined';
-}
-
-/**
- * Determine if a value is a Buffer
- *
- * @param {Object} val The value to test
- * @returns {boolean} True if value is a Buffer, otherwise false
- */
-function isBuffer(val) {
-  return val !== null && !isUndefined(val) && val.constructor !== null && !isUndefined(val.constructor)
-    && typeof val.constructor.isBuffer === 'function' && val.constructor.isBuffer(val);
-}
-
-/**
- * Determine if a value is an ArrayBuffer
- *
- * @param {Object} val The value to test
- * @returns {boolean} True if value is an ArrayBuffer, otherwise false
- */
-function isArrayBuffer(val) {
-  return toString.call(val) === '[object ArrayBuffer]';
-}
-
-/**
- * Determine if a value is a FormData
- *
- * @param {Object} val The value to test
- * @returns {boolean} True if value is an FormData, otherwise false
- */
-function isFormData(val) {
-  return (typeof FormData !== 'undefined') && (val instanceof FormData);
-}
-
-/**
- * Determine if a value is a view on an ArrayBuffer
- *
- * @param {Object} val The value to test
- * @returns {boolean} True if value is a view on an ArrayBuffer, otherwise false
- */
-function isArrayBufferView(val) {
-  var result;
-  if ((typeof ArrayBuffer !== 'undefined') && (ArrayBuffer.isView)) {
-    result = ArrayBuffer.isView(val);
-  } else {
-    result = (val) && (val.buffer) && (val.buffer instanceof ArrayBuffer);
-  }
-  return result;
-}
-
-/**
- * Determine if a value is a String
- *
- * @param {Object} val The value to test
- * @returns {boolean} True if value is a String, otherwise false
- */
-function isString(val) {
-  return typeof val === 'string';
-}
-
-/**
- * Determine if a value is a Number
- *
- * @param {Object} val The value to test
- * @returns {boolean} True if value is a Number, otherwise false
- */
-function isNumber(val) {
-  return typeof val === 'number';
-}
-
-/**
- * Determine if a value is an Object
- *
- * @param {Object} val The value to test
- * @returns {boolean} True if value is an Object, otherwise false
- */
-function isObject(val) {
-  return val !== null && typeof val === 'object';
-}
-
-/**
- * Determine if a value is a Date
- *
- * @param {Object} val The value to test
- * @returns {boolean} True if value is a Date, otherwise false
- */
-function isDate(val) {
-  return toString.call(val) === '[object Date]';
-}
-
-/**
- * Determine if a value is a File
- *
- * @param {Object} val The value to test
- * @returns {boolean} True if value is a File, otherwise false
- */
-function isFile(val) {
-  return toString.call(val) === '[object File]';
-}
-
-/**
- * Determine if a value is a Blob
- *
- * @param {Object} val The value to test
- * @returns {boolean} True if value is a Blob, otherwise false
- */
-function isBlob(val) {
-  return toString.call(val) === '[object Blob]';
-}
-
-/**
- * Determine if a value is a Function
- *
- * @param {Object} val The value to test
- * @returns {boolean} True if value is a Function, otherwise false
- */
-function isFunction(val) {
-  return toString.call(val) === '[object Function]';
-}
-
-/**
- * Determine if a value is a Stream
- *
- * @param {Object} val The value to test
- * @returns {boolean} True if value is a Stream, otherwise false
- */
-function isStream(val) {
-  return isObject(val) && isFunction(val.pipe);
-}
-
-/**
- * Determine if a value is a URLSearchParams object
- *
- * @param {Object} val The value to test
- * @returns {boolean} True if value is a URLSearchParams object, otherwise false
- */
-function isURLSearchParams(val) {
-  return typeof URLSearchParams !== 'undefined' && val instanceof URLSearchParams;
-}
-
-/**
- * Trim excess whitespace off the beginning and end of a string
- *
- * @param {String} str The String to trim
- * @returns {String} The String freed of excess whitespace
- */
-function trim(str) {
-  return str.replace(/^\s*/, '').replace(/\s*$/, '');
-}
-
-/**
- * Determine if we're running in a standard browser environment
- *
- * This allows axios to run in a web worker, and react-native.
- * Both environments support XMLHttpRequest, but not fully standard globals.
- *
- * web workers:
- *  typeof window -> undefined
- *  typeof document -> undefined
- *
- * react-native:
- *  navigator.product -> 'ReactNative'
- * nativescript
- *  navigator.product -> 'NativeScript' or 'NS'
- */
-function isStandardBrowserEnv() {
-  if (typeof navigator !== 'undefined' && (navigator.product === 'ReactNative' ||
-                                           navigator.product === 'NativeScript' ||
-                                           navigator.product === 'NS')) {
-    return false;
-  }
-  return (
-    typeof window !== 'undefined' &&
-    typeof document !== 'undefined'
-  );
-}
-
-/**
- * Iterate over an Array or an Object invoking a function for each item.
- *
- * If `obj` is an Array callback will be called passing
- * the value, index, and complete array for each item.
- *
- * If 'obj' is an Object callback will be called passing
- * the value, key, and complete object for each property.
- *
- * @param {Object|Array} obj The object to iterate
- * @param {Function} fn The callback to invoke for each item
- */
-function forEach(obj, fn) {
-  // Don't bother if no value provided
-  if (obj === null || typeof obj === 'undefined') {
-    return;
-  }
-
-  // Force an array if not already something iterable
-  if (typeof obj !== 'object') {
-    /*eslint no-param-reassign:0*/
-    obj = [obj];
-  }
-
-  if (isArray(obj)) {
-    // Iterate over array values
-    for (var i = 0, l = obj.length; i < l; i++) {
-      fn.call(null, obj[i], i, obj);
-    }
-  } else {
-    // Iterate over object keys
-    for (var key in obj) {
-      if (Object.prototype.hasOwnProperty.call(obj, key)) {
-        fn.call(null, obj[key], key, obj);
-      }
-    }
-  }
-}
-
-/**
- * Accepts varargs expecting each argument to be an object, then
- * immutably merges the properties of each object and returns result.
- *
- * When multiple objects contain the same key the later object in
- * the arguments list will take precedence.
- *
- * Example:
- *
- * ```js
- * var result = merge({foo: 123}, {foo: 456});
- * console.log(result.foo); // outputs 456
- * ```
- *
- * @param {Object} obj1 Object to merge
- * @returns {Object} Result of all merge properties
- */
-function merge(/* obj1, obj2, obj3, ... */) {
-  var result = {};
-  function assignValue(val, key) {
-    if (typeof result[key] === 'object' && typeof val === 'object') {
-      result[key] = merge(result[key], val);
-    } else {
-      result[key] = val;
-    }
-  }
-
-  for (var i = 0, l = arguments.length; i < l; i++) {
-    forEach(arguments[i], assignValue);
-  }
-  return result;
-}
-
-/**
- * Function equal to merge with the difference being that no reference
- * to original objects is kept.
- *
- * @see merge
- * @param {Object} obj1 Object to merge
- * @returns {Object} Result of all merge properties
- */
-function deepMerge(/* obj1, obj2, obj3, ... */) {
-  var result = {};
-  function assignValue(val, key) {
-    if (typeof result[key] === 'object' && typeof val === 'object') {
-      result[key] = deepMerge(result[key], val);
-    } else if (typeof val === 'object') {
-      result[key] = deepMerge({}, val);
-    } else {
-      result[key] = val;
-    }
-  }
-
-  for (var i = 0, l = arguments.length; i < l; i++) {
-    forEach(arguments[i], assignValue);
-  }
-  return result;
-}
-
-/**
- * Extends object a by mutably adding to it the properties of object b.
- *
- * @param {Object} a The object to be extended
- * @param {Object} b The object to copy properties from
- * @param {Object} thisArg The object to bind function to
- * @return {Object} The resulting value of object a
- */
-function extend(a, b, thisArg) {
-  forEach(b, function assignValue(val, key) {
-    if (thisArg && typeof val === 'function') {
-      a[key] = bind(val, thisArg);
-    } else {
-      a[key] = val;
-    }
-  });
-  return a;
-}
-
-module.exports = {
-  isArray: isArray,
-  isArrayBuffer: isArrayBuffer,
-  isBuffer: isBuffer,
-  isFormData: isFormData,
-  isArrayBufferView: isArrayBufferView,
-  isString: isString,
-  isNumber: isNumber,
-  isObject: isObject,
-  isUndefined: isUndefined,
-  isDate: isDate,
-  isFile: isFile,
-  isBlob: isBlob,
-  isFunction: isFunction,
-  isStream: isStream,
-  isURLSearchParams: isURLSearchParams,
-  isStandardBrowserEnv: isStandardBrowserEnv,
-  forEach: forEach,
-  merge: merge,
-  deepMerge: deepMerge,
-  extend: extend,
-  trim: trim
-};
-
-},{"./helpers/bind":"node_modules/axios/lib/helpers/bind.js"}],"node_modules/axios/lib/helpers/buildURL.js":[function(require,module,exports) {
-'use strict';
-
-var utils = require('./../utils');
-
-function encode(val) {
-  return encodeURIComponent(val).
-    replace(/%40/gi, '@').
-    replace(/%3A/gi, ':').
-    replace(/%24/g, '$').
-    replace(/%2C/gi, ',').
-    replace(/%20/g, '+').
-    replace(/%5B/gi, '[').
-    replace(/%5D/gi, ']');
-}
-
-/**
- * Build a URL by appending params to the end
- *
- * @param {string} url The base of the url (e.g., http://www.google.com)
- * @param {object} [params] The params to be appended
- * @returns {string} The formatted url
- */
-module.exports = function buildURL(url, params, paramsSerializer) {
-  /*eslint no-param-reassign:0*/
-  if (!params) {
-    return url;
-  }
-
-  var serializedParams;
-  if (paramsSerializer) {
-    serializedParams = paramsSerializer(params);
-  } else if (utils.isURLSearchParams(params)) {
-    serializedParams = params.toString();
-  } else {
-    var parts = [];
-
-    utils.forEach(params, function serialize(val, key) {
-      if (val === null || typeof val === 'undefined') {
-        return;
-      }
-
-      if (utils.isArray(val)) {
-        key = key + '[]';
-      } else {
-        val = [val];
-      }
-
-      utils.forEach(val, function parseValue(v) {
-        if (utils.isDate(v)) {
-          v = v.toISOString();
-        } else if (utils.isObject(v)) {
-          v = JSON.stringify(v);
-        }
-        parts.push(encode(key) + '=' + encode(v));
-      });
-    });
-
-    serializedParams = parts.join('&');
-  }
-
-  if (serializedParams) {
-    var hashmarkIndex = url.indexOf('#');
-    if (hashmarkIndex !== -1) {
-      url = url.slice(0, hashmarkIndex);
-    }
-
-    url += (url.indexOf('?') === -1 ? '?' : '&') + serializedParams;
-  }
-
-  return url;
-};
-
-},{"./../utils":"node_modules/axios/lib/utils.js"}],"node_modules/axios/lib/core/InterceptorManager.js":[function(require,module,exports) {
-'use strict';
-
-var utils = require('./../utils');
-
-function InterceptorManager() {
-  this.handlers = [];
-}
-
-/**
- * Add a new interceptor to the stack
- *
- * @param {Function} fulfilled The function to handle `then` for a `Promise`
- * @param {Function} rejected The function to handle `reject` for a `Promise`
- *
- * @return {Number} An ID used to remove interceptor later
- */
-InterceptorManager.prototype.use = function use(fulfilled, rejected) {
-  this.handlers.push({
-    fulfilled: fulfilled,
-    rejected: rejected
-  });
-  return this.handlers.length - 1;
-};
-
-/**
- * Remove an interceptor from the stack
- *
- * @param {Number} id The ID that was returned by `use`
- */
-InterceptorManager.prototype.eject = function eject(id) {
-  if (this.handlers[id]) {
-    this.handlers[id] = null;
-  }
-};
-
-/**
- * Iterate over all the registered interceptors
- *
- * This method is particularly useful for skipping over any
- * interceptors that may have become `null` calling `eject`.
- *
- * @param {Function} fn The function to call for each interceptor
- */
-InterceptorManager.prototype.forEach = function forEach(fn) {
-  utils.forEach(this.handlers, function forEachHandler(h) {
-    if (h !== null) {
-      fn(h);
-    }
-  });
-};
-
-module.exports = InterceptorManager;
-
-},{"./../utils":"node_modules/axios/lib/utils.js"}],"node_modules/axios/lib/core/transformData.js":[function(require,module,exports) {
-'use strict';
-
-var utils = require('./../utils');
-
-/**
- * Transform the data for a request or a response
- *
- * @param {Object|String} data The data to be transformed
- * @param {Array} headers The headers for the request or response
- * @param {Array|Function} fns A single function or Array of functions
- * @returns {*} The resulting transformed data
- */
-module.exports = function transformData(data, headers, fns) {
-  /*eslint no-param-reassign:0*/
-  utils.forEach(fns, function transform(fn) {
-    data = fn(data, headers);
-  });
-
-  return data;
-};
-
-},{"./../utils":"node_modules/axios/lib/utils.js"}],"node_modules/axios/lib/cancel/isCancel.js":[function(require,module,exports) {
-'use strict';
-
-module.exports = function isCancel(value) {
-  return !!(value && value.__CANCEL__);
-};
-
-},{}],"node_modules/axios/lib/helpers/normalizeHeaderName.js":[function(require,module,exports) {
-'use strict';
-
-var utils = require('../utils');
-
-module.exports = function normalizeHeaderName(headers, normalizedName) {
-  utils.forEach(headers, function processHeader(value, name) {
-    if (name !== normalizedName && name.toUpperCase() === normalizedName.toUpperCase()) {
-      headers[normalizedName] = value;
-      delete headers[name];
-    }
-  });
-};
-
-},{"../utils":"node_modules/axios/lib/utils.js"}],"node_modules/axios/lib/core/enhanceError.js":[function(require,module,exports) {
-'use strict';
-
-/**
- * Update an Error with the specified config, error code, and response.
- *
- * @param {Error} error The error to update.
- * @param {Object} config The config.
- * @param {string} [code] The error code (for example, 'ECONNABORTED').
- * @param {Object} [request] The request.
- * @param {Object} [response] The response.
- * @returns {Error} The error.
- */
-module.exports = function enhanceError(error, config, code, request, response) {
-  error.config = config;
-  if (code) {
-    error.code = code;
-  }
-
-  error.request = request;
-  error.response = response;
-  error.isAxiosError = true;
-
-  error.toJSON = function() {
-    return {
-      // Standard
-      message: this.message,
-      name: this.name,
-      // Microsoft
-      description: this.description,
-      number: this.number,
-      // Mozilla
-      fileName: this.fileName,
-      lineNumber: this.lineNumber,
-      columnNumber: this.columnNumber,
-      stack: this.stack,
-      // Axios
-      config: this.config,
-      code: this.code
-    };
-  };
-  return error;
-};
-
-},{}],"node_modules/axios/lib/core/createError.js":[function(require,module,exports) {
-'use strict';
-
-var enhanceError = require('./enhanceError');
-
-/**
- * Create an Error with the specified message, config, error code, request and response.
- *
- * @param {string} message The error message.
- * @param {Object} config The config.
- * @param {string} [code] The error code (for example, 'ECONNABORTED').
- * @param {Object} [request] The request.
- * @param {Object} [response] The response.
- * @returns {Error} The created error.
- */
-module.exports = function createError(message, config, code, request, response) {
-  var error = new Error(message);
-  return enhanceError(error, config, code, request, response);
-};
-
-},{"./enhanceError":"node_modules/axios/lib/core/enhanceError.js"}],"node_modules/axios/lib/core/settle.js":[function(require,module,exports) {
-'use strict';
-
-var createError = require('./createError');
-
-/**
- * Resolve or reject a Promise based on response status.
- *
- * @param {Function} resolve A function that resolves the promise.
- * @param {Function} reject A function that rejects the promise.
- * @param {object} response The response.
- */
-module.exports = function settle(resolve, reject, response) {
-  var validateStatus = response.config.validateStatus;
-  if (!validateStatus || validateStatus(response.status)) {
-    resolve(response);
-  } else {
-    reject(createError(
-      'Request failed with status code ' + response.status,
-      response.config,
-      null,
-      response.request,
-      response
-    ));
-  }
-};
-
-},{"./createError":"node_modules/axios/lib/core/createError.js"}],"node_modules/axios/lib/helpers/isAbsoluteURL.js":[function(require,module,exports) {
-'use strict';
-
-/**
- * Determines whether the specified URL is absolute
- *
- * @param {string} url The URL to test
- * @returns {boolean} True if the specified URL is absolute, otherwise false
- */
-module.exports = function isAbsoluteURL(url) {
-  // A URL is considered absolute if it begins with "<scheme>://" or "//" (protocol-relative URL).
-  // RFC 3986 defines scheme name as a sequence of characters beginning with a letter and followed
-  // by any combination of letters, digits, plus, period, or hyphen.
-  return /^([a-z][a-z\d\+\-\.]*:)?\/\//i.test(url);
-};
-
-},{}],"node_modules/axios/lib/helpers/combineURLs.js":[function(require,module,exports) {
-'use strict';
-
-/**
- * Creates a new URL by combining the specified URLs
- *
- * @param {string} baseURL The base URL
- * @param {string} relativeURL The relative URL
- * @returns {string} The combined URL
- */
-module.exports = function combineURLs(baseURL, relativeURL) {
-  return relativeURL
-    ? baseURL.replace(/\/+$/, '') + '/' + relativeURL.replace(/^\/+/, '')
-    : baseURL;
-};
-
-},{}],"node_modules/axios/lib/core/buildFullPath.js":[function(require,module,exports) {
-'use strict';
-
-var isAbsoluteURL = require('../helpers/isAbsoluteURL');
-var combineURLs = require('../helpers/combineURLs');
-
-/**
- * Creates a new URL by combining the baseURL with the requestedURL,
- * only when the requestedURL is not already an absolute URL.
- * If the requestURL is absolute, this function returns the requestedURL untouched.
- *
- * @param {string} baseURL The base URL
- * @param {string} requestedURL Absolute or relative URL to combine
- * @returns {string} The combined full path
- */
-module.exports = function buildFullPath(baseURL, requestedURL) {
-  if (baseURL && !isAbsoluteURL(requestedURL)) {
-    return combineURLs(baseURL, requestedURL);
-  }
-  return requestedURL;
-};
-
-},{"../helpers/isAbsoluteURL":"node_modules/axios/lib/helpers/isAbsoluteURL.js","../helpers/combineURLs":"node_modules/axios/lib/helpers/combineURLs.js"}],"node_modules/axios/lib/helpers/parseHeaders.js":[function(require,module,exports) {
-'use strict';
-
-var utils = require('./../utils');
-
-// Headers whose duplicates are ignored by node
-// c.f. https://nodejs.org/api/http.html#http_message_headers
-var ignoreDuplicateOf = [
-  'age', 'authorization', 'content-length', 'content-type', 'etag',
-  'expires', 'from', 'host', 'if-modified-since', 'if-unmodified-since',
-  'last-modified', 'location', 'max-forwards', 'proxy-authorization',
-  'referer', 'retry-after', 'user-agent'
-];
-
-/**
- * Parse headers into an object
- *
- * ```
- * Date: Wed, 27 Aug 2014 08:58:49 GMT
- * Content-Type: application/json
- * Connection: keep-alive
- * Transfer-Encoding: chunked
- * ```
- *
- * @param {String} headers Headers needing to be parsed
- * @returns {Object} Headers parsed into an object
- */
-module.exports = function parseHeaders(headers) {
-  var parsed = {};
-  var key;
-  var val;
-  var i;
-
-  if (!headers) { return parsed; }
-
-  utils.forEach(headers.split('\n'), function parser(line) {
-    i = line.indexOf(':');
-    key = utils.trim(line.substr(0, i)).toLowerCase();
-    val = utils.trim(line.substr(i + 1));
-
-    if (key) {
-      if (parsed[key] && ignoreDuplicateOf.indexOf(key) >= 0) {
-        return;
-      }
-      if (key === 'set-cookie') {
-        parsed[key] = (parsed[key] ? parsed[key] : []).concat([val]);
-      } else {
-        parsed[key] = parsed[key] ? parsed[key] + ', ' + val : val;
-      }
-    }
-  });
-
-  return parsed;
-};
-
-},{"./../utils":"node_modules/axios/lib/utils.js"}],"node_modules/axios/lib/helpers/isURLSameOrigin.js":[function(require,module,exports) {
-'use strict';
-
-var utils = require('./../utils');
-
-module.exports = (
-  utils.isStandardBrowserEnv() ?
-
-  // Standard browser envs have full support of the APIs needed to test
-  // whether the request URL is of the same origin as current location.
-    (function standardBrowserEnv() {
-      var msie = /(msie|trident)/i.test(navigator.userAgent);
-      var urlParsingNode = document.createElement('a');
-      var originURL;
-
-      /**
-    * Parse a URL to discover it's components
-    *
-    * @param {String} url The URL to be parsed
-    * @returns {Object}
-    */
-      function resolveURL(url) {
-        var href = url;
-
-        if (msie) {
-        // IE needs attribute set twice to normalize properties
-          urlParsingNode.setAttribute('href', href);
-          href = urlParsingNode.href;
-        }
-
-        urlParsingNode.setAttribute('href', href);
-
-        // urlParsingNode provides the UrlUtils interface - http://url.spec.whatwg.org/#urlutils
-        return {
-          href: urlParsingNode.href,
-          protocol: urlParsingNode.protocol ? urlParsingNode.protocol.replace(/:$/, '') : '',
-          host: urlParsingNode.host,
-          search: urlParsingNode.search ? urlParsingNode.search.replace(/^\?/, '') : '',
-          hash: urlParsingNode.hash ? urlParsingNode.hash.replace(/^#/, '') : '',
-          hostname: urlParsingNode.hostname,
-          port: urlParsingNode.port,
-          pathname: (urlParsingNode.pathname.charAt(0) === '/') ?
-            urlParsingNode.pathname :
-            '/' + urlParsingNode.pathname
-        };
-      }
-
-      originURL = resolveURL(window.location.href);
-
-      /**
-    * Determine if a URL shares the same origin as the current location
-    *
-    * @param {String} requestURL The URL to test
-    * @returns {boolean} True if URL shares the same origin, otherwise false
-    */
-      return function isURLSameOrigin(requestURL) {
-        var parsed = (utils.isString(requestURL)) ? resolveURL(requestURL) : requestURL;
-        return (parsed.protocol === originURL.protocol &&
-            parsed.host === originURL.host);
-      };
-    })() :
-
-  // Non standard browser envs (web workers, react-native) lack needed support.
-    (function nonStandardBrowserEnv() {
-      return function isURLSameOrigin() {
-        return true;
-      };
-    })()
-);
-
-},{"./../utils":"node_modules/axios/lib/utils.js"}],"node_modules/axios/lib/helpers/cookies.js":[function(require,module,exports) {
-'use strict';
-
-var utils = require('./../utils');
-
-module.exports = (
-  utils.isStandardBrowserEnv() ?
-
-  // Standard browser envs support document.cookie
-    (function standardBrowserEnv() {
-      return {
-        write: function write(name, value, expires, path, domain, secure) {
-          var cookie = [];
-          cookie.push(name + '=' + encodeURIComponent(value));
-
-          if (utils.isNumber(expires)) {
-            cookie.push('expires=' + new Date(expires).toGMTString());
-          }
-
-          if (utils.isString(path)) {
-            cookie.push('path=' + path);
-          }
-
-          if (utils.isString(domain)) {
-            cookie.push('domain=' + domain);
-          }
-
-          if (secure === true) {
-            cookie.push('secure');
-          }
-
-          document.cookie = cookie.join('; ');
-        },
-
-        read: function read(name) {
-          var match = document.cookie.match(new RegExp('(^|;\\s*)(' + name + ')=([^;]*)'));
-          return (match ? decodeURIComponent(match[3]) : null);
-        },
-
-        remove: function remove(name) {
-          this.write(name, '', Date.now() - 86400000);
-        }
-      };
-    })() :
-
-  // Non standard browser env (web workers, react-native) lack needed support.
-    (function nonStandardBrowserEnv() {
-      return {
-        write: function write() {},
-        read: function read() { return null; },
-        remove: function remove() {}
-      };
-    })()
-);
-
-},{"./../utils":"node_modules/axios/lib/utils.js"}],"node_modules/axios/lib/adapters/xhr.js":[function(require,module,exports) {
-'use strict';
-
-var utils = require('./../utils');
-var settle = require('./../core/settle');
-var buildURL = require('./../helpers/buildURL');
-var buildFullPath = require('../core/buildFullPath');
-var parseHeaders = require('./../helpers/parseHeaders');
-var isURLSameOrigin = require('./../helpers/isURLSameOrigin');
-var createError = require('../core/createError');
-
-module.exports = function xhrAdapter(config) {
-  return new Promise(function dispatchXhrRequest(resolve, reject) {
-    var requestData = config.data;
-    var requestHeaders = config.headers;
-
-    if (utils.isFormData(requestData)) {
-      delete requestHeaders['Content-Type']; // Let the browser set it
-    }
-
-    var request = new XMLHttpRequest();
-
-    // HTTP basic authentication
-    if (config.auth) {
-      var username = config.auth.username || '';
-      var password = config.auth.password || '';
-      requestHeaders.Authorization = 'Basic ' + btoa(username + ':' + password);
-    }
-
-    var fullPath = buildFullPath(config.baseURL, config.url);
-    request.open(config.method.toUpperCase(), buildURL(fullPath, config.params, config.paramsSerializer), true);
-
-    // Set the request timeout in MS
-    request.timeout = config.timeout;
-
-    // Listen for ready state
-    request.onreadystatechange = function handleLoad() {
-      if (!request || request.readyState !== 4) {
-        return;
-      }
-
-      // The request errored out and we didn't get a response, this will be
-      // handled by onerror instead
-      // With one exception: request that using file: protocol, most browsers
-      // will return status as 0 even though it's a successful request
-      if (request.status === 0 && !(request.responseURL && request.responseURL.indexOf('file:') === 0)) {
-        return;
-      }
-
-      // Prepare the response
-      var responseHeaders = 'getAllResponseHeaders' in request ? parseHeaders(request.getAllResponseHeaders()) : null;
-      var responseData = !config.responseType || config.responseType === 'text' ? request.responseText : request.response;
-      var response = {
-        data: responseData,
-        status: request.status,
-        statusText: request.statusText,
-        headers: responseHeaders,
-        config: config,
-        request: request
-      };
-
-      settle(resolve, reject, response);
-
-      // Clean up request
-      request = null;
-    };
-
-    // Handle browser request cancellation (as opposed to a manual cancellation)
-    request.onabort = function handleAbort() {
-      if (!request) {
-        return;
-      }
-
-      reject(createError('Request aborted', config, 'ECONNABORTED', request));
-
-      // Clean up request
-      request = null;
-    };
-
-    // Handle low level network errors
-    request.onerror = function handleError() {
-      // Real errors are hidden from us by the browser
-      // onerror should only fire if it's a network error
-      reject(createError('Network Error', config, null, request));
-
-      // Clean up request
-      request = null;
-    };
-
-    // Handle timeout
-    request.ontimeout = function handleTimeout() {
-      var timeoutErrorMessage = 'timeout of ' + config.timeout + 'ms exceeded';
-      if (config.timeoutErrorMessage) {
-        timeoutErrorMessage = config.timeoutErrorMessage;
-      }
-      reject(createError(timeoutErrorMessage, config, 'ECONNABORTED',
-        request));
-
-      // Clean up request
-      request = null;
-    };
-
-    // Add xsrf header
-    // This is only done if running in a standard browser environment.
-    // Specifically not if we're in a web worker, or react-native.
-    if (utils.isStandardBrowserEnv()) {
-      var cookies = require('./../helpers/cookies');
-
-      // Add xsrf header
-      var xsrfValue = (config.withCredentials || isURLSameOrigin(fullPath)) && config.xsrfCookieName ?
-        cookies.read(config.xsrfCookieName) :
-        undefined;
-
-      if (xsrfValue) {
-        requestHeaders[config.xsrfHeaderName] = xsrfValue;
-      }
-    }
-
-    // Add headers to the request
-    if ('setRequestHeader' in request) {
-      utils.forEach(requestHeaders, function setRequestHeader(val, key) {
-        if (typeof requestData === 'undefined' && key.toLowerCase() === 'content-type') {
-          // Remove Content-Type if data is undefined
-          delete requestHeaders[key];
-        } else {
-          // Otherwise add header to the request
-          request.setRequestHeader(key, val);
-        }
-      });
-    }
-
-    // Add withCredentials to request if needed
-    if (!utils.isUndefined(config.withCredentials)) {
-      request.withCredentials = !!config.withCredentials;
-    }
-
-    // Add responseType to request if needed
-    if (config.responseType) {
-      try {
-        request.responseType = config.responseType;
-      } catch (e) {
-        // Expected DOMException thrown by browsers not compatible XMLHttpRequest Level 2.
-        // But, this can be suppressed for 'json' type as it can be parsed by default 'transformResponse' function.
-        if (config.responseType !== 'json') {
-          throw e;
-        }
-      }
-    }
-
-    // Handle progress if needed
-    if (typeof config.onDownloadProgress === 'function') {
-      request.addEventListener('progress', config.onDownloadProgress);
-    }
-
-    // Not all browsers support upload events
-    if (typeof config.onUploadProgress === 'function' && request.upload) {
-      request.upload.addEventListener('progress', config.onUploadProgress);
-    }
-
-    if (config.cancelToken) {
-      // Handle cancellation
-      config.cancelToken.promise.then(function onCanceled(cancel) {
-        if (!request) {
-          return;
-        }
-
-        request.abort();
-        reject(cancel);
-        // Clean up request
-        request = null;
-      });
-    }
-
-    if (requestData === undefined) {
-      requestData = null;
-    }
-
-    // Send the request
-    request.send(requestData);
-  });
-};
-
-},{"./../utils":"node_modules/axios/lib/utils.js","./../core/settle":"node_modules/axios/lib/core/settle.js","./../helpers/buildURL":"node_modules/axios/lib/helpers/buildURL.js","../core/buildFullPath":"node_modules/axios/lib/core/buildFullPath.js","./../helpers/parseHeaders":"node_modules/axios/lib/helpers/parseHeaders.js","./../helpers/isURLSameOrigin":"node_modules/axios/lib/helpers/isURLSameOrigin.js","../core/createError":"node_modules/axios/lib/core/createError.js","./../helpers/cookies":"node_modules/axios/lib/helpers/cookies.js"}],"node_modules/process/browser.js":[function(require,module,exports) {
-
-// shim for using process in browser
-var process = module.exports = {}; // cached from whatever global is present so that test runners that stub it
-// don't break things.  But we need to wrap it in a try catch in case it is
-// wrapped in strict mode code which doesn't define any globals.  It's inside a
-// function because try/catches deoptimize in certain engines.
-
-var cachedSetTimeout;
-var cachedClearTimeout;
-
-function defaultSetTimout() {
-  throw new Error('setTimeout has not been defined');
-}
-
-function defaultClearTimeout() {
-  throw new Error('clearTimeout has not been defined');
-}
-
-(function () {
-  try {
-    if (typeof setTimeout === 'function') {
-      cachedSetTimeout = setTimeout;
-    } else {
-      cachedSetTimeout = defaultSetTimout;
-    }
-  } catch (e) {
-    cachedSetTimeout = defaultSetTimout;
-  }
-
-  try {
-    if (typeof clearTimeout === 'function') {
-      cachedClearTimeout = clearTimeout;
-    } else {
-      cachedClearTimeout = defaultClearTimeout;
-    }
-  } catch (e) {
-    cachedClearTimeout = defaultClearTimeout;
-  }
-})();
-
-function runTimeout(fun) {
-  if (cachedSetTimeout === setTimeout) {
-    //normal enviroments in sane situations
-    return setTimeout(fun, 0);
-  } // if setTimeout wasn't available but was latter defined
-
-
-  if ((cachedSetTimeout === defaultSetTimout || !cachedSetTimeout) && setTimeout) {
-    cachedSetTimeout = setTimeout;
-    return setTimeout(fun, 0);
-  }
-
-  try {
-    // when when somebody has screwed with setTimeout but no I.E. maddness
-    return cachedSetTimeout(fun, 0);
-  } catch (e) {
-    try {
-      // When we are in I.E. but the script has been evaled so I.E. doesn't trust the global object when called normally
-      return cachedSetTimeout.call(null, fun, 0);
-    } catch (e) {
-      // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error
-      return cachedSetTimeout.call(this, fun, 0);
-    }
-  }
-}
-
-function runClearTimeout(marker) {
-  if (cachedClearTimeout === clearTimeout) {
-    //normal enviroments in sane situations
-    return clearTimeout(marker);
-  } // if clearTimeout wasn't available but was latter defined
-
-
-  if ((cachedClearTimeout === defaultClearTimeout || !cachedClearTimeout) && clearTimeout) {
-    cachedClearTimeout = clearTimeout;
-    return clearTimeout(marker);
-  }
-
-  try {
-    // when when somebody has screwed with setTimeout but no I.E. maddness
-    return cachedClearTimeout(marker);
-  } catch (e) {
-    try {
-      // When we are in I.E. but the script has been evaled so I.E. doesn't  trust the global object when called normally
-      return cachedClearTimeout.call(null, marker);
-    } catch (e) {
-      // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error.
-      // Some versions of I.E. have different rules for clearTimeout vs setTimeout
-      return cachedClearTimeout.call(this, marker);
-    }
-  }
-}
-
-var queue = [];
-var draining = false;
-var currentQueue;
-var queueIndex = -1;
-
-function cleanUpNextTick() {
-  if (!draining || !currentQueue) {
-    return;
-  }
-
-  draining = false;
-
-  if (currentQueue.length) {
-    queue = currentQueue.concat(queue);
-  } else {
-    queueIndex = -1;
-  }
-
-  if (queue.length) {
-    drainQueue();
-  }
-}
-
-function drainQueue() {
-  if (draining) {
-    return;
-  }
-
-  var timeout = runTimeout(cleanUpNextTick);
-  draining = true;
-  var len = queue.length;
-
-  while (len) {
-    currentQueue = queue;
-    queue = [];
-
-    while (++queueIndex < len) {
-      if (currentQueue) {
-        currentQueue[queueIndex].run();
-      }
-    }
-
-    queueIndex = -1;
-    len = queue.length;
-  }
-
-  currentQueue = null;
-  draining = false;
-  runClearTimeout(timeout);
-}
-
-process.nextTick = function (fun) {
-  var args = new Array(arguments.length - 1);
-
-  if (arguments.length > 1) {
-    for (var i = 1; i < arguments.length; i++) {
-      args[i - 1] = arguments[i];
-    }
-  }
-
-  queue.push(new Item(fun, args));
-
-  if (queue.length === 1 && !draining) {
-    runTimeout(drainQueue);
-  }
-}; // v8 likes predictible objects
-
-
-function Item(fun, array) {
-  this.fun = fun;
-  this.array = array;
-}
-
-Item.prototype.run = function () {
-  this.fun.apply(null, this.array);
-};
-
-process.title = 'browser';
-process.env = {};
-process.argv = [];
-process.version = ''; // empty string to avoid regexp issues
-
-process.versions = {};
-
-function noop() {}
-
-process.on = noop;
-process.addListener = noop;
-process.once = noop;
-process.off = noop;
-process.removeListener = noop;
-process.removeAllListeners = noop;
-process.emit = noop;
-process.prependListener = noop;
-process.prependOnceListener = noop;
-
-process.listeners = function (name) {
-  return [];
-};
-
-process.binding = function (name) {
-  throw new Error('process.binding is not supported');
-};
-
-process.cwd = function () {
-  return '/';
-};
-
-process.chdir = function (dir) {
-  throw new Error('process.chdir is not supported');
-};
-
-process.umask = function () {
-  return 0;
-};
-},{}],"node_modules/axios/lib/defaults.js":[function(require,module,exports) {
-var process = require("process");
-'use strict';
-
-var utils = require('./utils');
-var normalizeHeaderName = require('./helpers/normalizeHeaderName');
-
-var DEFAULT_CONTENT_TYPE = {
-  'Content-Type': 'application/x-www-form-urlencoded'
-};
-
-function setContentTypeIfUnset(headers, value) {
-  if (!utils.isUndefined(headers) && utils.isUndefined(headers['Content-Type'])) {
-    headers['Content-Type'] = value;
-  }
-}
-
-function getDefaultAdapter() {
-  var adapter;
-  if (typeof XMLHttpRequest !== 'undefined') {
-    // For browsers use XHR adapter
-    adapter = require('./adapters/xhr');
-  } else if (typeof process !== 'undefined' && Object.prototype.toString.call(process) === '[object process]') {
-    // For node use HTTP adapter
-    adapter = require('./adapters/http');
-  }
-  return adapter;
-}
-
-var defaults = {
-  adapter: getDefaultAdapter(),
-
-  transformRequest: [function transformRequest(data, headers) {
-    normalizeHeaderName(headers, 'Accept');
-    normalizeHeaderName(headers, 'Content-Type');
-    if (utils.isFormData(data) ||
-      utils.isArrayBuffer(data) ||
-      utils.isBuffer(data) ||
-      utils.isStream(data) ||
-      utils.isFile(data) ||
-      utils.isBlob(data)
-    ) {
-      return data;
-    }
-    if (utils.isArrayBufferView(data)) {
-      return data.buffer;
-    }
-    if (utils.isURLSearchParams(data)) {
-      setContentTypeIfUnset(headers, 'application/x-www-form-urlencoded;charset=utf-8');
-      return data.toString();
-    }
-    if (utils.isObject(data)) {
-      setContentTypeIfUnset(headers, 'application/json;charset=utf-8');
-      return JSON.stringify(data);
-    }
-    return data;
-  }],
-
-  transformResponse: [function transformResponse(data) {
-    /*eslint no-param-reassign:0*/
-    if (typeof data === 'string') {
-      try {
-        data = JSON.parse(data);
-      } catch (e) { /* Ignore */ }
-    }
-    return data;
-  }],
-
-  /**
-   * A timeout in milliseconds to abort a request. If set to 0 (default) a
-   * timeout is not created.
-   */
-  timeout: 0,
-
-  xsrfCookieName: 'XSRF-TOKEN',
-  xsrfHeaderName: 'X-XSRF-TOKEN',
-
-  maxContentLength: -1,
-
-  validateStatus: function validateStatus(status) {
-    return status >= 200 && status < 300;
-  }
-};
-
-defaults.headers = {
-  common: {
-    'Accept': 'application/json, text/plain, */*'
-  }
-};
-
-utils.forEach(['delete', 'get', 'head'], function forEachMethodNoData(method) {
-  defaults.headers[method] = {};
-});
-
-utils.forEach(['post', 'put', 'patch'], function forEachMethodWithData(method) {
-  defaults.headers[method] = utils.merge(DEFAULT_CONTENT_TYPE);
-});
-
-module.exports = defaults;
-
-},{"./utils":"node_modules/axios/lib/utils.js","./helpers/normalizeHeaderName":"node_modules/axios/lib/helpers/normalizeHeaderName.js","./adapters/xhr":"node_modules/axios/lib/adapters/xhr.js","./adapters/http":"node_modules/axios/lib/adapters/xhr.js","process":"node_modules/process/browser.js"}],"node_modules/axios/lib/core/dispatchRequest.js":[function(require,module,exports) {
-'use strict';
-
-var utils = require('./../utils');
-var transformData = require('./transformData');
-var isCancel = require('../cancel/isCancel');
-var defaults = require('../defaults');
-
-/**
- * Throws a `Cancel` if cancellation has been requested.
- */
-function throwIfCancellationRequested(config) {
-  if (config.cancelToken) {
-    config.cancelToken.throwIfRequested();
-  }
-}
-
-/**
- * Dispatch a request to the server using the configured adapter.
- *
- * @param {object} config The config that is to be used for the request
- * @returns {Promise} The Promise to be fulfilled
- */
-module.exports = function dispatchRequest(config) {
-  throwIfCancellationRequested(config);
-
-  // Ensure headers exist
-  config.headers = config.headers || {};
-
-  // Transform request data
-  config.data = transformData(
-    config.data,
-    config.headers,
-    config.transformRequest
-  );
-
-  // Flatten headers
-  config.headers = utils.merge(
-    config.headers.common || {},
-    config.headers[config.method] || {},
-    config.headers
-  );
-
-  utils.forEach(
-    ['delete', 'get', 'head', 'post', 'put', 'patch', 'common'],
-    function cleanHeaderConfig(method) {
-      delete config.headers[method];
-    }
-  );
-
-  var adapter = config.adapter || defaults.adapter;
-
-  return adapter(config).then(function onAdapterResolution(response) {
-    throwIfCancellationRequested(config);
-
-    // Transform response data
-    response.data = transformData(
-      response.data,
-      response.headers,
-      config.transformResponse
-    );
-
-    return response;
-  }, function onAdapterRejection(reason) {
-    if (!isCancel(reason)) {
-      throwIfCancellationRequested(config);
-
-      // Transform response data
-      if (reason && reason.response) {
-        reason.response.data = transformData(
-          reason.response.data,
-          reason.response.headers,
-          config.transformResponse
-        );
-      }
-    }
-
-    return Promise.reject(reason);
-  });
-};
-
-},{"./../utils":"node_modules/axios/lib/utils.js","./transformData":"node_modules/axios/lib/core/transformData.js","../cancel/isCancel":"node_modules/axios/lib/cancel/isCancel.js","../defaults":"node_modules/axios/lib/defaults.js"}],"node_modules/axios/lib/core/mergeConfig.js":[function(require,module,exports) {
-'use strict';
-
-var utils = require('../utils');
-
-/**
- * Config-specific merge-function which creates a new config-object
- * by merging two configuration objects together.
- *
- * @param {Object} config1
- * @param {Object} config2
- * @returns {Object} New object resulting from merging config2 to config1
- */
-module.exports = function mergeConfig(config1, config2) {
-  // eslint-disable-next-line no-param-reassign
-  config2 = config2 || {};
-  var config = {};
-
-  var valueFromConfig2Keys = ['url', 'method', 'params', 'data'];
-  var mergeDeepPropertiesKeys = ['headers', 'auth', 'proxy'];
-  var defaultToConfig2Keys = [
-    'baseURL', 'url', 'transformRequest', 'transformResponse', 'paramsSerializer',
-    'timeout', 'withCredentials', 'adapter', 'responseType', 'xsrfCookieName',
-    'xsrfHeaderName', 'onUploadProgress', 'onDownloadProgress',
-    'maxContentLength', 'validateStatus', 'maxRedirects', 'httpAgent',
-    'httpsAgent', 'cancelToken', 'socketPath'
-  ];
-
-  utils.forEach(valueFromConfig2Keys, function valueFromConfig2(prop) {
-    if (typeof config2[prop] !== 'undefined') {
-      config[prop] = config2[prop];
-    }
-  });
-
-  utils.forEach(mergeDeepPropertiesKeys, function mergeDeepProperties(prop) {
-    if (utils.isObject(config2[prop])) {
-      config[prop] = utils.deepMerge(config1[prop], config2[prop]);
-    } else if (typeof config2[prop] !== 'undefined') {
-      config[prop] = config2[prop];
-    } else if (utils.isObject(config1[prop])) {
-      config[prop] = utils.deepMerge(config1[prop]);
-    } else if (typeof config1[prop] !== 'undefined') {
-      config[prop] = config1[prop];
-    }
-  });
-
-  utils.forEach(defaultToConfig2Keys, function defaultToConfig2(prop) {
-    if (typeof config2[prop] !== 'undefined') {
-      config[prop] = config2[prop];
-    } else if (typeof config1[prop] !== 'undefined') {
-      config[prop] = config1[prop];
-    }
-  });
-
-  var axiosKeys = valueFromConfig2Keys
-    .concat(mergeDeepPropertiesKeys)
-    .concat(defaultToConfig2Keys);
-
-  var otherKeys = Object
-    .keys(config2)
-    .filter(function filterAxiosKeys(key) {
-      return axiosKeys.indexOf(key) === -1;
-    });
-
-  utils.forEach(otherKeys, function otherKeysDefaultToConfig2(prop) {
-    if (typeof config2[prop] !== 'undefined') {
-      config[prop] = config2[prop];
-    } else if (typeof config1[prop] !== 'undefined') {
-      config[prop] = config1[prop];
-    }
-  });
-
-  return config;
-};
-
-},{"../utils":"node_modules/axios/lib/utils.js"}],"node_modules/axios/lib/core/Axios.js":[function(require,module,exports) {
-'use strict';
-
-var utils = require('./../utils');
-var buildURL = require('../helpers/buildURL');
-var InterceptorManager = require('./InterceptorManager');
-var dispatchRequest = require('./dispatchRequest');
-var mergeConfig = require('./mergeConfig');
-
-/**
- * Create a new instance of Axios
- *
- * @param {Object} instanceConfig The default config for the instance
- */
-function Axios(instanceConfig) {
-  this.defaults = instanceConfig;
-  this.interceptors = {
-    request: new InterceptorManager(),
-    response: new InterceptorManager()
-  };
-}
-
-/**
- * Dispatch a request
- *
- * @param {Object} config The config specific for this request (merged with this.defaults)
- */
-Axios.prototype.request = function request(config) {
-  /*eslint no-param-reassign:0*/
-  // Allow for axios('example/url'[, config]) a la fetch API
-  if (typeof config === 'string') {
-    config = arguments[1] || {};
-    config.url = arguments[0];
-  } else {
-    config = config || {};
-  }
-
-  config = mergeConfig(this.defaults, config);
-
-  // Set config.method
-  if (config.method) {
-    config.method = config.method.toLowerCase();
-  } else if (this.defaults.method) {
-    config.method = this.defaults.method.toLowerCase();
-  } else {
-    config.method = 'get';
-  }
-
-  // Hook up interceptors middleware
-  var chain = [dispatchRequest, undefined];
-  var promise = Promise.resolve(config);
-
-  this.interceptors.request.forEach(function unshiftRequestInterceptors(interceptor) {
-    chain.unshift(interceptor.fulfilled, interceptor.rejected);
-  });
-
-  this.interceptors.response.forEach(function pushResponseInterceptors(interceptor) {
-    chain.push(interceptor.fulfilled, interceptor.rejected);
-  });
-
-  while (chain.length) {
-    promise = promise.then(chain.shift(), chain.shift());
-  }
-
-  return promise;
-};
-
-Axios.prototype.getUri = function getUri(config) {
-  config = mergeConfig(this.defaults, config);
-  return buildURL(config.url, config.params, config.paramsSerializer).replace(/^\?/, '');
-};
-
-// Provide aliases for supported request methods
-utils.forEach(['delete', 'get', 'head', 'options'], function forEachMethodNoData(method) {
-  /*eslint func-names:0*/
-  Axios.prototype[method] = function(url, config) {
-    return this.request(utils.merge(config || {}, {
-      method: method,
-      url: url
-    }));
-  };
-});
-
-utils.forEach(['post', 'put', 'patch'], function forEachMethodWithData(method) {
-  /*eslint func-names:0*/
-  Axios.prototype[method] = function(url, data, config) {
-    return this.request(utils.merge(config || {}, {
-      method: method,
-      url: url,
-      data: data
-    }));
-  };
-});
-
-module.exports = Axios;
-
-},{"./../utils":"node_modules/axios/lib/utils.js","../helpers/buildURL":"node_modules/axios/lib/helpers/buildURL.js","./InterceptorManager":"node_modules/axios/lib/core/InterceptorManager.js","./dispatchRequest":"node_modules/axios/lib/core/dispatchRequest.js","./mergeConfig":"node_modules/axios/lib/core/mergeConfig.js"}],"node_modules/axios/lib/cancel/Cancel.js":[function(require,module,exports) {
-'use strict';
-
-/**
- * A `Cancel` is an object that is thrown when an operation is canceled.
- *
- * @class
- * @param {string=} message The message.
- */
-function Cancel(message) {
-  this.message = message;
-}
-
-Cancel.prototype.toString = function toString() {
-  return 'Cancel' + (this.message ? ': ' + this.message : '');
-};
-
-Cancel.prototype.__CANCEL__ = true;
-
-module.exports = Cancel;
-
-},{}],"node_modules/axios/lib/cancel/CancelToken.js":[function(require,module,exports) {
-'use strict';
-
-var Cancel = require('./Cancel');
-
-/**
- * A `CancelToken` is an object that can be used to request cancellation of an operation.
- *
- * @class
- * @param {Function} executor The executor function.
- */
-function CancelToken(executor) {
-  if (typeof executor !== 'function') {
-    throw new TypeError('executor must be a function.');
-  }
-
-  var resolvePromise;
-  this.promise = new Promise(function promiseExecutor(resolve) {
-    resolvePromise = resolve;
-  });
-
-  var token = this;
-  executor(function cancel(message) {
-    if (token.reason) {
-      // Cancellation has already been requested
-      return;
-    }
-
-    token.reason = new Cancel(message);
-    resolvePromise(token.reason);
-  });
-}
-
-/**
- * Throws a `Cancel` if cancellation has been requested.
- */
-CancelToken.prototype.throwIfRequested = function throwIfRequested() {
-  if (this.reason) {
-    throw this.reason;
-  }
-};
-
-/**
- * Returns an object that contains a new `CancelToken` and a function that, when called,
- * cancels the `CancelToken`.
- */
-CancelToken.source = function source() {
-  var cancel;
-  var token = new CancelToken(function executor(c) {
-    cancel = c;
-  });
-  return {
-    token: token,
-    cancel: cancel
-  };
-};
-
-module.exports = CancelToken;
-
-},{"./Cancel":"node_modules/axios/lib/cancel/Cancel.js"}],"node_modules/axios/lib/helpers/spread.js":[function(require,module,exports) {
-'use strict';
-
-/**
- * Syntactic sugar for invoking a function and expanding an array for arguments.
- *
- * Common use case would be to use `Function.prototype.apply`.
- *
- *  ```js
- *  function f(x, y, z) {}
- *  var args = [1, 2, 3];
- *  f.apply(null, args);
- *  ```
- *
- * With `spread` this example can be re-written.
- *
- *  ```js
- *  spread(function(x, y, z) {})([1, 2, 3]);
- *  ```
- *
- * @param {Function} callback
- * @returns {Function}
- */
-module.exports = function spread(callback) {
-  return function wrap(arr) {
-    return callback.apply(null, arr);
-  };
-};
-
-},{}],"node_modules/axios/lib/axios.js":[function(require,module,exports) {
-'use strict';
-
-var utils = require('./utils');
-var bind = require('./helpers/bind');
-var Axios = require('./core/Axios');
-var mergeConfig = require('./core/mergeConfig');
-var defaults = require('./defaults');
-
-/**
- * Create an instance of Axios
- *
- * @param {Object} defaultConfig The default config for the instance
- * @return {Axios} A new instance of Axios
- */
-function createInstance(defaultConfig) {
-  var context = new Axios(defaultConfig);
-  var instance = bind(Axios.prototype.request, context);
-
-  // Copy axios.prototype to instance
-  utils.extend(instance, Axios.prototype, context);
-
-  // Copy context to instance
-  utils.extend(instance, context);
-
-  return instance;
-}
-
-// Create the default instance to be exported
-var axios = createInstance(defaults);
-
-// Expose Axios class to allow class inheritance
-axios.Axios = Axios;
-
-// Factory for creating new instances
-axios.create = function create(instanceConfig) {
-  return createInstance(mergeConfig(axios.defaults, instanceConfig));
-};
-
-// Expose Cancel & CancelToken
-axios.Cancel = require('./cancel/Cancel');
-axios.CancelToken = require('./cancel/CancelToken');
-axios.isCancel = require('./cancel/isCancel');
-
-// Expose all/spread
-axios.all = function all(promises) {
-  return Promise.all(promises);
-};
-axios.spread = require('./helpers/spread');
-
-module.exports = axios;
-
-// Allow use of default import syntax in TypeScript
-module.exports.default = axios;
-
-},{"./utils":"node_modules/axios/lib/utils.js","./helpers/bind":"node_modules/axios/lib/helpers/bind.js","./core/Axios":"node_modules/axios/lib/core/Axios.js","./core/mergeConfig":"node_modules/axios/lib/core/mergeConfig.js","./defaults":"node_modules/axios/lib/defaults.js","./cancel/Cancel":"node_modules/axios/lib/cancel/Cancel.js","./cancel/CancelToken":"node_modules/axios/lib/cancel/CancelToken.js","./cancel/isCancel":"node_modules/axios/lib/cancel/isCancel.js","./helpers/spread":"node_modules/axios/lib/helpers/spread.js"}],"node_modules/axios/index.js":[function(require,module,exports) {
-module.exports = require('./lib/axios');
-},{"./lib/axios":"node_modules/axios/lib/axios.js"}],"modules/vuex/user.js":[function(require,module,exports) {
+},{"./Errors":"node_modules/@microsoft/signalr/dist/esm/Errors.js","./HttpClient":"node_modules/@microsoft/signalr/dist/esm/HttpClient.js","./DefaultHttpClient":"node_modules/@microsoft/signalr/dist/esm/DefaultHttpClient.js","./HubConnection":"node_modules/@microsoft/signalr/dist/esm/HubConnection.js","./HubConnectionBuilder":"node_modules/@microsoft/signalr/dist/esm/HubConnectionBuilder.js","./IHubProtocol":"node_modules/@microsoft/signalr/dist/esm/IHubProtocol.js","./ILogger":"node_modules/@microsoft/signalr/dist/esm/ILogger.js","./ITransport":"node_modules/@microsoft/signalr/dist/esm/ITransport.js","./Loggers":"node_modules/@microsoft/signalr/dist/esm/Loggers.js","./JsonHubProtocol":"node_modules/@microsoft/signalr/dist/esm/JsonHubProtocol.js","./Subject":"node_modules/@microsoft/signalr/dist/esm/Subject.js"}],"modules/store.js":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -18984,15 +18984,31 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.default = void 0;
 
+var _vue = _interopRequireDefault(require("vue"));
+
+var _vuex = _interopRequireDefault(require("vuex"));
+
 var _axios = _interopRequireDefault(require("axios"));
+
+var signalR = _interopRequireWildcard(require("@microsoft/signalr"));
+
+function _getRequireWildcardCache() { if (typeof WeakMap !== "function") return null; var cache = new WeakMap(); _getRequireWildcardCache = function () { return cache; }; return cache; }
+
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-const user = {
-  state: () => ({
+_vue.default.use(_vuex.default);
+
+const store = new _vuex.default.Store({
+  state: {
+    connection: new signalR.HubConnectionBuilder().withUrl("/notifications").build(),
     user: {},
-    plan: {}
-  }),
+    plan: {},
+    todoLists: [],
+    contributors: [],
+    loadingTodoLists: true
+  },
   mutations: {
     setUserData(state, data) {
       state.user = data;
@@ -19000,6 +19016,43 @@ const user = {
 
     setPlanData(state, data) {
       state.plan = data;
+    },
+
+    setContributors(state, contributors) {
+      state.contributors = contributors;
+    },
+
+    setTodoListsLoadingState(state, loadingState) {
+      state.loadingTodoLists = loadingState;
+    },
+
+    setTodoLists(state, lists) {
+      state.todoLists = lists;
+    },
+
+    deleteTodoList(state, todoListId) {
+      state.todoLists.splice(state.todoLists.findIndex(t => t.id === todoListId), 1);
+    },
+
+    updateTodoListTitle(state, {
+      todoListId,
+      listTitle
+    }) {
+      state.todoLists[state.todoLists.findIndex(t => t.id === todoListId)].listTitle = listTitle;
+    },
+
+    setTodoListCompletedState(state, {
+      todoListId,
+      completed
+    }) {
+      state.todoLists[state.todoLists.findIndex(t => t.id === todoListId)].completed = completed;
+    },
+
+    changeUserRoleByListId(state, {
+      todoListId,
+      role
+    }) {
+      state.todoLists[state.todoLists.findIndex(t => t.id === todoListId)].role = role;
     }
 
   },
@@ -19034,6 +19087,64 @@ const user = {
       } catch (error) {
         throw error;
       }
+    },
+
+    async getTodoLists(context) {
+      context.commit('setTodoListsLoadingState', true);
+      const response = await (0, _axios.default)({
+        method: "GET",
+        url: "api/lists"
+      });
+      context.commit('setTodoLists', response.data.todoLists);
+      context.commit('setContributors', response.data.contributors);
+      context.commit('setTodoListsLoadingState', false);
+    },
+
+    async addTodoList(context, {
+      listTitle
+    }) {
+      await (0, _axios.default)({
+        method: "POST",
+        url: "api/lists",
+        data: JSON.stringify({
+          listTitle: listTitle,
+          email: context.state.user.email
+        }),
+        headers: {
+          "content-type": "application/json"
+        }
+      });
+      context.dispatch('getTodoLists');
+    },
+
+    async deleteTodoList(context, {
+      todoListId
+    }) {
+      context.commit('deleteTodoList', todoListId);
+      await (0, _axios.default)({
+        method: "DELETE",
+        url: "api/lists/".concat(todoListId)
+      });
+    },
+
+    async updateTodoListTitle(context, {
+      todoListId,
+      listTitle
+    }) {
+      context.commit('updateTodoListTitle', {
+        todoListId,
+        listTitle
+      });
+      await (0, _axios.default)({
+        method: 'PUT',
+        url: "api/lists/".concat(todoListId),
+        data: JSON.stringify({
+          listTitle
+        }),
+        headers: {
+          'content-type': 'application/json'
+        }
+      });
     }
 
   },
@@ -19048,671 +19159,16 @@ const user = {
 
     planName(state) {
       return state.plan.name;
-    }
-
-  }
-};
-var _default = user;
-exports.default = _default;
-},{"axios":"node_modules/axios/index.js"}],"modules/vuex/todoLists.js":[function(require,module,exports) {
-"use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.default = void 0;
-
-var _vue = _interopRequireDefault(require("vue"));
-
-var _axios = _interopRequireDefault(require("axios"));
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-const todoLists = {
-  state: () => ({
-    todoLists: [],
-    contributors: [],
-    loading: false
-  }),
-  mutations: {
-    updateTodoLists(state, data) {
-      state.todoLists = data.todoLists;
-      state.contributors = data.contributors;
-    },
-
-    setTodoListCompletedState(state, {
-      listId,
-      listCompletedState
-    }) {
-      let index = state.todoLists.findIndex(x => x.id === listId);
-      let updatedList = state.todoLists[index];
-      updatedList.completed = listCompletedState;
-
-      _vue.default.set(state.todoLists, index, updatedList);
-    },
-
-    updateListTitle(state, {
-      listId,
-      listTitle
-    }) {
-      const index = state.todoLists.findIndex(x => x.id === listId);
-      state.todoLists[index].listTitle = listTitle;
-    },
-
-    updateLoadingState(state, {
-      loadingState
-    }) {
-      state.loading = loadingState;
-    },
-
-    changeUserRoleByListId(state, {
-      listId,
-      role
-    }) {
-      const index = state.todoLists.findIndex(x => x.id === listId);
-      state.todoLists[index].role = role;
-    },
-
-    addTodoList(state, {
-      list
-    }) {
-      state.todoLists.push(list);
-    },
-
-    removeTodoList(state, {
-      listId
-    }) {
-      const index = state.todoLists.findIndex(x => x.id === listId);
-      state.todoLists.splice(index, 1);
-    },
-
-    updateAccountContributors(state, {
-      contributors
-    }) {
-      state.contributors = contributors;
-    },
-
-    updateListContributors(state, {
-      list
-    }) {
-      const index = state.todoLists.findIndex(x => x.id === list.id);
-      state.todoLists[index].contributors = list.contributors;
-    }
-
-  },
-  actions: {
-    async loadTodoLists(context) {
-      context.commit('updateLoadingState', {
-        loadingState: true
-      });
-      const response = await (0, _axios.default)({
-        method: 'GET',
-        url: 'api/lists'
-      });
-      context.commit('updateTodoLists', response.data);
-      context.commit('updateLoadingState', {
-        loadingState: false
-      });
-    },
-
-    async addTodoList(context, payload) {
-      await (0, _axios.default)({
-        method: 'POST',
-        url: 'api/lists',
-        data: JSON.stringify(payload),
-        headers: {
-          'content-type': 'application/json'
-        }
-      });
-      await context.dispatch('loadTodoLists');
-    },
-
-    deleteTodoList(context, payload) {
-      return new Promise((resolve, reject) => {
-        (0, _axios.default)({
-          method: 'DELETE',
-          url: "api/lists/".concat(payload.listId)
-        }).then(() => {
-          context.dispatch('loadTodoLists');
-        }).finally(() => {
-          resolve();
-        });
-      });
-    },
-
-    inviteContributorToList(context, {
-      listId,
-      email
-    }) {
-      return new Promise((resolve, reject) => {
-        (0, _axios.default)({
-          method: 'POST',
-          url: "api/lists/".concat(listId, "/email"),
-          data: JSON.stringify({
-            email
-          }),
-          headers: {
-            'content-type': 'application/json'
-          }
-        }).finally(() => {
-          resolve();
-        });
-      });
-    },
-
-    async updateListTitle(context, {
-      listId,
-      listTitle
-    }) {
-      context.commit('updateListTitle', {
-        listId,
-        listTitle
-      });
-      await (0, _axios.default)({
-        method: 'PUT',
-        url: "api/lists/".concat(listId),
-        data: JSON.stringify({
-          listTitle
-        }),
-        headers: {
-          'content-type': 'application/json'
-        }
-      });
-    },
-
-    async acceptInvitation(context, {
-      listId
-    }) {
-      try {
-        await (0, _axios.default)({
-          method: 'POST',
-          url: "api/lists/".concat(listId, "/accept")
-        });
-        context.commit('changeUserRoleByListId', {
-          listId,
-          role: 2
-        });
-      } catch (error) {
-        console.log(error);
-      }
-    },
-
-    async declineInvitation(context, {
-      listId
-    }) {
-      try {
-        await (0, _axios.default)({
-          method: 'POST',
-          url: "api/lists/".concat(listId, "/decline")
-        });
-        context.commit('removeTodoList', {
-          listId
-        });
-      } catch (error) {
-        console.log(error);
-      }
-    },
-
-    async leaveTodoList(context, {
-      listId
-    }) {
-      try {
-        await (0, _axios.default)({
-          method: 'POST',
-          url: "api/lists/".concat(listId, "/removeself")
-        });
-        context.commit('removeTodoList', {
-          listId
-        });
-      } catch (error) {
-        console.log(error);
-      }
-    },
-
-    async refreshContributors(context, {
-      list
-    }) {
-      try {
-        const response = await (0, _axios.default)({
-          method: 'GET',
-          url: "api/accounts/contributors"
-        });
-        const contributors = response.data;
-        context.commit('updateAccountContributors', {
-          contributors
-        });
-        context.commit('updateListContributors', {
-          list
-        });
-      } catch (error) {
-        console.log(error);
-      }
-    }
-
-  },
-  getters: {
-    todoLists(state) {
-      return state.todoLists;
-    },
-
-    contributors(state) {
-      return state.contributors;
     },
 
     getTodoListById: state => todoListId => {
-      return state.todoLists.find(list => list.id === todoListId);
-    },
-    getTodoListTitle: state => todoListId => {
-      let title = state.todoLists.find(list => list.id === todoListId).listTitle;
-      return title;
-    },
-
-    getLoadingState(state) {
-      return state.loading;
+      return state.todoLists.find(t => t.id === todoListId);
     }
-
-  }
-};
-var _default = todoLists;
-exports.default = _default;
-},{"vue":"node_modules/vue/dist/vue.runtime.esm.js","axios":"node_modules/axios/index.js"}],"modules/vuex/todoListItems.js":[function(require,module,exports) {
-"use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.default = void 0;
-
-var _vue = _interopRequireDefault(require("vue"));
-
-var _axios = _interopRequireDefault(require("axios"));
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-const todoLists = {
-  state: () => ({
-    items: {}
-  }),
-  mutations: {
-    setItems(state, {
-      listId,
-      items
-    }) {
-      _vue.default.set(state.items, listId, items);
-    },
-
-    addItem(state, {
-      listId,
-      item
-    }) {
-      state.items[listId].unshift(item);
-    },
-
-    deleteItem(state, {
-      listId,
-      itemId
-    }) {
-      const index = state.items[listId].findIndex(i => i.itemId === itemId);
-      state.items[listId].splice(index, 1);
-    },
-
-    updateItemCompletedState(state, {
-      item
-    }) {
-      let index = state.items[item.listId].findIndex(i => i.id === item.id);
-      state.items[item.listId][index].completed = item.completed;
-    },
-
-    updateItem(state, {
-      item
-    }) {
-      let index = state.items[item.listId].findIndex(i => i.id === item.id);
-
-      _vue.default.set(state.items[item.listId], index, item);
-    }
-
-  },
-  actions: {
-    async loadItemsByListId(context, payload) {
-      const response = await (0, _axios.default)({
-        method: 'GET',
-        url: "api/lists/".concat(payload.todoListId, "/todos")
-      });
-      context.commit('setItems', {
-        listId: payload.todoListId,
-        items: response.data
-      });
-      response.data.forEach(async item => {
-        await context.dispatch("loadSubItems", {
-          listId: item.listId,
-          todoItemId: item.id
-        });
-      });
-    },
-
-    async addItem(context, item) {
-      const response = await (0, _axios.default)({
-        method: 'POST',
-        url: "api/lists/".concat(item.listId, "/todos"),
-        data: JSON.stringify(item),
-        headers: {
-          'content-type': 'application/json'
-        }
-      });
-      const itemAdded = response.data;
-      context.commit('addItem', {
-        listId: itemAdded.listId,
-        item: itemAdded
-      }); // Set initial state for sub items in new item
-
-      context.commit('setSubItems', {
-        todoItemId: itemAdded.id,
-        subItems: []
-      });
-    },
-
-    toggleItemCompletedState(context, {
-      item
-    }) {
-      (0, _axios.default)({
-        method: 'PUT',
-        url: "api/lists/".concat(item.listId, "/todos/").concat(item.id, "/completed"),
-        data: JSON.stringify({
-          completed: item.completed
-        }),
-        headers: {
-          'content-type': 'application/json'
-        }
-      });
-      context.commit('updateItemCompletedState', {
-        item
-      });
-    },
-
-    async updateItem(context, {
-      item
-    }) {
-      context.commit('updateItem', {
-        item
-      });
-      await (0, _axios.default)({
-        method: 'PUT',
-        url: "api/lists/".concat(item.listId, "/todos/").concat(item.id),
-        data: JSON.stringify({
-          name: item.name,
-          notes: item.notes,
-          dueDate: item.dueDate
-        }),
-        headers: {
-          'content-type': 'application/json'
-        }
-      });
-    },
-
-    async deleteItem(context, {
-      item
-    }) {
-      await (0, _axios.default)({
-        method: 'DELETE',
-        url: "api/lists/".concat(item.listId, "/todos/").concat(item.id)
-      });
-      context.commit('deleteItem', {
-        listId: item.listId,
-        itemId: item.id
-      });
-    }
-
-  },
-  getters: {
-    getItemsByListId: state => listId => {
-      return state.items[listId];
-    },
-    getItemName: state => (listId, itemId) => {
-      return state.items[listId].find(i => i.id === itemId).name;
-    },
-    getItemCompletedState: state => (listId, itemId) => {
-      return state.items[listId].find(i => i.id === itemId).completed;
-    }
-  }
-};
-var _default = todoLists;
-exports.default = _default;
-},{"vue":"node_modules/vue/dist/vue.runtime.esm.js","axios":"node_modules/axios/index.js"}],"modules/vuex/subItems.js":[function(require,module,exports) {
-"use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.default = void 0;
-
-var _vue = _interopRequireDefault(require("vue"));
-
-var _axios = _interopRequireDefault(require("axios"));
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-const subItems = {
-  state: () => ({
-    subItems: {}
-  }),
-  mutations: {
-    setSubItems(state, {
-      todoItemId,
-      subItems
-    }) {
-      state.subItems[todoItemId] = subItems;
-    },
-
-    addSubItem(state, {
-      subItem
-    }) {
-      state.subItems[subItem.listItemId].unshift(subItem);
-    },
-
-    updateSubItem(state, {
-      subItem
-    }) {
-      const index = state.subItems[subItem.listItemId].findIndex(i => i.id == subItem.id);
-
-      _vue.default.set(state.subItems[subItem.listItemId], index, subItem);
-    },
-
-    trashSubItem(state, {
-      todoItemId,
-      subItemId
-    }) {
-      const index = state.subItems[todoItemId].findIndex(i => i.id == subItemId);
-      state.subItems[todoItemId].splice(index, 1);
-    },
-
-    updateSubItemCompletedState(state, {
-      todoItemId,
-      subItemId,
-      completed
-    }) {
-      const index = state.subItems[todoItemId].findIndex(i => i.id == subItemId);
-      state.subItems[todoItemId][index].completed = completed;
-    }
-
-  },
-  actions: {
-    async loadSubItems(context, {
-      listId,
-      todoItemId
-    }) {
-      try {
-        const response = await (0, _axios.default)({
-          method: 'GET',
-          url: "api/lists/".concat(listId, "/todos/").concat(todoItemId, "/subitems")
-        });
-        context.commit('setSubItems', {
-          todoItemId: todoItemId,
-          subItems: response.data
-        });
-      } catch (error) {
-        console.log(error);
-      }
-    },
-
-    async addSubItem(context, {
-      listId,
-      todoItemId,
-      name
-    }) {
-      try {
-        const response = await (0, _axios.default)({
-          method: 'POST',
-          url: "api/lists/".concat(listId, "/todos/").concat(todoItemId, "/subitems"),
-          headers: {
-            'content-type': 'application/json'
-          },
-          data: JSON.stringify({
-            name
-          })
-        });
-        context.commit('addSubItem', {
-          subItem: response.data
-        });
-      } catch (error) {
-        console.log(error);
-      }
-    },
-
-    async updateSubItem(context, {
-      listId,
-      subItem
-    }) {
-      try {
-        context.commit('updateSubItem', {
-          listId,
-          subItem
-        });
-        await (0, _axios.default)({
-          method: 'PUT',
-          url: "api/lists/".concat(listId, "/todos/").concat(subItem.listItemId, "/subitems/").concat(subItem.id),
-          headers: {
-            'content-type': 'application/json'
-          },
-          data: JSON.stringify({
-            name: subItem.name
-          })
-        });
-      } catch (error) {
-        console.log(error);
-      }
-    },
-
-    async trashSubItem(context, {
-      listId,
-      todoItemId,
-      subItemId
-    }) {
-      try {
-        await (0, _axios.default)({
-          method: 'DELETE',
-          url: "api/lists/".concat(listId, "/todos/").concat(todoItemId, "/subitems/").concat(subItemId)
-        });
-        context.commit('trashSubItem', {
-          todoItemId,
-          subItemId
-        });
-      } catch (error) {
-        console.log(error);
-      }
-    },
-
-    async toggleSubItemCompletedState(context, {
-      listId,
-      todoItemId,
-      subItemId,
-      completed
-    }) {
-      context.commit('updateSubItemCompletedState', {
-        todoItemId,
-        subItemId,
-        completed
-      });
-
-      try {
-        await (0, _axios.default)({
-          method: 'PUT',
-          url: "api/lists/".concat(listId, "/todos/").concat(todoItemId, "/subitems/").concat(subItemId, "/completed"),
-          headers: {
-            'content-type': 'application/json'
-          },
-          data: completed
-        });
-      } catch (error) {
-        console.log(error);
-      }
-    }
-
-  },
-  getters: {
-    getSubItemsByItemId: state => itemId => {
-      return state.subItems[itemId];
-    },
-    getSubItemCompletedState: state => (itemId, subItemId) => {
-      var _state$subItems$itemI;
-
-      return (_state$subItems$itemI = state.subItems[itemId]) === null || _state$subItems$itemI === void 0 ? void 0 : _state$subItems$itemI.find(i => i.id === subItemId).completed;
-    },
-    subItemCountByItemId: state => itemId => {
-      return state.subItems[itemId].length;
-    },
-
-    getSubItemsLoadingState(state) {
-      return state.loadingSubItems;
-    }
-
-  }
-};
-var _default = subItems;
-exports.default = _default;
-},{"vue":"node_modules/vue/dist/vue.runtime.esm.js","axios":"node_modules/axios/index.js"}],"modules/store.js":[function(require,module,exports) {
-"use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.default = void 0;
-
-var _vue = _interopRequireDefault(require("vue"));
-
-var _vuex = _interopRequireDefault(require("vuex"));
-
-var signalR = _interopRequireWildcard(require("@microsoft/signalr"));
-
-var _user = _interopRequireDefault(require("./vuex/user"));
-
-var _todoLists = _interopRequireDefault(require("./vuex/todoLists"));
-
-var _todoListItems = _interopRequireDefault(require("./vuex/todoListItems"));
-
-var _subItems = _interopRequireDefault(require("./vuex/subItems"));
-
-function _getRequireWildcardCache() { if (typeof WeakMap !== "function") return null; var cache = new WeakMap(); _getRequireWildcardCache = function () { return cache; }; return cache; }
-
-function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-_vue.default.use(_vuex.default);
-
-const store = new _vuex.default.Store({
-  modules: {
-    user: _user.default,
-    todoLists: _todoLists.default,
-    todoListItems: _todoListItems.default,
-    subItems: _subItems.default
-  },
-  state: {
-    connection: new signalR.HubConnectionBuilder().withUrl("/notifications").build()
   }
 });
 var _default = store;
 exports.default = _default;
-},{"vue":"node_modules/vue/dist/vue.runtime.esm.js","vuex":"node_modules/vuex/dist/vuex.esm.js","@microsoft/signalr":"node_modules/@microsoft/signalr/dist/esm/index.js","./vuex/user":"modules/vuex/user.js","./vuex/todoLists":"modules/vuex/todoLists.js","./vuex/todoListItems":"modules/vuex/todoListItems.js","./vuex/subItems":"modules/vuex/subItems.js"}],"node_modules/vue-router/dist/vue-router.esm.js":[function(require,module,exports) {
+},{"vue":"node_modules/vue/dist/vue.runtime.esm.js","vuex":"node_modules/vuex/dist/vuex.esm.js","axios":"node_modules/axios/index.js","@microsoft/signalr":"node_modules/@microsoft/signalr/dist/esm/index.js"}],"node_modules/vue-router/dist/vue-router.esm.js":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -22967,14 +22423,14 @@ var _default = {
   props: ['todoListContributors', 'accountContributors']
 };
 exports.default = _default;
-        var $c44f16 = exports.default || module.exports;
+        var $370f63 = exports.default || module.exports;
       
-      if (typeof $c44f16 === 'function') {
-        $c44f16 = $c44f16.options;
+      if (typeof $370f63 === 'function') {
+        $370f63 = $370f63.options;
       }
     
         /* template */
-        Object.assign($c44f16, (function () {
+        Object.assign($370f63, (function () {
           var render = function() {
   var _vm = this
   var _h = _vm.$createElement
@@ -23010,7 +22466,7 @@ render._withStripped = true
             render: render,
             staticRenderFns: staticRenderFns,
             _compiled: true,
-            _scopeId: "data-v-c44f16",
+            _scopeId: "data-v-370f63",
             functional: undefined
           };
         })());
@@ -23023,9 +22479,9 @@ render._withStripped = true
         if (api.compatible) {
           module.hot.accept();
           if (!module.hot.data) {
-            api.createRecord('$c44f16', $c44f16);
+            api.createRecord('$370f63', $370f63);
           } else {
-            api.reload('$c44f16', $c44f16);
+            api.reload('$370f63', $370f63);
           }
         }
 
@@ -23043,6 +22499,8 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.default = void 0;
+
+var _axios = _interopRequireDefault(require("axios"));
 
 var _Contributors = _interopRequireDefault(require("./Contributors"));
 
@@ -23100,40 +22558,47 @@ var _default = {
   },
   methods: {
     deleteTodoList() {
-      this.$store.dispatch("deleteTodoList", {
-        listId: this.todoList.id
-      });
+      this.$emit("delete-todo-list", this.todoList.id);
     },
 
     async acceptInvitation() {
-      await this.$store.dispatch("acceptInvitation", {
-        listId: this.todoList.id
+      await (0, _axios.default)({
+        method: "POST",
+        url: "api/lists/".concat(this.todoList.id, "/accept")
+      });
+      this.$store.commit("changeUserRoleByListId", {
+        todoListId: this.todoList.id,
+        role: 2
       });
     },
 
     async declineInvitation() {
-      await this.$store.dispatch("declineInvitation", {
-        listId: this.todoList.id
+      await (0, _axios.default)({
+        method: "POST",
+        url: "api/lists/".concat(this.todoList.id, "/decline")
       });
+      this.$store.commit("deleteTodoList", this.todoList.id);
     },
 
     async leaveTodoList() {
-      await this.$store.dispatch("leaveTodoList", {
-        listId: this.todoList.id
+      await (0, _axios.default)({
+        method: "POST",
+        url: "api/lists/".concat(this.todoList.id, "/removeself")
       });
+      this.$store.commit("deleteTodoList", this.todoList.id);
     }
 
   }
 };
 exports.default = _default;
-        var $77e2d2 = exports.default || module.exports;
+        var $2d7314 = exports.default || module.exports;
       
-      if (typeof $77e2d2 === 'function') {
-        $77e2d2 = $77e2d2.options;
+      if (typeof $2d7314 === 'function') {
+        $2d7314 = $2d7314.options;
       }
     
         /* template */
-        Object.assign($77e2d2, (function () {
+        Object.assign($2d7314, (function () {
           var render = function() {
   var _vm = this
   var _h = _vm.$createElement
@@ -23291,7 +22756,7 @@ render._withStripped = true
             render: render,
             staticRenderFns: staticRenderFns,
             _compiled: true,
-            _scopeId: "data-v-77e2d2",
+            _scopeId: "data-v-2d7314",
             functional: undefined
           };
         })());
@@ -23304,9 +22769,9 @@ render._withStripped = true
         if (api.compatible) {
           module.hot.accept();
           if (!module.hot.data) {
-            api.createRecord('$77e2d2', $77e2d2);
+            api.createRecord('$2d7314', $2d7314);
           } else {
-            api.reload('$77e2d2', $77e2d2);
+            api.reload('$2d7314', $2d7314);
           }
         }
 
@@ -23317,111 +22782,7 @@ render._withStripped = true
       
       }
     })();
-},{"./Contributors":"vue/components/Contributors.vue","_css_loader":"node_modules/parcel-bundler/src/builtins/css-loader.js","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/components/TodoLists.vue":[function(require,module,exports) {
-"use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.default = void 0;
-
-var _TodoListPreview = _interopRequireDefault(require("./TodoListPreview"));
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-var _default = {
-  data() {
-    return {};
-  },
-
-  computed: {
-    todoLists() {
-      return this.$store.getters.todoLists;
-    },
-
-    contributors() {
-      return this.$store.getters.contributors;
-    }
-
-  },
-  components: {
-    TodoListPreview: _TodoListPreview.default
-  }
-};
-exports.default = _default;
-        var $b12203 = exports.default || module.exports;
-      
-      if (typeof $b12203 === 'function') {
-        $b12203 = $b12203.options;
-      }
-    
-        /* template */
-        Object.assign($b12203, (function () {
-          var render = function() {
-  var _vm = this
-  var _h = _vm.$createElement
-  var _c = _vm._self._c || _h
-  return _c(
-    "div",
-    { staticClass: "todo-lists-wrapper" },
-    _vm._l(_vm.todoLists, function(todoList) {
-      return _c("todo-list-preview", {
-        key: todoList.id,
-        attrs: { todoList: todoList, contributors: _vm.contributors }
-      })
-    }),
-    1
-  )
-}
-var staticRenderFns = []
-render._withStripped = true
-
-          return {
-            render: render,
-            staticRenderFns: staticRenderFns,
-            _compiled: true,
-            _scopeId: "data-v-b12203",
-            functional: undefined
-          };
-        })());
-      
-    /* hot reload */
-    (function () {
-      if (module.hot) {
-        var api = require('vue-hot-reload-api');
-        api.install(require('vue'));
-        if (api.compatible) {
-          module.hot.accept();
-          if (!module.hot.data) {
-            api.createRecord('$b12203', $b12203);
-          } else {
-            api.reload('$b12203', $b12203);
-          }
-        }
-
-        
-        var reloadCSS = require('_css_loader');
-        module.hot.dispose(reloadCSS);
-        module.hot.accept(reloadCSS);
-      
-      }
-    })();
-},{"./TodoListPreview":"vue/components/TodoListPreview.vue","_css_loader":"node_modules/parcel-bundler/src/builtins/css-loader.js","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/components/AddTodoListForm.vue":[function(require,module,exports) {
+},{"axios":"node_modules/axios/index.js","./Contributors":"vue/components/Contributors.vue","_css_loader":"node_modules/parcel-bundler/src/builtins/css-loader.js","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/components/AddTodoListForm.vue":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -23455,22 +22816,13 @@ var _default = {
     };
   },
 
-  computed: {
-    user() {
-      return this.$store.getters.user;
-    }
-
-  },
   methods: {
     focusOnForm() {
       this.$refs.listTitle.focus();
     },
 
-    async addTodoList() {
-      await this.$store.dispatch("addTodoList", {
-        listTitle: this.form.listTitle,
-        email: this.user.email
-      });
+    addTodoListRequest() {
+      this.$emit("add-todo-list", this.form.listTitle);
       this.form.listTitle = "";
       this.$bvModal.hide("modal-add-todo-list");
     }
@@ -23478,14 +22830,14 @@ var _default = {
   }
 };
 exports.default = _default;
-        var $999c84 = exports.default || module.exports;
+        var $baacd1 = exports.default || module.exports;
       
-      if (typeof $999c84 === 'function') {
-        $999c84 = $999c84.options;
+      if (typeof $baacd1 === 'function') {
+        $baacd1 = $baacd1.options;
       }
     
         /* template */
-        Object.assign($999c84, (function () {
+        Object.assign($baacd1, (function () {
           var render = function() {
   var _vm = this
   var _h = _vm.$createElement
@@ -23519,7 +22871,7 @@ exports.default = _default;
               on: {
                 submit: function($event) {
                   $event.preventDefault()
-                  return _vm.addTodoList($event)
+                  return _vm.addTodoListRequest($event)
                 }
               }
             },
@@ -23580,16 +22932,16 @@ render._withStripped = true
         if (api.compatible) {
           module.hot.accept();
           if (!module.hot.data) {
-            api.createRecord('$999c84', $999c84);
+            api.createRecord('$baacd1', $baacd1);
           } else {
-            api.reload('$999c84', $999c84);
+            api.reload('$baacd1', $baacd1);
           }
         }
 
         
       }
     })();
-},{"vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/views/Home.vue":[function(require,module,exports) {
+},{"vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/components/TodoLists.vue":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -23597,7 +22949,11 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.default = void 0;
 
-var _TodoLists = _interopRequireDefault(require("../components/TodoLists"));
+var _axios = _interopRequireDefault(require("axios"));
+
+var _vuex = require("vuex");
+
+var _TodoListPreview = _interopRequireDefault(require("./TodoListPreview"));
 
 var _AddTodoListForm = _interopRequireDefault(require("../components/AddTodoListForm"));
 
@@ -23613,33 +22969,145 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 //
 //
 //
+//
+//
+//
+//
+//
+var _default = {
+  components: {
+    TodoListPreview: _TodoListPreview.default,
+    AddTodoListForm: _AddTodoListForm.default
+  },
+  computed: (0, _vuex.mapState)({
+    todoLists: state => state.todoLists,
+    contributors: state => state.contributors,
+    loadingTodoLists: state => state.loadingTodoLists
+  }),
+  methods: {
+    async addTodoList(listTitle) {
+      await this.$store.dispatch("addTodoList", {
+        listTitle
+      });
+    },
+
+    async deleteTodoList(todoListId) {
+      await this.$store.dispatch("deleteTodoList", {
+        todoListId
+      });
+    }
+
+  }
+};
+exports.default = _default;
+        var $f31e3f = exports.default || module.exports;
+      
+      if (typeof $f31e3f === 'function') {
+        $f31e3f = $f31e3f.options;
+      }
+    
+        /* template */
+        Object.assign($f31e3f, (function () {
+          var render = function() {
+  var _vm = this
+  var _h = _vm.$createElement
+  var _c = _vm._self._c || _h
+  return _c(
+    "div",
+    [
+      !_vm.loadingTodoLists
+        ? _c(
+            "div",
+            _vm._l(_vm.todoLists, function(todoList) {
+              return _c("todo-list-preview", {
+                key: todoList.id,
+                attrs: { todoList: todoList, contributors: _vm.contributors },
+                on: { "delete-todo-list": _vm.deleteTodoList }
+              })
+            }),
+            1
+          )
+        : _vm._e(),
+      _vm._v(" "),
+      _c("AddTodoListForm", { on: { "add-todo-list": _vm.addTodoList } })
+    ],
+    1
+  )
+}
+var staticRenderFns = []
+render._withStripped = true
+
+          return {
+            render: render,
+            staticRenderFns: staticRenderFns,
+            _compiled: true,
+            _scopeId: null,
+            functional: undefined
+          };
+        })());
+      
+    /* hot reload */
+    (function () {
+      if (module.hot) {
+        var api = require('vue-hot-reload-api');
+        api.install(require('vue'));
+        if (api.compatible) {
+          module.hot.accept();
+          if (!module.hot.data) {
+            api.createRecord('$f31e3f', $f31e3f);
+          } else {
+            api.reload('$f31e3f', $f31e3f);
+          }
+        }
+
+        
+      }
+    })();
+},{"axios":"node_modules/axios/index.js","vuex":"node_modules/vuex/dist/vuex.esm.js","./TodoListPreview":"vue/components/TodoListPreview.vue","../components/AddTodoListForm":"vue/components/AddTodoListForm.vue","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/views/Home.vue":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = void 0;
+
+var _TodoLists = _interopRequireDefault(require("../components/TodoLists"));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+//
+//
+//
+//
+//
+//
+//
 var _default = {
   name: "Home",
-
-  data() {
-    return {};
-  },
-
   computed: {
     user() {
       return this.$store.getters.user;
+    },
+
+    firstName() {
+      const fullName = this.user.fullName.split(" ");
+      return fullName[0];
     }
 
   },
   components: {
-    TodoLists: _TodoLists.default,
-    AddTodoListForm: _AddTodoListForm.default
+    TodoLists: _TodoLists.default
   }
 };
 exports.default = _default;
-        var $5072a3 = exports.default || module.exports;
+        var $254769 = exports.default || module.exports;
       
-      if (typeof $5072a3 === 'function') {
-        $5072a3 = $5072a3.options;
+      if (typeof $254769 === 'function') {
+        $254769 = $254769.options;
       }
     
         /* template */
-        Object.assign($5072a3, (function () {
+        Object.assign($254769, (function () {
           var render = function() {
   var _vm = this
   var _h = _vm.$createElement
@@ -23650,9 +23118,7 @@ exports.default = _default;
         [
           _c("h1", { staticClass: "mb-4" }, [_vm._v("My Lists")]),
           _vm._v(" "),
-          _c("TodoLists"),
-          _vm._v(" "),
-          _c("AddTodoListForm")
+          _c("TodoLists")
         ],
         1
       )
@@ -23678,236 +23144,16 @@ render._withStripped = true
         if (api.compatible) {
           module.hot.accept();
           if (!module.hot.data) {
-            api.createRecord('$5072a3', $5072a3);
+            api.createRecord('$254769', $254769);
           } else {
-            api.reload('$5072a3', $5072a3);
+            api.reload('$254769', $254769);
           }
         }
 
         
       }
     })();
-},{"../components/TodoLists":"vue/components/TodoLists.vue","../components/AddTodoListForm":"vue/components/AddTodoListForm.vue","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/components/AddTodoListItemForm.vue":[function(require,module,exports) {
-"use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.default = void 0;
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-var _default = {
-  name: "AddTodoListItemForm",
-  props: ["todoListId"],
-
-  data() {
-    return {
-      form: {
-        listId: this.todoListId,
-        name: null,
-        notes: null,
-        dueDate: null
-      }
-    };
-  },
-
-  computed: {
-    plan() {
-      return this.$store.getters.plan;
-    }
-
-  },
-  methods: {
-    focusOnForm() {
-      this.$refs.title.focus();
-    },
-
-    async addItem() {
-      await this.$store.dispatch("addItem", this.form);
-      this.form.name = null;
-      this.form.notes = null;
-      this.form.dueDate = null;
-      this.$bvModal.hide("modal-add-todo-list-item");
-    }
-
-  }
-};
-exports.default = _default;
-        var $38fd75 = exports.default || module.exports;
-      
-      if (typeof $38fd75 === 'function') {
-        $38fd75 = $38fd75.options;
-      }
-    
-        /* template */
-        Object.assign($38fd75, (function () {
-          var render = function() {
-  var _vm = this
-  var _h = _vm.$createElement
-  var _c = _vm._self._c || _h
-  return _c(
-    "div",
-    { attrs: { id: "add-todo-list-item" } },
-    [
-      _c(
-        "b-button",
-        {
-          on: {
-            click: function($event) {
-              return _vm.$bvModal.show("modal-add-todo-list-item")
-            }
-          }
-        },
-        [_vm._v("Add item")]
-      ),
-      _vm._v(" "),
-      _c(
-        "b-modal",
-        {
-          attrs: { id: "modal-add-todo-list-item", title: "Add item" },
-          on: { shown: _vm.focusOnForm }
-        },
-        [
-          _c(
-            "b-form",
-            {
-              on: {
-                submit: function($event) {
-                  $event.preventDefault()
-                  return _vm.addItem($event)
-                }
-              }
-            },
-            [
-              _c(
-                "b-form-group",
-                { attrs: { label: "Name" } },
-                [
-                  _c("b-form-input", {
-                    ref: "title",
-                    attrs: { maxlength: "50", required: "" },
-                    model: {
-                      value: _vm.form.name,
-                      callback: function($$v) {
-                        _vm.$set(_vm.form, "name", $$v)
-                      },
-                      expression: "form.name"
-                    }
-                  })
-                ],
-                1
-              ),
-              _vm._v(" "),
-              _c(
-                "b-form-group",
-                { attrs: { label: "Notes" } },
-                [
-                  _c("b-form-textarea", {
-                    attrs: { rows: "3", maxlength: "200" },
-                    model: {
-                      value: _vm.form.notes,
-                      callback: function($$v) {
-                        _vm.$set(_vm.form, "notes", $$v)
-                      },
-                      expression: "form.notes"
-                    }
-                  })
-                ],
-                1
-              ),
-              _vm._v(" "),
-              _vm.plan.canAddDueDates
-                ? _c(
-                    "b-form-group",
-                    { attrs: { label: "Due Date" } },
-                    [
-                      _c("b-form-datepicker", {
-                        model: {
-                          value: _vm.form.dueDate,
-                          callback: function($$v) {
-                            _vm.$set(_vm.form, "dueDate", $$v)
-                          },
-                          expression: "form.dueDate"
-                        }
-                      })
-                    ],
-                    1
-                  )
-                : _vm._e(),
-              _vm._v(" "),
-              _c(
-                "b-button",
-                {
-                  staticClass: "ml-auto d-block",
-                  attrs: { type: "submit", variant: "success" }
-                },
-                [_vm._v("Add")]
-              )
-            ],
-            1
-          )
-        ],
-        1
-      )
-    ],
-    1
-  )
-}
-var staticRenderFns = []
-render._withStripped = true
-
-          return {
-            render: render,
-            staticRenderFns: staticRenderFns,
-            _compiled: true,
-            _scopeId: null,
-            functional: undefined
-          };
-        })());
-      
-    /* hot reload */
-    (function () {
-      if (module.hot) {
-        var api = require('vue-hot-reload-api');
-        api.install(require('vue'));
-        if (api.compatible) {
-          module.hot.accept();
-          if (!module.hot.data) {
-            api.createRecord('$38fd75', $38fd75);
-          } else {
-            api.reload('$38fd75', $38fd75);
-          }
-        }
-
-        
-      }
-    })();
-},{"vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"node_modules/sortablejs/modular/sortable.esm.js":[function(require,module,exports) {
+},{"../components/TodoLists":"vue/components/TodoLists.vue","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"node_modules/sortablejs/modular/sortable.esm.js":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -37255,25 +36501,12 @@ exports.default = void 0;
 //
 //
 //
+//
+//
+//
+//
 var _default = {
   props: ["listId", "subItem"],
-  computed: {
-    completedState: {
-      get() {
-        return this.$store.getters.getSubItemCompletedState(this.subItem.listItemId, this.subItem.id);
-      },
-
-      set(value) {
-        this.$store.dispatch("toggleSubItemCompletedState", {
-          listId: this.listId,
-          todoItemId: this.subItem.listItemId,
-          subItemId: this.subItem.id,
-          completed: value
-        });
-      }
-
-    }
-  },
 
   data() {
     return {
@@ -37284,6 +36517,18 @@ var _default = {
     };
   },
 
+  computed: {
+    subItemCompletedState: {
+      get() {
+        return this.subItem.completed;
+      },
+
+      set(val) {
+        this.sendCheckboxClickedEvent(val);
+      }
+
+    }
+  },
   methods: {
     focusForm() {
       this.editingSubItem = true;
@@ -37292,34 +36537,36 @@ var _default = {
       });
     },
 
-    async updateSubItem() {
-      this.subItem.name = this.form.name;
-      await this.$store.dispatch("updateSubItem", {
-        listId: this.listId,
-        subItem: this.subItem
-      });
-      this.editingSubItem = false;
+    sendDeleteSubItemEvent() {
+      this.$emit("delete-sub-item", this.subItem.id);
     },
 
-    async deleteSubItem() {
-      await this.$store.dispatch("trashSubItem", {
-        listId: this.listId,
-        todoItemId: this.subItem.listItemId,
-        subItemId: this.subItem.id
+    sendCheckboxClickedEvent(completed) {
+      this.$emit("checkbox-clicked", {
+        subItemId: this.subItem.id,
+        completed: completed
       });
+    },
+
+    sendUpdateSubItemNameEvent() {
+      this.$emit("update-sub-item-name", {
+        subItemId: this.subItem.id,
+        subItemName: this.form.name
+      });
+      this.editingSubItem = false;
     }
 
   }
 };
 exports.default = _default;
-        var $2fc84d = exports.default || module.exports;
+        var $7b87e9 = exports.default || module.exports;
       
-      if (typeof $2fc84d === 'function') {
-        $2fc84d = $2fc84d.options;
+      if (typeof $7b87e9 === 'function') {
+        $7b87e9 = $7b87e9.options;
       }
     
         /* template */
-        Object.assign($2fc84d, (function () {
+        Object.assign($7b87e9, (function () {
           var render = function() {
   var _vm = this
   var _h = _vm.$createElement
@@ -37344,11 +36591,11 @@ exports.default = _default;
             [
               _c("b-form-checkbox", {
                 model: {
-                  value: _vm.completedState,
+                  value: _vm.subItemCompletedState,
                   callback: function($$v) {
-                    _vm.completedState = $$v
+                    _vm.subItemCompletedState = $$v
                   },
-                  expression: "completedState"
+                  expression: "subItemCompletedState"
                 }
               })
             ],
@@ -37373,7 +36620,7 @@ exports.default = _default;
                 "b-button",
                 {
                   attrs: { size: "sm", variant: "danger" },
-                  on: { click: _vm.deleteSubItem }
+                  on: { click: _vm.sendDeleteSubItemEvent }
                 },
                 [_vm._v("Delete")]
               )
@@ -37390,7 +36637,7 @@ exports.default = _default;
               on: {
                 submit: function($event) {
                   $event.preventDefault()
-                  return _vm.updateSubItem($event)
+                  return _vm.sendUpdateSubItemNameEvent($event)
                 }
               }
             },
@@ -37471,9 +36718,9 @@ render._withStripped = true
         if (api.compatible) {
           module.hot.accept();
           if (!module.hot.data) {
-            api.createRecord('$2fc84d', $2fc84d);
+            api.createRecord('$7b87e9', $7b87e9);
           } else {
-            api.reload('$2fc84d', $2fc84d);
+            api.reload('$7b87e9', $7b87e9);
           }
         }
 
@@ -37484,22 +36731,20 @@ render._withStripped = true
       
       }
     })();
-},{"_css_loader":"node_modules/parcel-bundler/src/builtins/css-loader.js","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/components/SubItems.vue":[function(require,module,exports) {
+},{"_css_loader":"node_modules/parcel-bundler/src/builtins/css-loader.js","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/components/AddSubItemForm.vue":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.default = void 0;
-
-var _axios = _interopRequireDefault(require("axios"));
-
-var _SubItem = _interopRequireDefault(require("./SubItem"));
-
-var _vuedraggable = _interopRequireDefault(require("vuedraggable"));
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
+//
+//
+//
+//
+//
+//
+//
 //
 //
 //
@@ -37515,240 +36760,13 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 //
 //
 var _default = {
+  name: "AddSubItemForm",
   props: ["todoListItem"],
-  components: {
-    Draggable: _vuedraggable.default,
-    SubItem: _SubItem.default
-  },
-
-  async created() {
-    await this.getLayout();
-    this.items = this.setSubItems();
-    this.loadingSubItems = false;
-  },
-
-  mounted() {
-    this.$store.state.connection.on("ItemLayoutUpdated", async itemId => await this.refreshSubItemLayout(itemId));
-    this.$store.state.connection.on("SubItemTrashed", async (todoItemId, subItem) => {
-      this.$store.commit("trashSubItem", {
-        todoItemId,
-        subItemId: subItem.id
-      });
-      await this.refreshSubItemLayout(todoItemId);
-    });
-  },
-
-  data() {
-    return {
-      items: [],
-      layout: [],
-      loadingSubItems: true
-    };
-  },
-
-  methods: {
-    async getLayout() {
-      try {
-        const response = await (0, _axios.default)({
-          method: "GET",
-          url: "api/lists/".concat(this.todoListItem.listId, "/todos/").concat(this.todoListItem.id, "/layout")
-        });
-        this.layout = response.data.layout;
-      } catch (error) {
-        console.log(error);
-      }
-    },
-
-    async updateSubItemPosition(event) {
-      const subItemId = event.item.getAttribute("data-id");
-      const position = event.newIndex;
-
-      try {
-        await (0, _axios.default)({
-          method: "PUT",
-          url: "api/lists/".concat(this.todoListItem.listId, "/todos/").concat(this.todoListItem.id, "/layout"),
-          headers: {
-            "content-type": "application/json"
-          },
-          data: JSON.stringify({
-            subItemId,
-            position
-          })
-        });
-      } catch (error) {
-        console.log(error);
-      }
-    },
-
-    async refreshSubItemLayout(todoItemId) {
-      if (todoItemId === this.todoListItem.id) {
-        await this.getLayout();
-      }
-    },
-
-    setSubItems() {
-      return this.$store.getters.getSubItemsByItemId(this.todoListItem.id);
-    }
-
-  },
-  computed: {
-    subItemsCompleted() {
-      var _this$items;
-
-      return this.items.every(item => item.completed) && ((_this$items = this.items) === null || _this$items === void 0 ? void 0 : _this$items.length) > 0;
-    }
-
-  },
-  watch: {
-    items: async function () {
-      await this.getLayout();
-    },
-    subItemsCompleted: function () {
-      if (this.subItemsCompleted && !this.todoListItem.completed) {
-        this.todoListItem.completed = true;
-        this.$store.commit("updateItemCompletedState", {
-          item: this.todoListItem
-        });
-      } else if (!this.subItemsCompleted && this.todoListItem.completed) {
-        this.todoListItem.completed = false;
-        this.$store.commit("updateItemCompletedState", {
-          item: this.todoListItem
-        });
-      }
-    }
-  }
-};
-exports.default = _default;
-        var $4fbb86 = exports.default || module.exports;
-      
-      if (typeof $4fbb86 === 'function') {
-        $4fbb86 = $4fbb86.options;
-      }
-    
-        /* template */
-        Object.assign($4fbb86, (function () {
-          var render = function() {
-  var _vm = this
-  var _h = _vm.$createElement
-  var _c = _vm._self._c || _h
-  return !_vm.loadingSubItems
-    ? _c(
-        "b-list-group",
-        [
-          _c(
-            "Draggable",
-            {
-              attrs: { handle: ".sub-item-handle" },
-              on: { end: _vm.updateSubItemPosition },
-              model: {
-                value: _vm.layout,
-                callback: function($$v) {
-                  _vm.layout = $$v
-                },
-                expression: "layout"
-              }
-            },
-            [
-              _vm._l(_vm.layout, function(itemId) {
-                return _c("SubItem", {
-                  key: itemId,
-                  attrs: {
-                    subItem: _vm.items.find(function(x) {
-                      return x.id === itemId
-                    }),
-                    listId: _vm.todoListItem.listId
-                  }
-                })
-              }),
-              _vm._v(" "),
-              _vm.layout.length < 1
-                ? _c("b-list-group-item", [_vm._v("There are no sub-items.")])
-                : _vm._e()
-            ],
-            2
-          )
-        ],
-        1
-      )
-    : _vm._e()
-}
-var staticRenderFns = []
-render._withStripped = true
-
-          return {
-            render: render,
-            staticRenderFns: staticRenderFns,
-            _compiled: true,
-            _scopeId: null,
-            functional: undefined
-          };
-        })());
-      
-    /* hot reload */
-    (function () {
-      if (module.hot) {
-        var api = require('vue-hot-reload-api');
-        api.install(require('vue'));
-        if (api.compatible) {
-          module.hot.accept();
-          if (!module.hot.data) {
-            api.createRecord('$4fbb86', $4fbb86);
-          } else {
-            api.reload('$4fbb86', $4fbb86);
-          }
-        }
-
-        
-      }
-    })();
-},{"axios":"node_modules/axios/index.js","./SubItem":"vue/components/SubItem.vue","vuedraggable":"node_modules/vuedraggable/dist/vuedraggable.common.js","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/components/AddSubItemForm.vue":[function(require,module,exports) {
-"use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.default = void 0;
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-var _default = {
-  name: 'AddSubItemForm',
-  props: ['todoListItem'],
 
   data() {
     return {
       form: {
-        name: ''
+        name: ""
       },
       formActive: false
     };
@@ -37770,26 +36788,23 @@ var _default = {
     },
 
     async addSubItem() {
-      await this.$store.dispatch('addSubItem', {
-        listId: this.todoListItem.listId,
-        todoItemId: this.todoListItem.id,
-        name: this.form.name
-      });
+      const subItemName = this.form.name;
+      this.$emit("add-sub-item", subItemName);
       this.blurForm();
-      this.form.name = '';
+      this.form.name = "";
     }
 
   }
 };
 exports.default = _default;
-        var $fab093 = exports.default || module.exports;
+        var $efb0d1 = exports.default || module.exports;
       
-      if (typeof $fab093 === 'function') {
-        $fab093 = $fab093.options;
+      if (typeof $efb0d1 === 'function') {
+        $efb0d1 = $efb0d1.options;
       }
     
         /* template */
-        Object.assign($fab093, (function () {
+        Object.assign($efb0d1, (function () {
           var render = function() {
   var _vm = this
   var _h = _vm.$createElement
@@ -37815,7 +36830,7 @@ exports.default = _default;
               attrs: { size: "sm" },
               on: { click: _vm.focusForm }
             },
-            [_vm._v("\r\n        Add an item\r\n    ")]
+            [_vm._v("Add an item")]
           )
         : _vm._e(),
       _vm._v(" "),
@@ -37846,13 +36861,13 @@ exports.default = _default;
               _c(
                 "b-button",
                 { attrs: { size: "sm", variant: "success", type: "submit" } },
-                [_vm._v("\r\n            Add\r\n        ")]
+                [_vm._v("Add")]
               ),
               _vm._v(" "),
               _c(
                 "b-button",
                 { attrs: { size: "sm" }, on: { click: _vm.blurForm } },
-                [_vm._v("\r\n            Cancel\r\n        ")]
+                [_vm._v("Cancel")]
               )
             ],
             1
@@ -37882,16 +36897,16 @@ render._withStripped = true
         if (api.compatible) {
           module.hot.accept();
           if (!module.hot.data) {
-            api.createRecord('$fab093', $fab093);
+            api.createRecord('$efb0d1', $efb0d1);
           } else {
-            api.reload('$fab093', $fab093);
+            api.reload('$efb0d1', $efb0d1);
           }
         }
 
         
       }
     })();
-},{"vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/components/EditTodoItemForm.vue":[function(require,module,exports) {
+},{"vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/components/SubItems.vue":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -37899,11 +36914,382 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.default = void 0;
 
+var _axios = _interopRequireDefault(require("axios"));
+
+var _vuedraggable = _interopRequireDefault(require("vuedraggable"));
+
+var _SubItem = _interopRequireDefault(require("./SubItem"));
+
+var _AddSubItemForm = _interopRequireDefault(require("./AddSubItemForm"));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+var _default = {
+  props: ["todoListItem"],
+  components: {
+    Draggable: _vuedraggable.default,
+    SubItem: _SubItem.default,
+    AddSubItemForm: _AddSubItemForm.default
+  },
+
+  data() {
+    return {
+      subItems: [],
+      subItemsLayout: [],
+      loadingSubItems: true
+    };
+  },
+
+  async created() {
+    await this.dispatchGetSubItemsAndLayout();
+  },
+
+  mounted() {
+    // Sub-item created
+    this.$store.state.connection.on("SubItemCreated", subItem => {
+      if (this.subItemsBelongToItem(subItem.listItemId)) {
+        this.commitAddSubItem(subItem);
+      }
+    }); // Sub-item trashed
+
+    this.$store.state.connection.on("SubItemTrashed", (itemId, subItem) => {
+      if (this.subItemsBelongToItem(itemId)) {
+        this.commitDeleteSubItem(subItem.id);
+      }
+    }); // Sub-item completed state changed
+
+    this.$store.state.connection.on("SubItemCompletedStateChanged", subItem => {
+      if (this.subItemsBelongToItem(subItem.listItemId)) {
+        this.commitSetSubItemCompletedState(subItem.id, subItem.completed);
+      }
+    }); // Sub-item updated
+
+    this.$store.state.connection.on("SubItemUpdated", subItem => {
+      if (this.subItemsBelongToItem(subItem.listItemId)) {
+        this.commitUpdateSubItemName(subItem.id, subItem.name);
+      }
+    }); // Layout updated
+
+    this.$store.state.connection.on("ItemLayoutUpdated", async itemId => {
+      if (this.subItemsBelongToItem(itemId)) {
+        await this.dispatchGetSubItemsLayout();
+      }
+    });
+  },
+
+  methods: {
+    async dispatchGetSubItemsAndLayout() {
+      await this.dispatchGetSubItemsLayout();
+      await this.dispatchGetSubItems();
+    },
+
+    async dispatchGetSubItems() {
+      this.commitSetLoadingSubItemsState(true);
+      const response = await (0, _axios.default)({
+        method: "GET",
+        url: "api/lists/".concat(this.todoListItem.listId, "/todos/").concat(this.todoListItem.id, "/subitems")
+      });
+      this.commitSetSubItems(response.data);
+      this.commitSetLoadingSubItemsState(false);
+    },
+
+    async dispatchGetSubItemsLayout() {
+      const response = await (0, _axios.default)({
+        method: "GET",
+        url: "api/lists/".concat(this.todoListItem.listId, "/todos/").concat(this.todoListItem.id, "/layout")
+      });
+      this.commitSetSubItemsLayout(response.data.layout);
+    },
+
+    async dispatchAddSubItem(subItemName) {
+      const response = await (0, _axios.default)({
+        method: "POST",
+        url: "api/lists/".concat(this.todoListItem.listId, "/todos/").concat(this.todoListItem.id, "/subitems"),
+        headers: {
+          "content-type": "application/json"
+        },
+        data: JSON.stringify({
+          name: subItemName
+        })
+      });
+      const newSubItem = response.data;
+      this.commitAddSubItem(newSubItem);
+    },
+
+    async dispatchSetSubItemCompletedState({
+      subItemId,
+      completed
+    }) {
+      this.commitSetSubItemCompletedState(subItemId, completed);
+      await (0, _axios.default)({
+        method: "PUT",
+        url: "api/lists/".concat(this.todoListItem.listId, "/todos/").concat(this.todoListItem.id, "/subitems/").concat(subItemId, "/completed"),
+        headers: {
+          "content-type": "application/json"
+        },
+        data: completed
+      });
+    },
+
+    async dispatchDeleteSubItem(subItemId) {
+      this.commitDeleteSubItem(subItemId);
+      await (0, _axios.default)({
+        method: "DELETE",
+        url: "api/lists/".concat(this.todoListItem.listId, "/todos/").concat(this.todoListItem.id, "/subitems/").concat(subItemId)
+      });
+    },
+
+    async dispatchUpdateSubItemName({
+      subItemId,
+      subItemName
+    }) {
+      this.commitUpdateSubItemName(subItemId, subItemName);
+      await (0, _axios.default)({
+        method: "PUT",
+        url: "api/lists/".concat(this.todoListItem.listId, "/todos/").concat(this.todoListItem.id, "/subitems/").concat(subItemId),
+        headers: {
+          "content-type": "application/json"
+        },
+        data: JSON.stringify({
+          name: subItemName
+        })
+      });
+    },
+
+    async dispatchUpdateSubItemPosition(event) {
+      const subItemId = event.item.getAttribute("data-id");
+      const position = event.newIndex;
+      await (0, _axios.default)({
+        method: "PUT",
+        url: "api/lists/".concat(this.todoListItem.listId, "/todos/").concat(this.todoListItem.id, "/layout"),
+        headers: {
+          "content-type": "application/json"
+        },
+        data: JSON.stringify({
+          subItemId,
+          position
+        })
+      });
+    },
+
+    commitSetLoadingSubItemsState(state) {
+      this.loadingSubItems = state;
+    },
+
+    commitDeleteSubItem(subItemId) {
+      this.commitRemoveSubItemLayoutPosition(subItemId);
+      this.subItems.splice(this.subItems.findIndex(s => s.id == subItemId), 1);
+      this.triggerSubItemsCompletedEvent();
+    },
+
+    commitSetSubItems(subItems) {
+      this.subItems = subItems;
+    },
+
+    commitSetSubItemsLayout(layout) {
+      this.subItemsLayout = layout;
+    },
+
+    commitAddSubItemLayoutPosition(subItemId) {
+      this.subItemsLayout.unshift(subItemId);
+    },
+
+    commitRemoveSubItemLayoutPosition(subItemId) {
+      this.subItemsLayout.splice(this.subItemsLayout.findIndex(l => l == subItemId), 1);
+    },
+
+    commitAddSubItem(subItem) {
+      this.subItems.unshift(subItem);
+      this.commitAddSubItemLayoutPosition(subItem.id);
+      this.triggerSubItemsCompletedEvent();
+    },
+
+    commitUpdateSubItemName(subItemId, subItemName) {
+      this.subItems[this.subItems.findIndex(s => s.id == subItemId)].name = subItemName;
+    },
+
+    commitSetSubItemCompletedState(subItemId, completed) {
+      this.subItems[this.subItems.findIndex(s => s.id == subItemId)].completed = completed;
+      this.triggerSubItemsCompletedEvent();
+    },
+
+    triggerSubItemsCompletedEvent() {
+      const hasSubItems = this.subItems.length > 0;
+      const subItemsCompleted = hasSubItems && this.subItems.every(s => s.completed);
+
+      if (subItemsCompleted) {
+        this.$emit("sub-items-completed");
+      } else if (hasSubItems) {
+        this.$emit("sub-items-uncompleted");
+      } else {
+        this.$emit("sub-items-uncompleted");
+      }
+    },
+
+    triggerSubItemCountChangedEvent() {
+      if (this.subItems.length > 0) {
+        this.$emit("sub-item-count-changed", {
+          disabled: true
+        });
+      } else {
+        this.$emit("sub-item-count-changed", {
+          disabled: false
+        });
+      }
+    },
+
+    subItemsBelongToItem(itemId) {
+      return this.todoListItem.id === itemId;
+    }
+
+  },
+  watch: {
+    subItems() {
+      this.triggerSubItemCountChangedEvent();
+    }
+
+  }
+};
+exports.default = _default;
+        var $9ad823 = exports.default || module.exports;
+      
+      if (typeof $9ad823 === 'function') {
+        $9ad823 = $9ad823.options;
+      }
+    
+        /* template */
+        Object.assign($9ad823, (function () {
+          var render = function() {
+  var _vm = this
+  var _h = _vm.$createElement
+  var _c = _vm._self._c || _h
+  return _c(
+    "div",
+    { staticClass: "sub-items-wrapper" },
+    [
+      !_vm.loadingSubItems
+        ? _c(
+            "b-list-group",
+            [
+              _c(
+                "Draggable",
+                {
+                  attrs: { handle: ".sub-item-handle" },
+                  on: { end: _vm.dispatchUpdateSubItemPosition },
+                  model: {
+                    value: _vm.subItemsLayout,
+                    callback: function($$v) {
+                      _vm.subItemsLayout = $$v
+                    },
+                    expression: "subItemsLayout"
+                  }
+                },
+                [
+                  _vm._l(_vm.subItemsLayout, function(subItemId) {
+                    return _c("SubItem", {
+                      key: subItemId,
+                      attrs: {
+                        subItem: _vm.subItems.find(function(s) {
+                          return s.id == subItemId
+                        }),
+                        listId: _vm.todoListItem.listId
+                      },
+                      on: {
+                        "checkbox-clicked":
+                          _vm.dispatchSetSubItemCompletedState,
+                        "update-sub-item-name": _vm.dispatchUpdateSubItemName,
+                        "delete-sub-item": _vm.dispatchDeleteSubItem
+                      }
+                    })
+                  }),
+                  _vm._v(" "),
+                  _vm.subItems.length < 1
+                    ? _c("b-list-group-item", [
+                        _vm._v("There are no sub-items.")
+                      ])
+                    : _vm._e()
+                ],
+                2
+              )
+            ],
+            1
+          )
+        : _vm._e(),
+      _vm._v(" "),
+      _c("AddSubItemForm", {
+        attrs: { todoListItem: _vm.todoListItem },
+        on: { "add-sub-item": _vm.dispatchAddSubItem }
+      })
+    ],
+    1
+  )
+}
+var staticRenderFns = []
+render._withStripped = true
+
+          return {
+            render: render,
+            staticRenderFns: staticRenderFns,
+            _compiled: true,
+            _scopeId: null,
+            functional: undefined
+          };
+        })());
+      
+    /* hot reload */
+    (function () {
+      if (module.hot) {
+        var api = require('vue-hot-reload-api');
+        api.install(require('vue'));
+        if (api.compatible) {
+          module.hot.accept();
+          if (!module.hot.data) {
+            api.createRecord('$9ad823', $9ad823);
+          } else {
+            api.reload('$9ad823', $9ad823);
+          }
+        }
+
+        
+      }
+    })();
+},{"axios":"node_modules/axios/index.js","vuedraggable":"node_modules/vuedraggable/dist/vuedraggable.common.js","./SubItem":"vue/components/SubItem.vue","./AddSubItemForm":"vue/components/AddSubItemForm.vue","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/components/EditTodoItemForm.vue":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = void 0;
+
+var _vuex = require("vuex");
+
 var _moment = _interopRequireDefault(require("moment"));
 
 var _SubItems = _interopRequireDefault(require("./SubItems"));
-
-var _AddSubItemForm = _interopRequireDefault(require("./AddSubItemForm"));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -37968,30 +37354,9 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 //
 //
 //
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
 var _default = {
-  name: 'EditTodoItemForm',
-  props: ['todoListItem'],
+  name: "EditTodoItemForm",
+  props: ["todoListItem"],
 
   data() {
     return {
@@ -38006,22 +37371,20 @@ var _default = {
   },
 
   components: {
-    SubItems: _SubItems.default,
-    AddSubItemForm: _AddSubItemForm.default
+    SubItems: _SubItems.default
   },
   computed: {
     dueDate() {
       return this.form.dueDate;
     },
 
-    plan() {
-      return this.$store.getters.plan;
-    }
-
+    ...(0, _vuex.mapState)({
+      plan: state => state.plan
+    })
   },
   watch: {
     dueDate: function () {
-      this.updateItem();
+      this.sendItemEditedEvent();
     }
   },
   methods: {
@@ -38041,7 +37404,7 @@ var _default = {
       this.editingNotes = false;
     },
 
-    updateItem() {
+    sendItemEditedEvent() {
       this.editingName = false;
       this.editingNotes = false;
       let item = {
@@ -38049,29 +37412,37 @@ var _default = {
         listId: this.todoListItem.listId,
         name: this.form.name,
         notes: this.form.notes,
-        dueDate: this.form.dueDate
+        dueDate: this.form.dueDate,
+        hasSubItems: this.todoListItem.hasSubItems,
+        completed: this.todoListItem.completed
       };
-      this.$store.dispatch('updateItem', {
-        item
+      this.$emit("item-edited", item);
+    },
+
+    sendSubItemCountChangedEvent({
+      disabled
+    }) {
+      this.$emit("sub-item-count-changed", {
+        disabled
       });
     }
 
   },
   filters: {
     formatDate: function (value) {
-      return (0, _moment.default)(value).format('MM/D/YYYY');
+      return (0, _moment.default)(value).format("MM/D/YYYY");
     }
   }
 };
 exports.default = _default;
-        var $ec928f = exports.default || module.exports;
+        var $1d8a45 = exports.default || module.exports;
       
-      if (typeof $ec928f === 'function') {
-        $ec928f = $ec928f.options;
+      if (typeof $1d8a45 === 'function') {
+        $1d8a45 = $1d8a45.options;
       }
     
         /* template */
-        Object.assign($ec928f, (function () {
+        Object.assign($1d8a45, (function () {
           var render = function() {
   var _vm = this
   var _h = _vm.$createElement
@@ -38092,7 +37463,7 @@ exports.default = _default;
           on: {
             submit: function($event) {
               $event.preventDefault()
-              return _vm.updateItem($event)
+              return _vm.sendItemEditedEvent($event)
             }
           }
         },
@@ -38128,7 +37499,7 @@ exports.default = _default;
                   staticClass: "mb-2",
                   attrs: { type: "submit", variant: "success", size: "sm" }
                 },
-                [_vm._v("\n            Save\n        ")]
+                [_vm._v("Save")]
               )
             : _vm._e(),
           _vm._v(" "),
@@ -38140,7 +37511,7 @@ exports.default = _default;
                   attrs: { variant: "secondary", size: "sm" },
                   on: { click: _vm.cancelChangesToName }
                 },
-                [_vm._v("\n            Cancel\n        ")]
+                [_vm._v("Cancel")]
               )
             : _vm._e()
         ],
@@ -38153,7 +37524,7 @@ exports.default = _default;
           on: {
             submit: function($event) {
               $event.preventDefault()
-              return _vm.updateItem($event)
+              return _vm.sendItemEditedEvent($event)
             }
           }
         },
@@ -38188,7 +37559,7 @@ exports.default = _default;
                   staticClass: "mb-2",
                   attrs: { type: "submit", variant: "success", size: "sm" }
                 },
-                [_vm._v("\n            Save\n        ")]
+                [_vm._v("Save")]
               )
             : _vm._e(),
           _vm._v(" "),
@@ -38200,7 +37571,7 @@ exports.default = _default;
                   attrs: { variant: "secondary", size: "sm" },
                   on: { click: _vm.cancelChangesToNotes }
                 },
-                [_vm._v("\n            Cancel\n        ")]
+                [_vm._v("Cancel")]
               )
             : _vm._e()
         ],
@@ -38222,7 +37593,7 @@ exports.default = _default;
                 "b-form-group",
                 [
                   _c("label", { attrs: { for: "due-date" } }, [
-                    _vm._v("Due Date: "),
+                    _vm._v("\n        Due Date:\n        "),
                     _vm.form.dueDate
                       ? _c("span", [
                           _vm._v(_vm._s(_vm._f("formatDate")(_vm.form.dueDate)))
@@ -38253,9 +37624,18 @@ exports.default = _default;
         attrs: { label: "Sub-items" }
       }),
       _vm._v(" "),
-      _c("SubItems", { attrs: { todoListItem: _vm.todoListItem } }),
-      _vm._v(" "),
-      _c("AddSubItemForm", { attrs: { todoListItem: _vm.todoListItem } })
+      _c("SubItems", {
+        attrs: { todoListItem: _vm.todoListItem },
+        on: {
+          "sub-items-completed": function($event) {
+            return _vm.$emit("sub-items-completed")
+          },
+          "sub-items-uncompleted": function($event) {
+            return _vm.$emit("sub-items-uncompleted")
+          },
+          "sub-item-count-changed": _vm.sendSubItemCountChangedEvent
+        }
+      })
     ],
     1
   )
@@ -38267,7 +37647,7 @@ render._withStripped = true
             render: render,
             staticRenderFns: staticRenderFns,
             _compiled: true,
-            _scopeId: "data-v-ec928f",
+            _scopeId: "data-v-1d8a45",
             functional: undefined
           };
         })());
@@ -38280,9 +37660,9 @@ render._withStripped = true
         if (api.compatible) {
           module.hot.accept();
           if (!module.hot.data) {
-            api.createRecord('$ec928f', $ec928f);
+            api.createRecord('$1d8a45', $1d8a45);
           } else {
-            api.reload('$ec928f', $ec928f);
+            api.reload('$1d8a45', $1d8a45);
           }
         }
 
@@ -38293,7 +37673,7 @@ render._withStripped = true
       
       }
     })();
-},{"moment":"node_modules/moment/moment.js","./SubItems":"vue/components/SubItems.vue","./AddSubItemForm":"vue/components/AddSubItemForm.vue","_css_loader":"node_modules/parcel-bundler/src/builtins/css-loader.js","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/components/TodoListItem.vue":[function(require,module,exports) {
+},{"vuex":"node_modules/vuex/dist/vuex.esm.js","moment":"node_modules/moment/moment.js","./SubItems":"vue/components/SubItems.vue","_css_loader":"node_modules/parcel-bundler/src/builtins/css-loader.js","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/components/TodoListItem.vue":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -38353,28 +37733,20 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 //
 var _default = {
   name: "TodoListItem",
-  props: ["todoListItem"],
-
-  data() {
-    return {
-      subItems: this.$store.getters.getSubItemsByItemId(this.todoListItem.id)
-    };
-  },
-
+  props: ["item"],
   components: {
     EditTodoItemForm: _EditTodoItemForm.default
   },
   computed: {
     itemCompletedState: {
       get() {
-        return this.$store.getters.getItemCompletedState(this.todoListItem.listId, this.todoListItem.id);
+        return this.item.completed;
       },
 
-      set(value) {
-        this.todoListItem.completed = value;
-        this.$store.dispatch("toggleItemCompletedState", {
-          item: this.todoListItem
-        });
+      set(val) {
+        if (val !== null) {
+          this.sendCheckboxClickedEvent(val);
+        }
       }
 
     }
@@ -38386,17 +37758,39 @@ var _default = {
     truncate: function (text, length, suffix) {
       return text.substring(0, length) + suffix;
     }
+  },
+  methods: {
+    sendItemEditedEvent(item) {
+      this.$emit("item-edited", item);
+    },
+
+    sendCheckboxClickedEvent(completed) {
+      this.$emit("checkbox-clicked", {
+        itemId: this.item.id,
+        completed: completed
+      });
+    },
+
+    sendSubItemCountChangedEvent({
+      disabled
+    }) {
+      this.$emit("sub-item-count-changed", {
+        itemId: this.item.id,
+        hasSubItems: disabled
+      });
+    }
+
   }
 };
 exports.default = _default;
-        var $b8ebde = exports.default || module.exports;
+        var $71ea3c = exports.default || module.exports;
       
-      if (typeof $b8ebde === 'function') {
-        $b8ebde = $b8ebde.options;
+      if (typeof $71ea3c === 'function') {
+        $71ea3c = $71ea3c.options;
       }
     
         /* template */
-        Object.assign($b8ebde, (function () {
+        Object.assign($71ea3c, (function () {
           var render = function() {
   var _vm = this
   var _h = _vm.$createElement
@@ -38405,18 +37799,15 @@ exports.default = _default;
     "b-list-group-item",
     {
       staticClass: "todo-item bg-light",
-      class: {
-        "align-items-center":
-          !_vm.todoListItem.dueDate && !_vm.todoListItem.notes
-      },
-      attrs: { "data-id": _vm.todoListItem.id }
+      class: { "align-items-center": !_vm.item.dueDate && !_vm.item.notes },
+      attrs: { "data-id": _vm.item.id }
     },
     [
       _c("div", { staticClass: "item-handle mr-2" }, [_c("b-icon-list")], 1),
       _vm._v(" "),
       _c("b-form-checkbox", {
         staticClass: "todo-item-checkbox",
-        attrs: { disabled: _vm.subItems && _vm.subItems.length > 0 },
+        attrs: { disabled: _vm.item.hasSubItems },
         model: {
           value: _vm.itemCompletedState,
           callback: function($$v) {
@@ -38431,14 +37822,12 @@ exports.default = _default;
           "div",
           {
             staticClass: "todo-item-name",
-            class: {
-              "mb-0": !_vm.todoListItem.dueDate && !_vm.todoListItem.notes
-            }
+            class: { "mb-0": !_vm.item.dueDate && !_vm.item.notes }
           },
-          [_vm._v(_vm._s(_vm.todoListItem.name))]
+          [_vm._v(_vm._s(_vm.item.name))]
         ),
         _vm._v(" "),
-        _vm.todoListItem.dueDate
+        _vm.item.dueDate
           ? _c(
               "div",
               { staticClass: "todo-item-due-date" },
@@ -38446,7 +37835,7 @@ exports.default = _default;
                 _c("b-icon-calendar"),
                 _vm._v(
                   "\n      " +
-                    _vm._s(_vm._f("formatDate")(_vm.todoListItem.dueDate)) +
+                    _vm._s(_vm._f("formatDate")(_vm.item.dueDate)) +
                     "\n    "
                 )
               ],
@@ -38454,7 +37843,7 @@ exports.default = _default;
             )
           : _vm._e(),
         _vm._v(" "),
-        _vm.todoListItem.notes
+        _vm.item.notes
           ? _c(
               "div",
               { staticClass: "todo-item-notes" },
@@ -38462,9 +37851,7 @@ exports.default = _default;
                 _c("b-icon-text-left"),
                 _vm._v(
                   "\n      " +
-                    _vm._s(
-                      _vm._f("truncate")(_vm.todoListItem.notes, 30, "...")
-                    ) +
+                    _vm._s(_vm._f("truncate")(_vm.item.notes, 30, "...")) +
                     "\n    "
                 )
               ],
@@ -38486,7 +37873,7 @@ exports.default = _default;
                   attrs: { variant: "info" },
                   on: {
                     click: function($event) {
-                      return _vm.$bvModal.show("modal-" + _vm.todoListItem.id)
+                      return _vm.$bvModal.show("modal-" + _vm.item.id)
                     }
                   }
                 },
@@ -38499,9 +37886,7 @@ exports.default = _default;
                   attrs: { variant: "danger" },
                   on: {
                     click: function($event) {
-                      return _vm.$store.dispatch("deleteItem", {
-                        item: _vm.todoListItem
-                      })
+                      return _vm.$emit("delete-item", _vm.item.id)
                     }
                   }
                 },
@@ -38511,7 +37896,19 @@ exports.default = _default;
             1
           ),
           _vm._v(" "),
-          _c("EditTodoItemForm", { attrs: { todoListItem: _vm.todoListItem } })
+          _c("EditTodoItemForm", {
+            attrs: { todoListItem: _vm.item },
+            on: {
+              "item-edited": _vm.sendItemEditedEvent,
+              "sub-items-completed": function($event) {
+                return _vm.sendCheckboxClickedEvent(true)
+              },
+              "sub-items-uncompleted": function($event) {
+                return _vm.sendCheckboxClickedEvent(false)
+              },
+              "sub-item-count-changed": _vm.sendSubItemCountChangedEvent
+            }
+          })
         ],
         1
       )
@@ -38526,7 +37923,7 @@ render._withStripped = true
             render: render,
             staticRenderFns: staticRenderFns,
             _compiled: true,
-            _scopeId: "data-v-b8ebde",
+            _scopeId: "data-v-71ea3c",
             functional: undefined
           };
         })());
@@ -38539,9 +37936,9 @@ render._withStripped = true
         if (api.compatible) {
           module.hot.accept();
           if (!module.hot.data) {
-            api.createRecord('$b8ebde', $b8ebde);
+            api.createRecord('$71ea3c', $71ea3c);
           } else {
-            api.reload('$b8ebde', $b8ebde);
+            api.reload('$71ea3c', $71ea3c);
           }
         }
 
@@ -38552,22 +37949,27 @@ render._withStripped = true
       
       }
     })();
-},{"moment":"node_modules/moment/moment.js","./EditTodoItemForm":"vue/components/EditTodoItemForm.vue","_css_loader":"node_modules/parcel-bundler/src/builtins/css-loader.js","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/components/TodoListItems.vue":[function(require,module,exports) {
+},{"moment":"node_modules/moment/moment.js","./EditTodoItemForm":"vue/components/EditTodoItemForm.vue","_css_loader":"node_modules/parcel-bundler/src/builtins/css-loader.js","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/components/AddTodoListItemForm.vue":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.default = void 0;
-
-var _axios = _interopRequireDefault(require("axios"));
-
-var _vuedraggable = _interopRequireDefault(require("vuedraggable"));
-
-var _TodoListItem = _interopRequireDefault(require("./TodoListItem"));
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 //
 //
 //
@@ -38582,107 +37984,158 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 //
 //
 var _default = {
-  name: "TodoListItems",
-  props: ["listId", "todoListItems"],
+  name: "AddTodoListItemForm",
+  props: ["todoListId"],
 
   data() {
     return {
-      layout: []
+      form: {
+        listId: this.todoListId,
+        name: null,
+        notes: null,
+        dueDate: null
+      }
     };
   },
 
-  async created() {
-    await this.getLayout();
-  },
+  computed: {
+    plan() {
+      return this.$store.getters.plan;
+    }
 
-  mounted() {
-    this.$store.state.connection.on("ListLayoutChanged", listId => this.refreshLayout(listId));
-    this.$store.state.connection.on("ItemTrashed", (listId, item) => this.refreshLayout(listId));
   },
-
   methods: {
-    async getLayout() {
-      const response = await (0, _axios.default)({
-        method: "GET",
-        url: "api/lists/".concat(this.listId, "/layout")
-      });
-      this.layout = response.data;
+    focusOnForm() {
+      this.$refs.title.focus();
     },
 
-    updateLayout(e) {
-      let position = e.newIndex;
-      let itemId = e.item.getAttribute("data-id");
-      (0, _axios.default)({
-        method: "PUT",
-        url: "api/lists/".concat(this.listId, "/layout"),
-        data: JSON.stringify({
-          itemId,
-          position
-        }),
-        headers: {
-          "content-type": "application/json"
-        }
-      });
-    },
-
-    refreshLayout(listId) {
-      if (this.listId === listId) {
-        this.getLayout();
-      }
+    async addItemRequest() {
+      let item = { ...this.form
+      };
+      this.$emit("add-item", item);
+      this.form.name = null;
+      this.form.notes = null;
+      this.form.dueDate = null;
+      this.$bvModal.hide("modal-add-todo-list-item");
     }
 
-  },
-  watch: {
-    todoListItems: function () {
-      this.refreshLayout(this.listId);
-    }
-  },
-  components: {
-    Draggable: _vuedraggable.default,
-    TodoListItem: _TodoListItem.default
   }
 };
 exports.default = _default;
-        var $2b69d1 = exports.default || module.exports;
+        var $aa59c0 = exports.default || module.exports;
       
-      if (typeof $2b69d1 === 'function') {
-        $2b69d1 = $2b69d1.options;
+      if (typeof $aa59c0 === 'function') {
+        $aa59c0 = $aa59c0.options;
       }
     
         /* template */
-        Object.assign($2b69d1, (function () {
+        Object.assign($aa59c0, (function () {
           var render = function() {
   var _vm = this
   var _h = _vm.$createElement
   var _c = _vm._self._c || _h
   return _c(
-    "b-list-group",
-    { staticClass: "todo-list-items" },
+    "div",
+    { attrs: { id: "add-todo-list-item" } },
     [
       _c(
-        "Draggable",
+        "b-button",
         {
-          attrs: { handle: ".item-handle" },
-          on: { end: _vm.updateLayout },
-          model: {
-            value: _vm.layout,
-            callback: function($$v) {
-              _vm.layout = $$v
-            },
-            expression: "layout"
+          on: {
+            click: function($event) {
+              return _vm.$bvModal.show("modal-add-todo-list-item")
+            }
           }
         },
-        _vm._l(_vm.layout, function(position) {
-          return _c("TodoListItem", {
-            key: position,
-            staticClass: "todo-list-item",
-            attrs: {
-              todoListItem: _vm.todoListItems.find(function(x) {
-                return x.id === position
-              })
-            }
-          })
-        }),
+        [_vm._v("Add item")]
+      ),
+      _vm._v(" "),
+      _c(
+        "b-modal",
+        {
+          attrs: { id: "modal-add-todo-list-item", title: "Add item" },
+          on: { shown: _vm.focusOnForm }
+        },
+        [
+          _c(
+            "b-form",
+            {
+              on: {
+                submit: function($event) {
+                  $event.preventDefault()
+                  return _vm.addItemRequest($event)
+                }
+              }
+            },
+            [
+              _c(
+                "b-form-group",
+                { attrs: { label: "Name" } },
+                [
+                  _c("b-form-input", {
+                    ref: "title",
+                    attrs: { maxlength: "50", required: "" },
+                    model: {
+                      value: _vm.form.name,
+                      callback: function($$v) {
+                        _vm.$set(_vm.form, "name", $$v)
+                      },
+                      expression: "form.name"
+                    }
+                  })
+                ],
+                1
+              ),
+              _vm._v(" "),
+              _c(
+                "b-form-group",
+                { attrs: { label: "Notes" } },
+                [
+                  _c("b-form-textarea", {
+                    attrs: { rows: "3", maxlength: "200" },
+                    model: {
+                      value: _vm.form.notes,
+                      callback: function($$v) {
+                        _vm.$set(_vm.form, "notes", $$v)
+                      },
+                      expression: "form.notes"
+                    }
+                  })
+                ],
+                1
+              ),
+              _vm._v(" "),
+              _vm.plan.canAddDueDates
+                ? _c(
+                    "b-form-group",
+                    { attrs: { label: "Due Date" } },
+                    [
+                      _c("b-form-datepicker", {
+                        model: {
+                          value: _vm.form.dueDate,
+                          callback: function($$v) {
+                            _vm.$set(_vm.form, "dueDate", $$v)
+                          },
+                          expression: "form.dueDate"
+                        }
+                      })
+                    ],
+                    1
+                  )
+                : _vm._e(),
+              _vm._v(" "),
+              _c(
+                "b-button",
+                {
+                  staticClass: "ml-auto d-block",
+                  attrs: { type: "submit", variant: "success" }
+                },
+                [_vm._v("Add")]
+              )
+            ],
+            1
+          )
+        ],
         1
       )
     ],
@@ -38709,25 +38162,35 @@ render._withStripped = true
         if (api.compatible) {
           module.hot.accept();
           if (!module.hot.data) {
-            api.createRecord('$2b69d1', $2b69d1);
+            api.createRecord('$aa59c0', $aa59c0);
           } else {
-            api.reload('$2b69d1', $2b69d1);
+            api.reload('$aa59c0', $aa59c0);
           }
         }
 
         
       }
     })();
-},{"axios":"node_modules/axios/index.js","vuedraggable":"node_modules/vuedraggable/dist/vuedraggable.common.js","./TodoListItem":"vue/components/TodoListItem.vue","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/components/InviteContributorsForm.vue":[function(require,module,exports) {
+},{"vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/components/TodoListItems.vue":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.default = void 0;
-//
-//
-//
+
+var _vue = _interopRequireDefault(require("vue"));
+
+var _axios = _interopRequireDefault(require("axios"));
+
+var _vuedraggable = _interopRequireDefault(require("vuedraggable"));
+
+var _TodoListItem = _interopRequireDefault(require("./TodoListItem"));
+
+var _AddTodoListItemForm = _interopRequireDefault(require("./AddTodoListItemForm.vue"));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
 //
 //
 //
@@ -38754,12 +38217,392 @@ exports.default = void 0;
 //
 //
 var _default = {
-  props: ['listId'],
+  name: "TodoListItems",
+  props: ["todoListId"],
+  components: {
+    Draggable: _vuedraggable.default,
+    TodoListItem: _TodoListItem.default,
+    AddTodoListItemForm: _AddTodoListItemForm.default
+  },
+
+  data() {
+    return {
+      items: [],
+      itemsLayout: [],
+      loadingItems: true
+    };
+  },
+
+  methods: {
+    async dispatchGetItemsAndLayout() {
+      await this.dispatchGetItemsLayout();
+      await this.dispatchGetItems();
+    },
+
+    async dispatchGetItemsLayout() {
+      const response = await (0, _axios.default)({
+        method: "GET",
+        url: "api/lists/".concat(this.todoListId, "/layout")
+      });
+      this.commitSetItemsLayout(response.data);
+    },
+
+    async dispatchGetItems() {
+      this.commitSetLoadingItemsState(true);
+      const response = await (0, _axios.default)({
+        method: "GET",
+        url: "api/lists/".concat(this.todoListId, "/todos")
+      });
+      this.commitSetItems(response.data);
+      this.commitSetLoadingItemsState(false);
+    },
+
+    async dispatchAddItem(item) {
+      const response = await (0, _axios.default)({
+        method: "POST",
+        url: "api/lists/".concat(this.todoListId, "/todos"),
+        data: JSON.stringify(item),
+        headers: {
+          "content-type": "application/json"
+        }
+      });
+      this.commitAddItem(response.data);
+    },
+
+    async dispatchSetItemCompletedState({
+      itemId,
+      completed
+    }) {
+      this.commitSetItemCompletedState(itemId, completed);
+      await (0, _axios.default)({
+        method: "PUT",
+        url: "api/lists/".concat(this.todoListId, "/todos/").concat(itemId, "/completed"),
+        data: JSON.stringify({
+          completed
+        }),
+        headers: {
+          "content-type": "application/json"
+        }
+      });
+    },
+
+    async dispatchUpdateItem(item) {
+      this.commitUpdateItem(item);
+      await (0, _axios.default)({
+        method: "PUT",
+        url: "api/lists/".concat(item.listId, "/todos/").concat(item.id),
+        data: JSON.stringify({
+          name: item.name,
+          notes: item.notes,
+          dueDate: item.dueDate
+        }),
+        headers: {
+          "content-type": "application/json"
+        }
+      });
+    },
+
+    async dispatchDeleteItem(itemId) {
+      this.commitDeleteItem(itemId);
+      await (0, _axios.default)({
+        method: "DELETE",
+        url: "api/lists/".concat(this.todoListId, "/todos/").concat(itemId)
+      });
+    },
+
+    async dispatchUpdateItemPosition(event) {
+      let itemId = event.item.getAttribute("data-id");
+      let position = event.newIndex;
+      await (0, _axios.default)({
+        method: "PUT",
+        url: "api/lists/".concat(this.todoListId, "/layout"),
+        data: JSON.stringify({
+          itemId,
+          position
+        }),
+        headers: {
+          "content-type": "application/json"
+        }
+      });
+    },
+
+    async dispatchGetItem(itemId) {
+      const response = await (0, _axios.default)({
+        method: "GET",
+        url: "api/lists/".concat(this.todoListId, "/todos/").concat(itemId)
+      });
+      return response.data;
+    },
+
+    commitSetLoadingItemsState(state) {
+      this.loadingItems = state;
+    },
+
+    commitSetItems(items) {
+      this.items = items;
+    },
+
+    commitAddItem(item) {
+      this.items.unshift(item);
+      this.commitAddItemLayoutPosition(item.id);
+    },
+
+    commitAddItemLayoutPosition(itemId) {
+      this.itemsLayout.unshift(itemId);
+    },
+
+    commitSetItemCompletedState(itemId, completed) {
+      this.items[this.items.findIndex(i => i.id === itemId)].completed = completed;
+      this.triggerTodoListCompletedEvent();
+    },
+
+    commitUpdateItem(item) {
+      const itemIndex = this.items.findIndex(i => i.id === item.id);
+
+      _vue.default.set(this.items, itemIndex, item);
+    },
+
+    commitDeleteItem(itemId) {
+      this.commitRemoveItemLayoutPosition(itemId);
+      this.items.splice(this.items.findIndex(i => i.id === itemId), 1);
+    },
+
+    commitRemoveItemLayoutPosition(itemId) {
+      this.itemsLayout.splice(this.itemsLayout.findIndex(l => l === itemId), 1);
+    },
+
+    commitUpdateHasSubItems({
+      itemId,
+      hasSubItems
+    }) {
+      this.items[this.items.findIndex(i => i.id == itemId)].hasSubItems = hasSubItems;
+    },
+
+    commitSetItemsLayout(itemsLayout) {
+      this.itemsLayout = itemsLayout;
+    },
+
+    triggerTodoListCompletedEvent() {
+      const listCompleted = this.items.length > 0 && this.items.every(item => item.completed);
+
+      if (listCompleted) {
+        this.$emit("todo-list-completed");
+      } else {
+        this.$emit("todo-list-uncompleted");
+      }
+    },
+
+    itemsBelongToList(todoListId) {
+      return this.todoListId === todoListId;
+    }
+
+  },
+
+  async created() {
+    await this.dispatchGetItemsAndLayout();
+  },
+
+  mounted() {
+    // Item created
+    this.$store.state.connection.on("ItemCreated", (todoListId, item) => {
+      if (this.itemsBelongToList(todoListId)) {
+        this.commitAddItem(item);
+      }
+    }); // Item trashed
+
+    this.$store.state.connection.on("ItemTrashed", (todoListId, item) => {
+      if (this.itemsBelongToList(todoListId)) {
+        this.commitDeleteItem(item.id);
+      }
+    }); // Item updated
+
+    this.$store.state.connection.on("ItemUpdated", item => {
+      if (this.itemsBelongToList(item.listId)) {
+        this.commitUpdateItem(item);
+      }
+    }); // Item completed state changed
+
+    this.$store.state.connection.on("ItemCompleted", item => {
+      if (this.itemsBelongToList(item.listId)) {
+        this.commitSetItemCompletedState(item.id, item.completed);
+      }
+    }); // Layout changed
+
+    this.$store.state.connection.on("ListLayoutChanged", async todoListId => {
+      if (this.itemsBelongToList(todoListId)) {
+        await this.dispatchGetItemsLayout();
+      }
+    }); // Sub-item created
+
+    this.$store.state.connection.on("SubItemCreated", async subItem => {
+      const itemIndex = this.items.findIndex(i => i.id === subItem.listItemId);
+      const item = this.items[itemIndex];
+
+      if (itemIndex !== -1) {
+        if (!item.hasSubItems) {
+          this.commitUpdateHasSubItems({
+            itemId: item.id,
+            hasSubItems: true
+          });
+        }
+      }
+    }); // Sub-item trashed
+
+    this.$store.state.connection.on("SubItemTrashed", async (itemId, subItem) => {
+      if (this.items.findIndex(i => i.id === itemId) !== -1) {
+        const item = await this.dispatchGetItem(itemId);
+
+        if (!item.hasSubItems) {
+          this.commitUpdateHasSubItems({
+            itemId: item.id,
+            hasSubItems: false
+          });
+        }
+      }
+    });
+  },
+
+  watch: {
+    items() {
+      this.triggerTodoListCompletedEvent();
+    }
+
+  }
+};
+exports.default = _default;
+        var $642124 = exports.default || module.exports;
+      
+      if (typeof $642124 === 'function') {
+        $642124 = $642124.options;
+      }
+    
+        /* template */
+        Object.assign($642124, (function () {
+          var render = function() {
+  var _vm = this
+  var _h = _vm.$createElement
+  var _c = _vm._self._c || _h
+  return _c(
+    "b-list-group",
+    { staticClass: "todo-list-items" },
+    [
+      !_vm.loadingItems
+        ? _c(
+            "Draggable",
+            {
+              attrs: { handle: ".item-handle" },
+              on: { end: _vm.dispatchUpdateItemPosition },
+              model: {
+                value: _vm.itemsLayout,
+                callback: function($$v) {
+                  _vm.itemsLayout = $$v
+                },
+                expression: "itemsLayout"
+              }
+            },
+            _vm._l(_vm.itemsLayout, function(itemId) {
+              return _c("TodoListItem", {
+                key: itemId,
+                attrs: {
+                  item: _vm.items.find(function(i) {
+                    return i.id === itemId
+                  })
+                },
+                on: {
+                  "checkbox-clicked": _vm.dispatchSetItemCompletedState,
+                  "item-edited": _vm.dispatchUpdateItem,
+                  "delete-item": _vm.dispatchDeleteItem,
+                  "sub-item-count-changed": _vm.commitUpdateHasSubItems
+                }
+              })
+            }),
+            1
+          )
+        : _vm._e(),
+      _vm._v(" "),
+      _vm.items.length === 0
+        ? _c("b-list-group-item", [_vm._v("Add an item to get started.")])
+        : _vm._e(),
+      _vm._v(" "),
+      _c("AddTodoListItemForm", {
+        staticClass: "mt-3",
+        attrs: { todoListId: _vm.todoListId },
+        on: { "add-item": _vm.dispatchAddItem }
+      })
+    ],
+    1
+  )
+}
+var staticRenderFns = []
+render._withStripped = true
+
+          return {
+            render: render,
+            staticRenderFns: staticRenderFns,
+            _compiled: true,
+            _scopeId: null,
+            functional: undefined
+          };
+        })());
+      
+    /* hot reload */
+    (function () {
+      if (module.hot) {
+        var api = require('vue-hot-reload-api');
+        api.install(require('vue'));
+        if (api.compatible) {
+          module.hot.accept();
+          if (!module.hot.data) {
+            api.createRecord('$642124', $642124);
+          } else {
+            api.reload('$642124', $642124);
+          }
+        }
+
+        
+      }
+    })();
+},{"vue":"node_modules/vue/dist/vue.runtime.esm.js","axios":"node_modules/axios/index.js","vuedraggable":"node_modules/vuedraggable/dist/vuedraggable.common.js","./TodoListItem":"vue/components/TodoListItem.vue","./AddTodoListItemForm.vue":"vue/components/AddTodoListItemForm.vue","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js"}],"vue/components/InviteContributorsForm.vue":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = void 0;
+
+var _axios = _interopRequireDefault(require("axios"));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+var _default = {
+  props: ["listId"],
 
   data() {
     return {
       form: {
-        email: ''
+        email: ""
       },
       invitationSent: false,
       dismissSecs: 5,
@@ -38768,12 +38611,18 @@ var _default = {
   },
 
   methods: {
-    invite() {
-      this.$store.dispatch('inviteContributorToList', {
-        listId: this.listId,
-        email: this.form.email
+    async invite() {
+      await (0, _axios.default)({
+        method: "POST",
+        url: "api/lists/".concat(this.listId, "/email"),
+        data: JSON.stringify({
+          email: this.form.email
+        }),
+        headers: {
+          "content-type": "application/json"
+        }
       });
-      this.form.email = '';
+      this.form.email = "";
       this.showAlert();
     },
 
@@ -38788,14 +38637,14 @@ var _default = {
   }
 };
 exports.default = _default;
-        var $e8e650 = exports.default || module.exports;
+        var $3f1240 = exports.default || module.exports;
       
-      if (typeof $e8e650 === 'function') {
-        $e8e650 = $e8e650.options;
+      if (typeof $3f1240 === 'function') {
+        $3f1240 = $3f1240.options;
       }
     
         /* template */
-        Object.assign($e8e650, (function () {
+        Object.assign($3f1240, (function () {
           var render = function() {
   var _vm = this
   var _h = _vm.$createElement
@@ -38856,7 +38705,7 @@ exports.default = _default;
                 "dismiss-count-down": _vm.countDownChanged
               }
             },
-            [_vm._v("\n            Invitation sent!\n        ")]
+            [_vm._v("Invitation sent!")]
           )
         ],
         1
@@ -38872,7 +38721,7 @@ render._withStripped = true
             render: render,
             staticRenderFns: staticRenderFns,
             _compiled: true,
-            _scopeId: "data-v-e8e650",
+            _scopeId: "data-v-3f1240",
             functional: undefined
           };
         })());
@@ -38885,9 +38734,9 @@ render._withStripped = true
         if (api.compatible) {
           module.hot.accept();
           if (!module.hot.data) {
-            api.createRecord('$e8e650', $e8e650);
+            api.createRecord('$3f1240', $3f1240);
           } else {
-            api.reload('$e8e650', $e8e650);
+            api.reload('$3f1240', $3f1240);
           }
         }
 
@@ -38898,10 +38747,10 @@ render._withStripped = true
       
       }
     })();
-},{"_css_loader":"node_modules/parcel-bundler/src/builtins/css-loader.js","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"node_modules/vue-confetti/dist/vue-confetti.js":[function(require,module,exports) {
+},{"axios":"node_modules/axios/index.js","_css_loader":"node_modules/parcel-bundler/src/builtins/css-loader.js","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"node_modules/vue-confetti/dist/vue-confetti.js":[function(require,module,exports) {
 var define;
 !function(t,e){"object"==typeof exports&&"object"==typeof module?module.exports=e():"function"==typeof define&&define.amd?define([],e):"object"==typeof exports?exports["vue-confetti"]=e():t["vue-confetti"]=e()}(window,(function(){return function(t){var e={};function n(i){if(e[i])return e[i].exports;var r=e[i]={i:i,l:!1,exports:{}};return t[i].call(r.exports,r,r.exports,n),r.l=!0,r.exports}return n.m=t,n.c=e,n.d=function(t,e,i){n.o(t,e)||Object.defineProperty(t,e,{enumerable:!0,get:i})},n.r=function(t){"undefined"!=typeof Symbol&&Symbol.toStringTag&&Object.defineProperty(t,Symbol.toStringTag,{value:"Module"}),Object.defineProperty(t,"__esModule",{value:!0})},n.t=function(t,e){if(1&e&&(t=n(t)),8&e)return t;if(4&e&&"object"==typeof t&&t&&t.__esModule)return t;var i=Object.create(null);if(n.r(i),Object.defineProperty(i,"default",{enumerable:!0,value:t}),2&e&&"string"!=typeof t)for(var r in t)n.d(i,r,function(e){return t[e]}.bind(null,r));return i},n.n=function(t){var e=t&&t.__esModule?function(){return t.default}:function(){return t};return n.d(e,"a",e),e},n.o=function(t,e){return Object.prototype.hasOwnProperty.call(t,e)},n.p="",n(n.s=3)}([function(t,e,n){"use strict";n.r(e);var i=function(){var t=arguments.length>0&&void 0!==arguments[0]?arguments[0]:1,e=arguments.length>1&&void 0!==arguments[1]?arguments[1]:t+1,n=arguments.length>2&&void 0!==arguments[2]&&arguments[2],i=parseFloat(t),r=parseFloat(e),o=Math.random()*(r-i)+i;return n?Math.round(o):o};function r(t,e){for(var n=0;n<e.length;n++){var i=e[n];i.enumerable=i.enumerable||!1,i.configurable=!0,"value"in i&&(i.writable=!0),Object.defineProperty(t,i.key,i)}}var o=function(){function t(){var e=arguments.length>0&&void 0!==arguments[0]?arguments[0]:{},n=e.color,i=void 0===n?"blue":n,r=e.size,o=void 0===r?10:r,a=e.dropRate,c=void 0===a?10:a;!function(t,e){if(!(t instanceof e))throw new TypeError("Cannot call a class as a function")}(this,t),this.color=i,this.size=o,this.dropRate=c}var e,n,o;return e=t,(n=[{key:"setup",value:function(t){var e=t.canvas,n=t.wind,r=t.windPosCoef,o=t.windSpeedMax,a=t.count;return this.canvas=e,this.wind=n,this.windPosCoef=r,this.windSpeedMax=o,this.x=i(-35,this.canvas.width+35),this.y=i(-30,-35),this.d=i(150)+10,this.particleSize=i(this.size,2*this.size),this.tilt=i(10),this.tiltAngleIncremental=(i(0,.08)+.04)*(i()<.5?-1:1),this.tiltAngle=0,this.angle=i(2*Math.PI),this.count=a+1,this.remove=!1,this}},{key:"update",value:function(){this.tiltAngle+=this.tiltAngleIncremental*(.2*Math.cos(this.wind+(this.d+this.x+this.y)*this.windPosCoef)+1),this.y+=(Math.cos(this.angle+this.d)+parseInt(this.dropRate,10))/2,this.x+=Math.sin(this.angle),this.x+=Math.cos(this.wind+(this.d+this.x+this.y)*this.windPosCoef)*this.windSpeedMax,this.y+=Math.sin(this.wind+(this.d+this.x+this.y)*this.windPosCoef)*this.windSpeedMax,this.tilt=15*Math.sin(this.tiltAngle-this.count/3)}},{key:"pastBottom",value:function(){return this.y>this.canvas.height}},{key:"draw",value:function(){this.canvas.ctx.fillStyle=this.color,this.canvas.ctx.beginPath(),this.canvas.ctx.setTransform(Math.cos(this.tiltAngle),Math.sin(this.tiltAngle),0,1,this.x,this.y)}},{key:"kill",value:function(){this.remove=!0}}])&&r(e.prototype,n),o&&r(e,o),t}();function a(t){return(a="function"==typeof Symbol&&"symbol"==typeof Symbol.iterator?function(t){return typeof t}:function(t){return t&&"function"==typeof Symbol&&t.constructor===Symbol&&t!==Symbol.prototype?"symbol":typeof t})(t)}function c(t,e){for(var n=0;n<e.length;n++){var i=e[n];i.enumerable=i.enumerable||!1,i.configurable=!0,"value"in i&&(i.writable=!0),Object.defineProperty(t,i.key,i)}}function s(t,e){return!e||"object"!==a(e)&&"function"!=typeof e?function(t){if(void 0===t)throw new ReferenceError("this hasn't been initialised - super() hasn't been called");return t}(t):e}function l(t,e,n){return(l="undefined"!=typeof Reflect&&Reflect.get?Reflect.get:function(t,e,n){var i=function(t,e){for(;!Object.prototype.hasOwnProperty.call(t,e)&&null!==(t=u(t)););return t}(t,e);if(i){var r=Object.getOwnPropertyDescriptor(i,e);return r.get?r.get.call(n):r.value}})(t,e,n||t)}function u(t){return(u=Object.setPrototypeOf?Object.getPrototypeOf:function(t){return t.__proto__||Object.getPrototypeOf(t)})(t)}function f(t,e){return(f=Object.setPrototypeOf||function(t,e){return t.__proto__=e,t})(t,e)}var h=function(t){function e(){return function(t,e){if(!(t instanceof e))throw new TypeError("Cannot call a class as a function")}(this,e),s(this,u(e).apply(this,arguments))}var n,i,r;return function(t,e){if("function"!=typeof e&&null!==e)throw new TypeError("Super expression must either be null or a function");t.prototype=Object.create(e&&e.prototype,{constructor:{value:t,writable:!0,configurable:!0}}),e&&f(t,e)}(e,t),n=e,(i=[{key:"draw",value:function(){l(u(e.prototype),"draw",this).call(this),this.canvas.ctx.arc(0,0,this.particleSize/2,0,2*Math.PI,!1),this.canvas.ctx.fill()}}])&&c(n.prototype,i),r&&c(n,r),e}(o);function p(t){return(p="function"==typeof Symbol&&"symbol"==typeof Symbol.iterator?function(t){return typeof t}:function(t){return t&&"function"==typeof Symbol&&t.constructor===Symbol&&t!==Symbol.prototype?"symbol":typeof t})(t)}function y(t,e){for(var n=0;n<e.length;n++){var i=e[n];i.enumerable=i.enumerable||!1,i.configurable=!0,"value"in i&&(i.writable=!0),Object.defineProperty(t,i.key,i)}}function d(t,e){return!e||"object"!==p(e)&&"function"!=typeof e?function(t){if(void 0===t)throw new ReferenceError("this hasn't been initialised - super() hasn't been called");return t}(t):e}function v(t,e,n){return(v="undefined"!=typeof Reflect&&Reflect.get?Reflect.get:function(t,e,n){var i=function(t,e){for(;!Object.prototype.hasOwnProperty.call(t,e)&&null!==(t=b(t)););return t}(t,e);if(i){var r=Object.getOwnPropertyDescriptor(i,e);return r.get?r.get.call(n):r.value}})(t,e,n||t)}function b(t){return(b=Object.setPrototypeOf?Object.getPrototypeOf:function(t){return t.__proto__||Object.getPrototypeOf(t)})(t)}function m(t,e){return(m=Object.setPrototypeOf||function(t,e){return t.__proto__=e,t})(t,e)}var w=function(t){function e(){return function(t,e){if(!(t instanceof e))throw new TypeError("Cannot call a class as a function")}(this,e),d(this,b(e).apply(this,arguments))}var n,i,r;return function(t,e){if("function"!=typeof e&&null!==e)throw new TypeError("Super expression must either be null or a function");t.prototype=Object.create(e&&e.prototype,{constructor:{value:t,writable:!0,configurable:!0}}),e&&m(t,e)}(e,t),n=e,(i=[{key:"draw",value:function(){v(b(e.prototype),"draw",this).call(this),this.canvas.ctx.fillRect(0,0,this.particleSize,this.particleSize/2)}}])&&y(n.prototype,i),r&&y(n,r),e}(o);function g(t){return(g="function"==typeof Symbol&&"symbol"==typeof Symbol.iterator?function(t){return typeof t}:function(t){return t&&"function"==typeof Symbol&&t.constructor===Symbol&&t!==Symbol.prototype?"symbol":typeof t})(t)}function O(t,e){for(var n=0;n<e.length;n++){var i=e[n];i.enumerable=i.enumerable||!1,i.configurable=!0,"value"in i&&(i.writable=!0),Object.defineProperty(t,i.key,i)}}function P(t,e){return!e||"object"!==g(e)&&"function"!=typeof e?function(t){if(void 0===t)throw new ReferenceError("this hasn't been initialised - super() hasn't been called");return t}(t):e}function S(t,e,n){return(S="undefined"!=typeof Reflect&&Reflect.get?Reflect.get:function(t,e,n){var i=function(t,e){for(;!Object.prototype.hasOwnProperty.call(t,e)&&null!==(t=j(t)););return t}(t,e);if(i){var r=Object.getOwnPropertyDescriptor(i,e);return r.get?r.get.call(n):r.value}})(t,e,n||t)}function j(t){return(j=Object.setPrototypeOf?Object.getPrototypeOf:function(t){return t.__proto__||Object.getPrototypeOf(t)})(t)}function k(t,e){return(k=Object.setPrototypeOf||function(t,e){return t.__proto__=e,t})(t,e)}var x=function(t){function e(){return function(t,e){if(!(t instanceof e))throw new TypeError("Cannot call a class as a function")}(this,e),P(this,j(e).apply(this,arguments))}var n,i,r;return function(t,e){if("function"!=typeof e&&null!==e)throw new TypeError("Super expression must either be null or a function");t.prototype=Object.create(e&&e.prototype,{constructor:{value:t,writable:!0,configurable:!0}}),e&&k(t,e)}(e,t),n=e,(i=[{key:"draw",value:function(){var t=this;S(j(e.prototype),"draw",this).call(this);var n=function(e,n,i,r,o,a){t.canvas.ctx.bezierCurveTo(e*(t.particleSize/200),n*(t.particleSize/200),i*(t.particleSize/200),r*(t.particleSize/200),o*(t.particleSize/200),a*(t.particleSize/200))};this.canvas.ctx.moveTo(37.5/this.particleSize,20/this.particleSize),n(75,37,70,25,50,25),n(20,25,20,62.5,20,62.5),n(20,80,40,102,75,120),n(110,102,130,80,130,62.5),n(130,62.5,130,25,100,25),n(85,25,75,37,75,40),this.canvas.ctx.fill()}}])&&O(n.prototype,i),r&&O(n,r),e}(o);function M(t){return(M="function"==typeof Symbol&&"symbol"==typeof Symbol.iterator?function(t){return typeof t}:function(t){return t&&"function"==typeof Symbol&&t.constructor===Symbol&&t!==Symbol.prototype?"symbol":typeof t})(t)}function _(t,e){for(var n=0;n<e.length;n++){var i=e[n];i.enumerable=i.enumerable||!1,i.configurable=!0,"value"in i&&(i.writable=!0),Object.defineProperty(t,i.key,i)}}function E(t,e){return!e||"object"!==M(e)&&"function"!=typeof e?function(t){if(void 0===t)throw new ReferenceError("this hasn't been initialised - super() hasn't been called");return t}(t):e}function I(t,e,n){return(I="undefined"!=typeof Reflect&&Reflect.get?Reflect.get:function(t,e,n){var i=function(t,e){for(;!Object.prototype.hasOwnProperty.call(t,e)&&null!==(t=C(t)););return t}(t,e);if(i){var r=Object.getOwnPropertyDescriptor(i,e);return r.get?r.get.call(n):r.value}})(t,e,n||t)}function C(t){return(C=Object.setPrototypeOf?Object.getPrototypeOf:function(t){return t.__proto__||Object.getPrototypeOf(t)})(t)}function D(t,e){return(D=Object.setPrototypeOf||function(t,e){return t.__proto__=e,t})(t,e)}var R=function(t){function e(t,n){var i;return function(t,e){if(!(t instanceof e))throw new TypeError("Cannot call a class as a function")}(this,e),(i=E(this,C(e).call(this,t))).imgEl=n,i}var n,i,r;return function(t,e){if("function"!=typeof e&&null!==e)throw new TypeError("Super expression must either be null or a function");t.prototype=Object.create(e&&e.prototype,{constructor:{value:t,writable:!0,configurable:!0}}),e&&D(t,e)}(e,t),n=e,(i=[{key:"draw",value:function(){I(C(e.prototype),"draw",this).call(this),this.canvas.ctx.drawImage(this.imgEl,0,0,this.particleSize,this.particleSize)}}])&&_(n.prototype,i),r&&_(n,r),e}(o);function T(t,e){for(var n=0;n<e.length;n++){var i=e[n];i.enumerable=i.enumerable||!1,i.configurable=!0,"value"in i&&(i.writable=!0),Object.defineProperty(t,i.key,i)}}var z=function(){function t(){!function(t,e){if(!(t instanceof e))throw new TypeError("Cannot call a class as a function")}(this,t),this.cachedImage=null}var e,n,r;return e=t,(n=[{key:"createImageElement",value:function(t){var e=document.createElement("img");return e.setAttribute("src",t),e}},{key:"getImageElement",value:function(t){return this.cachedImage&&t===this.cachedImage.getAttribute("src")||(this.cachedImage=this.createImageElement(t)),this.cachedImage}},{key:"getRandomParticle",value:function(){var t=arguments.length>0&&void 0!==arguments[0]?arguments[0]:{},e=t.particles||[];return e.length<1?{}:e[Math.floor(Math.random()*e.length)]}},{key:"getDefaults",value:function(){var t=arguments.length>0&&void 0!==arguments[0]?arguments[0]:{};return{type:t.defaultType||"circle",size:t.defaultSize||10,dropRate:t.defaultDropRate||10,colors:t.defaultColors||["DodgerBlue","OliveDrab","Gold","pink","SlateBlue","lightblue","Violet","PaleGreen","SteelBlue","SandyBrown","Chocolate","Crimson"],url:null}}},{key:"create",value:function(t){var e=this.getDefaults(t),n=this.getRandomParticle(t),r=Object.assign(e,n),o=i(0,r.colors.length-1,!0);if(r.color=r.colors[o],"circle"===r.type)return new h(r);if("rect"===r.type)return new w(r);if("heart"===r.type)return new x(r);if("image"===r.type)return new R(r,this.getImageElement(r.url));throw Error('Unknown particle type: "'.concat(r.type,'"'))}}])&&T(e.prototype,n),r&&T(e,r),t}();function F(t,e){for(var n=0;n<e.length;n++){var i=e[n];i.enumerable=i.enumerable||!1,i.configurable=!0,"value"in i&&(i.writable=!0),Object.defineProperty(t,i.key,i)}}var A=function(){function t(e){!function(t,e){if(!(t instanceof e))throw new TypeError("Cannot call a class as a function")}(this,t),this.items=[],this.pool=[],this.particleOptions=e,this.particleFactory=new z}var e,n,i;return e=t,(n=[{key:"update",value:function(){var t,e=this,n=[],i=[];this.items.forEach((function(t){t.update(),t.pastBottom()?t.remove||(t.setup(e.particleOptions),n.push(t)):i.push(t)})),(t=this.pool).push.apply(t,n),this.items=i}},{key:"draw",value:function(){this.items.forEach((function(t){return t.draw()}))}},{key:"add",value:function(){this.pool.length>0?this.items.push(this.pool.pop().setup(this.particleOptions)):this.items.push(this.particleFactory.create(this.particleOptions).setup(this.particleOptions))}},{key:"refresh",value:function(){this.items.forEach((function(t){t.kill()})),this.pool=[]}}])&&F(e.prototype,n),i&&F(e,i),t}();function B(t,e){for(var n=0;n<e.length;n++){var i=e[n];i.enumerable=i.enumerable||!1,i.configurable=!0,"value"in i&&(i.writable=!0),Object.defineProperty(t,i.key,i)}}var H=function(){function t(e){!function(t,e){if(!(t instanceof e))throw new TypeError("Cannot call a class as a function")}(this,t);var n=document.getElementById(e);if(this.isDefault=null==e,!this.isDefault&&!n)throw new Error('No element found with ID "'.concat(e,'"'));if(this.canvas=n||t.createDefaultCanvas("confetti-canvas"),!(this.canvas instanceof HTMLCanvasElement))throw new Error('Element with ID "'.concat("confetti-canvas",'" is not a valid HTMLCanvasElement'));this.ctx=this.canvas.getContext("2d")}var e,n,i;return e=t,i=[{key:"createDefaultCanvas",value:function(t){var e=document.createElement("canvas");return e.style.display="block",e.style.position="fixed",e.style.pointerEvents="none",e.style.top=0,e.style.width="100vw",e.style.height="100vh",e.id=t,document.querySelector("body").appendChild(e),e}}],(n=[{key:"clear",value:function(){this.ctx.setTransform(1,0,0,1,0,0),this.ctx.clearRect(0,0,this.width,this.height)}},{key:"updateDimensions",value:function(){this.isDefault&&(this.width===window.innerWidth&&this.height===window.innerHeight||(this.canvas.width=window.innerWidth,this.canvas.height=window.innerHeight))}},{key:"width",get:function(){return this.canvas.width}},{key:"height",get:function(){return this.canvas.height}}])&&B(e.prototype,n),i&&B(e,i),t}();function L(t,e){for(var n=0;n<e.length;n++){var i=e[n];i.enumerable=i.enumerable||!1,i.configurable=!0,"value"in i&&(i.writable=!0),Object.defineProperty(t,i.key,i)}}var W=function(){function t(){!function(t,e){if(!(t instanceof e))throw new TypeError("Cannot call a class as a function")}(this,t),this.setDefaults()}var e,n,i;return e=t,(n=[{key:"setDefaults",value:function(){this.killed=!1,this.framesSinceDrop=0,this.canvas=null,this.canvasId=null,this.W=0,this.H=0,this.particleManager=null,this.particlesPerFrame=0,this.wind=0,this.windSpeed=1,this.windSpeedMax=1,this.windChange=.01,this.windPosCoef=.002,this.animationId=null}},{key:"getParticleOptions",value:function(t){var e={canvas:this.canvas,W:this.W,H:this.H,wind:this.wind,windPosCoef:this.windPosCoef,windSpeedMax:this.windSpeedMax,count:0};return Object.assign(e,t),e}},{key:"createParticles",value:function(){var t=arguments.length>0&&void 0!==arguments[0]?arguments[0]:{},e=this.getParticleOptions(t);this.particleManager=new A(e)}},{key:"start",value:function(){var t=arguments.length>0&&void 0!==arguments[0]?arguments[0]:{};this.canvas&&t.canvasId===this.canvasId||(this.canvas=new H(t.canvasId),this.canvasId=t.canvasId),this.animationId&&cancelAnimationFrame(this.animationId),this.createParticles(t),this.canvas.updateDimensions(),this.setParticlesPerFrame(t),this.animationId=requestAnimationFrame(this.mainLoop.bind(this))}},{key:"setParticlesPerFrame",value:function(t){this.particlesPerFrame=t.particlesPerFrame||2}},{key:"stop",value:function(){this.killed=!0,this.particlesPerFrame=0}},{key:"update",value:function(t){this.canvas&&t.canvasId!==this.canvasId&&(this.stop(),this.canvas.clear(),this.start(t)),this.setParticlesPerFrame(t),this.particleManager&&(this.particleManager.particleOptions=this.getParticleOptions(t),this.particleManager.refresh())}},{key:"remove",value:function(){this.stop(),this.animationId&&cancelAnimationFrame(this.animationId),this.canvas.clear(),this.setDefaults()}},{key:"mainLoop",value:function(t){this.canvas.updateDimensions(),this.canvas.clear(),this.windSpeed=Math.sin(t/8e3)*this.windSpeedMax,this.wind=this.particleManager.particleOptions.wind+=this.windChange;for(var e=this.framesSinceDrop*this.particlesPerFrame;e>=1;)this.particleManager.add(),e-=1,this.framesSinceDrop=0;this.particleManager.update(),this.particleManager.draw(),this.killed&&!this.particleManager.items.length||(this.animationId=requestAnimationFrame(this.mainLoop.bind(this))),this.framesSinceDrop+=1}}])&&L(e.prototype,n),i&&L(e,i),t}();n.d(e,"Confetti",(function(){return W}));e.default={install:function(t,e){this.installed||(this.installed=!0,t.prototype.$confetti=new W(e))}}},,,function(t,e,n){t.exports=n(0)}])}));
-},{}],"vue/components/TodoList.vue":[function(require,module,exports) {
+},{}],"vue/components/Confetti.vue":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -38911,291 +38760,48 @@ exports.default = void 0;
 
 var _vue = _interopRequireDefault(require("vue"));
 
-var _AddTodoListItemForm = _interopRequireDefault(require("./AddTodoListItemForm"));
-
-var _TodoListItems = _interopRequireDefault(require("./TodoListItems"));
-
-var _Contributors = _interopRequireDefault(require("./Contributors"));
-
-var _InviteContributorsForm = _interopRequireDefault(require("./InviteContributorsForm"));
-
 var _vueConfetti = _interopRequireDefault(require("vue-confetti"));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 //
 //
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
 _vue.default.use(_vueConfetti.default);
 
 var _default = {
-  name: "TodoList",
-  props: ["todoListId"],
+  name: "Confetti",
 
-  data() {
-    return {
-      items: [],
-      editingTitle: false,
-      form: {
-        title: ""
-      },
-      loadingItems: true
-    };
-  },
-
-  async created() {
-    await this.$store.dispatch("loadItemsByListId", {
-      todoListId: this.todoListId
+  mounted() {
+    this.$nextTick(() => {
+      this.$confetti.start({
+        particles: [{
+          type: "rect"
+        }],
+        particlesPerFrame: 0.4,
+        dropRate: 8
+      });
     });
-    this.items = this.getItems();
-    this.loadingItems = false;
   },
 
-  destroyed() {
+  beforeDestroy() {
     this.$confetti.stop();
-  },
-
-  computed: {
-    list() {
-      return this.$store.getters.getTodoListById(this.todoListId);
-    },
-
-    contributors() {
-      return this.$store.getters.contributors;
-    },
-
-    allItemsCompleted() {
-      return this.items.every(item => item.completed) && this.items.length > 0;
-    }
-
-  },
-  watch: {
-    allItemsCompleted: function () {
-      if (this.allItemsCompleted) {
-        this.$confetti.start({
-          particles: [{
-            type: "rect"
-          }],
-          particlesPerFrame: 0.5,
-          dropRate: 8
-        });
-        this.$store.commit("setTodoListCompletedState", {
-          listId: this.todoListId,
-          listCompletedState: true
-        });
-      } else {
-        this.$confetti.stop();
-        this.$store.commit("setTodoListCompletedState", {
-          listId: this.todoListId,
-          listCompletedState: false
-        });
-      }
-    }
-  },
-  components: {
-    AddTodoListItemForm: _AddTodoListItemForm.default,
-    TodoListItems: _TodoListItems.default,
-    Contributors: _Contributors.default,
-    InviteContributorsForm: _InviteContributorsForm.default
-  },
-  methods: {
-    getItems() {
-      return this.$store.getters.getItemsByListId(this.todoListId);
-    },
-
-    showTitleEditor() {
-      this.editingTitle = true;
-      this.$nextTick(() => {
-        this.$refs.listTitleInput.focus();
-      });
-      this.form.title = this.list.listTitle;
-    },
-
-    async updateListTitle() {
-      this.editingTitle = false;
-      await this.$store.dispatch("updateListTitle", {
-        listId: this.todoListId,
-        listTitle: this.form.title
-      });
-      this.form.title = "";
-    }
-
   }
+
 };
 exports.default = _default;
-        var $20d7fb = exports.default || module.exports;
+        var $1a387c = exports.default || module.exports;
       
-      if (typeof $20d7fb === 'function') {
-        $20d7fb = $20d7fb.options;
+      if (typeof $1a387c === 'function') {
+        $1a387c = $1a387c.options;
       }
     
         /* template */
-        Object.assign($20d7fb, (function () {
+        Object.assign($1a387c, (function () {
           var render = function() {
   var _vm = this
   var _h = _vm.$createElement
   var _c = _vm._self._c || _h
-  return _c("div", { staticClass: "todo-list-wrapper" }, [
-    _c(
-      "div",
-      { staticClass: "todo-list" },
-      [
-        !_vm.editingTitle
-          ? _c(
-              "h1",
-              {
-                staticClass: "todo-list-title mb-2",
-                on: { click: _vm.showTitleEditor }
-              },
-              [_vm._v(_vm._s(_vm.list.listTitle))]
-            )
-          : _vm._e(),
-        _vm._v(" "),
-        _vm.editingTitle
-          ? _c(
-              "b-form",
-              {
-                staticClass: "list-title-editor",
-                on: {
-                  submit: function($event) {
-                    $event.preventDefault()
-                    return _vm.updateListTitle($event)
-                  }
-                }
-              },
-              [
-                _c(
-                  "b-form-group",
-                  [
-                    _c("b-form-input", {
-                      ref: "listTitleInput",
-                      attrs: { id: "title", maxlength: "50", required: "" },
-                      model: {
-                        value: _vm.form.title,
-                        callback: function($$v) {
-                          _vm.$set(_vm.form, "title", $$v)
-                        },
-                        expression: "form.title"
-                      }
-                    })
-                  ],
-                  1
-                ),
-                _vm._v(" "),
-                _c(
-                  "b-button",
-                  {
-                    staticClass: "mb-3",
-                    attrs: { variant: "success", type: "submit" }
-                  },
-                  [_vm._v("Save")]
-                )
-              ],
-              1
-            )
-          : _vm._e(),
-        _vm._v(" "),
-        _c("Contributors", {
-          staticClass: "mb-4",
-          attrs: {
-            todoListContributors: _vm.list.contributors,
-            accountContributors: _vm.contributors
-          }
-        }),
-        _vm._v(" "),
-        _c(
-          "b-row",
-          [
-            _c(
-              "b-col",
-              {
-                staticClass: "mb-3",
-                class: { "col-md-8": _vm.list.role == 3 }
-              },
-              [
-                !_vm.loadingItems
-                  ? _c("TodoListItems", {
-                      attrs: {
-                        listId: _vm.todoListId,
-                        todoListItems: _vm.items
-                      }
-                    })
-                  : _vm._e(),
-                _vm._v(" "),
-                _vm.items && _vm.items.length < 1
-                  ? _c("b-list-group-item", [
-                      _vm._v("Add an item to get started.")
-                    ])
-                  : _vm._e(),
-                _vm._v(" "),
-                _c("AddTodoListItemForm", {
-                  staticClass: "mt-3",
-                  attrs: { todoListId: _vm.todoListId }
-                })
-              ],
-              1
-            ),
-            _vm._v(" "),
-            _vm.list.role == 3
-              ? _c(
-                  "b-col",
-                  { attrs: { md: "4" } },
-                  [
-                    _c("InviteContributorsForm", {
-                      attrs: { listId: this.todoListId }
-                    })
-                  ],
-                  1
-                )
-              : _vm._e()
-          ],
-          1
-        )
-      ],
-      1
-    )
-  ])
+  return _c("div")
 }
 var staticRenderFns = []
 render._withStripped = true
@@ -39217,16 +38823,16 @@ render._withStripped = true
         if (api.compatible) {
           module.hot.accept();
           if (!module.hot.data) {
-            api.createRecord('$20d7fb', $20d7fb);
+            api.createRecord('$1a387c', $1a387c);
           } else {
-            api.reload('$20d7fb', $20d7fb);
+            api.reload('$1a387c', $1a387c);
           }
         }
 
         
       }
     })();
-},{"vue":"node_modules/vue/dist/vue.runtime.esm.js","./AddTodoListItemForm":"vue/components/AddTodoListItemForm.vue","./TodoListItems":"vue/components/TodoListItems.vue","./Contributors":"vue/components/Contributors.vue","./InviteContributorsForm":"vue/components/InviteContributorsForm.vue","vue-confetti":"node_modules/vue-confetti/dist/vue-confetti.js","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js"}],"vue/views/TodoListView.vue":[function(require,module,exports) {
+},{"vue":"node_modules/vue/dist/vue.runtime.esm.js","vue-confetti":"node_modules/vue-confetti/dist/vue-confetti.js","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js"}],"vue/components/TodoList.vue":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -39234,7 +38840,15 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.default = void 0;
 
-var _TodoList = _interopRequireDefault(require("../components/TodoList"));
+var _vuex = require("vuex");
+
+var _TodoListItems = _interopRequireDefault(require("./TodoListItems"));
+
+var _Contributors = _interopRequireDefault(require("./Contributors"));
+
+var _InviteContributorsForm = _interopRequireDefault(require("./InviteContributorsForm"));
+
+var _Confetti = _interopRequireDefault(require("./Confetti"));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -39250,28 +38864,305 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 var _default = {
-  name: 'TodoListView',
-  props: ['todoListId'],
-  components: {
-    TodoList: _TodoList.default
+  name: "TodoList",
+  props: ["todoListId"],
+
+  data() {
+    return {
+      editingTitle: false,
+      todoListForm: {
+        listTitle: ""
+      }
+    };
   },
+
   computed: {
-    loading() {
-      return this.$store.getters.getLoadingState;
+    todoList() {
+      return this.$store.getters.getTodoListById(this.todoListId);
+    },
+
+    ...(0, _vuex.mapState)({
+      contributors: state => state.contributors
+    })
+  },
+  components: {
+    TodoListItems: _TodoListItems.default,
+    Contributors: _Contributors.default,
+    InviteContributorsForm: _InviteContributorsForm.default,
+    Confetti: _Confetti.default
+  },
+  methods: {
+    async updateListTitle() {
+      this.editingTitle = false;
+      await this.$store.dispatch("updateTodoListTitle", {
+        todoListId: this.todoListId,
+        listTitle: this.todoListForm.listTitle
+      });
+      this.todoListForm.listTitle = "";
+    },
+
+    showTitleEditor() {
+      this.editingTitle = true;
+      this.$nextTick(() => {
+        this.$refs.listTitleInput.focus();
+      });
+      this.todoListForm.listTitle = this.todoList.listTitle;
+    },
+
+    setTodoListCompleted() {
+      this.$store.commit("setTodoListCompletedState", {
+        todoListId: this.todoListId,
+        completed: true
+      });
+    },
+
+    setTodoListUncompleted() {
+      this.$store.commit("setTodoListCompletedState", {
+        todoListId: this.todoListId,
+        completed: false
+      });
     }
 
   }
 };
 exports.default = _default;
-        var $090fa3 = exports.default || module.exports;
+        var $98e7b1 = exports.default || module.exports;
       
-      if (typeof $090fa3 === 'function') {
-        $090fa3 = $090fa3.options;
+      if (typeof $98e7b1 === 'function') {
+        $98e7b1 = $98e7b1.options;
       }
     
         /* template */
-        Object.assign($090fa3, (function () {
+        Object.assign($98e7b1, (function () {
+          var render = function() {
+  var _vm = this
+  var _h = _vm.$createElement
+  var _c = _vm._self._c || _h
+  return _c(
+    "div",
+    { staticClass: "todo-list-wrapper" },
+    [
+      _vm.todoList.completed ? _c("Confetti") : _vm._e(),
+      _vm._v(" "),
+      _c(
+        "div",
+        { staticClass: "todo-list" },
+        [
+          !_vm.editingTitle
+            ? _c(
+                "h1",
+                {
+                  staticClass: "todo-list-title mb-2",
+                  on: { click: _vm.showTitleEditor }
+                },
+                [_vm._v(_vm._s(_vm.todoList.listTitle))]
+              )
+            : _vm._e(),
+          _vm._v(" "),
+          _vm.editingTitle
+            ? _c(
+                "b-form",
+                {
+                  staticClass: "list-title-editor",
+                  on: {
+                    submit: function($event) {
+                      $event.preventDefault()
+                      return _vm.updateListTitle($event)
+                    }
+                  }
+                },
+                [
+                  _c(
+                    "b-form-group",
+                    [
+                      _c("b-form-input", {
+                        ref: "listTitleInput",
+                        attrs: { id: "title", maxlength: "50", required: "" },
+                        model: {
+                          value: _vm.todoListForm.listTitle,
+                          callback: function($$v) {
+                            _vm.$set(_vm.todoListForm, "listTitle", $$v)
+                          },
+                          expression: "todoListForm.listTitle"
+                        }
+                      })
+                    ],
+                    1
+                  ),
+                  _vm._v(" "),
+                  _c(
+                    "b-button",
+                    {
+                      staticClass: "mb-3",
+                      attrs: { variant: "success", type: "submit" }
+                    },
+                    [_vm._v("Save")]
+                  )
+                ],
+                1
+              )
+            : _vm._e(),
+          _vm._v(" "),
+          _c("Contributors", {
+            staticClass: "mb-4",
+            attrs: {
+              todoListContributors: _vm.todoList.contributors,
+              accountContributors: _vm.contributors
+            }
+          }),
+          _vm._v(" "),
+          _c(
+            "b-row",
+            [
+              _c(
+                "b-col",
+                {
+                  staticClass: "mb-3",
+                  class: { "col-md-8": _vm.todoList.role == 3 }
+                },
+                [
+                  _c("TodoListItems", {
+                    attrs: { todoListId: _vm.todoListId },
+                    on: {
+                      "todo-list-completed": _vm.setTodoListCompleted,
+                      "todo-list-uncompleted": _vm.setTodoListUncompleted
+                    }
+                  })
+                ],
+                1
+              ),
+              _vm._v(" "),
+              _vm.todoList.role == 3
+                ? _c(
+                    "b-col",
+                    { attrs: { md: "4" } },
+                    [
+                      _c("InviteContributorsForm", {
+                        attrs: { listId: this.todoListId }
+                      })
+                    ],
+                    1
+                  )
+                : _vm._e()
+            ],
+            1
+          )
+        ],
+        1
+      )
+    ],
+    1
+  )
+}
+var staticRenderFns = []
+render._withStripped = true
+
+          return {
+            render: render,
+            staticRenderFns: staticRenderFns,
+            _compiled: true,
+            _scopeId: null,
+            functional: undefined
+          };
+        })());
+      
+    /* hot reload */
+    (function () {
+      if (module.hot) {
+        var api = require('vue-hot-reload-api');
+        api.install(require('vue'));
+        if (api.compatible) {
+          module.hot.accept();
+          if (!module.hot.data) {
+            api.createRecord('$98e7b1', $98e7b1);
+          } else {
+            api.reload('$98e7b1', $98e7b1);
+          }
+        }
+
+        
+      }
+    })();
+},{"vuex":"node_modules/vuex/dist/vuex.esm.js","./TodoListItems":"vue/components/TodoListItems.vue","./Contributors":"vue/components/Contributors.vue","./InviteContributorsForm":"vue/components/InviteContributorsForm.vue","./Confetti":"vue/components/Confetti.vue","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/views/TodoListView.vue":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = void 0;
+
+var _vuex = require("vuex");
+
+var _TodoList = _interopRequireDefault(require("../components/TodoList"));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+var _default = {
+  name: "TodoListView",
+  props: ["todoListId"],
+  components: {
+    TodoList: _TodoList.default
+  },
+  computed: (0, _vuex.mapState)({
+    loadingTodoLists: state => state.loadingTodoLists
+  })
+};
+exports.default = _default;
+        var $2f27a4 = exports.default || module.exports;
+      
+      if (typeof $2f27a4 === 'function') {
+        $2f27a4 = $2f27a4.options;
+      }
+    
+        /* template */
+        Object.assign($2f27a4, (function () {
           var render = function() {
   var _vm = this
   var _h = _vm.$createElement
@@ -39287,12 +39178,12 @@ exports.default = _default;
         },
         [
           _c("b-icon", { attrs: { icon: "chevron-left" } }),
-          _vm._v(" My Lists\n  ")
+          _vm._v("My Lists\n  ")
         ],
         1
       ),
       _vm._v(" "),
-      !_vm.loading
+      !_vm.loadingTodoLists
         ? _c("TodoList", { attrs: { todoListId: _vm.todoListId } })
         : _vm._e()
     ],
@@ -39306,7 +39197,7 @@ render._withStripped = true
             render: render,
             staticRenderFns: staticRenderFns,
             _compiled: true,
-            _scopeId: "data-v-090fa3",
+            _scopeId: "data-v-2f27a4",
             functional: undefined
           };
         })());
@@ -39319,9 +39210,9 @@ render._withStripped = true
         if (api.compatible) {
           module.hot.accept();
           if (!module.hot.data) {
-            api.createRecord('$090fa3', $090fa3);
+            api.createRecord('$2f27a4', $2f27a4);
           } else {
-            api.reload('$090fa3', $090fa3);
+            api.reload('$2f27a4', $2f27a4);
           }
         }
 
@@ -39332,7 +39223,7 @@ render._withStripped = true
       
       }
     })();
-},{"../components/TodoList":"vue/components/TodoList.vue","_css_loader":"node_modules/parcel-bundler/src/builtins/css-loader.js","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/views/Login.vue":[function(require,module,exports) {
+},{"vuex":"node_modules/vuex/dist/vuex.esm.js","../components/TodoList":"vue/components/TodoList.vue","_css_loader":"node_modules/parcel-bundler/src/builtins/css-loader.js","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/views/Login.vue":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -39372,14 +39263,14 @@ var _default = {
   }
 };
 exports.default = _default;
-        var $76be99 = exports.default || module.exports;
+        var $d02f84 = exports.default || module.exports;
       
-      if (typeof $76be99 === 'function') {
-        $76be99 = $76be99.options;
+      if (typeof $d02f84 === 'function') {
+        $d02f84 = $d02f84.options;
       }
     
         /* template */
-        Object.assign($76be99, (function () {
+        Object.assign($d02f84, (function () {
           var render = function() {
   var _vm = this
   var _h = _vm.$createElement
@@ -39431,9 +39322,9 @@ render._withStripped = true
         if (api.compatible) {
           module.hot.accept();
           if (!module.hot.data) {
-            api.createRecord('$76be99', $76be99);
+            api.createRecord('$d02f84', $d02f84);
           } else {
-            api.reload('$76be99', $76be99);
+            api.reload('$d02f84', $d02f84);
           }
         }
 
@@ -39444,13 +39335,123 @@ render._withStripped = true
       
       }
     })();
-},{"axios":"node_modules/axios/index.js","_css_loader":"node_modules/parcel-bundler/src/builtins/css-loader.js","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/components/PaymentMethod.vue":[function(require,module,exports) {
+},{"axios":"node_modules/axios/index.js","_css_loader":"node_modules/parcel-bundler/src/builtins/css-loader.js","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/components/SettingsAccount.vue":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.default = void 0;
+
+var _vuex = require("vuex");
+
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+var _default = {
+  name: "SettingsAccount",
+  computed: (0, _vuex.mapState)({
+    user: state => state.user
+  })
+};
+exports.default = _default;
+        var $6ce1f6 = exports.default || module.exports;
+      
+      if (typeof $6ce1f6 === 'function') {
+        $6ce1f6 = $6ce1f6.options;
+      }
+    
+        /* template */
+        Object.assign($6ce1f6, (function () {
+          var render = function() {
+  var _vm = this
+  var _h = _vm.$createElement
+  var _c = _vm._self._c || _h
+  return _c(
+    "div",
+    { staticClass: "account-settings-wrapper" },
+    [
+      _vm.user.fullName
+        ? _c("b-form-group", { attrs: { label: "Full Name" } }, [
+            _c("p", { staticClass: "form-control" }, [
+              _vm._v(_vm._s(_vm.user.fullName))
+            ])
+          ])
+        : _vm._e(),
+      _vm._v(" "),
+      _vm.user.username
+        ? _c("b-form-group", { attrs: { label: "Username" } }, [
+            _c("p", { staticClass: "form-control" }, [
+              _vm._v(_vm._s(_vm.user.username))
+            ])
+          ])
+        : _vm._e(),
+      _vm._v(" "),
+      _vm.user.email
+        ? _c("b-form-group", { attrs: { label: "Email" } }, [
+            _c("p", { staticClass: "form-control" }, [
+              _vm._v(_vm._s(_vm.user.email))
+            ])
+          ])
+        : _vm._e()
+    ],
+    1
+  )
+}
+var staticRenderFns = []
+render._withStripped = true
+
+          return {
+            render: render,
+            staticRenderFns: staticRenderFns,
+            _compiled: true,
+            _scopeId: "data-v-6ce1f6",
+            functional: undefined
+          };
+        })());
+      
+    /* hot reload */
+    (function () {
+      if (module.hot) {
+        var api = require('vue-hot-reload-api');
+        api.install(require('vue'));
+        if (api.compatible) {
+          module.hot.accept();
+          if (!module.hot.data) {
+            api.createRecord('$6ce1f6', $6ce1f6);
+          } else {
+            api.reload('$6ce1f6', $6ce1f6);
+          }
+        }
+
+        
+        var reloadCSS = require('_css_loader');
+        module.hot.dispose(reloadCSS);
+        module.hot.accept(reloadCSS);
+      
+      }
+    })();
+},{"vuex":"node_modules/vuex/dist/vuex.esm.js","_css_loader":"node_modules/parcel-bundler/src/builtins/css-loader.js","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/components/PaymentMethod.vue":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = void 0;
+//
+//
+//
 //
 //
 //
@@ -39468,14 +39469,14 @@ var _default = {
   }
 };
 exports.default = _default;
-        var $a848c0 = exports.default || module.exports;
+        var $5e4d3b = exports.default || module.exports;
       
-      if (typeof $a848c0 === 'function') {
-        $a848c0 = $a848c0.options;
+      if (typeof $5e4d3b === 'function') {
+        $5e4d3b = $5e4d3b.options;
       }
     
         /* template */
-        Object.assign($a848c0, (function () {
+        Object.assign($5e4d3b, (function () {
           var render = function() {
   var _vm = this
   var _h = _vm.$createElement
@@ -39485,21 +39486,24 @@ exports.default = _default;
     {
       attrs: {
         title:
-          _vm.paymentMethod.cardType +
+          (_vm.paymentMethod.cardType
+            ? _vm.paymentMethod.cardType
+            : "Loading") +
           " ••••" +
-          _vm.paymentMethod.lastFourDigits,
-        "sub-title": "Expires on: " + _vm.paymentMethod.expirationDate
+          (_vm.paymentMethod.lastFourDigits
+            ? _vm.paymentMethod.lastFourDigits
+            : "1111"),
+        "sub-title":
+          "Expires on: " +
+          (_vm.paymentMethod.expirationDate
+            ? _vm.paymentMethod.expirationDate
+            : "...")
       }
     },
     [
-      _c(
-        "b-link",
-        {
-          staticClass: "card-link mt-3 d-block",
-          on: { click: _vm.updatePaymentInfo }
-        },
-        [_vm._v("Update payment method")]
-      )
+      _c("b-link", { staticClass: "card-link mt-3 d-block" }, [
+        _vm._v("Remove card")
+      ])
     ],
     1
   )
@@ -39524,9 +39528,9 @@ render._withStripped = true
         if (api.compatible) {
           module.hot.accept();
           if (!module.hot.data) {
-            api.createRecord('$a848c0', $a848c0);
+            api.createRecord('$5e4d3b', $5e4d3b);
           } else {
-            api.reload('$a848c0', $a848c0);
+            api.reload('$5e4d3b', $5e4d3b);
           }
         }
 
@@ -46747,19 +46751,6 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 //
 //
 //
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
 const braintree = require("braintree-web/client");
 
 const hostedFields = require("braintree-web/hosted-fields");
@@ -46771,8 +46762,7 @@ var _default = {
     return {
       clientToken: "",
       brainTreeClient: null,
-      hostedFieldsClient: null,
-      allowFormSubmissions: false
+      hostedFieldsClient: null
     };
   },
 
@@ -46780,7 +46770,7 @@ var _default = {
     await this.generateClientToken();
     await this.createBrainTreeClient();
     await this.createHostedFieldsClient();
-    this.allowFormSubmissions = true;
+    this.$emit("form-ready");
   },
 
   methods: {
@@ -46807,18 +46797,10 @@ var _default = {
             selector: "#cc-number",
             placeholder: "4111 1111 1111 1111"
           },
-          // cvv: {
-          //   selector: "#cc-cvv",
-          //   placeholder: "123",
-          // },
           expirationDate: {
             selector: "#cc-expiration",
             placeholder: "MM / YY"
-          } // postalCode: {
-          //   selector: "#cc-postal-code",
-          //   placeholder: "11111",
-          // },
-
+          }
         }
       });
     },
@@ -46840,7 +46822,7 @@ var _default = {
             "content-type": "application/json"
           }
         });
-        this.$emit("formSubmitted");
+        this.$emit("form-submitted");
       });
     }
 
@@ -46853,14 +46835,14 @@ var _default = {
   }
 };
 exports.default = _default;
-        var $81fc0e = exports.default || module.exports;
+        var $8dae8a = exports.default || module.exports;
       
-      if (typeof $81fc0e === 'function') {
-        $81fc0e = $81fc0e.options;
+      if (typeof $8dae8a === 'function') {
+        $8dae8a = $8dae8a.options;
       }
     
         /* template */
-        Object.assign($81fc0e, (function () {
+        Object.assign($8dae8a, (function () {
           var render = function() {
   var _vm = this
   var _h = _vm.$createElement
@@ -46927,27 +46909,8 @@ exports.default = _default;
             [
               _c(
                 "b-button",
-                {
-                  attrs: {
-                    type: "submit",
-                    variant: "success",
-                    disabled: !_vm.allowFormSubmissions
-                  }
-                },
+                { attrs: { type: "submit", variant: "success" } },
                 [_vm._v("Submit")]
-              ),
-              _vm._v(" "),
-              _c(
-                "b-button",
-                {
-                  attrs: { variant: "secondary" },
-                  on: {
-                    click: function($event) {
-                      return _vm.$emit("formCancelled")
-                    }
-                  }
-                },
-                [_vm._v("Cancel")]
               )
             ],
             1
@@ -46979,9 +46942,9 @@ render._withStripped = true
         if (api.compatible) {
           module.hot.accept();
           if (!module.hot.data) {
-            api.createRecord('$81fc0e', $81fc0e);
+            api.createRecord('$8dae8a', $8dae8a);
           } else {
-            api.reload('$81fc0e', $81fc0e);
+            api.reload('$8dae8a', $8dae8a);
           }
         }
 
@@ -47063,6 +47026,10 @@ var _default = {
           "content-type": "application/json"
         }
       });
+    },
+
+    setSelectedPlan(planName) {
+      this.selectedPlan = planName;
     }
 
   },
@@ -47071,17 +47038,23 @@ var _default = {
       return this.$store.getters.planName;
     }
 
+  },
+  watch: {
+    currentPlan() {
+      this.setSelectedPlan(this.currentPlan);
+    }
+
   }
 };
 exports.default = _default;
-        var $77fbb6 = exports.default || module.exports;
+        var $96dd18 = exports.default || module.exports;
       
-      if (typeof $77fbb6 === 'function') {
-        $77fbb6 = $77fbb6.options;
+      if (typeof $96dd18 === 'function') {
+        $96dd18 = $96dd18.options;
       }
     
         /* template */
-        Object.assign($77fbb6, (function () {
+        Object.assign($96dd18, (function () {
           var render = function() {
   var _vm = this
   var _h = _vm.$createElement
@@ -47223,9 +47196,9 @@ render._withStripped = true
         if (api.compatible) {
           module.hot.accept();
           if (!module.hot.data) {
-            api.createRecord('$77fbb6', $77fbb6);
+            api.createRecord('$96dd18', $96dd18);
           } else {
-            api.reload('$77fbb6', $77fbb6);
+            api.reload('$96dd18', $96dd18);
           }
         }
 
@@ -47270,15 +47243,21 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 //
 //
 //
+//
+//
+//
+//
+//
+//
 var _default = {
   name: "SettingsBilling",
 
   data() {
     return {
       plan: {},
-      errorMessage: "",
       paymentMethod: {},
-      updatingPaymentInfo: false
+      loadingPaymentInfo: true,
+      loadingCheckoutForm: true
     };
   },
 
@@ -47288,15 +47267,13 @@ var _default = {
 
   methods: {
     async getPaymentMethod() {
-      try {
-        const response = await (0, _axios.default)({
-          method: 'GET',
-          url: 'api/payments'
-        });
-        this.paymentMethod = response.data;
-      } catch (err) {
-        console.log(err);
-      }
+      this.loadingPaymentInfo = true;
+      const response = await (0, _axios.default)({
+        method: "GET",
+        url: "api/payments"
+      });
+      this.paymentMethod = response.data;
+      this.loadingPaymentInfo = false;
     }
 
   },
@@ -47304,17 +47281,23 @@ var _default = {
     PaymentMethod: _PaymentMethod.default,
     CheckoutForm: _CheckoutForm.default,
     ChangePlan: _ChangePlan.default
+  },
+  computed: {
+    loading() {
+      return this.loadingCheckoutForm || this.loadingPaymentInfo;
+    }
+
   }
 };
 exports.default = _default;
-        var $e2b67e = exports.default || module.exports;
+        var $1c308f = exports.default || module.exports;
       
-      if (typeof $e2b67e === 'function') {
-        $e2b67e = $e2b67e.options;
+      if (typeof $1c308f === 'function') {
+        $1c308f = $1c308f.options;
       }
     
         /* template */
-        Object.assign($e2b67e, (function () {
+        Object.assign($1c308f, (function () {
           var render = function() {
   var _vm = this
   var _h = _vm.$createElement
@@ -47323,30 +47306,39 @@ exports.default = _default;
     "section",
     { attrs: { id: "settings-plan" } },
     [
-      _vm.paymentMethod.cardType && !_vm.updatingPaymentInfo
+      !_vm.loadingPaymentInfo
         ? _c("PaymentMethod", {
             staticClass: "mb-3",
-            attrs: { paymentMethod: _vm.paymentMethod },
+            attrs: { paymentMethod: _vm.paymentMethod }
+          })
+        : _vm._e(),
+      _vm._v(" "),
+      _c(
+        "b-overlay",
+        {
+          attrs: {
+            show: _vm.loading,
+            blur: "5px",
+            "spinner-variant": "primary",
+            "spinner-type": "grow",
+            "spinner-small": ""
+          }
+        },
+        [
+          _c("CheckoutForm", {
+            staticClass: "mb-3",
             on: {
-              updatePaymentInfo: function($event) {
-                _vm.updatingPaymentInfo = true
+              "form-submitted": _vm.getPaymentMethod,
+              "form-ready": function($event) {
+                _vm.loadingCheckoutForm = false
               }
             }
           })
-        : _c("CheckoutForm", {
-            staticClass: "mb-3",
-            on: {
-              formSubmitted: function($event) {
-                _vm.getPaymentMethod()
-                _vm.updatingPaymentInfo = false
-              },
-              formCancelled: function($event) {
-                _vm.updatingPaymentInfo = false
-              }
-            }
-          }),
+        ],
+        1
+      ),
       _vm._v(" "),
-      _c("ChangePlan", { staticClass: "mb-3" })
+      _c("ChangePlan")
     ],
     1
   )
@@ -47358,7 +47350,7 @@ render._withStripped = true
             render: render,
             staticRenderFns: staticRenderFns,
             _compiled: true,
-            _scopeId: null,
+            _scopeId: "data-v-1c308f",
             functional: undefined
           };
         })());
@@ -47371,22 +47363,28 @@ render._withStripped = true
         if (api.compatible) {
           module.hot.accept();
           if (!module.hot.data) {
-            api.createRecord('$e2b67e', $e2b67e);
+            api.createRecord('$1c308f', $1c308f);
           } else {
-            api.reload('$e2b67e', $e2b67e);
+            api.reload('$1c308f', $1c308f);
           }
         }
 
         
+        var reloadCSS = require('_css_loader');
+        module.hot.dispose(reloadCSS);
+        module.hot.accept(reloadCSS);
+      
       }
     })();
-},{"axios":"node_modules/axios/index.js","../components/PaymentMethod":"vue/components/PaymentMethod.vue","../components/CheckoutForm":"vue/components/CheckoutForm.vue","../components/ChangePlan":"vue/components/ChangePlan.vue","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/views/Settings.vue":[function(require,module,exports) {
+},{"axios":"node_modules/axios/index.js","../components/PaymentMethod":"vue/components/PaymentMethod.vue","../components/CheckoutForm":"vue/components/CheckoutForm.vue","../components/ChangePlan":"vue/components/ChangePlan.vue","_css_loader":"node_modules/parcel-bundler/src/builtins/css-loader.js","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/views/Settings.vue":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.default = void 0;
+
+var _SettingsAccount = _interopRequireDefault(require("../components/SettingsAccount"));
 
 var _SettingsBilling = _interopRequireDefault(require("../components/SettingsBilling"));
 
@@ -47408,21 +47406,23 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 //
 //
 //
+//
 var _default = {
   name: "Settings",
   components: {
+    SettingsAccount: _SettingsAccount.default,
     SettingsBilling: _SettingsBilling.default
   }
 };
 exports.default = _default;
-        var $7cc9c9 = exports.default || module.exports;
+        var $a8fd0e = exports.default || module.exports;
       
-      if (typeof $7cc9c9 === 'function') {
-        $7cc9c9 = $7cc9c9.options;
+      if (typeof $a8fd0e === 'function') {
+        $a8fd0e = $a8fd0e.options;
       }
     
         /* template */
-        Object.assign($7cc9c9, (function () {
+        Object.assign($a8fd0e, (function () {
           var render = function() {
   var _vm = this
   var _h = _vm.$createElement
@@ -47438,13 +47438,20 @@ exports.default = _default;
             "b-tabs",
             { attrs: { pills: "", vertical: "", "nav-wrapper-class": "w-25" } },
             [
-              _c("b-tab", { attrs: { title: "Account" } }, [
-                _c("h2", [_vm._v("Account")])
-              ]),
+              _c(
+                "b-tab",
+                { attrs: { title: "Account", active: "" } },
+                [
+                  _c("h2", [_vm._v("Account")]),
+                  _vm._v(" "),
+                  _c("SettingsAccount")
+                ],
+                1
+              ),
               _vm._v(" "),
               _c(
                 "b-tab",
-                { attrs: { title: "Billing", active: "" } },
+                { attrs: { title: "Billing" } },
                 [
                   _c("h2", [_vm._v("Billing")]),
                   _vm._v(" "),
@@ -47482,9 +47489,9 @@ render._withStripped = true
         if (api.compatible) {
           module.hot.accept();
           if (!module.hot.data) {
-            api.createRecord('$7cc9c9', $7cc9c9);
+            api.createRecord('$a8fd0e', $a8fd0e);
           } else {
-            api.reload('$7cc9c9', $7cc9c9);
+            api.reload('$a8fd0e', $a8fd0e);
           }
         }
 
@@ -47495,7 +47502,7 @@ render._withStripped = true
       
       }
     })();
-},{"../components/SettingsBilling":"vue/components/SettingsBilling.vue","_css_loader":"node_modules/parcel-bundler/src/builtins/css-loader.js","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"modules/router.js":[function(require,module,exports) {
+},{"../components/SettingsAccount":"vue/components/SettingsAccount.vue","../components/SettingsBilling":"vue/components/SettingsBilling.vue","_css_loader":"node_modules/parcel-bundler/src/builtins/css-loader.js","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"modules/router.js":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -47610,7 +47617,6 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 //
 //
 //
-//
 var _default = {
   name: "Header",
 
@@ -47625,7 +47631,9 @@ var _default = {
       await this.checkAuthState();
       await this.getPlan();
       this.user = this.$store.getters.user;
-    } catch (error) {}
+    } catch (error) {
+      console.error(error);
+    }
   },
 
   methods: {
@@ -47636,7 +47644,9 @@ var _default = {
           url: "api/accounts"
         });
         this.$store.commit("setUserData", user.data);
-      } catch (error) {}
+      } catch (error) {
+        console.error(error);
+      }
     },
 
     async getPlan() {
@@ -47656,14 +47666,14 @@ var _default = {
   }
 };
 exports.default = _default;
-        var $85f3a2 = exports.default || module.exports;
+        var $f4778d = exports.default || module.exports;
       
-      if (typeof $85f3a2 === 'function') {
-        $85f3a2 = $85f3a2.options;
+      if (typeof $f4778d === 'function') {
+        $f4778d = $f4778d.options;
       }
     
         /* template */
-        Object.assign($85f3a2, (function () {
+        Object.assign($f4778d, (function () {
           var render = function() {
   var _vm = this
   var _h = _vm.$createElement
@@ -47673,67 +47683,82 @@ exports.default = _default;
         "b-navbar",
         {
           staticClass: "fixed-top",
-          attrs: {
-            toggleable: "sm",
-            type: "light",
-            variant: "light",
-            id: "navbar"
-          }
+          attrs: { toggleable: "sm", type: "light", id: "navbar" }
         },
         [
-          _c("b-navbar-brand", [_vm._v("Todo")]),
-          _vm._v(" "),
-          _vm.user.id
-            ? _c(
-                "div",
-                { staticClass: "user-info ml-auto" },
-                [
-                  _c(
-                    "b-dropdown",
-                    {
-                      staticClass: "account-dropdown",
-                      attrs: { right: "" },
-                      scopedSlots: _vm._u(
-                        [
-                          {
-                            key: "button-content",
-                            fn: function() {
-                              return [
-                                _c("b-avatar", {
-                                  attrs: { src: _vm.user.pictureUrl }
-                                })
-                              ]
-                            },
-                            proxy: true
-                          }
-                        ],
-                        null,
-                        false,
-                        2889888370
-                      )
-                    },
+          _c(
+            "b-container",
+            [
+              _c("b-navbar-brand", [
+                _c(
+                  "div",
+                  { staticClass: "brand-text" },
+                  [
+                    _c("b-icon-check-circle-fill", {
+                      staticStyle: { "margin-right": "7px" }
+                    }),
+                    _vm._v("Todo\n      ")
+                  ],
+                  1
+                )
+              ]),
+              _vm._v(" "),
+              _vm.user.id
+                ? _c(
+                    "div",
+                    { staticClass: "user-info ml-auto" },
                     [
-                      _vm._v(" "),
-                      _c("b-dropdown-item", { attrs: { to: "/lists" } }, [
-                        _vm._v("My Lists")
-                      ]),
-                      _vm._v(" "),
-                      _c("b-dropdown-divider"),
-                      _vm._v(" "),
-                      _c("b-dropdown-item", { attrs: { to: "/settings" } }, [
-                        _vm._v("Settings")
-                      ]),
-                      _vm._v(" "),
-                      _c("b-dropdown-item", { on: { click: _vm.logout } }, [
-                        _vm._v("Sign Out")
-                      ])
+                      _c(
+                        "b-dropdown",
+                        {
+                          staticClass: "account-dropdown",
+                          attrs: { right: "" },
+                          scopedSlots: _vm._u(
+                            [
+                              {
+                                key: "button-content",
+                                fn: function() {
+                                  return [
+                                    _c("b-avatar", {
+                                      attrs: { src: _vm.user.pictureUrl }
+                                    })
+                                  ]
+                                },
+                                proxy: true
+                              }
+                            ],
+                            null,
+                            false,
+                            2889888370
+                          )
+                        },
+                        [
+                          _vm._v(" "),
+                          _c("b-dropdown-item", { attrs: { to: "/lists" } }, [
+                            _vm._v("My Lists")
+                          ]),
+                          _vm._v(" "),
+                          _c("b-dropdown-divider"),
+                          _vm._v(" "),
+                          _c(
+                            "b-dropdown-item",
+                            { attrs: { to: "/settings" } },
+                            [_vm._v("Settings")]
+                          ),
+                          _vm._v(" "),
+                          _c("b-dropdown-item", { on: { click: _vm.logout } }, [
+                            _vm._v("Sign Out")
+                          ])
+                        ],
+                        1
+                      )
                     ],
                     1
                   )
-                ],
-                1
-              )
-            : _vm._e()
+                : _vm._e()
+            ],
+            1
+          )
         ],
         1
       )
@@ -47759,9 +47784,9 @@ render._withStripped = true
         if (api.compatible) {
           module.hot.accept();
           if (!module.hot.data) {
-            api.createRecord('$85f3a2', $85f3a2);
+            api.createRecord('$f4778d', $f4778d);
           } else {
-            api.reload('$85f3a2', $85f3a2);
+            api.reload('$f4778d', $f4778d);
           }
         }
 
@@ -47797,70 +47822,41 @@ var _default = {
     Header: _Header.default
   },
 
-  async beforeCreate() {
-    try {
-      await this.$store.dispatch("loadTodoLists");
-    } catch (error) {}
+  async created() {
+    await this.$store.dispatch("getTodoLists");
   },
 
   mounted() {
-    this.$store.state.connection.start().catch(err => console.error(err.toString()));
-    this.$store.state.connection.on("InvitationSent", list => this.$store.commit("addTodoList", {
-      list
-    }));
-    this.$store.state.connection.on("InvitationAccepted", list => this.$store.dispatch("refreshContributors", {
-      list
-    }));
-    this.$store.state.connection.on("ContributorLeft", list => this.$store.dispatch("refreshContributors", {
-      list
-    }));
-    this.$store.state.connection.on("ListNameUpdated", (listId, listTitle) => this.$store.commit("updateListTitle", {
-      listId,
+    // Establish connection with SignalR
+    this.$store.state.connection.start().catch(err => console.error(err.toString())); // Todo list completed state changed
+
+    this.$store.state.connection.on("ListCompletedStateChanged", (todoListId, completed) => this.$store.commit("setTodoListCompletedState", {
+      todoListId,
+      completed
+    })); // Todo list name changed
+
+    this.$store.state.connection.on("ListNameUpdated", (todoListId, listTitle) => this.$store.commit("updateTodoListTitle", {
+      todoListId,
       listTitle
-    }));
-    this.$store.state.connection.on("ListCompletedStateChanged", (listId, listCompletedState) => this.$store.commit("setTodoListCompletedState", {
-      listId,
-      listCompletedState
-    }));
-    this.$store.state.connection.on("ItemCreated", (listId, item) => {
-      this.$store.commit("addItem", {
-        listId,
-        item
-      });
-      this.$store.commit("setSubItems", {
-        todoItemId: item.id,
-        subItems: []
-      });
-    });
-    this.$store.state.connection.on("ItemCompleted", item => this.$store.commit("updateItemCompletedState", {
-      item
-    }));
-    this.$store.state.connection.on("ItemUpdated", item => this.$store.commit("updateItem", {
-      item
-    }));
-    this.$store.state.connection.on("SubItemCreated", subItem => this.$store.commit("addSubItem", {
-      subItem
-    }));
-    this.$store.state.connection.on("SubItemCompletedStateChanged", subItem => this.$store.commit("updateSubItemCompletedState", {
-      todoItemId: subItem.listItemId,
-      subItemId: subItem.id,
-      completed: subItem.completed
-    }));
-    this.$store.state.connection.on("SubItemUpdated", subItem => this.$store.commit("updateSubItem", {
-      subItem
-    }));
+    })); // Invitation sent
+
+    this.$store.state.connection.on("InvitationSent", async () => await this.$store.dispatch("getTodoLists")); // Invitation accepted
+
+    this.$store.state.connection.on("InvitationAccepted", async () => await this.$store.dispatch("getTodoLists")); // Contributor left
+
+    this.$store.state.connection.on("ContributorLeft", async () => await this.$store.dispatch("getTodoLists"));
   }
 
 };
 exports.default = _default;
-        var $06aed4 = exports.default || module.exports;
+        var $fcc03e = exports.default || module.exports;
       
-      if (typeof $06aed4 === 'function') {
-        $06aed4 = $06aed4.options;
+      if (typeof $fcc03e === 'function') {
+        $fcc03e = $fcc03e.options;
       }
     
         /* template */
-        Object.assign($06aed4, (function () {
+        Object.assign($fcc03e, (function () {
           var render = function() {
   var _vm = this
   var _h = _vm.$createElement
@@ -47892,9 +47888,9 @@ render._withStripped = true
         if (api.compatible) {
           module.hot.accept();
           if (!module.hot.data) {
-            api.createRecord('$06aed4', $06aed4);
+            api.createRecord('$fcc03e', $fcc03e);
           } else {
-            api.reload('$06aed4', $06aed4);
+            api.reload('$fcc03e', $fcc03e);
           }
         }
 
@@ -97235,7 +97231,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "55880" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "49836" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};

@@ -13,57 +13,51 @@ export default {
   components: {
     Header,
   },
-  async beforeCreate() {
-    try {
-      await this.$store.dispatch("loadTodoLists");
-    } catch (error) {}
+  async created() {
+    await this.$store.dispatch("getTodoLists");
   },
   mounted() {
+    // Establish connection with SignalR
     this.$store.state.connection
       .start()
       .catch((err) => console.error(err.toString()));
-    this.$store.state.connection.on("InvitationSent", (list) =>
-      this.$store.commit("addTodoList", { list })
-    );
-    this.$store.state.connection.on("InvitationAccepted", (list) =>
-      this.$store.dispatch("refreshContributors", { list })
-    );
-    this.$store.state.connection.on("ContributorLeft", (list) =>
-      this.$store.dispatch("refreshContributors", { list })
-    );
-    this.$store.state.connection.on("ListNameUpdated", (listId, listTitle) =>
-      this.$store.commit("updateListTitle", { listId, listTitle })
-    );
+
+    // Todo list completed state changed
     this.$store.state.connection.on(
       "ListCompletedStateChanged",
-      (listId, listCompletedState) =>
+      (todoListId, completed) =>
         this.$store.commit("setTodoListCompletedState", {
-          listId,
-          listCompletedState,
+          todoListId,
+          completed,
         })
     );
-    this.$store.state.connection.on("ItemCreated", (listId, item) => {
-      this.$store.commit("addItem", { listId, item });
-      this.$store.commit("setSubItems", { todoItemId: item.id, subItems: [] });
-    });
-    this.$store.state.connection.on("ItemCompleted", (item) =>
-      this.$store.commit("updateItemCompletedState", { item })
+
+    // Todo list name changed
+    this.$store.state.connection.on(
+      "ListNameUpdated",
+      (todoListId, listTitle) =>
+        this.$store.commit("updateTodoListTitle", {
+          todoListId,
+          listTitle,
+        })
     );
-    this.$store.state.connection.on("ItemUpdated", (item) =>
-      this.$store.commit("updateItem", { item })
+
+    // Invitation sent
+    this.$store.state.connection.on(
+      "InvitationSent",
+      async () => await this.$store.dispatch("getTodoLists")
     );
-    this.$store.state.connection.on("SubItemCreated", (subItem) =>
-      this.$store.commit("addSubItem", { subItem })
+
+    // Invitation accepted
+    this.$store.state.connection.on(
+      "InvitationAccepted",
+      async () => await this.$store.dispatch("getTodoLists")
     );
-    this.$store.state.connection.on("SubItemCompletedStateChanged", (subItem) =>
-      this.$store.commit("updateSubItemCompletedState", {
-        todoItemId: subItem.listItemId,
-        subItemId: subItem.id,
-        completed: subItem.completed,
-      })
-    );
-    this.$store.state.connection.on("SubItemUpdated", (subItem) =>
-      this.$store.commit("updateSubItem", { subItem })
+
+    // Contributor left
+    this.$store.state.connection.on(
+      "ContributorLeft",
+      async () => await this.$store.dispatch("getTodoLists")
     );
   },
 };
@@ -75,8 +69,16 @@ export default {
 }
 
 #content {
-  padding: 75px 20px;
+  padding: 85px 20px;
   height: 100vh;
+
+  @media screen and (min-width: 768px) {
+    padding: 100px 20px;
+
+    h1 {
+      font-size: 50px;
+    }
+  }
 
   h1,
   h2,

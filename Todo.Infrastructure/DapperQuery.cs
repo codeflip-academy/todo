@@ -64,6 +64,18 @@ namespace TodoWebAPI
                 return result.ToList();
             }
         }
+        public async Task<TodoListItemDto> GetTodoItemByIdAsync(Guid itemId)
+        {
+            using (var connection = new SqlConnection(_connectionString))
+            {
+                await connection.OpenAsync();
+
+                var result = await connection.QueryAsync<TodoListItemDto>("SELECT * From TodoListItems WHERE ID = @id", new { id = itemId });
+                var item = result.FirstOrDefault();
+
+                return item;
+            }
+        }
 
         public async Task<TodoListDto> GetListAsync(Guid listId)
         {

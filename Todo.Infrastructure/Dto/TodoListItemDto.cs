@@ -15,5 +15,6 @@ namespace Todo.Infrastructure.Dto
         public string Name { get; set; }
         public Guid? ListId { get; set; }
         public DateTime? DueDate { get; set; }
+        public bool HasSubItems { get; set; }
     }
 }
