@@ -1,6 +1,9 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 using Todo.Domain;
 
 namespace Todo.Infrastructure.EFRepositories
@@ -22,6 +25,21 @@ namespace Todo.Infrastructure.EFRepositories
                 BillingCycleEnd = billingCycleEnd,
                 PlanId = planId
             });
+        }
+
+        public async Task<List<Downgrade>> GetDowngradesAsync()
+        {
+            return _context.Downgrades.ToList();
+        }
+
+        public async Task<Downgrade> GetDowngradeByAccountIdAsync(Guid accountId)
+        {
+            return await _context.Downgrades.Where(x => x.AccountId == accountId).FirstOrDefaultAsync();
+        }
+
+        public async Task Remove(Downgrade downgrade)
+        {
+            _context.Downgrades.Remove(downgrade);
         }
 
         public Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)

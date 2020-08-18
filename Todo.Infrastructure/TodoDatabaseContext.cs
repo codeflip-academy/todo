@@ -201,7 +201,7 @@ namespace Todo.Infrastructure
                 .ToTable("AccountsLists")
                 .HasDiscriminator<byte>("Role")
                 .HasValue<RoleOwner>(Roles.Owner)
-                .HasValue<RoleContributor>(Roles.Contributer)
+                .HasValue<RoleContributor>(Roles.Contributor)
                 .HasValue<RoleInvited>(Roles.Invited)
                 .HasValue<RoleDecline>(Roles.Declined)
                 .HasValue<RoleLeft>(Roles.Left);

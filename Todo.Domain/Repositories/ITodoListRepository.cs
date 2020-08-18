@@ -8,8 +8,9 @@ namespace Todo.Domain.Repositories
     public interface ITodoListRepository : IRepository
     {
         Task AddTodoListAsync(TodoList list, Guid accountId);
-        Task<List<TodoList>> FindTodoListsByAccountIdAsync(Guid accountId, int pageSize);
+        Task<List<TodoList>> FindTodoListsByAccountIdAsync(Guid accountId);
         Task<TodoList> FindTodoListIdByIdAsync(Guid listId);
+        Task<List<TodoList>> GetNumberOfTodoListsByAccountIdAsync(Guid accountId, int numberOfLists);
         Task RemoveTodoListAsync(Guid listId);
         void UpdateListAsync(TodoList list);
     }

@@ -75,6 +75,13 @@ namespace Todo.Infrastructure.EFRepositories
                 .FirstOrDefaultAsync();
         }
 
+        public async Task<RoleOwner> FindAccountsListsOwnerByAccountIdAndListIdAsync(Guid accountId, Guid listId)
+        {
+            return await _context.AccountsListsOwner
+                .Where(a => a.AccountId == accountId && a.ListId == listId)
+                .FirstOrDefaultAsync();
+        }
+
         public Guid NextId()
         {
             return _sequentialIdGenerator.NextId();

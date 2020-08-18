@@ -2,13 +2,7 @@
   <section id="settings-plan">
     <PaymentMethod v-if="!loadingPaymentInfo" :paymentMethod="paymentMethod" class="mb-3"></PaymentMethod>
 
-    <b-overlay
-      :show="loading"
-      blur="5px"
-      spinner-variant="primary"
-      spinner-type="grow"
-      spinner-small
-    >
+    <b-overlay :show="false" blur="5px" spinner-variant="primary" spinner-type="grow" spinner-small>
       <CheckoutForm
         @form-submitted="getPaymentMethod"
         @form-ready="loadingCheckoutForm = false;"

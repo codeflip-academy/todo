@@ -78,13 +78,13 @@ namespace Todo.Domain
         }
         public void RemoveContribuor(string email)
         {
-            if(email == null)
+            if (email == null)
                 return;
             Contributors.Remove(email);
         }
         public void UpdateListName()
         {
-            DomainEvents.Add(new ListNameUpdated { List = this,  });
+            DomainEvents.Add(new ListNameUpdated { List = this, });
         }
 
         public int GetContributorCountExcludingOwner()

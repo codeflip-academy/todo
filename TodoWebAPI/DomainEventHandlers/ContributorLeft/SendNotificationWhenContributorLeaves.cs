@@ -17,29 +17,30 @@ namespace TodoWebAPI.DomainEventHandlers
     {
         private readonly IHubContext<NotificationHub> _hubContext;
         private readonly ITodoListRepository _todoListRepository;
-        private readonly IAccountRepository _accounts;
         private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly IAccountRepository _accountRepository;
 
         public SendNotificationWhenContributorLeaves(
             IHubContext<NotificationHub> hubContext,
             ITodoListRepository todoListRepository,
             IAccountRepository accountsLists,
-            IHttpContextAccessor httpContextAccessor)
+            IHttpContextAccessor httpContextAccessor,
+            IAccountRepository accountRepository)
         {
             _hubContext = hubContext;
             _todoListRepository = todoListRepository;
-            _accounts = accountsLists;
             _httpContextAccessor = httpContextAccessor;
+            _accountRepository = accountRepository;
         }
         public async Task Handle(ContributorLeft notification, CancellationToken cancellationToken)
         {
             var list = await _todoListRepository.FindTodoListIdByIdAsync(notification.ListId);
+            var account = await _accountRepository.FindAccountByIdAsync(notification.AccountId);
 
-            var usersExceptYou = RemoveSelfFromContributorSignalRHelper.RemoveContributor(list, _httpContextAccessor.HttpContext.User.FindFirst(c => c.Type == "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress").Value);
+            var usersExceptYou = RemoveSelfFromContributorSignalRHelper.RemoveContributor(list, account.Email);
 
             await _hubContext.Clients.Users(usersExceptYou).SendAsync("ContributorLeft", list);
         }
 
-        
     }
 }

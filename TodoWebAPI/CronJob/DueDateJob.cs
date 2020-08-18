@@ -22,8 +22,9 @@ namespace TodoWebAPI.CronJob
             IScheduleConfig<DueDateJob> config,
             ILogger<DueDateJob> logger,
             IEmailService emailService,
-            DapperQuery dapperQuery)
-            : base(config.CronExpression, config.TimeZoneInfo)
+            DapperQuery dapperQuery,
+            IServiceProvider serviceProvider)
+            : base(config.CronExpression, config.TimeZoneInfo, serviceProvider)
         {
             _configuration = configuration;
             _logger = logger;
@@ -37,7 +38,7 @@ namespace TodoWebAPI.CronJob
             return base.StartAsync(cancellationToken);
         }
 
-        public override async Task DoWork(CancellationToken cancellationToken)
+        public override async Task DoWork(CancellationToken cancellationToken, IServiceProvider serviceProvider)
         {
             var items = await _dapperQuery.GetItemsFromListItemsAsync();
 
@@ -47,7 +48,7 @@ namespace TodoWebAPI.CronJob
                 {
                     var contributors = await _dapperQuery.GetContributorsByListIdAsync(item.ListId.GetValueOrDefault());
 
-                    foreach(var contributor in contributors)
+                    foreach (var contributor in contributors)
                     {
                         var email = new EmailMessage()
                         {
@@ -58,7 +59,7 @@ namespace TodoWebAPI.CronJob
                         };
                         await _emailService.SendEmailAsync(email);
                     }
-                   
+
                 }
             }
 

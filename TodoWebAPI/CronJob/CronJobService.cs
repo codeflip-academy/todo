@@ -1,4 +1,5 @@
 ﻿using Cronos;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using System;
 using System.Collections.Generic;
@@ -13,11 +14,13 @@ namespace TodoWebAPI.CronJob
         private System.Timers.Timer _timer;
         private readonly CronExpression _expression;
         private readonly TimeZoneInfo _timeZoneInfo;
+        private readonly IServiceProvider _serviceProvider;
 
-        protected CronJobService(string cronExpression, TimeZoneInfo timeZoneInfo)
+        protected CronJobService(string cronExpression, TimeZoneInfo timeZoneInfo, IServiceProvider serviceProvider)
         {
             _expression = CronExpression.Parse(cronExpression);
             _timeZoneInfo = timeZoneInfo;
+            _serviceProvider = serviceProvider;
         }
 
         public virtual async Task StartAsync(CancellationToken cancellationToken)
@@ -39,7 +42,9 @@ namespace TodoWebAPI.CronJob
 
                     if (!cancellationToken.IsCancellationRequested)
                     {
-                        await DoWork(cancellationToken);
+                        using var scope = _serviceProvider.CreateScope();
+
+                        await DoWork(cancellationToken, scope.ServiceProvider);
                     }
 
                     if (!cancellationToken.IsCancellationRequested)
@@ -52,7 +57,7 @@ namespace TodoWebAPI.CronJob
             await Task.CompletedTask;
         }
 
-        public virtual async Task DoWork(CancellationToken cancellationToken)
+        public virtual async Task DoWork(CancellationToken cancellationToken, IServiceProvider serviceProvider)
         {
             await Task.Delay(5000, cancellationToken);  // do the work
         }

@@ -47243,12 +47243,6 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 //
 //
 //
-//
-//
-//
-//
-//
-//
 var _default = {
   name: "SettingsBilling",
 
@@ -47317,7 +47311,7 @@ exports.default = _default;
         "b-overlay",
         {
           attrs: {
-            show: _vm.loading,
+            show: false,
             blur: "5px",
             "spinner-variant": "primary",
             "spinner-type": "grow",
@@ -97231,7 +97225,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "49836" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "57525" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};
