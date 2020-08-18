@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using Todo.Core;
+using Todo.Domain.DomainEvents;
 
 namespace Todo.Domain
 {
@@ -8,5 +10,10 @@ namespace Todo.Domain
         public Guid AccountId { get; set; }
         public DateTime? BillingCycleEnd { get; set; }
         public int PlanId { get; set; }
+
+        public void Downgraded(List<TodoList> numberOfListsToDelete)
+        {
+            DomainEvents.Add(new PlanDowngraded { Downgrade = this, NumberOfListsToDelete = numberOfListsToDelete });
+        }
     }
 }

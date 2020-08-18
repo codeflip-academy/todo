@@ -13,5 +13,7 @@ namespace Todo.Domain.Repositories
         Task<List<TodoList>> GetNumberOfTodoListsByAccountIdAsync(Guid accountId, int numberOfLists);
         Task RemoveTodoListAsync(Guid listId);
         void UpdateListAsync(TodoList list);
+        Task<List<TodoList>> GetOwnedListsAsync(Guid accountId);
+        Task<List<TodoList>> GetUnOwnedListsAsync(Guid accountId);
     }
 }

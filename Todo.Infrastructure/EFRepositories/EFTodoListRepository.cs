@@ -85,5 +85,25 @@ namespace TodoWebAPI.Data
         {
             _context.TodoLists.Update(list);
         }
+
+        public async Task<List<TodoList>> GetOwnedListsAsync(Guid accountId)
+        {
+            var todoLists = (from list in _context.TodoLists
+                             join accountList in _context.AccountsLists on list.Id equals accountList.ListId
+                             where accountList.Role == Roles.Owner && accountList.AccountId == accountId
+                             select list).ToList();
+
+            return todoLists;
+        }
+
+        public async Task<List<TodoList>> GetUnOwnedListsAsync(Guid accountId)
+        {
+            var todoLists = (from list in _context.TodoLists
+                             join accountList in _context.AccountsLists on list.Id equals accountList.ListId
+                             where accountList.Role == Roles.Contributor && accountList.AccountId == accountId
+                             select list).ToList();
+
+            return todoLists;
+        }
     }
 }
