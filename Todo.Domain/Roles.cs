@@ -8,7 +8,7 @@ namespace Todo.Domain
     {
         public readonly static byte Invited = 0;
         public readonly static byte Declined = 1;
-        public readonly static byte Contributer = 2;
+        public readonly static byte Contributor = 2;
         public readonly static byte Owner = 3;
         public readonly static byte Left = 4;
     }

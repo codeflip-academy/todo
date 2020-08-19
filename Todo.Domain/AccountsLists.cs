@@ -35,7 +35,7 @@ namespace Todo.Domain
         }
         public void MakeContributor()
         {
-            base.Role = Roles.Contributer;
+            base.Role = Roles.Contributor;
         }
         public void MakeDeclined()
         {
@@ -55,12 +55,12 @@ namespace Todo.Domain
     {
         public void Contributed()
         {
-            base.Role = Roles.Contributer;
+            base.Role = Roles.Contributor;
         }
         public void MakeLeft()
         {
             base.Role = Roles.Left;
-            DomainEvents.Add(new ContributorLeft() { ListId = this.ListId });
+            DomainEvents.Add(new ContributorLeft() { ListId = this.ListId, AccountId = this.AccountId });
         }
     }
 

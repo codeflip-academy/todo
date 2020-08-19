@@ -45,6 +45,7 @@ namespace Todo.Infrastructure
         public virtual DbSet<RoleLeft> AccountsListsLeft { get; set; }
         public virtual DbSet<Plan> Plans { get; set; }
         public virtual DbSet<Payment> PaymentMethods { get; set; }
+        public virtual DbSet<Downgrade> Downgrades { get; set; }
         public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         {
             var saveChanges = await base.SaveChangesAsync(cancellationToken);
@@ -200,7 +201,7 @@ namespace Todo.Infrastructure
                 .ToTable("AccountsLists")
                 .HasDiscriminator<byte>("Role")
                 .HasValue<RoleOwner>(Roles.Owner)
-                .HasValue<RoleContributor>(Roles.Contributer)
+                .HasValue<RoleContributor>(Roles.Contributor)
                 .HasValue<RoleInvited>(Roles.Invited)
                 .HasValue<RoleDecline>(Roles.Declined)
                 .HasValue<RoleLeft>(Roles.Left);
@@ -259,6 +260,21 @@ namespace Todo.Infrastructure
                    .Property(e => e.AccountId)
                    .HasColumnName("AccountID");
            });
+
+            modelBuilder.Entity<Downgrade>(entity =>
+            {
+                entity
+                    .HasKey(e => e.AccountId);
+
+                entity
+                    .Property(e => e.BillingCycleEnd)
+                    .HasColumnName("BillingCycleEnd");
+
+                entity
+                    .Property(e => e.PlanId)
+                    .HasColumnName("PlanID");
+
+            });
         }
     }
 }

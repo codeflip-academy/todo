@@ -46951,7 +46951,7 @@ render._withStripped = true
         
       }
     })();
-},{"axios":"node_modules/axios/index.js","braintree-web/client":"node_modules/braintree-web/client/index.js","braintree-web/hosted-fields":"node_modules/braintree-web/hosted-fields/index.js","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/components/ChangePlan.vue":[function(require,module,exports) {
+},{"axios":"node_modules/axios/index.js","braintree-web/client":"node_modules/braintree-web/client/index.js","braintree-web/hosted-fields":"node_modules/braintree-web/hosted-fields/index.js","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/components/CouponForm.vue":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -47004,6 +47004,285 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 //
 //
 //
+//
+//
+//
+//
+var _default = {
+  name: "CouponForm",
+
+  data() {
+    return {
+      couponCode: "",
+      couponRedeemed: null,
+      couponRedeemedMessage: ""
+    };
+  },
+
+  methods: {
+    async applyCoupon() {
+      try {
+        const response = await (0, _axios.default)({
+          method: "POST",
+          url: "/api/payments/coupons/redeem",
+          data: JSON.stringify({
+            couponCode: this.couponCode
+          }),
+          headers: {
+            "content-type": "application/json"
+          }
+        });
+        this.showCodeRedemptionMessage(response.data, true);
+      } catch (error) {
+        console.log("error");
+        this.showCodeRedemptionMessage("Unable to redeem code", false);
+      }
+    },
+
+    showCodeRedemptionMessage(msg, status) {
+      this.couponRedeemed = status;
+      this.couponRedeemedMessage = msg;
+      this.couponCode = "";
+    }
+
+  }
+};
+exports.default = _default;
+        var $4638de = exports.default || module.exports;
+      
+      if (typeof $4638de === 'function') {
+        $4638de = $4638de.options;
+      }
+    
+        /* template */
+        Object.assign($4638de, (function () {
+          var render = function() {
+  var _vm = this
+  var _h = _vm.$createElement
+  var _c = _vm._self._c || _h
+  return _c(
+    "div",
+    { staticClass: "coupon-form-wrapper" },
+    [
+      _c("div", [
+        _c("small", [
+          _c(
+            "a",
+            {
+              directives: [
+                {
+                  name: "b-toggle",
+                  rawName: "v-b-toggle.coupon-form-collapse",
+                  modifiers: { "coupon-form-collapse": true }
+                }
+              ],
+              staticClass: "text-muted",
+              attrs: { href: "#" },
+              on: {
+                click: function($event) {
+                  $event.preventDefault()
+                }
+              }
+            },
+            [_vm._v("Have a coupon code?")]
+          )
+        ])
+      ]),
+      _vm._v(" "),
+      _c(
+        "b-collapse",
+        { attrs: { id: "coupon-form-collapse" } },
+        [
+          _c(
+            "b-form",
+            {
+              staticClass: "mt-4",
+              attrs: { id: "coupon-form" },
+              on: {
+                submit: function($event) {
+                  $event.preventDefault()
+                  return _vm.applyCoupon($event)
+                }
+              }
+            },
+            [
+              _c(
+                "b-row",
+                { staticClass: "align-items-end" },
+                [
+                  _c(
+                    "b-col",
+                    [
+                      _c(
+                        "b-form-group",
+                        {
+                          staticClass: "mb-0",
+                          attrs: { label: "Coupon code", for: "coupon-code" }
+                        },
+                        [
+                          _c("b-form-input", {
+                            attrs: {
+                              id: "coupon-code",
+                              type: "text",
+                              pattern: ".{6,}",
+                              maxlength: "6",
+                              required: "required",
+                              autofocus: "autofocus",
+                              title: "6 characters required"
+                            },
+                            model: {
+                              value: _vm.couponCode,
+                              callback: function($$v) {
+                                _vm.couponCode = $$v
+                              },
+                              expression: "couponCode"
+                            }
+                          })
+                        ],
+                        1
+                      )
+                    ],
+                    1
+                  ),
+                  _vm._v(" "),
+                  _c(
+                    "b-col",
+                    { staticClass: "text-right" },
+                    [
+                      _c(
+                        "b-button",
+                        {
+                          attrs: {
+                            variant: "success",
+                            size: "sm",
+                            type: "submit"
+                          }
+                        },
+                        [_vm._v("Apply coupon")]
+                      )
+                    ],
+                    1
+                  )
+                ],
+                1
+              ),
+              _vm._v(" "),
+              _c(
+                "div",
+                { staticClass: "form-submission-response" },
+                [
+                  _c(
+                    "b-alert",
+                    {
+                      staticClass: "mt-3",
+                      class: {
+                        "alert-success": _vm.couponRedeemed,
+                        "alert-danger": !_vm.couponRedeemed
+                      },
+                      attrs: { show: _vm.couponRedeemedMessage !== "" }
+                    },
+                    [_vm._v(_vm._s(_vm.couponRedeemedMessage))]
+                  )
+                ],
+                1
+              )
+            ],
+            1
+          )
+        ],
+        1
+      )
+    ],
+    1
+  )
+}
+var staticRenderFns = []
+render._withStripped = true
+
+          return {
+            render: render,
+            staticRenderFns: staticRenderFns,
+            _compiled: true,
+            _scopeId: null,
+            functional: undefined
+          };
+        })());
+      
+    /* hot reload */
+    (function () {
+      if (module.hot) {
+        var api = require('vue-hot-reload-api');
+        api.install(require('vue'));
+        if (api.compatible) {
+          module.hot.accept();
+          if (!module.hot.data) {
+            api.createRecord('$4638de', $4638de);
+          } else {
+            api.reload('$4638de', $4638de);
+          }
+        }
+
+        
+      }
+    })();
+},{"axios":"node_modules/axios/index.js","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/components/ChangePlan.vue":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = void 0;
+
+var _axios = _interopRequireDefault(require("axios"));
+
+var _CouponForm = _interopRequireDefault(require("./CouponForm"));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 var _default = {
   name: "ChangePlan",
 
@@ -47014,6 +47293,9 @@ var _default = {
     };
   },
 
+  components: {
+    CouponForm: _CouponForm.default
+  },
   methods: {
     async changePlan() {
       const response = await (0, _axios.default)({
@@ -47076,25 +47358,31 @@ exports.default = _default;
                       _vm._v("Todo " + _vm._s(_vm.selectedPlan))
                     ]),
                     _vm._v(" "),
-                    _c("p", { staticClass: "text-muted mb-0" }, [
-                      _vm.selectedPlan === "Free"
-                        ? _c("small", [_vm._v("Maximum of 10 lists.")])
-                        : _vm._e(),
-                      _vm._v(" "),
-                      _vm.selectedPlan === "Basic"
-                        ? _c("small", [
-                            _vm._v(
-                              "50 lists, 5 contributors per list, due dates, and notifications."
-                            )
-                          ])
-                        : _vm._e(),
-                      _vm._v(" "),
-                      _vm.selectedPlan === "Premium"
-                        ? _c("small", [
-                            _vm._v("Unlimited lists and contributors.")
-                          ])
-                        : _vm._e()
-                    ])
+                    _c(
+                      "p",
+                      { staticClass: "text-muted mb-0 plan-description" },
+                      [
+                        _vm.selectedPlan === "Free"
+                          ? _c("small", [_vm._v("Maximum of 10 lists.")])
+                          : _vm._e(),
+                        _vm._v(" "),
+                        _vm.selectedPlan === "Basic"
+                          ? _c("small", [
+                              _vm._v(
+                                "Maximum of 5 lists and contributors, due dates, and notifications."
+                              )
+                            ])
+                          : _vm._e(),
+                        _vm._v(" "),
+                        _vm.selectedPlan === "Premium"
+                          ? _c("small", [
+                              _vm._v(
+                                "Unlimited lists and contributors, due dates, and notifications."
+                              )
+                            ])
+                          : _vm._e()
+                      ]
+                    )
                   ]),
                   _vm._v(" "),
                   _c(
@@ -47132,7 +47420,7 @@ exports.default = _default;
         [
           _c(
             "b-row",
-            { staticClass: "align-items-center" },
+            { staticClass: "align-items-center mb-1" },
             [
               _c("b-col", [
                 _c(
@@ -47168,7 +47456,9 @@ exports.default = _default;
               ])
             ],
             1
-          )
+          ),
+          _vm._v(" "),
+          _c("CouponForm")
         ],
         1
       )
@@ -47209,7 +47499,7 @@ render._withStripped = true
       
       }
     })();
-},{"axios":"node_modules/axios/index.js","_css_loader":"node_modules/parcel-bundler/src/builtins/css-loader.js","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/components/SettingsBilling.vue":[function(require,module,exports) {
+},{"axios":"node_modules/axios/index.js","./CouponForm":"vue/components/CouponForm.vue","_css_loader":"node_modules/parcel-bundler/src/builtins/css-loader.js","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/components/SettingsBilling.vue":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -47227,12 +47517,6 @@ var _ChangePlan = _interopRequireDefault(require("../components/ChangePlan"));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-//
-//
-//
-//
-//
-//
 //
 //
 //
@@ -47317,7 +47601,7 @@ exports.default = _default;
         "b-overlay",
         {
           attrs: {
-            show: _vm.loading,
+            show: false,
             blur: "5px",
             "spinner-variant": "primary",
             "spinner-type": "grow",
@@ -47440,7 +47724,7 @@ exports.default = _default;
             [
               _c(
                 "b-tab",
-                { attrs: { title: "Account", active: "" } },
+                { attrs: { title: "Account" } },
                 [
                   _c("h2", [_vm._v("Account")]),
                   _vm._v(" "),
@@ -47451,7 +47735,7 @@ exports.default = _default;
               _vm._v(" "),
               _c(
                 "b-tab",
-                { attrs: { title: "Billing" } },
+                { attrs: { title: "Billing", active: "" } },
                 [
                   _c("h2", [_vm._v("Billing")]),
                   _vm._v(" "),
@@ -97231,7 +97515,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "49836" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "63322" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};

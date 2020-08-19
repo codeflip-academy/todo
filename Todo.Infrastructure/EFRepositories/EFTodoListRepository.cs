@@ -38,9 +38,15 @@ namespace TodoWebAPI.Data
             return Task.CompletedTask;
         }
 
-        public Task<List<TodoList>> FindTodoListsByAccountIdAsync(Guid accountId, int pageSize)
+        public async Task<List<TodoList>> FindTodoListsByAccountIdAsync(Guid accountId)
         {
-            throw new NotImplementedException();
+            var todoLists =
+                (from list in _context.TodoLists
+                 join accountList in _context.AccountsLists on list.Id equals accountList.ListId
+                 where (accountList.Role == Roles.Contributor || accountList.Role == Roles.Owner) && accountList.AccountId == accountId
+                 select list).ToList();
+
+            return todoLists;
         }
 
         public async Task<TodoList> FindTodoListIdByIdAsync(Guid listId)
@@ -52,6 +58,17 @@ namespace TodoWebAPI.Data
             var list = await _context.TodoLists.FindAsync(listId);
 
             _context.Remove(list);
+        }
+        public async Task<List<TodoList>> GetNumberOfTodoListsByAccountIdAsync(Guid accountId, int numberOfLists)
+        {
+            var todoLists = (from list in _context.TodoLists
+                             join accountList in _context.AccountsLists on list.Id equals accountList.ListId
+                             where accountList.AccountId == accountId && accountList.Role != Roles.Invited
+                             && accountList.Role != Roles.Left
+                             && accountList.Role != Roles.Declined
+                             select list).Take(numberOfLists).ToList();
+
+            return todoLists;
         }
 
         public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
@@ -67,6 +84,26 @@ namespace TodoWebAPI.Data
         public void UpdateListAsync(TodoList list)
         {
             _context.TodoLists.Update(list);
+        }
+
+        public async Task<List<TodoList>> GetOwnedListsAsync(Guid accountId)
+        {
+            var todoLists = (from list in _context.TodoLists
+                             join accountList in _context.AccountsLists on list.Id equals accountList.ListId
+                             where accountList.Role == Roles.Owner && accountList.AccountId == accountId
+                             select list).ToList();
+
+            return todoLists;
+        }
+
+        public async Task<List<TodoList>> GetUnOwnedListsAsync(Guid accountId)
+        {
+            var todoLists = (from list in _context.TodoLists
+                             join accountList in _context.AccountsLists on list.Id equals accountList.ListId
+                             where accountList.Role == Roles.Contributor && accountList.AccountId == accountId
+                             select list).ToList();
+
+            return todoLists;
         }
     }
 }

@@ -36,7 +36,7 @@ namespace TodoWebAPI.UserStories
 
             _listRepository.UpdateListAsync(list);
 
-            var accountsLists = await _accountsListsRepository.FindAccountsListsContributorByAccountIdAsync(request.AccountId, request.ListId);
+            var accountsLists = await _accountsListsRepository.FindAccountsListsContributorByAccountIdAndListIdAsync(request.AccountId, request.ListId);
             accountsLists.MakeLeft();
 
             accountPlan.DecrementListCount();

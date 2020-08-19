@@ -22,8 +22,9 @@ namespace Todo.DomainEventHandlers
             {
                 Id = _accountPlanRepository.NextId(),
                 AccountId = notification.AccountId,
-                PlanId = notification.PlanId
             };
+
+            accountPlan.ChangePlan(notification.PlanId);
 
             await _accountPlanRepository.AddAccountPlanAsync(accountPlan);
             await _accountPlanRepository.SaveChangesAsync();

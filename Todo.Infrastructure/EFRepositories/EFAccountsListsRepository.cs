@@ -47,7 +47,7 @@ namespace Todo.Infrastructure.EFRepositories
             return await _context.AccountsLists.Where(x => x.AccountId == accountId).ToListAsync();
         }
 
-        public async Task<RoleContributor> FindAccountsListsContributorByAccountIdAsync(Guid accountId, Guid listId)
+        public async Task<RoleContributor> FindAccountsListsContributorByAccountIdAndListIdAsync(Guid accountId, Guid listId)
         {
             return await _context.AccountsListsContributor
                 .Where(a => a.AccountId == accountId && a.ListId == listId)
@@ -71,6 +71,13 @@ namespace Todo.Infrastructure.EFRepositories
         public async Task<RoleLeft> FindAccountsListsLeftByAccountIdAsync(Guid accountId, Guid listId)
         {
             return await _context.AccountsListsLeft
+                .Where(a => a.AccountId == accountId && a.ListId == listId)
+                .FirstOrDefaultAsync();
+        }
+
+        public async Task<RoleOwner> FindAccountsListsOwnerByAccountIdAndListIdAsync(Guid accountId, Guid listId)
+        {
+            return await _context.AccountsListsOwner
                 .Where(a => a.AccountId == accountId && a.ListId == listId)
                 .FirstOrDefaultAsync();
         }

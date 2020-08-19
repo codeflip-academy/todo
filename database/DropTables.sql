@@ -2,6 +2,7 @@ USE [ToDo]
 
 GO
 
+DROP TABLE Downgrades
 DROP TABLE SubItems
 DROP TABLE SubItemLayouts
 DROP TABLE TodoListItems

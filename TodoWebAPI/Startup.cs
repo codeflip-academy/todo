@@ -63,6 +63,7 @@ namespace TodoWebAPI
                 options => options.UseSqlServer(Configuration.GetConnectionString("Development"))
             );
             services.AddScoped<ITodoListRepository, EFTodoListRepository>();
+            services.AddScoped<IDowngradeRepository, EFDowngradeRepository>();
             services.AddScoped<IAccountsListsRepository, EFAccountsListsRepository>();
             services.AddScoped<ITodoListLayoutRepository, EFTodoListLayoutRepository>();
             services.AddScoped<ITodoListItemRepository, EFTodoListItemRepository>();
@@ -83,6 +84,12 @@ namespace TodoWebAPI
             services.AddSingleton<IEmailQueue, AzureServiceBusEmailQueue>();
 
             services.AddCronJob<DueDateJob>(c =>
+            {
+                c.TimeZoneInfo = TimeZoneInfo.Local;
+                c.CronExpression = @"00 12 * * *";
+            });
+
+            services.AddCronJob<SubscriptionDowngradeJob>(c =>
             {
                 c.TimeZoneInfo = TimeZoneInfo.Local;
                 c.CronExpression = @"00 12 * * *";

@@ -16,6 +16,8 @@ using Todo.Infrastructure.PaymentMethods;
 using Todo.Infrastructure;
 using TodoWebAPI.UserStories.DeletePaymentMethod;
 using TodoWebAPI.UserStories;
+using TodoWebAPI.ViewModels;
+using TodoWebAPI.Extentions;
 
 namespace TodoWebAPI.Controllers
 {
@@ -121,7 +123,6 @@ namespace TodoWebAPI.Controllers
         public async Task<IActionResult> ChangePaymentSubscription([FromBody] ChangePaymentSubscription changePayment)
         {
             changePayment.AccountId = Guid.Parse(User.FindFirst(c => c.Type == "urn:codefliptodo:accountid").Value);
-            var gateway = _braintreeConfiguration.GetGateway();
 
             var createSubscription = new CreateSubscription
             {
@@ -133,26 +134,17 @@ namespace TodoWebAPI.Controllers
 
             if (result)
             {
+                await _mediator.Send(changePayment);
+
                 var planChange = new ChangePlan
                 {
                     AccountId = changePayment.AccountId,
                     Plan = changePayment.Plan
                 };
 
-                var response = await _mediator.Send(planChange);
+                await _mediator.Send(planChange);
 
-                if (response == true)
-                {
-                    var brainTreeResponse = await _mediator.Send(changePayment);
-                    if (brainTreeResponse == true)
-                    {
-                        return Ok();
-                    }
-                }
-                else
-                {
-                    return Forbid();
-                }
+                return Ok();
             }
 
             return BadRequest();
@@ -169,6 +161,25 @@ namespace TodoWebAPI.Controllers
             await _mediator.Send(deletePaymentMethod);
 
             return Ok();
+        }
+
+        [HttpPost, Route("coupons/redeem")]
+        public async Task<IActionResult> RedeemCoupon(RedeemCouponViewModel redeemCouponViewModel)
+        {
+            var redeemCouponCommand = new RedeemCoupon()
+            {
+                AccountId = User.ReadClaimAsGuidValue("urn:codefliptodo:accountid"),
+                CouponCode = redeemCouponViewModel.CouponCode
+            };
+
+            var codeRedeemed = await _mediator.Send(redeemCouponCommand);
+
+            if (codeRedeemed)
+            {
+                return Ok("A free month has been applied.");
+            }
+
+            return BadRequest("Unable to apply coupon.");
         }
     }
 }
