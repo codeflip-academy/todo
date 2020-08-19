@@ -16,6 +16,8 @@ using Todo.Infrastructure.PaymentMethods;
 using Todo.Infrastructure;
 using TodoWebAPI.UserStories.DeletePaymentMethod;
 using TodoWebAPI.UserStories;
+using TodoWebAPI.ViewModels;
+using TodoWebAPI.Extentions;
 
 namespace TodoWebAPI.Controllers
 {
@@ -159,6 +161,25 @@ namespace TodoWebAPI.Controllers
             await _mediator.Send(deletePaymentMethod);
 
             return Ok();
+        }
+
+        [HttpPost, Route("coupons/redeem")]
+        public async Task<IActionResult> RedeemCoupon(RedeemCouponViewModel redeemCouponViewModel)
+        {
+            var redeemCouponCommand = new RedeemCoupon()
+            {
+                AccountId = User.ReadClaimAsGuidValue("urn:codefliptodo:accountid"),
+                CouponCode = redeemCouponViewModel.CouponCode
+            };
+
+            var codeRedeemed = await _mediator.Send(redeemCouponCommand);
+
+            if (codeRedeemed)
+            {
+                return Ok("A free month has been applied.");
+            }
+
+            return BadRequest("Unable to apply coupon.");
         }
     }
 }

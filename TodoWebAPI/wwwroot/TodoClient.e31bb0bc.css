@@ -146,6 +146,11 @@ h3[data-v-3f1240] {
   font-family: "Nunito", sans-serif;
   font-weight: bold;
   line-height: 1;
+  margin-bottom: 12px;
+}
+
+.plan-description {
+  line-height: 1.2;
 }
 .showing-overlay[data-v-1c308f] {
   min-height: 133px;

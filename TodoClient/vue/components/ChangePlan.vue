@@ -4,12 +4,14 @@
       <b-row class="align-items-center">
         <b-col>
           <h6 class="mb-0 current-plan">Todo {{ selectedPlan }}</h6>
-          <p class="text-muted mb-0">
+          <p class="text-muted mb-0 plan-description">
             <small v-if="selectedPlan === 'Free'">Maximum of 10 lists.</small>
             <small
               v-if="selectedPlan === 'Basic'"
-            >50 lists, 5 contributors per list, due dates, and notifications.</small>
-            <small v-if="selectedPlan === 'Premium'">Unlimited lists and contributors.</small>
+            >Maximum of 5 lists and contributors, due dates, and notifications.</small>
+            <small
+              v-if="selectedPlan === 'Premium'"
+            >Unlimited lists and contributors, due dates, and notifications.</small>
           </p>
         </b-col>
         <b-col class="text-right">
@@ -23,7 +25,7 @@
       </b-row>
     </template>
     <b-card-text>
-      <b-row class="align-items-center">
+      <b-row class="align-items-center mb-1">
         <b-col>
           <div>
             <b-form-select v-model="selectedPlan" :options="plans"></b-form-select>
@@ -35,12 +37,16 @@
           <strong v-if="selectedPlan === 'Premium'">$10.00 / month</strong>
         </b-col>
       </b-row>
+      <CouponForm></CouponForm>
     </b-card-text>
   </b-card>
 </template>
 
 <script>
 import axios from "axios";
+
+import CouponForm from "./CouponForm";
+
 export default {
   name: "ChangePlan",
   data() {
@@ -48,6 +54,9 @@ export default {
       plans: ["Free", "Basic", "Premium"],
       selectedPlan: "Free",
     };
+  },
+  components: {
+    CouponForm,
   },
   methods: {
     async changePlan() {
@@ -84,5 +93,10 @@ export default {
   font-family: "Nunito", sans-serif;
   font-weight: bold;
   line-height: 1;
+  margin-bottom: 12px;
+}
+
+.plan-description {
+  line-height: 1.2;
 }
 </style>
