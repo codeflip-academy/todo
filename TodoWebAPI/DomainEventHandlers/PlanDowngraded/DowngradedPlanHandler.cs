@@ -33,44 +33,48 @@ namespace TodoWebAPI.DomainEventHandlers
         }
         public async Task Handle(PlanDowngraded notification, CancellationToken cancellationToken)
         {
+            var accountPlan = await _accountPlanRepository.FindAccountPlanByAccountIdAsync(notification.Downgrade.AccountId);
+            var plan = await _planRepository.FindPlanByIdAsync(notification.Downgrade.PlanId);
             var account = await _accountsRepository.FindAccountByIdAsync(notification.Downgrade.AccountId);
 
-            foreach (var list in notification.NumberOfListsToDelete)
+            var numListsToDelete = (accountPlan.ListCount - plan.MaxLists) < 0 ? 0 : accountPlan.ListCount - plan.MaxLists;
+            var listsToDelete = await _listRepository.GetNumberOfTodoListsByAccountIdAsync(notification.Downgrade.AccountId, numListsToDelete);
+
+            foreach (var list in listsToDelete)
             {
-                var accountList = await _accountsListsRepository.FindAccountsListsByAccountIdAndListIdAsync(notification.Downgrade.AccountId, list.Id);
+                var accountListOwner = await _accountsListsRepository.FindAccountsListsOwnerByAccountIdAndListIdAsync(notification.Downgrade.AccountId, list.Id);
+                var accountListContributor = await _accountsListsRepository.FindAccountsListsContributorByAccountIdAndListIdAsync(notification.Downgrade.AccountId, list.Id);
 
-                if (accountList.UserIsOwner(notification.Downgrade.AccountId))
+                if (accountListOwner != null)
                 {
-                    await _listRepository.RemoveTodoListAsync(list.Id);
-
                     var contributors = list.Contributors;
 
                     foreach (var contributor in contributors)
                     {
                         var contributorAccount = await _accountsRepository.FindAccountByEmailAsync(contributor);
                         var contributorPlan = await _accountPlanRepository.FindAccountPlanByAccountIdAsync(contributorAccount.Id);
-                        var accountsListsContributor = await _accountsListsRepository.FindAccountsListsContributorByAccountIdAsync(contributorAccount.Id, list.Id);
+                        var accountsListsContributor = await _accountsListsRepository.FindAccountsListsContributorByAccountIdAndListIdAsync(contributorAccount.Id, list.Id);
 
                         if (accountsListsContributor != null)
                         {
                             accountsListsContributor.MakeLeft();
                             contributorPlan.DecrementListCount();
+                            list.Contributors.Remove(contributorAccount.Email);
+                            _listRepository.UpdateListAsync(list);
                         }
                     }
 
-                    await _listRepository.SaveChangesAsync();
+                    await _listRepository.RemoveTodoListAsync(list.Id);
                 }
-                else
+                else if (accountListContributor != null)
                 {
-                    var contributorAccountList = await _accountsListsRepository.FindAccountsListsContributorByAccountIdAsync(notification.Downgrade.AccountId, list.Id);
-                    var contributorAccountPlan = await _accountPlanRepository.FindAccountPlanByAccountIdAsync(notification.Downgrade.AccountId);
-
-                    contributorAccountList.MakeLeft();
-                    contributorAccountPlan.DecrementListCount();
+                    accountListContributor.MakeLeft();
+                    accountPlan.DecrementListCount();
                     list.Contributors.Remove(account.Email);
+                    _listRepository.UpdateListAsync(list);
 
-                    await _accountsListsRepository.SaveChangesAsync();
                 }
+                await _listRepository.SaveChangesAsync();
             }
         }
     }

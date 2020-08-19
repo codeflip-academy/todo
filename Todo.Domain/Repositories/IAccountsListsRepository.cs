@@ -12,7 +12,7 @@ namespace Todo.Domain
         Task<RoleOwner> FindAccountsListsOwnerByAccountIdAndListIdAsync(Guid accountId, Guid listId);
         Task<RoleInvited> FindAccountsListsInvitedByAccountIdAsync(Guid accountId, Guid listId);
         Task<RoleDecline> FindAccountsListsDeclinedByAccountIdAsync(Guid accountId, Guid listId);
-        Task<RoleContributor> FindAccountsListsContributorByAccountIdAsync(Guid accountId, Guid listId);
+        Task<RoleContributor> FindAccountsListsContributorByAccountIdAndListIdAsync(Guid accountId, Guid listId);
         Task<RoleLeft> FindAccountsListsLeftByAccountIdAsync(Guid accountId, Guid listId);
         Task<List<AccountsLists>> FindAccountsListsByAccountIdAsync(Guid accountId);
     }

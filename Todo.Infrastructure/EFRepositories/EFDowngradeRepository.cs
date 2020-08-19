@@ -17,7 +17,7 @@ namespace Todo.Infrastructure.EFRepositories
             _context = context;
         }
 
-        public async Task Add(Guid accountId, DateTime? billingCycleEnd, int planId)
+        public async Task Add(Guid accountId, DateTime billingCycleEnd, int planId)
         {
             _context.Add(new Downgrade
             {
@@ -29,7 +29,7 @@ namespace Todo.Infrastructure.EFRepositories
 
         public async Task<List<Downgrade>> GetDowngradesAsync()
         {
-            return _context.Downgrades.ToList();
+            return _context.Downgrades.Where(x => x.BillingCycleEnd.Date == DateTime.Now.Date).ToList();
         }
 
         public async Task<Downgrade> GetDowngradeByAccountIdAsync(Guid accountId)

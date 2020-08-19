@@ -50,12 +50,13 @@ namespace TodoWebAPI.DomainEventHandlers
                         var contributor = contributors[i];
 
                         var account = await _accountRepository.FindAccountByEmailAsync(contributor);
-                        var contributorAccountList = await _accountsListsRepository.FindAccountsListsContributorByAccountIdAsync(account.Id, ownedList.Id);
+                        var contributorAccountList = await _accountsListsRepository.FindAccountsListsContributorByAccountIdAndListIdAsync(account.Id, ownedList.Id);
                         var contributorAccountPlan = await _accountPlanRepository.FindAccountPlanByAccountIdAsync(account.Id);
 
                         contributorAccountList.MakeLeft();
                         contributorAccountPlan.DecrementListCount();
                         ownedList.Contributors.Remove(contributor);
+                        _todoListRepository.UpdateListAsync(ownedList);
 
                         await _todoListRepository.SaveChangesAsync();
                     }
@@ -63,11 +64,12 @@ namespace TodoWebAPI.DomainEventHandlers
 
                 foreach (var unownedList in unownedLists)
                 {
-                    var accountList = await _accountsListsRepository.FindAccountsListsContributorByAccountIdAsync(notification.Downgrade.AccountId, unownedList.Id);
+                    var accountList = await _accountsListsRepository.FindAccountsListsContributorByAccountIdAndListIdAsync(notification.Downgrade.AccountId, unownedList.Id);
 
                     accountList.MakeLeft();
                     accountPlan.DecrementListCount();
                     unownedList.Contributors.Remove(myAccount.Email);
+                    _todoListRepository.UpdateListAsync(unownedList);
 
                     await _todoListRepository.SaveChangesAsync();
                 }
@@ -85,12 +87,13 @@ namespace TodoWebAPI.DomainEventHandlers
                         foreach (var contributor in contributors)
                         {
                             var accountContributor = await _accountRepository.FindAccountByEmailAsync(contributor);
-                            var contributorAccountList = await _accountsListsRepository.FindAccountsListsContributorByAccountIdAsync(notification.Downgrade.AccountId, ownedList.Id);
+                            var contributorAccountList = await _accountsListsRepository.FindAccountsListsContributorByAccountIdAndListIdAsync(notification.Downgrade.AccountId, ownedList.Id);
                             var contributorAccountPlan = await _accountPlanRepository.FindAccountPlanByAccountIdAsync(notification.Downgrade.AccountId);
 
                             contributorAccountList.MakeLeft();
                             contributorAccountPlan.DecrementListCount();
                             ownedList.Contributors.Remove(accountContributor.Email);
+                            _todoListRepository.UpdateListAsync(ownedList);
 
                             await _accountsListsRepository.SaveChangesAsync();
                         }

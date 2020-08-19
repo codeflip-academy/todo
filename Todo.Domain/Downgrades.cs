@@ -8,12 +8,12 @@ namespace Todo.Domain
     public class Downgrade : Entity
     {
         public Guid AccountId { get; set; }
-        public DateTime? BillingCycleEnd { get; set; }
+        public DateTime BillingCycleEnd { get; set; }
         public int PlanId { get; set; }
 
-        public void Downgraded(List<TodoList> numberOfListsToDelete)
+        public void Downgraded()
         {
-            DomainEvents.Add(new PlanDowngraded { Downgrade = this, NumberOfListsToDelete = numberOfListsToDelete });
+            DomainEvents.Add(new PlanDowngraded { Downgrade = this });
         }
     }
 }

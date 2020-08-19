@@ -92,7 +92,7 @@ namespace TodoWebAPI
             services.AddCronJob<SubscriptionDowngradeJob>(c =>
             {
                 c.TimeZoneInfo = TimeZoneInfo.Local;
-                c.CronExpression = @"* * * * *";
+                c.CronExpression = @"00 12 * * *";
             });
 
 

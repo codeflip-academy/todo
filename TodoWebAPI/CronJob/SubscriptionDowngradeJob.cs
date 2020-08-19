@@ -54,23 +54,15 @@ namespace TodoWebAPI.CronJob
             var accountRepository = serviceProvider.GetRequiredService<IAccountRepository>();
             var mediator = serviceProvider.GetRequiredService<IMediator>();
 
-            using var transaction = await todoDatabaseContext.Database.BeginTransactionAsync();
-
             foreach (var downgrade in await downgradeRepository.GetDowngradesAsync())
             {
                 var accountPlan = await accountPlanRepository.FindAccountPlanByAccountIdAsync(downgrade.AccountId);
-                var plan = await planRepository.FindPlanByIdAsync(downgrade.PlanId);
-                var accountPlanAuthorizationValidator = new AccountPlanAuthorizationValidator(accountPlan, plan);
 
                 accountPlan.ChangePlan(downgrade.PlanId);
 
-                var numListsToDelete = accountPlan.ListCount - plan.MaxLists;
-                var listsToDelete = await listRepository.GetNumberOfTodoListsByAccountIdAsync(downgrade.AccountId, numListsToDelete);
-
-                downgrade.Downgraded(listsToDelete);
+                downgrade.Downgraded();
                 await downgradeRepository.SaveChangesAsync();
 
-                await transaction.CommitAsync();
                 _logger.LogInformation($"{DateTime.Now:hh:mm:ss} Subscription downgrade job running");
             }
         }

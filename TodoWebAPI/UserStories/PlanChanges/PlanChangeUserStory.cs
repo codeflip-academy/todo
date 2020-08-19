@@ -45,14 +45,14 @@ namespace TodoWebAPI.UserStories.RoleChanges
                     if (downgrade != null)
                     {
                         downgrade.AccountId = request.AccountId;
-                        downgrade.BillingCycleEnd = currentSubscription.BillingPeriodEndDate;
+                        downgrade.BillingCycleEnd = currentSubscription.BillingPeriodEndDate.GetValueOrDefault();
                         downgrade.PlanId = Int32.Parse(SubscriptionHelper.ConvertPlanToBrainTreeType(request.Plan));
                     }
                     else
                     {
                         await _downgradeRepository.Add(
                             accountId: request.AccountId,
-                            billingCycleEnd: currentSubscription.BillingPeriodEndDate,
+                            billingCycleEnd: currentSubscription.BillingPeriodEndDate.GetValueOrDefault(),
                             planId: Int32.Parse(SubscriptionHelper.ConvertPlanToBrainTreeType(request.Plan)));
                     }
 
@@ -71,14 +71,14 @@ namespace TodoWebAPI.UserStories.RoleChanges
                     if (downgrade != null)
                     {
                         downgrade.AccountId = request.AccountId;
-                        downgrade.BillingCycleEnd = currentSubscription.BillingPeriodEndDate;
+                        downgrade.BillingCycleEnd = currentSubscription.BillingPeriodEndDate.GetValueOrDefault();
                         downgrade.PlanId = Int32.Parse(SubscriptionHelper.ConvertPlanToBrainTreeType(request.Plan));
                     }
                     else
                     {
                         await _downgradeRepository.Add(
                             accountId: request.AccountId,
-                            billingCycleEnd: currentSubscription.BillingPeriodEndDate,
+                            billingCycleEnd: currentSubscription.BillingPeriodEndDate.GetValueOrDefault(),
                             planId: Int32.Parse(SubscriptionHelper.ConvertPlanToBrainTreeType(request.Plan)));
                     }
                 }

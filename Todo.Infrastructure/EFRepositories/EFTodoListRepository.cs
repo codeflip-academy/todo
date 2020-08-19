@@ -64,8 +64,8 @@ namespace TodoWebAPI.Data
             var todoLists = (from list in _context.TodoLists
                              join accountList in _context.AccountsLists on list.Id equals accountList.ListId
                              where accountList.AccountId == accountId && accountList.Role != Roles.Invited
-                                || accountList.Role != Roles.Left
-                                || accountList.Role != Roles.Declined
+                             && accountList.Role != Roles.Left
+                             && accountList.Role != Roles.Declined
                              select list).Take(numberOfLists).ToList();
 
             return todoLists;

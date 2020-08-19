@@ -49,7 +49,7 @@ namespace TodoWebAPI.UserStories
                     {
                         var contributorAccount = await _accountsRepository.FindAccountByEmailAsync(contributor);
                         var contributorPlan = await _accountPlanRepository.FindAccountPlanByAccountIdAsync(contributorAccount.Id);
-                        var accountsListsContributor = await _accountsListsRepository.FindAccountsListsContributorByAccountIdAsync(contributorAccount.Id, list.Id);
+                        var accountsListsContributor = await _accountsListsRepository.FindAccountsListsContributorByAccountIdAndListIdAsync(contributorAccount.Id, list.Id);
 
                         if (accountsListsContributor != null)
                         {
@@ -66,7 +66,7 @@ namespace TodoWebAPI.UserStories
                 // Remove user from list and decrement list count
                 else
                 {
-                    var contributorAccountList = await _accountsListsRepository.FindAccountsListsContributorByAccountIdAsync(request.AccountId, list.Id);
+                    var contributorAccountList = await _accountsListsRepository.FindAccountsListsContributorByAccountIdAndListIdAsync(request.AccountId, list.Id);
                     var contributorAccountPlan = await _accountPlanRepository.FindAccountPlanByAccountIdAsync(request.AccountId);
 
                     contributorAccountList.MakeLeft();
