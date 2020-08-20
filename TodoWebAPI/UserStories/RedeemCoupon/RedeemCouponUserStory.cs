@@ -19,9 +19,9 @@ namespace TodoWebAPI.UserStories
         {
             var gateway = new CodeJarGateway();
 
-            var code = await gateway.RedeemCodeAsync(request.CouponCode);
+            var response = await gateway.RedeemCodeAsync(request.CouponCode);
 
-            if (code.IsSuccessStatusCode)
+            if (response.IsSuccess())
             {
                 return true;
             }

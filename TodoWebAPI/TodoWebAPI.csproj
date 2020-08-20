@@ -7,7 +7,7 @@
 
   <ItemGroup>
     <PackageReference Include="Braintree" Version="4.17.0" />
-    <PackageReference Include="code-jar-client" Version="1.0.0" />
+    <PackageReference Include="code-jar-client" Version="1.0.1" />
     <PackageReference Include="Cronos" Version="0.7.0" />
     <PackageReference Include="MediatR" Version="8.0.1" />
     <PackageReference Include="MediatR.Extensions.Microsoft.DependencyInjection" Version="8.0.0" />
