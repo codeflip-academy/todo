@@ -18,7 +18,6 @@ using TodoWebAPI.UserStories.DeletePaymentMethod;
 using TodoWebAPI.UserStories;
 using TodoWebAPI.ViewModels;
 using TodoWebAPI.Extentions;
-using CodeJar.Nugget;
 
 namespace TodoWebAPI.Controllers
 {

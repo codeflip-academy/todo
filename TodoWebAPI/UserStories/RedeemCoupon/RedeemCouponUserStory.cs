@@ -1,7 +1,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using CodeJar.Nugget;
+using CodeJar.Gateway;
 using MediatR;
 using Todo.Domain.Repositories;
 
@@ -17,11 +17,11 @@ namespace TodoWebAPI.UserStories
         }
         public async Task<bool> Handle(RedeemCoupon request, CancellationToken cancellationToken)
         {
-            var redeem = new RedeemCode();
+            var gateway = new CodeJarGateway();
 
-            var code = await redeem.RedeemCodeAsync(request.CouponCode);
+            var code = await gateway.RedeemCodeAsync(request.CouponCode);
 
-            if(code.IsSuccessStatusCode)
+            if (code.IsSuccessStatusCode)
             {
                 return true;
             }
