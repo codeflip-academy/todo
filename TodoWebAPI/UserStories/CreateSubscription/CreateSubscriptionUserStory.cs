@@ -26,29 +26,32 @@ namespace TodoWebAPI.UserStories
         {
             var account = await _account.FindAccountByIdAsync(request.AccountId);
 
-            if (account.SubscriptionId != null)
+            if (account.HasSubscription())
             {
                 return true;
             }
 
             var gateway = _braintreeConfiguration.GetGateway();
+            var planId = SubscriptionHelper.ConvertPlanToBrainTreeType(request.Plan);
+            var subscriptionId = Guid.NewGuid().ToString();
 
-            var brainType = SubscriptionHelper.ConvertPlanToBrainTreeType(request.Plan);
-
-            var re = new SubscriptionRequest
+            var createSubscriptionRequest = new SubscriptionRequest
             {
                 PaymentMethodToken = account.PaymentMethodId,
-                PlanId = brainType,
-                Id = Guid.NewGuid().ToString()
+                PlanId = planId,
+                Id = subscriptionId,
             };
 
-            account.SubscriptionId = re.Id;
+            Result<Subscription> createSubscriptionResult = gateway.Subscription.Create(createSubscriptionRequest);
 
-            await _account.SaveChangesAsync();
+            if (createSubscriptionResult.IsSuccess())
+            {
+                account.UpdateSubscriptionId(createSubscriptionRequest.Id);
 
-            Result<Subscription> result = gateway.Subscription.Create(re);
-            if (result.IsSuccess())
+                await _account.SaveChangesAsync();
+
                 return true;
+            }
 
             return false;
         }

@@ -9,14 +9,14 @@ using TodoWebAPI.BraintreeService;
 
 namespace TodoWebAPI.UserStories.RoleChanges
 {
-    public class PlanChangeUserStory : IRequestHandler<ChangePlan, bool>
+    public class ChangePlanUserStory : IRequestHandler<ChangePlan, bool>
     {
         private readonly IAccountRepository _accountRepository;
         private readonly IAccountPlanRepository _accountPlan;
         private readonly IDowngradeRepository _downgradeRepository;
         private readonly IBraintreeConfiguration _braintreeConfiguration;
 
-        public PlanChangeUserStory(
+        public ChangePlanUserStory(
             IAccountRepository accountRepository,
             IAccountPlanRepository accountPlan,
             IDowngradeRepository downgradeRepository,

@@ -28,7 +28,7 @@ namespace TodoWebAPI.UserStories
             var gateway = _braintreeConfiguration.GetGateway();
             var account = await _account.FindAccountByIdAsync(request.AccountId);
 
-            if (account.PaymentMethodId != null)
+            if (account.HasPaymentMethod())
             {
                 CreditCard creditCard = (CreditCard)await gateway.PaymentMethod.FindAsync(account.PaymentMethodId);
 
