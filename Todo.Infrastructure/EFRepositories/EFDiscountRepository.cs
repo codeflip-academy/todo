@@ -8,7 +8,7 @@ using Todo.Domain.Repositories;
 
 namespace Todo.Infrastructure
 {
-    public class EFCouponRepository : ICouponRepository
+    public class EFCouponRepository : IDiscountRepository
     {
         private readonly TodoDatabaseContext _context;
 
@@ -16,14 +16,15 @@ namespace Todo.Infrastructure
         {
             _context = context;
         }
-        public async Task<Coupon> GetCouponByIdAsync(int Id)
+
+        public async Task<Discount> GetDiscountByNameAsync(string discountName)
         {
-            return await _context.Coupons.Where(x => x.Id == Id).FirstOrDefaultAsync();
+            return await _context.Discounts.Where(d => d.Name == discountName).FirstOrDefaultAsync();
         }
 
-        public Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+        public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         {
-            throw new NotImplementedException();
+            return await _context.SaveChangesAsync(cancellationToken);
         }
     }
 }
