@@ -47,6 +47,7 @@ namespace Todo.Infrastructure
         public virtual DbSet<Payment> PaymentMethods { get; set; }
         public virtual DbSet<Downgrade> Downgrades { get; set; }
         public virtual DbSet<Discount> Discounts { get; set; }
+        public virtual DbSet<AccountDiscount> AccountsDiscounts { get; set; }
 
         public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         {
@@ -291,6 +292,21 @@ namespace Todo.Infrastructure
 
                 entity
                     .Property(e => e.BillingCycles);
+            });
+
+            modelBuilder.Entity<AccountDiscount>(entity =>
+            {
+                entity
+                    .HasKey(e => e.Id);
+
+                entity
+                    .Property(e => e.AccountId);
+
+                entity
+                    .Property(e => e.DiscountId);
+
+                entity
+                    .Property(e => e.AppliedToSubscription);
             });
         }
     }

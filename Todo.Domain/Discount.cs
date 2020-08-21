@@ -7,7 +7,7 @@ namespace Todo.Domain
     {
         public int Id { get; set; }
         public string Name { get; set; }
-        public byte Percentage { get; set; }
+        public int Percentage { get; set; }
         public byte BillingCycles { get; set; }
     }
 }

@@ -6,7 +6,7 @@ CREATE TABLE [Discounts]
 (
     [ID] INT PRIMARY KEY NOT NULL,
     [Name] VARCHAR(50) NOT NULL,
-    [Percentage] TINYINT NOT NULL,
+    [Percentage] INT NOT NULL,
     [BillingCycles] TINYINT NOT NULL
 )
 

@@ -12,6 +12,6 @@ VALUES
 INSERT INTO Discounts
     ([ID], [Name], [Percentage], [BillingCycles])
 VALUES
-    (1, '20PercentOff', 20, 1)
+    (2, '20PercentOff', 20, 1)
 
 GO
