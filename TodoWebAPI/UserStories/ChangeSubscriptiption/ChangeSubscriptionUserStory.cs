@@ -65,7 +65,8 @@ namespace TodoWebAPI.UserStories
                                     InheritedFromId = discount.Id.ToString(),
                                     Amount = DiscountCalculator.CalculateDiscount(
                                         price: plan.Price.GetValueOrDefault(),
-                                        percentage: discount.Percentage)
+                                        percentage: discount.Percentage),
+                                    NumberOfBillingCycles = discount.BillingCycles
                                 }
                             },
                     };
