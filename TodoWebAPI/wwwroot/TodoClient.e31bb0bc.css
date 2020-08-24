@@ -15,13 +15,16 @@
   color: #455a64;
   background: rgba(30, 136, 229, 0.2);
 }
+.sidebar-list:hover.completed[data-v-2d7314], .sidebar-list:active.completed[data-v-2d7314] {
+  background: rgba(76, 175, 80, 0.2);
+}
 .sidebar-list[data-v-2d7314]:not(:last-child) {
   margin-bottom: 15px;
 }
 .sidebar-list.selected[data-v-2d7314] {
   background: rgba(30, 136, 229, 0.2);
 }
-.sidebar-list.completed[data-v-2d7314] {
+.sidebar-list.completed.selected[data-v-2d7314] {
   background: rgba(76, 175, 80, 0.2);
 }
 .sidebar-list.completed .sidebar-list-completed-state[data-v-2d7314] {

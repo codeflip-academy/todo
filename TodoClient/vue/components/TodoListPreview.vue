@@ -74,6 +74,10 @@ $red: #b71c1c;
   &:active {
     color: $gray;
     background: transparentize($blue, 0.8);
+
+    &.completed {
+      background: transparentize($green, 0.8);
+    }
   }
 
   &:not(:last-child) {
@@ -85,7 +89,9 @@ $red: #b71c1c;
   }
 
   &.completed {
-    background: transparentize($green, 0.8);
+    &.selected {
+      background: transparentize($green, 0.8);
+    }
 
     .sidebar-list-completed-state {
       background: $green;

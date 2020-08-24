@@ -1,5 +1,7 @@
 <template>
   <div class="list-wrapper" v-if="!loadingTodoLists">
+    <Confetti v-if="todoList.completed"></Confetti>
+
     <header class="list-header">
       <h2 class="list-title">{{ todoList.listTitle }}</h2>
       <div class="list-controls"></div>

@@ -38843,6 +38843,8 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 //
 //
 //
+//
+//
 var _default = {
   name: "TodoList",
   props: ["todoListId"],
@@ -38925,6 +38927,8 @@ exports.default = _default;
         "div",
         { staticClass: "list-wrapper" },
         [
+          _vm.todoList.completed ? _c("Confetti") : _vm._e(),
+          _vm._v(" "),
           _c("header", { staticClass: "list-header" }, [
             _c("h2", { staticClass: "list-title" }, [
               _vm._v(_vm._s(_vm.todoList.listTitle))
