@@ -70,14 +70,14 @@ namespace TodoWebAPI.UserStories
                                 }
                             },
                     };
+
+                    accountDiscount.ApplyDiscountToSubscription();
                 }
 
                 var updateSubscriptionResult = await gateway.Subscription.UpdateAsync(account.SubscriptionId, updateSubscriptionRequest);
 
                 if (updateSubscriptionResult.IsSuccess())
                 {
-                    accountDiscount.ApplyDiscountToSubscription();
-
                     await _accountDiscountRepository.SaveChangesAsync();
 
                     return true;

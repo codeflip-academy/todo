@@ -161,10 +161,10 @@ namespace TodoWebAPI.Controllers
         [HttpDelete, Route("paymentMethod/delete")]
         public async Task<IActionResult> DeletePayment(DeletePaymentMethod deletePaymentMethod)
         {
-            var accountId = Guid.Parse(User.FindFirst(c => c.Type == "urn:codefliptodo:accountid").Value);
-            var account = await _accountRepository.FindAccountByIdAsync(accountId);
+            var account = await _accountRepository.FindAccountByIdAsync(User.ReadClaimAsGuidValue("urn:codefliptodo:accountid"));
+
             deletePaymentMethod.PaymentMethodId = account.PaymentMethodId;
-            deletePaymentMethod.AccountId = accountId;
+            deletePaymentMethod.AccountId = account.Id;
 
             await _mediator.Send(deletePaymentMethod);
 

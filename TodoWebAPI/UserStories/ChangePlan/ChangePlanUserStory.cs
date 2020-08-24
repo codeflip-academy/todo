@@ -32,64 +32,31 @@ namespace TodoWebAPI.UserStories.RoleChanges
         {
             var account = await _accountRepository.FindAccountByIdAsync(request.AccountId);
             var accountPlan = await _accountPlan.FindAccountPlanByAccountIdAsync(request.AccountId);
-
             var gateway = _braintreeConfiguration.GetGateway();
             var currentSubscription = await gateway.Subscription.FindAsync(account.SubscriptionId);
+            var planId = PlanTiers.ConvertPlanNameToInt(request.Plan);
+            var downgrading = accountPlan.IsNewPlanLessThanCurrentPlan(planId);
 
-            if (request.Plan == "Free")
+            if (downgrading)
             {
-                if (accountPlan.IsNewPlanLessThanCurrentPlan(PlanTiers.Free) == true)
+                var downgrade = await _downgradeRepository.GetDowngradeByAccountIdAsync(account.Id);
+
+                if (downgrade != null)
                 {
-                    var downgrade = await _downgradeRepository.GetDowngradeByAccountIdAsync(account.Id);
-
-                    if (downgrade != null)
-                    {
-                        downgrade.AccountId = request.AccountId;
-                        downgrade.BillingCycleEnd = currentSubscription.BillingPeriodEndDate.GetValueOrDefault();
-                        downgrade.PlanId = Int32.Parse(SubscriptionHelper.ConvertPlanToBrainTreeType(request.Plan));
-                    }
-                    else
-                    {
-                        await _downgradeRepository.Add(
-                            accountId: request.AccountId,
-                            billingCycleEnd: currentSubscription.BillingPeriodEndDate.GetValueOrDefault(),
-                            planId: Int32.Parse(SubscriptionHelper.ConvertPlanToBrainTreeType(request.Plan)));
-                    }
-
+                    downgrade.BillingCycleEnd = currentSubscription.BillingPeriodEndDate.GetValueOrDefault();
+                    downgrade.PlanId = planId;
                 }
                 else
                 {
-                    accountPlan.ChangePlan(PlanTiers.Free);
+                    await _downgradeRepository.Add(
+                        accountId: request.AccountId,
+                        billingCycleEnd: currentSubscription.BillingPeriodEndDate.GetValueOrDefault(),
+                        planId: planId);
                 }
             }
-            else if (request.Plan == "Basic")
+            else
             {
-                if (accountPlan.IsNewPlanLessThanCurrentPlan(PlanTiers.Basic) == true)
-                {
-                    var downgrade = await _downgradeRepository.GetDowngradeByAccountIdAsync(account.Id);
-
-                    if (downgrade != null)
-                    {
-                        downgrade.AccountId = request.AccountId;
-                        downgrade.BillingCycleEnd = currentSubscription.BillingPeriodEndDate.GetValueOrDefault();
-                        downgrade.PlanId = Int32.Parse(SubscriptionHelper.ConvertPlanToBrainTreeType(request.Plan));
-                    }
-                    else
-                    {
-                        await _downgradeRepository.Add(
-                            accountId: request.AccountId,
-                            billingCycleEnd: currentSubscription.BillingPeriodEndDate.GetValueOrDefault(),
-                            planId: Int32.Parse(SubscriptionHelper.ConvertPlanToBrainTreeType(request.Plan)));
-                    }
-                }
-                else
-                {
-                    accountPlan.ChangePlan(PlanTiers.Basic);
-                }
-            }
-            else if (request.Plan == "Premium")
-            {
-                accountPlan.ChangePlan(PlanTiers.Premium);
+                accountPlan.ChangePlan(planId);
             }
 
             await _accountPlan.SaveChangesAsync();
