@@ -71,12 +71,14 @@ $red: #b71c1c;
   padding: 7px 10px 7px 30px;
 
   &:hover,
+  &:focus,
   &:active {
-    color: $gray;
-    background: transparentize($blue, 0.8);
+    color: $gray !important;
+    background: transparentize($blue, 0.8) !important;
+    box-shadow: none !important;
 
     &.completed {
-      background: transparentize($green, 0.8);
+      background: transparentize($green, 0.8) !important;
     }
   }
 
