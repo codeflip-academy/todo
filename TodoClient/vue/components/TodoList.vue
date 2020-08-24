@@ -4,7 +4,11 @@
       <h2 class="list-title">{{ todoList.listTitle }}</h2>
       <div class="list-controls"></div>
     </header>
-    <TodoListItems :todoListId="todoList.id"></TodoListItems>
+    <TodoListItems
+      :todoListId="todoList.id"
+      @todo-list-completed="setTodoListCompleted"
+      @todo-list-uncompleted="setTodoListUncompleted"
+    ></TodoListItems>
   </div>
 </template>
 

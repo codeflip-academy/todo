@@ -30297,7 +30297,10 @@ exports.default = _default;
     "b-button",
     {
       staticClass: "sidebar-list",
-      class: { selected: _vm.$route.params.todoListId == _vm.todoList.id },
+      class: {
+        selected: _vm.$route.params.todoListId == _vm.todoList.id,
+        completed: _vm.todoList.completed
+      },
       attrs: { to: { path: "/lists/" + _vm.todoList.id } }
     },
     [
@@ -38836,6 +38839,10 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 //
 //
 //
+//
+//
+//
+//
 var _default = {
   name: "TodoList",
   props: ["todoListId"],
@@ -38926,7 +38933,13 @@ exports.default = _default;
             _c("div", { staticClass: "list-controls" })
           ]),
           _vm._v(" "),
-          _c("TodoListItems", { attrs: { todoListId: _vm.todoList.id } })
+          _c("TodoListItems", {
+            attrs: { todoListId: _vm.todoList.id },
+            on: {
+              "todo-list-completed": _vm.setTodoListCompleted,
+              "todo-list-uncompleted": _vm.setTodoListUncompleted
+            }
+          })
         ],
         1
       )

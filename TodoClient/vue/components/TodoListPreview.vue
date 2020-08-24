@@ -2,7 +2,7 @@
   <b-button
     class="sidebar-list"
     :to="{ path: `/lists/${todoList.id}` }"
-    :class="{ 'selected': $route.params.todoListId == todoList.id }"
+    :class="{ 'selected': $route.params.todoListId == todoList.id, 'completed': todoList.completed }"
   >
     {{ todoList.listTitle }}
     <div class="sidebar-list-completed-state">8</div>
