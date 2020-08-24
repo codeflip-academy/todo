@@ -43,9 +43,55 @@
                 <h2 class="list-title">Design</h2>
                 <div class="list-controls"></div>
               </header>
+              <div class="items">
+                <Draggable delay="200">
+                  <div class="item">
+                    <div class="item-checkbox">
+                      <label for="checkbox" class="custom-checkbox" :class="{ 'checked': test }">
+                        <b-icon-check></b-icon-check>
+                        <input id="checkbox" v-model="test" type="checkbox" class="sr-only" />
+                      </label>
+                    </div>
+                    <div class="item-details">
+                      <div class="item-name">Lorem ipsum dolor sit.</div>
+                      <div class="item-content-preview">
+                        <div class="item-due-date">
+                          <b-icon-calendar></b-icon-calendar>Today
+                        </div>
+                        <div class="item-notes">
+                          <b-icon-file-earmark-text></b-icon-file-earmark-text>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="item-controls">
+                      <b-button variant="link" class="btn-trash">
+                        <b-icon-trash></b-icon-trash>
+                      </b-button>
+                    </div>
+                  </div>
+                </Draggable>
+              </div>
             </div>
           </b-col>
-          <b-col md="7"></b-col>
+          <b-col md="7">
+            <div class="item-content">
+              <h2 class="item-name">Lorem ipsum dolor sit.</h2>
+              <div class="item-meta">
+                <div class="item-due-date">
+                  <b-icon-calendar></b-icon-calendar>Today
+                </div>
+              </div>
+              <div
+                class="item-notes"
+              >Maecenas faucibus mollis interdum. Etiam porta sem malesuada magna mollis euismod. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Donec id elit non mi porta gravida at eget metus.</div>
+              <div class="sub-items">
+                <div class="sub-item">Item 1</div>
+                <div class="sub-item">Item 2</div>
+                <div class="sub-item">Item 3</div>
+                <div class="sub-item">Item 4</div>
+              </div>
+            </div>
+          </b-col>
         </b-row>
       </b-col>
     </b-row>
@@ -57,9 +103,15 @@
 
 <script>
 import axios from "axios";
+import Draggable from "vuedraggable";
 
 export default {
   name: "App",
+  data() {
+    return {
+      test: false,
+    };
+  },
   computed: {
     user() {
       return this.$store.getters.user;
@@ -143,6 +195,9 @@ export default {
       });
     },
   },
+  components: {
+    Draggable,
+  },
 };
 </script>
 
@@ -152,6 +207,7 @@ $gray: #455a64;
 $blue: #1e88e5;
 $orange: #ff7043;
 $green: #4caf50;
+$red: #b71c1c;
 
 * {
   box-sizing: border-box;
@@ -312,6 +368,95 @@ body {
   }
 }
 
+.item {
+  padding: 25px;
+  background: $light-gray;
+  display: flex;
+  align-items: center;
+  transition: background-color 0.3s ease;
+  border-bottom: 1px solid darken($light-gray, 5%);
+
+  &:hover {
+    background-color: lighten($light-gray, 2%);
+  }
+
+  &:active {
+    background-color: lighten($light-gray, 10%);
+  }
+
+  .custom-checkbox {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 100px;
+    background-color: transparent;
+    border: solid 1px $blue;
+    margin-bottom: 0;
+    margin-right: 16px;
+    font-size: 36px;
+    color: #fff;
+    transition: all 0.2s ease;
+
+    &:hover {
+      box-shadow: 0 10px 30px transparentize($blue, 0.7);
+    }
+
+    svg {
+      transition: opacity 0.2s ease;
+      opacity: 0;
+    }
+
+    &.checked {
+      background-color: $blue;
+      box-shadow: 0 10px 30px transparentize($blue, 0.7);
+
+      svg {
+        opacity: 1;
+      }
+    }
+  }
+
+  .item-details {
+    color: darken($light-gray, 40%);
+    font-size: 13px;
+
+    .item-name {
+      color: $gray;
+      font-size: 16px;
+      margin-bottom: 2px;
+    }
+
+    .item-due-date {
+      margin-right: 16px;
+
+      svg {
+        margin-right: 6px;
+      }
+    }
+  }
+
+  .item-content-preview {
+    display: flex;
+  }
+
+  .item-controls {
+    margin-left: auto;
+
+    .btn-trash {
+      color: $gray;
+      opacity: 0.5;
+      transition: all 0.3s ease;
+
+      &:hover {
+        color: red;
+        opacity: 1;
+      }
+    }
+  }
+}
+
 .btn.add-list-btn {
   position: fixed;
   bottom: 50px;
@@ -339,6 +484,37 @@ body {
     box-shadow: none !important;
     border: none !important;
     background: darken($orange, 5%) !important;
+  }
+}
+
+.item-content {
+  padding: 40px 50px;
+
+  .item-name {
+    font-size: 24px;
+    color: $gray;
+    line-height: 1.1;
+    margin-bottom: 16px;
+  }
+
+  .item-meta {
+    margin-bottom: 36px;
+
+    .item-due-date {
+      font-size: 13px;
+      color: darken($light-gray, 40%);
+
+      svg {
+        margin-right: 6px;
+      }
+    }
+  }
+
+  .item-notes {
+    color: $gray;
+    font-size: 14px;
+    line-height: 1.5;
+    margin-bottom: 36px;
   }
 }
 </style>

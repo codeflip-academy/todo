@@ -85,35 +85,34 @@
     margin: 0;
 }
 }
-.sub-item {
+.sub-item[data-v-7b87e9] {
   transition: background-color 0.3s ease;
 }
-.sub-item.list-group-item {
+.sub-item.list-group-item[data-v-7b87e9] {
   display: flex;
   align-items: center;
   padding: 0;
 }
-.sub-item:hover {
+.sub-item[data-v-7b87e9]:hover {
   cursor: pointer;
   background-color: #eff1f4 !important;
 }
-.sub-item:active {
+.sub-item[data-v-7b87e9]:active {
   background-color: #e9ecef !important;
 }
-.sub-item .sub-item-handle {
+.sub-item .sub-item-handle[data-v-7b87e9] {
   padding: 12px 0px 12px 20px;
 }
-.sub-item .sub-item-handle:hover {
+.sub-item .sub-item-handle[data-v-7b87e9]:hover {
   cursor: move;
 }
-.sub-item .sub-item-name {
+.sub-item .sub-item-name[data-v-7b87e9] {
   font-family: "Nunito", sans-serif;
   font-weight: bold;
   flex: 1 0 auto;
   padding: 12px 0;
 }
-
-.edit-sub-item-form {
+.edit-sub-item-form[data-v-7b87e9] {
   padding: 12px;
   width: 100%;
 }
@@ -302,6 +301,80 @@ body {
   margin: 0;
 }
 
+.item {
+  padding: 25px;
+  background: #f5f6f7;
+  display: flex;
+  align-items: center;
+  transition: background-color 0.3s ease;
+  border-bottom: 1px solid #e7e9ec;
+}
+.item:hover {
+  background-color: #fbfbfc;
+}
+.item:active {
+  background-color: white;
+}
+.item .custom-checkbox {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 100px;
+  background-color: transparent;
+  border: solid 1px #1e88e5;
+  margin-bottom: 0;
+  margin-right: 16px;
+  font-size: 36px;
+  color: #fff;
+  transition: all 0.2s ease;
+}
+.item .custom-checkbox:hover {
+  box-shadow: 0 10px 30px rgba(30, 136, 229, 0.3);
+}
+.item .custom-checkbox svg {
+  transition: opacity 0.2s ease;
+  opacity: 0;
+}
+.item .custom-checkbox.checked {
+  background-color: #1e88e5;
+  box-shadow: 0 10px 30px rgba(30, 136, 229, 0.3);
+}
+.item .custom-checkbox.checked svg {
+  opacity: 1;
+}
+.item .item-details {
+  color: #84909c;
+  font-size: 13px;
+}
+.item .item-details .item-name {
+  color: #455a64;
+  font-size: 16px;
+  margin-bottom: 2px;
+}
+.item .item-details .item-due-date {
+  margin-right: 16px;
+}
+.item .item-details .item-due-date svg {
+  margin-right: 6px;
+}
+.item .item-content-preview {
+  display: flex;
+}
+.item .item-controls {
+  margin-left: auto;
+}
+.item .item-controls .btn-trash {
+  color: #455a64;
+  opacity: 0.5;
+  transition: all 0.3s ease;
+}
+.item .item-controls .btn-trash:hover {
+  color: red;
+  opacity: 1;
+}
+
 .btn.add-list-btn {
   position: fixed;
   bottom: 50px;
@@ -327,6 +400,32 @@ body {
   box-shadow: none !important;
   border: none !important;
   background: #ff5d2a !important;
+}
+
+.item-content {
+  padding: 40px 50px;
+}
+.item-content .item-name {
+  font-size: 24px;
+  color: #455a64;
+  line-height: 1.1;
+  margin-bottom: 16px;
+}
+.item-content .item-meta {
+  margin-bottom: 36px;
+}
+.item-content .item-meta .item-due-date {
+  font-size: 13px;
+  color: #84909c;
+}
+.item-content .item-meta .item-due-date svg {
+  margin-right: 6px;
+}
+.item-content .item-notes {
+  color: #455a64;
+  font-size: 14px;
+  line-height: 1.5;
+  margin-bottom: 36px;
 }
 /*!
  * Bootstrap v4.5.2 (https://getbootstrap.com/)

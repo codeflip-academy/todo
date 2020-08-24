@@ -36885,7 +36885,7 @@ render._withStripped = true
             render: render,
             staticRenderFns: staticRenderFns,
             _compiled: true,
-            _scopeId: null,
+            _scopeId: "data-v-7b87e9",
             functional: undefined
           };
         })());
@@ -48055,6 +48055,8 @@ exports.default = void 0;
 
 var _axios = _interopRequireDefault(require("axios"));
 
+var _vuedraggable = _interopRequireDefault(require("vuedraggable"));
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 //
@@ -48114,8 +48116,61 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 var _default = {
   name: "App",
+
+  data() {
+    return {
+      test: false
+    };
+  },
+
   computed: {
     user() {
       return this.$store.getters.user;
@@ -48182,6 +48237,9 @@ var _default = {
       });
     }
 
+  },
+  components: {
+    Draggable: _vuedraggable.default
   }
 };
 exports.default = _default;
@@ -48286,11 +48344,168 @@ exports.default = _default;
                         ]),
                         _vm._v(" "),
                         _c("div", { staticClass: "list-controls" })
-                      ])
+                      ]),
+                      _vm._v(" "),
+                      _c(
+                        "div",
+                        { staticClass: "items" },
+                        [
+                          _c("Draggable", { attrs: { delay: "200" } }, [
+                            _c("div", { staticClass: "item" }, [
+                              _c("div", { staticClass: "item-checkbox" }, [
+                                _c(
+                                  "label",
+                                  {
+                                    staticClass: "custom-checkbox",
+                                    class: { checked: _vm.test },
+                                    attrs: { for: "checkbox" }
+                                  },
+                                  [
+                                    _c("b-icon-check"),
+                                    _vm._v(" "),
+                                    _c("input", {
+                                      directives: [
+                                        {
+                                          name: "model",
+                                          rawName: "v-model",
+                                          value: _vm.test,
+                                          expression: "test"
+                                        }
+                                      ],
+                                      staticClass: "sr-only",
+                                      attrs: {
+                                        id: "checkbox",
+                                        type: "checkbox"
+                                      },
+                                      domProps: {
+                                        checked: Array.isArray(_vm.test)
+                                          ? _vm._i(_vm.test, null) > -1
+                                          : _vm.test
+                                      },
+                                      on: {
+                                        change: function($event) {
+                                          var $$a = _vm.test,
+                                            $$el = $event.target,
+                                            $$c = $$el.checked ? true : false
+                                          if (Array.isArray($$a)) {
+                                            var $$v = null,
+                                              $$i = _vm._i($$a, $$v)
+                                            if ($$el.checked) {
+                                              $$i < 0 &&
+                                                (_vm.test = $$a.concat([$$v]))
+                                            } else {
+                                              $$i > -1 &&
+                                                (_vm.test = $$a
+                                                  .slice(0, $$i)
+                                                  .concat($$a.slice($$i + 1)))
+                                            }
+                                          } else {
+                                            _vm.test = $$c
+                                          }
+                                        }
+                                      }
+                                    })
+                                  ],
+                                  1
+                                )
+                              ]),
+                              _vm._v(" "),
+                              _c("div", { staticClass: "item-details" }, [
+                                _c("div", { staticClass: "item-name" }, [
+                                  _vm._v("Lorem ipsum dolor sit.")
+                                ]),
+                                _vm._v(" "),
+                                _c(
+                                  "div",
+                                  { staticClass: "item-content-preview" },
+                                  [
+                                    _c(
+                                      "div",
+                                      { staticClass: "item-due-date" },
+                                      [
+                                        _c("b-icon-calendar"),
+                                        _vm._v("Today\n                      ")
+                                      ],
+                                      1
+                                    ),
+                                    _vm._v(" "),
+                                    _c(
+                                      "div",
+                                      { staticClass: "item-notes" },
+                                      [_c("b-icon-file-earmark-text")],
+                                      1
+                                    )
+                                  ]
+                                )
+                              ]),
+                              _vm._v(" "),
+                              _c(
+                                "div",
+                                { staticClass: "item-controls" },
+                                [
+                                  _c(
+                                    "b-button",
+                                    {
+                                      staticClass: "btn-trash",
+                                      attrs: { variant: "link" }
+                                    },
+                                    [_c("b-icon-trash")],
+                                    1
+                                  )
+                                ],
+                                1
+                              )
+                            ])
+                          ])
+                        ],
+                        1
+                      )
                     ])
                   ]),
                   _vm._v(" "),
-                  _c("b-col", { attrs: { md: "7" } })
+                  _c("b-col", { attrs: { md: "7" } }, [
+                    _c("div", { staticClass: "item-content" }, [
+                      _c("h2", { staticClass: "item-name" }, [
+                        _vm._v("Lorem ipsum dolor sit.")
+                      ]),
+                      _vm._v(" "),
+                      _c("div", { staticClass: "item-meta" }, [
+                        _c(
+                          "div",
+                          { staticClass: "item-due-date" },
+                          [
+                            _c("b-icon-calendar"),
+                            _vm._v("Today\n              ")
+                          ],
+                          1
+                        )
+                      ]),
+                      _vm._v(" "),
+                      _c("div", { staticClass: "item-notes" }, [
+                        _vm._v(
+                          "Maecenas faucibus mollis interdum. Etiam porta sem malesuada magna mollis euismod. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Donec id elit non mi porta gravida at eget metus."
+                        )
+                      ]),
+                      _vm._v(" "),
+                      _c("div", { staticClass: "sub-items" }, [
+                        _c("div", { staticClass: "sub-item" }, [
+                          _vm._v("Item 1")
+                        ]),
+                        _vm._v(" "),
+                        _c("div", { staticClass: "sub-item" }, [
+                          _vm._v("Item 2")
+                        ]),
+                        _vm._v(" "),
+                        _c("div", { staticClass: "sub-item" }, [
+                          _vm._v("Item 3")
+                        ]),
+                        _vm._v(" "),
+                        _c("div", { staticClass: "sub-item" }, [
+                          _vm._v("Item 4")
+                        ])
+                      ])
+                    ])
+                  ])
                 ],
                 1
               )
@@ -48339,7 +48554,7 @@ render._withStripped = true
       
       }
     })();
-},{"axios":"node_modules/axios/index.js","_css_loader":"node_modules/parcel-bundler/src/builtins/css-loader.js","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"node_modules/bootstrap-vue/esm/utils/vue.js":[function(require,module,exports) {
+},{"axios":"node_modules/axios/index.js","vuedraggable":"node_modules/vuedraggable/dist/vuedraggable.common.js","_css_loader":"node_modules/parcel-bundler/src/builtins/css-loader.js","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"node_modules/bootstrap-vue/esm/utils/vue.js":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -99195,7 +99410,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "59223" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "58170" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};
