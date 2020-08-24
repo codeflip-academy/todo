@@ -1,48 +1,10 @@
 <template>
-  <div class="todo-list-wrapper">
-    <Confetti v-if="todoList.completed"></Confetti>
-
-    <div class="todo-list">
-      <h1
-        class="todo-list-title mb-2"
-        @click="showTitleEditor"
-        v-if="!editingTitle"
-      >{{ todoList.listTitle }}</h1>
-
-      <b-form class="list-title-editor" v-if="editingTitle" @submit.prevent="updateListTitle">
-        <b-form-group>
-          <b-form-input
-            ref="listTitleInput"
-            v-model="todoListForm.listTitle"
-            id="title"
-            maxlength="50"
-            required
-          ></b-form-input>
-        </b-form-group>
-
-        <b-button variant="success" type="submit" class="mb-3">Save</b-button>
-      </b-form>
-
-      <Contributors
-        class="mb-4"
-        :todoListContributors="todoList.contributors"
-        :accountContributors="contributors"
-      ></Contributors>
-
-      <b-row>
-        <b-col class="mb-3" :class="{ 'col-md-8': todoList.role == 3 }">
-          <TodoListItems
-            :todoListId="todoListId"
-            @todo-list-completed="setTodoListCompleted"
-            @todo-list-uncompleted="setTodoListUncompleted"
-          ></TodoListItems>
-        </b-col>
-
-        <b-col md="4" v-if="todoList.role == 3">
-          <InviteContributorsForm :listId="this.todoListId"></InviteContributorsForm>
-        </b-col>
-      </b-row>
-    </div>
+  <div class="list-wrapper" v-if="!loadingTodoLists">
+    <header class="list-header">
+      <h2 class="list-title">{{ todoList.listTitle }}</h2>
+      <div class="list-controls"></div>
+    </header>
+    <TodoListItems :todoListId="todoList.id"></TodoListItems>
   </div>
 </template>
 
@@ -53,6 +15,7 @@ import TodoListItems from "./TodoListItems";
 import Contributors from "./Contributors";
 import InviteContributorsForm from "./InviteContributorsForm";
 import Confetti from "./Confetti";
+import Draggable from "vuedraggable";
 
 export default {
   name: "TodoList",
@@ -71,6 +34,7 @@ export default {
     },
     ...mapState({
       contributors: (state) => state.contributors,
+      loadingTodoLists: (state) => state.loadingTodoLists,
     }),
   },
   components: {
@@ -78,6 +42,7 @@ export default {
     Contributors,
     InviteContributorsForm,
     Confetti,
+    Draggable,
   },
   methods: {
     async updateListTitle() {

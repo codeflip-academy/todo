@@ -1,10 +1,12 @@
 <template>
-  <b-list-group class="todo-list-items">
+  <div>
+    <AddTodoListItemForm :todoListId="todoListId" @add-item="dispatchAddItem"></AddTodoListItemForm>
+
     <Draggable
       v-model="itemsLayout"
-      @end="dispatchUpdateItemPosition"
-      handle=".item-handle"
       v-if="!loadingItems"
+      delay="200"
+      @end="dispatchUpdateItemPosition"
     >
       <TodoListItem
         v-for="itemId in itemsLayout"
@@ -16,11 +18,7 @@
         @sub-item-count-changed="commitUpdateHasSubItems"
       ></TodoListItem>
     </Draggable>
-
-    <b-list-group-item v-if="items.length === 0">Add an item to get started.</b-list-group-item>
-
-    <AddTodoListItemForm class="mt-3" :todoListId="todoListId" @add-item="dispatchAddItem"></AddTodoListItemForm>
-  </b-list-group>
+  </div>
 </template>
 
 <script>
@@ -204,7 +202,7 @@ export default {
   async created() {
     await this.dispatchGetItemsAndLayout();
   },
-  mounted() {
+  async mounted() {
     // Item created
     this.$store.state.connection.on("ItemCreated", (todoListId, item) => {
       if (this.itemsBelongToList(todoListId)) {

@@ -5,7 +5,6 @@
         v-for="todoList in todoLists"
         :key="todoList.id"
         :todoList="todoList"
-        :contributors="contributors"
         @delete-todo-list="deleteTodoList"
       ></todo-list-preview>
     </div>

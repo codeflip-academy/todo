@@ -1,58 +1,19 @@
 <template>
-  <b-card
-    v-if="todoList.role != 1 && todoList.role != 4"
-    class="todo-list-preview bg-light"
-    no-body
+  <b-button
+    class="sidebar-list"
+    :to="{ path: `/lists/${todoList.id}` }"
+    :class="{ 'selected': $route.params.todoListId == todoList.id }"
   >
-    <b-card-body class="todo-list-preview-content">
-      <b-card-title class="todo-list-preview-title">{{ todoList.listTitle }}</b-card-title>
-
-      <b-badge
-        class="todo-list-preview-status"
-        pill
-        :class="{ 'badge-success': todoList.completed, 'badge-secondary': !todoList.completed }"
-        v-if="todoList.role == 2 || todoList.role == 3"
-      >{{ todoList.completed ? 'Completed' : 'In Progress' }}</b-badge>
-
-      <Contributors
-        :todoListContributors="todoList.contributors"
-        :accountContributors="contributors"
-        class="todo-list-preview-contributors"
-      ></Contributors>
-
-      <div class="todo-list-preview-options">
-        <!-- Invited Options -->
-        <b-button-group v-if="todoList.role == 0">
-          <b-button variant="success" @click="acceptInvitation">Accept</b-button>
-          <b-button variant="danger" @click="declineInvitation">Decline</b-button>
-        </b-button-group>
-
-        <!-- Contributor Options -->
-        <b-button-group v-if="todoList.role == 2">
-          <b-button variant="info" @click="$router.push(`/lists/${todoList.id}`);">View</b-button>
-          <b-button variant="secondary" @click="leaveTodoList">Leave</b-button>
-        </b-button-group>
-
-        <!-- Owner Options -->
-        <b-button-group v-if="todoList.role == 3">
-          <b-button variant="info" @click="$router.push(`/lists/${todoList.id}`);">View</b-button>
-          <b-button variant="danger" @click="deleteTodoList">Delete</b-button>
-        </b-button-group>
-      </div>
-    </b-card-body>
-  </b-card>
+    {{ todoList.listTitle }}
+    <div class="sidebar-list-completed-state">8</div>
+  </b-button>
 </template>
 
 <script>
 import axios from "axios";
 
-import Contributors from "./Contributors";
-
 export default {
-  props: ["todoList", "contributors"],
-  components: {
-    Contributors,
-  },
+  props: ["todoList"],
   methods: {
     deleteTodoList() {
       this.$emit("delete-todo-list", this.todoList.id);
@@ -89,36 +50,63 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-.todo-list-preview {
-  z-index: 0;
-  margin-bottom: 24px;
+$light-gray: #f5f6f7;
+$gray: #455a64;
+$blue: #1e88e5;
+$orange: #ff7043;
+$green: #4caf50;
+$red: #b71c1c;
 
-  .todo-list-preview-contributors {
-    margin-top: 12px;
+.sidebar-list {
+  display: flex;
+  align-items: center;
+  color: $gray;
+  text-align: left;
+  width: 100%;
+  border: none;
+  border-radius: 100px;
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+  background: #fff;
+  padding: 7px 10px 7px 30px;
+
+  &:hover,
+  &:active {
+    color: $gray;
+    background: transparentize($blue, 0.8);
   }
 
-  .todo-list-preview-options {
-    margin-top: 12px;
+  &:not(:last-child) {
+    margin-bottom: 15px;
   }
 
-  @media screen and (min-width: 768px) {
-    .todo-list-preview-content {
-      display: flex;
-      align-items: center;
+  &.selected {
+    background: transparentize($blue, 0.8);
+  }
 
-      .todo-list-preview-title {
-        margin: 0;
-        flex: 1 0 auto;
-      }
+  &.completed {
+    background: transparentize($green, 0.8);
 
-      .todo-list-preview-contributors {
-        margin: 0 20px;
-      }
-
-      .todo-list-preview-options {
-        margin: 0;
-      }
+    .sidebar-list-completed-state {
+      background: $green;
     }
+  }
+
+  svg {
+    margin-right: 14px;
+  }
+
+  .sidebar-list-completed-state {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 22px;
+    width: 22px;
+    border-radius: 100px;
+    font-size: 10px;
+    color: #fff;
+    background: $blue;
+    margin-left: auto;
   }
 }
 </style>

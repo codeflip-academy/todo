@@ -22251,1089 +22251,7 @@ if (inBrowser && window.Vue) {
 
 var _default = VueRouter;
 exports.default = _default;
-},{}],"node_modules/parcel-bundler/src/builtins/bundle-url.js":[function(require,module,exports) {
-var bundleURL = null;
-
-function getBundleURLCached() {
-  if (!bundleURL) {
-    bundleURL = getBundleURL();
-  }
-
-  return bundleURL;
-}
-
-function getBundleURL() {
-  // Attempt to find the URL of the current script and use that as the base URL
-  try {
-    throw new Error();
-  } catch (err) {
-    var matches = ('' + err.stack).match(/(https?|file|ftp|chrome-extension|moz-extension):\/\/[^)\n]+/g);
-
-    if (matches) {
-      return getBaseURL(matches[0]);
-    }
-  }
-
-  return '/';
-}
-
-function getBaseURL(url) {
-  return ('' + url).replace(/^((?:https?|file|ftp|chrome-extension|moz-extension):\/\/.+)\/[^/]+$/, '$1') + '/';
-}
-
-exports.getBundleURL = getBundleURLCached;
-exports.getBaseURL = getBaseURL;
-},{}],"node_modules/parcel-bundler/src/builtins/css-loader.js":[function(require,module,exports) {
-var bundle = require('./bundle-url');
-
-function updateLink(link) {
-  var newLink = link.cloneNode();
-
-  newLink.onload = function () {
-    link.remove();
-  };
-
-  newLink.href = link.href.split('?')[0] + '?' + Date.now();
-  link.parentNode.insertBefore(newLink, link.nextSibling);
-}
-
-var cssTimeout = null;
-
-function reloadCSS() {
-  if (cssTimeout) {
-    return;
-  }
-
-  cssTimeout = setTimeout(function () {
-    var links = document.querySelectorAll('link[rel="stylesheet"]');
-
-    for (var i = 0; i < links.length; i++) {
-      if (bundle.getBaseURL(links[i].href) === bundle.getBundleURL()) {
-        updateLink(links[i]);
-      }
-    }
-
-    cssTimeout = null;
-  }, 50);
-}
-
-module.exports = reloadCSS;
-},{"./bundle-url":"node_modules/parcel-bundler/src/builtins/bundle-url.js"}],"node_modules/vue-hot-reload-api/dist/index.js":[function(require,module,exports) {
-var Vue // late bind
-var version
-var map = Object.create(null)
-if (typeof window !== 'undefined') {
-  window.__VUE_HOT_MAP__ = map
-}
-var installed = false
-var isBrowserify = false
-var initHookName = 'beforeCreate'
-
-exports.install = function (vue, browserify) {
-  if (installed) { return }
-  installed = true
-
-  Vue = vue.__esModule ? vue.default : vue
-  version = Vue.version.split('.').map(Number)
-  isBrowserify = browserify
-
-  // compat with < 2.0.0-alpha.7
-  if (Vue.config._lifecycleHooks.indexOf('init') > -1) {
-    initHookName = 'init'
-  }
-
-  exports.compatible = version[0] >= 2
-  if (!exports.compatible) {
-    console.warn(
-      '[HMR] You are using a version of vue-hot-reload-api that is ' +
-        'only compatible with Vue.js core ^2.0.0.'
-    )
-    return
-  }
-}
-
-/**
- * Create a record for a hot module, which keeps track of its constructor
- * and instances
- *
- * @param {String} id
- * @param {Object} options
- */
-
-exports.createRecord = function (id, options) {
-  if(map[id]) { return }
-
-  var Ctor = null
-  if (typeof options === 'function') {
-    Ctor = options
-    options = Ctor.options
-  }
-  makeOptionsHot(id, options)
-  map[id] = {
-    Ctor: Ctor,
-    options: options,
-    instances: []
-  }
-}
-
-/**
- * Check if module is recorded
- *
- * @param {String} id
- */
-
-exports.isRecorded = function (id) {
-  return typeof map[id] !== 'undefined'
-}
-
-/**
- * Make a Component options object hot.
- *
- * @param {String} id
- * @param {Object} options
- */
-
-function makeOptionsHot(id, options) {
-  if (options.functional) {
-    var render = options.render
-    options.render = function (h, ctx) {
-      var instances = map[id].instances
-      if (ctx && instances.indexOf(ctx.parent) < 0) {
-        instances.push(ctx.parent)
-      }
-      return render(h, ctx)
-    }
-  } else {
-    injectHook(options, initHookName, function() {
-      var record = map[id]
-      if (!record.Ctor) {
-        record.Ctor = this.constructor
-      }
-      record.instances.push(this)
-    })
-    injectHook(options, 'beforeDestroy', function() {
-      var instances = map[id].instances
-      instances.splice(instances.indexOf(this), 1)
-    })
-  }
-}
-
-/**
- * Inject a hook to a hot reloadable component so that
- * we can keep track of it.
- *
- * @param {Object} options
- * @param {String} name
- * @param {Function} hook
- */
-
-function injectHook(options, name, hook) {
-  var existing = options[name]
-  options[name] = existing
-    ? Array.isArray(existing) ? existing.concat(hook) : [existing, hook]
-    : [hook]
-}
-
-function tryWrap(fn) {
-  return function (id, arg) {
-    try {
-      fn(id, arg)
-    } catch (e) {
-      console.error(e)
-      console.warn(
-        'Something went wrong during Vue component hot-reload. Full reload required.'
-      )
-    }
-  }
-}
-
-function updateOptions (oldOptions, newOptions) {
-  for (var key in oldOptions) {
-    if (!(key in newOptions)) {
-      delete oldOptions[key]
-    }
-  }
-  for (var key$1 in newOptions) {
-    oldOptions[key$1] = newOptions[key$1]
-  }
-}
-
-exports.rerender = tryWrap(function (id, options) {
-  var record = map[id]
-  if (!options) {
-    record.instances.slice().forEach(function (instance) {
-      instance.$forceUpdate()
-    })
-    return
-  }
-  if (typeof options === 'function') {
-    options = options.options
-  }
-  if (record.Ctor) {
-    record.Ctor.options.render = options.render
-    record.Ctor.options.staticRenderFns = options.staticRenderFns
-    record.instances.slice().forEach(function (instance) {
-      instance.$options.render = options.render
-      instance.$options.staticRenderFns = options.staticRenderFns
-      // reset static trees
-      // pre 2.5, all static trees are cached together on the instance
-      if (instance._staticTrees) {
-        instance._staticTrees = []
-      }
-      // 2.5.0
-      if (Array.isArray(record.Ctor.options.cached)) {
-        record.Ctor.options.cached = []
-      }
-      // 2.5.3
-      if (Array.isArray(instance.$options.cached)) {
-        instance.$options.cached = []
-      }
-
-      // post 2.5.4: v-once trees are cached on instance._staticTrees.
-      // Pure static trees are cached on the staticRenderFns array
-      // (both already reset above)
-
-      // 2.6: temporarily mark rendered scoped slots as unstable so that
-      // child components can be forced to update
-      var restore = patchScopedSlots(instance)
-      instance.$forceUpdate()
-      instance.$nextTick(restore)
-    })
-  } else {
-    // functional or no instance created yet
-    record.options.render = options.render
-    record.options.staticRenderFns = options.staticRenderFns
-
-    // handle functional component re-render
-    if (record.options.functional) {
-      // rerender with full options
-      if (Object.keys(options).length > 2) {
-        updateOptions(record.options, options)
-      } else {
-        // template-only rerender.
-        // need to inject the style injection code for CSS modules
-        // to work properly.
-        var injectStyles = record.options._injectStyles
-        if (injectStyles) {
-          var render = options.render
-          record.options.render = function (h, ctx) {
-            injectStyles.call(ctx)
-            return render(h, ctx)
-          }
-        }
-      }
-      record.options._Ctor = null
-      // 2.5.3
-      if (Array.isArray(record.options.cached)) {
-        record.options.cached = []
-      }
-      record.instances.slice().forEach(function (instance) {
-        instance.$forceUpdate()
-      })
-    }
-  }
-})
-
-exports.reload = tryWrap(function (id, options) {
-  var record = map[id]
-  if (options) {
-    if (typeof options === 'function') {
-      options = options.options
-    }
-    makeOptionsHot(id, options)
-    if (record.Ctor) {
-      if (version[1] < 2) {
-        // preserve pre 2.2 behavior for global mixin handling
-        record.Ctor.extendOptions = options
-      }
-      var newCtor = record.Ctor.super.extend(options)
-      // prevent record.options._Ctor from being overwritten accidentally
-      newCtor.options._Ctor = record.options._Ctor
-      record.Ctor.options = newCtor.options
-      record.Ctor.cid = newCtor.cid
-      record.Ctor.prototype = newCtor.prototype
-      if (newCtor.release) {
-        // temporary global mixin strategy used in < 2.0.0-alpha.6
-        newCtor.release()
-      }
-    } else {
-      updateOptions(record.options, options)
-    }
-  }
-  record.instances.slice().forEach(function (instance) {
-    if (instance.$vnode && instance.$vnode.context) {
-      instance.$vnode.context.$forceUpdate()
-    } else {
-      console.warn(
-        'Root or manually mounted instance modified. Full reload required.'
-      )
-    }
-  })
-})
-
-// 2.6 optimizes template-compiled scoped slots and skips updates if child
-// only uses scoped slots. We need to patch the scoped slots resolving helper
-// to temporarily mark all scoped slots as unstable in order to force child
-// updates.
-function patchScopedSlots (instance) {
-  if (!instance._u) { return }
-  // https://github.com/vuejs/vue/blob/dev/src/core/instance/render-helpers/resolve-scoped-slots.js
-  var original = instance._u
-  instance._u = function (slots) {
-    try {
-      // 2.6.4 ~ 2.6.6
-      return original(slots, true)
-    } catch (e) {
-      // 2.5 / >= 2.6.7
-      return original(slots, null, true)
-    }
-  }
-  return function () {
-    instance._u = original
-  }
-}
-
-},{}],"vue/components/Contributors.vue":[function(require,module,exports) {
-"use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.default = void 0;
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-var _default = {
-  name: "Contributors",
-  props: ['todoListContributors', 'accountContributors']
-};
-exports.default = _default;
-        var $370f63 = exports.default || module.exports;
-      
-      if (typeof $370f63 === 'function') {
-        $370f63 = $370f63.options;
-      }
-    
-        /* template */
-        Object.assign($370f63, (function () {
-          var render = function() {
-  var _vm = this
-  var _h = _vm.$createElement
-  var _c = _vm._self._c || _h
-  return _c(
-    "ul",
-    { staticClass: "contributors" },
-    _vm._l(_vm.todoListContributors, function(contributor) {
-      return _c("li", { key: contributor, staticClass: "contributor" }, [
-        _c("img", {
-          directives: [
-            {
-              name: "b-tooltip",
-              rawName: "v-b-tooltip.hover",
-              modifiers: { hover: true }
-            }
-          ],
-          attrs: {
-            src: _vm.accountContributors[contributor].pictureUrl,
-            alt: _vm.accountContributors[contributor].fullName,
-            title: _vm.accountContributors[contributor].fullName
-          }
-        })
-      ])
-    }),
-    0
-  )
-}
-var staticRenderFns = []
-render._withStripped = true
-
-          return {
-            render: render,
-            staticRenderFns: staticRenderFns,
-            _compiled: true,
-            _scopeId: "data-v-370f63",
-            functional: undefined
-          };
-        })());
-      
-    /* hot reload */
-    (function () {
-      if (module.hot) {
-        var api = require('vue-hot-reload-api');
-        api.install(require('vue'));
-        if (api.compatible) {
-          module.hot.accept();
-          if (!module.hot.data) {
-            api.createRecord('$370f63', $370f63);
-          } else {
-            api.reload('$370f63', $370f63);
-          }
-        }
-
-        
-        var reloadCSS = require('_css_loader');
-        module.hot.dispose(reloadCSS);
-        module.hot.accept(reloadCSS);
-      
-      }
-    })();
-},{"_css_loader":"node_modules/parcel-bundler/src/builtins/css-loader.js","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/components/TodoListPreview.vue":[function(require,module,exports) {
-"use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.default = void 0;
-
-var _axios = _interopRequireDefault(require("axios"));
-
-var _Contributors = _interopRequireDefault(require("./Contributors"));
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-var _default = {
-  props: ["todoList", "contributors"],
-  components: {
-    Contributors: _Contributors.default
-  },
-  methods: {
-    deleteTodoList() {
-      this.$emit("delete-todo-list", this.todoList.id);
-    },
-
-    async acceptInvitation() {
-      await (0, _axios.default)({
-        method: "POST",
-        url: "api/lists/".concat(this.todoList.id, "/accept")
-      });
-      this.$store.commit("changeUserRoleByListId", {
-        todoListId: this.todoList.id,
-        role: 2
-      });
-    },
-
-    async declineInvitation() {
-      await (0, _axios.default)({
-        method: "POST",
-        url: "api/lists/".concat(this.todoList.id, "/decline")
-      });
-      this.$store.commit("deleteTodoList", this.todoList.id);
-    },
-
-    async leaveTodoList() {
-      await (0, _axios.default)({
-        method: "POST",
-        url: "api/lists/".concat(this.todoList.id, "/removeself")
-      });
-      this.$store.commit("deleteTodoList", this.todoList.id);
-    }
-
-  }
-};
-exports.default = _default;
-        var $2d7314 = exports.default || module.exports;
-      
-      if (typeof $2d7314 === 'function') {
-        $2d7314 = $2d7314.options;
-      }
-    
-        /* template */
-        Object.assign($2d7314, (function () {
-          var render = function() {
-  var _vm = this
-  var _h = _vm.$createElement
-  var _c = _vm._self._c || _h
-  return _vm.todoList.role != 1 && _vm.todoList.role != 4
-    ? _c(
-        "b-card",
-        { staticClass: "todo-list-preview bg-light", attrs: { "no-body": "" } },
-        [
-          _c(
-            "b-card-body",
-            { staticClass: "todo-list-preview-content" },
-            [
-              _c("b-card-title", { staticClass: "todo-list-preview-title" }, [
-                _vm._v(_vm._s(_vm.todoList.listTitle))
-              ]),
-              _vm._v(" "),
-              _vm.todoList.role == 2 || _vm.todoList.role == 3
-                ? _c(
-                    "b-badge",
-                    {
-                      staticClass: "todo-list-preview-status",
-                      class: {
-                        "badge-success": _vm.todoList.completed,
-                        "badge-secondary": !_vm.todoList.completed
-                      },
-                      attrs: { pill: "" }
-                    },
-                    [
-                      _vm._v(
-                        _vm._s(
-                          _vm.todoList.completed ? "Completed" : "In Progress"
-                        )
-                      )
-                    ]
-                  )
-                : _vm._e(),
-              _vm._v(" "),
-              _c("Contributors", {
-                staticClass: "todo-list-preview-contributors",
-                attrs: {
-                  todoListContributors: _vm.todoList.contributors,
-                  accountContributors: _vm.contributors
-                }
-              }),
-              _vm._v(" "),
-              _c(
-                "div",
-                { staticClass: "todo-list-preview-options" },
-                [
-                  _vm.todoList.role == 0
-                    ? _c(
-                        "b-button-group",
-                        [
-                          _c(
-                            "b-button",
-                            {
-                              attrs: { variant: "success" },
-                              on: { click: _vm.acceptInvitation }
-                            },
-                            [_vm._v("Accept")]
-                          ),
-                          _vm._v(" "),
-                          _c(
-                            "b-button",
-                            {
-                              attrs: { variant: "danger" },
-                              on: { click: _vm.declineInvitation }
-                            },
-                            [_vm._v("Decline")]
-                          )
-                        ],
-                        1
-                      )
-                    : _vm._e(),
-                  _vm._v(" "),
-                  _vm.todoList.role == 2
-                    ? _c(
-                        "b-button-group",
-                        [
-                          _c(
-                            "b-button",
-                            {
-                              attrs: { variant: "info" },
-                              on: {
-                                click: function($event) {
-                                  return _vm.$router.push(
-                                    "/lists/" + _vm.todoList.id
-                                  )
-                                }
-                              }
-                            },
-                            [_vm._v("View")]
-                          ),
-                          _vm._v(" "),
-                          _c(
-                            "b-button",
-                            {
-                              attrs: { variant: "secondary" },
-                              on: { click: _vm.leaveTodoList }
-                            },
-                            [_vm._v("Leave")]
-                          )
-                        ],
-                        1
-                      )
-                    : _vm._e(),
-                  _vm._v(" "),
-                  _vm.todoList.role == 3
-                    ? _c(
-                        "b-button-group",
-                        [
-                          _c(
-                            "b-button",
-                            {
-                              attrs: { variant: "info" },
-                              on: {
-                                click: function($event) {
-                                  return _vm.$router.push(
-                                    "/lists/" + _vm.todoList.id
-                                  )
-                                }
-                              }
-                            },
-                            [_vm._v("View")]
-                          ),
-                          _vm._v(" "),
-                          _c(
-                            "b-button",
-                            {
-                              attrs: { variant: "danger" },
-                              on: { click: _vm.deleteTodoList }
-                            },
-                            [_vm._v("Delete")]
-                          )
-                        ],
-                        1
-                      )
-                    : _vm._e()
-                ],
-                1
-              )
-            ],
-            1
-          )
-        ],
-        1
-      )
-    : _vm._e()
-}
-var staticRenderFns = []
-render._withStripped = true
-
-          return {
-            render: render,
-            staticRenderFns: staticRenderFns,
-            _compiled: true,
-            _scopeId: "data-v-2d7314",
-            functional: undefined
-          };
-        })());
-      
-    /* hot reload */
-    (function () {
-      if (module.hot) {
-        var api = require('vue-hot-reload-api');
-        api.install(require('vue'));
-        if (api.compatible) {
-          module.hot.accept();
-          if (!module.hot.data) {
-            api.createRecord('$2d7314', $2d7314);
-          } else {
-            api.reload('$2d7314', $2d7314);
-          }
-        }
-
-        
-        var reloadCSS = require('_css_loader');
-        module.hot.dispose(reloadCSS);
-        module.hot.accept(reloadCSS);
-      
-      }
-    })();
-},{"axios":"node_modules/axios/index.js","./Contributors":"vue/components/Contributors.vue","_css_loader":"node_modules/parcel-bundler/src/builtins/css-loader.js","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/components/AddTodoListForm.vue":[function(require,module,exports) {
-"use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.default = void 0;
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-var _default = {
-  name: "AddTodoListForm",
-
-  data() {
-    return {
-      form: {
-        listTitle: ""
-      }
-    };
-  },
-
-  methods: {
-    focusOnForm() {
-      this.$refs.listTitle.focus();
-    },
-
-    addTodoListRequest() {
-      this.$emit("add-todo-list", this.form.listTitle);
-      this.form.listTitle = "";
-      this.$bvModal.hide("modal-add-todo-list");
-    }
-
-  }
-};
-exports.default = _default;
-        var $baacd1 = exports.default || module.exports;
-      
-      if (typeof $baacd1 === 'function') {
-        $baacd1 = $baacd1.options;
-      }
-    
-        /* template */
-        Object.assign($baacd1, (function () {
-          var render = function() {
-  var _vm = this
-  var _h = _vm.$createElement
-  var _c = _vm._self._c || _h
-  return _c(
-    "div",
-    { attrs: { id: "add-todo-list-controls" } },
-    [
-      _c(
-        "b-button",
-        {
-          on: {
-            click: function($event) {
-              return _vm.$bvModal.show("modal-add-todo-list")
-            }
-          }
-        },
-        [_vm._v("Add list")]
-      ),
-      _vm._v(" "),
-      _c(
-        "b-modal",
-        {
-          attrs: { id: "modal-add-todo-list", title: "Add list" },
-          on: { shown: _vm.focusOnForm }
-        },
-        [
-          _c(
-            "b-form",
-            {
-              on: {
-                submit: function($event) {
-                  $event.preventDefault()
-                  return _vm.addTodoListRequest($event)
-                }
-              }
-            },
-            [
-              _c(
-                "b-form-group",
-                { attrs: { label: "List Title" } },
-                [
-                  _c("b-form-input", {
-                    ref: "listTitle",
-                    model: {
-                      value: _vm.form.listTitle,
-                      callback: function($$v) {
-                        _vm.$set(_vm.form, "listTitle", $$v)
-                      },
-                      expression: "form.listTitle"
-                    }
-                  })
-                ],
-                1
-              ),
-              _vm._v(" "),
-              _c(
-                "b-button",
-                {
-                  staticClass: "ml-auto d-block",
-                  attrs: { type: "submit", variant: "success" }
-                },
-                [_vm._v("Add")]
-              )
-            ],
-            1
-          )
-        ],
-        1
-      )
-    ],
-    1
-  )
-}
-var staticRenderFns = []
-render._withStripped = true
-
-          return {
-            render: render,
-            staticRenderFns: staticRenderFns,
-            _compiled: true,
-            _scopeId: null,
-            functional: undefined
-          };
-        })());
-      
-    /* hot reload */
-    (function () {
-      if (module.hot) {
-        var api = require('vue-hot-reload-api');
-        api.install(require('vue'));
-        if (api.compatible) {
-          module.hot.accept();
-          if (!module.hot.data) {
-            api.createRecord('$baacd1', $baacd1);
-          } else {
-            api.reload('$baacd1', $baacd1);
-          }
-        }
-
-        
-      }
-    })();
-},{"vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/components/TodoLists.vue":[function(require,module,exports) {
-"use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.default = void 0;
-
-var _axios = _interopRequireDefault(require("axios"));
-
-var _vuex = require("vuex");
-
-var _TodoListPreview = _interopRequireDefault(require("./TodoListPreview"));
-
-var _AddTodoListForm = _interopRequireDefault(require("../components/AddTodoListForm"));
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-var _default = {
-  components: {
-    TodoListPreview: _TodoListPreview.default,
-    AddTodoListForm: _AddTodoListForm.default
-  },
-  computed: (0, _vuex.mapState)({
-    todoLists: state => state.todoLists,
-    contributors: state => state.contributors,
-    loadingTodoLists: state => state.loadingTodoLists
-  }),
-  methods: {
-    async addTodoList(listTitle) {
-      await this.$store.dispatch("addTodoList", {
-        listTitle
-      });
-    },
-
-    async deleteTodoList(todoListId) {
-      await this.$store.dispatch("deleteTodoList", {
-        todoListId
-      });
-    }
-
-  }
-};
-exports.default = _default;
-        var $f31e3f = exports.default || module.exports;
-      
-      if (typeof $f31e3f === 'function') {
-        $f31e3f = $f31e3f.options;
-      }
-    
-        /* template */
-        Object.assign($f31e3f, (function () {
-          var render = function() {
-  var _vm = this
-  var _h = _vm.$createElement
-  var _c = _vm._self._c || _h
-  return _c(
-    "div",
-    [
-      !_vm.loadingTodoLists
-        ? _c(
-            "div",
-            _vm._l(_vm.todoLists, function(todoList) {
-              return _c("todo-list-preview", {
-                key: todoList.id,
-                attrs: { todoList: todoList, contributors: _vm.contributors },
-                on: { "delete-todo-list": _vm.deleteTodoList }
-              })
-            }),
-            1
-          )
-        : _vm._e(),
-      _vm._v(" "),
-      _c("AddTodoListForm", { on: { "add-todo-list": _vm.addTodoList } })
-    ],
-    1
-  )
-}
-var staticRenderFns = []
-render._withStripped = true
-
-          return {
-            render: render,
-            staticRenderFns: staticRenderFns,
-            _compiled: true,
-            _scopeId: null,
-            functional: undefined
-          };
-        })());
-      
-    /* hot reload */
-    (function () {
-      if (module.hot) {
-        var api = require('vue-hot-reload-api');
-        api.install(require('vue'));
-        if (api.compatible) {
-          module.hot.accept();
-          if (!module.hot.data) {
-            api.createRecord('$f31e3f', $f31e3f);
-          } else {
-            api.reload('$f31e3f', $f31e3f);
-          }
-        }
-
-        
-      }
-    })();
-},{"axios":"node_modules/axios/index.js","vuex":"node_modules/vuex/dist/vuex.esm.js","./TodoListPreview":"vue/components/TodoListPreview.vue","../components/AddTodoListForm":"vue/components/AddTodoListForm.vue","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/views/Home.vue":[function(require,module,exports) {
-"use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.default = void 0;
-
-var _TodoLists = _interopRequireDefault(require("../components/TodoLists"));
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-//
-//
-var _default = {
-  name: "Home",
-  computed: {
-    user() {
-      return this.$store.getters.user;
-    },
-
-    firstName() {
-      const fullName = this.user.fullName.split(" ");
-      return fullName[0];
-    }
-
-  },
-  components: {
-    TodoLists: _TodoLists.default
-  }
-};
-exports.default = _default;
-        var $254769 = exports.default || module.exports;
-      
-      if (typeof $254769 === 'function') {
-        $254769 = $254769.options;
-      }
-    
-        /* template */
-        Object.assign($254769, (function () {
-          var render = function() {
-  var _vm = this
-  var _h = _vm.$createElement
-  var _c = _vm._self._c || _h
-  return _c("div")
-}
-var staticRenderFns = []
-render._withStripped = true
-
-          return {
-            render: render,
-            staticRenderFns: staticRenderFns,
-            _compiled: true,
-            _scopeId: null,
-            functional: undefined
-          };
-        })());
-      
-    /* hot reload */
-    (function () {
-      if (module.hot) {
-        var api = require('vue-hot-reload-api');
-        api.install(require('vue'));
-        if (api.compatible) {
-          module.hot.accept();
-          if (!module.hot.data) {
-            api.createRecord('$254769', $254769);
-          } else {
-            api.reload('$254769', $254769);
-          }
-        }
-
-        
-      }
-    })();
-},{"../components/TodoLists":"vue/components/TodoLists.vue","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"node_modules/sortablejs/modular/sortable.esm.js":[function(require,module,exports) {
+},{}],"node_modules/sortablejs/modular/sortable.esm.js":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -30961,7 +29879,755 @@ function (modules) {
   /******/
 
 })["default"];
-},{"sortablejs":"node_modules/sortablejs/modular/sortable.esm.js"}],"node_modules/moment/moment.js":[function(require,module,exports) {
+},{"sortablejs":"node_modules/sortablejs/modular/sortable.esm.js"}],"node_modules/parcel-bundler/src/builtins/bundle-url.js":[function(require,module,exports) {
+var bundleURL = null;
+
+function getBundleURLCached() {
+  if (!bundleURL) {
+    bundleURL = getBundleURL();
+  }
+
+  return bundleURL;
+}
+
+function getBundleURL() {
+  // Attempt to find the URL of the current script and use that as the base URL
+  try {
+    throw new Error();
+  } catch (err) {
+    var matches = ('' + err.stack).match(/(https?|file|ftp|chrome-extension|moz-extension):\/\/[^)\n]+/g);
+
+    if (matches) {
+      return getBaseURL(matches[0]);
+    }
+  }
+
+  return '/';
+}
+
+function getBaseURL(url) {
+  return ('' + url).replace(/^((?:https?|file|ftp|chrome-extension|moz-extension):\/\/.+)\/[^/]+$/, '$1') + '/';
+}
+
+exports.getBundleURL = getBundleURLCached;
+exports.getBaseURL = getBaseURL;
+},{}],"node_modules/parcel-bundler/src/builtins/css-loader.js":[function(require,module,exports) {
+var bundle = require('./bundle-url');
+
+function updateLink(link) {
+  var newLink = link.cloneNode();
+
+  newLink.onload = function () {
+    link.remove();
+  };
+
+  newLink.href = link.href.split('?')[0] + '?' + Date.now();
+  link.parentNode.insertBefore(newLink, link.nextSibling);
+}
+
+var cssTimeout = null;
+
+function reloadCSS() {
+  if (cssTimeout) {
+    return;
+  }
+
+  cssTimeout = setTimeout(function () {
+    var links = document.querySelectorAll('link[rel="stylesheet"]');
+
+    for (var i = 0; i < links.length; i++) {
+      if (bundle.getBaseURL(links[i].href) === bundle.getBundleURL()) {
+        updateLink(links[i]);
+      }
+    }
+
+    cssTimeout = null;
+  }, 50);
+}
+
+module.exports = reloadCSS;
+},{"./bundle-url":"node_modules/parcel-bundler/src/builtins/bundle-url.js"}],"node_modules/vue-hot-reload-api/dist/index.js":[function(require,module,exports) {
+var Vue // late bind
+var version
+var map = Object.create(null)
+if (typeof window !== 'undefined') {
+  window.__VUE_HOT_MAP__ = map
+}
+var installed = false
+var isBrowserify = false
+var initHookName = 'beforeCreate'
+
+exports.install = function (vue, browserify) {
+  if (installed) { return }
+  installed = true
+
+  Vue = vue.__esModule ? vue.default : vue
+  version = Vue.version.split('.').map(Number)
+  isBrowserify = browserify
+
+  // compat with < 2.0.0-alpha.7
+  if (Vue.config._lifecycleHooks.indexOf('init') > -1) {
+    initHookName = 'init'
+  }
+
+  exports.compatible = version[0] >= 2
+  if (!exports.compatible) {
+    console.warn(
+      '[HMR] You are using a version of vue-hot-reload-api that is ' +
+        'only compatible with Vue.js core ^2.0.0.'
+    )
+    return
+  }
+}
+
+/**
+ * Create a record for a hot module, which keeps track of its constructor
+ * and instances
+ *
+ * @param {String} id
+ * @param {Object} options
+ */
+
+exports.createRecord = function (id, options) {
+  if(map[id]) { return }
+
+  var Ctor = null
+  if (typeof options === 'function') {
+    Ctor = options
+    options = Ctor.options
+  }
+  makeOptionsHot(id, options)
+  map[id] = {
+    Ctor: Ctor,
+    options: options,
+    instances: []
+  }
+}
+
+/**
+ * Check if module is recorded
+ *
+ * @param {String} id
+ */
+
+exports.isRecorded = function (id) {
+  return typeof map[id] !== 'undefined'
+}
+
+/**
+ * Make a Component options object hot.
+ *
+ * @param {String} id
+ * @param {Object} options
+ */
+
+function makeOptionsHot(id, options) {
+  if (options.functional) {
+    var render = options.render
+    options.render = function (h, ctx) {
+      var instances = map[id].instances
+      if (ctx && instances.indexOf(ctx.parent) < 0) {
+        instances.push(ctx.parent)
+      }
+      return render(h, ctx)
+    }
+  } else {
+    injectHook(options, initHookName, function() {
+      var record = map[id]
+      if (!record.Ctor) {
+        record.Ctor = this.constructor
+      }
+      record.instances.push(this)
+    })
+    injectHook(options, 'beforeDestroy', function() {
+      var instances = map[id].instances
+      instances.splice(instances.indexOf(this), 1)
+    })
+  }
+}
+
+/**
+ * Inject a hook to a hot reloadable component so that
+ * we can keep track of it.
+ *
+ * @param {Object} options
+ * @param {String} name
+ * @param {Function} hook
+ */
+
+function injectHook(options, name, hook) {
+  var existing = options[name]
+  options[name] = existing
+    ? Array.isArray(existing) ? existing.concat(hook) : [existing, hook]
+    : [hook]
+}
+
+function tryWrap(fn) {
+  return function (id, arg) {
+    try {
+      fn(id, arg)
+    } catch (e) {
+      console.error(e)
+      console.warn(
+        'Something went wrong during Vue component hot-reload. Full reload required.'
+      )
+    }
+  }
+}
+
+function updateOptions (oldOptions, newOptions) {
+  for (var key in oldOptions) {
+    if (!(key in newOptions)) {
+      delete oldOptions[key]
+    }
+  }
+  for (var key$1 in newOptions) {
+    oldOptions[key$1] = newOptions[key$1]
+  }
+}
+
+exports.rerender = tryWrap(function (id, options) {
+  var record = map[id]
+  if (!options) {
+    record.instances.slice().forEach(function (instance) {
+      instance.$forceUpdate()
+    })
+    return
+  }
+  if (typeof options === 'function') {
+    options = options.options
+  }
+  if (record.Ctor) {
+    record.Ctor.options.render = options.render
+    record.Ctor.options.staticRenderFns = options.staticRenderFns
+    record.instances.slice().forEach(function (instance) {
+      instance.$options.render = options.render
+      instance.$options.staticRenderFns = options.staticRenderFns
+      // reset static trees
+      // pre 2.5, all static trees are cached together on the instance
+      if (instance._staticTrees) {
+        instance._staticTrees = []
+      }
+      // 2.5.0
+      if (Array.isArray(record.Ctor.options.cached)) {
+        record.Ctor.options.cached = []
+      }
+      // 2.5.3
+      if (Array.isArray(instance.$options.cached)) {
+        instance.$options.cached = []
+      }
+
+      // post 2.5.4: v-once trees are cached on instance._staticTrees.
+      // Pure static trees are cached on the staticRenderFns array
+      // (both already reset above)
+
+      // 2.6: temporarily mark rendered scoped slots as unstable so that
+      // child components can be forced to update
+      var restore = patchScopedSlots(instance)
+      instance.$forceUpdate()
+      instance.$nextTick(restore)
+    })
+  } else {
+    // functional or no instance created yet
+    record.options.render = options.render
+    record.options.staticRenderFns = options.staticRenderFns
+
+    // handle functional component re-render
+    if (record.options.functional) {
+      // rerender with full options
+      if (Object.keys(options).length > 2) {
+        updateOptions(record.options, options)
+      } else {
+        // template-only rerender.
+        // need to inject the style injection code for CSS modules
+        // to work properly.
+        var injectStyles = record.options._injectStyles
+        if (injectStyles) {
+          var render = options.render
+          record.options.render = function (h, ctx) {
+            injectStyles.call(ctx)
+            return render(h, ctx)
+          }
+        }
+      }
+      record.options._Ctor = null
+      // 2.5.3
+      if (Array.isArray(record.options.cached)) {
+        record.options.cached = []
+      }
+      record.instances.slice().forEach(function (instance) {
+        instance.$forceUpdate()
+      })
+    }
+  }
+})
+
+exports.reload = tryWrap(function (id, options) {
+  var record = map[id]
+  if (options) {
+    if (typeof options === 'function') {
+      options = options.options
+    }
+    makeOptionsHot(id, options)
+    if (record.Ctor) {
+      if (version[1] < 2) {
+        // preserve pre 2.2 behavior for global mixin handling
+        record.Ctor.extendOptions = options
+      }
+      var newCtor = record.Ctor.super.extend(options)
+      // prevent record.options._Ctor from being overwritten accidentally
+      newCtor.options._Ctor = record.options._Ctor
+      record.Ctor.options = newCtor.options
+      record.Ctor.cid = newCtor.cid
+      record.Ctor.prototype = newCtor.prototype
+      if (newCtor.release) {
+        // temporary global mixin strategy used in < 2.0.0-alpha.6
+        newCtor.release()
+      }
+    } else {
+      updateOptions(record.options, options)
+    }
+  }
+  record.instances.slice().forEach(function (instance) {
+    if (instance.$vnode && instance.$vnode.context) {
+      instance.$vnode.context.$forceUpdate()
+    } else {
+      console.warn(
+        'Root or manually mounted instance modified. Full reload required.'
+      )
+    }
+  })
+})
+
+// 2.6 optimizes template-compiled scoped slots and skips updates if child
+// only uses scoped slots. We need to patch the scoped slots resolving helper
+// to temporarily mark all scoped slots as unstable in order to force child
+// updates.
+function patchScopedSlots (instance) {
+  if (!instance._u) { return }
+  // https://github.com/vuejs/vue/blob/dev/src/core/instance/render-helpers/resolve-scoped-slots.js
+  var original = instance._u
+  instance._u = function (slots) {
+    try {
+      // 2.6.4 ~ 2.6.6
+      return original(slots, true)
+    } catch (e) {
+      // 2.5 / >= 2.6.7
+      return original(slots, null, true)
+    }
+  }
+  return function () {
+    instance._u = original
+  }
+}
+
+},{}],"vue/components/TodoListPreview.vue":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = void 0;
+
+var _axios = _interopRequireDefault(require("axios"));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+var _default = {
+  props: ["todoList"],
+  methods: {
+    deleteTodoList() {
+      this.$emit("delete-todo-list", this.todoList.id);
+    },
+
+    async acceptInvitation() {
+      await (0, _axios.default)({
+        method: "POST",
+        url: "api/lists/".concat(this.todoList.id, "/accept")
+      });
+      this.$store.commit("changeUserRoleByListId", {
+        todoListId: this.todoList.id,
+        role: 2
+      });
+    },
+
+    async declineInvitation() {
+      await (0, _axios.default)({
+        method: "POST",
+        url: "api/lists/".concat(this.todoList.id, "/decline")
+      });
+      this.$store.commit("deleteTodoList", this.todoList.id);
+    },
+
+    async leaveTodoList() {
+      await (0, _axios.default)({
+        method: "POST",
+        url: "api/lists/".concat(this.todoList.id, "/removeself")
+      });
+      this.$store.commit("deleteTodoList", this.todoList.id);
+    }
+
+  }
+};
+exports.default = _default;
+        var $2d7314 = exports.default || module.exports;
+      
+      if (typeof $2d7314 === 'function') {
+        $2d7314 = $2d7314.options;
+      }
+    
+        /* template */
+        Object.assign($2d7314, (function () {
+          var render = function() {
+  var _vm = this
+  var _h = _vm.$createElement
+  var _c = _vm._self._c || _h
+  return _c(
+    "b-button",
+    {
+      staticClass: "sidebar-list",
+      class: { selected: _vm.$route.params.todoListId == _vm.todoList.id },
+      attrs: { to: { path: "/lists/" + _vm.todoList.id } }
+    },
+    [
+      _vm._v("\n  " + _vm._s(_vm.todoList.listTitle) + "\n  "),
+      _c("div", { staticClass: "sidebar-list-completed-state" }, [_vm._v("8")])
+    ]
+  )
+}
+var staticRenderFns = []
+render._withStripped = true
+
+          return {
+            render: render,
+            staticRenderFns: staticRenderFns,
+            _compiled: true,
+            _scopeId: "data-v-2d7314",
+            functional: undefined
+          };
+        })());
+      
+    /* hot reload */
+    (function () {
+      if (module.hot) {
+        var api = require('vue-hot-reload-api');
+        api.install(require('vue'));
+        if (api.compatible) {
+          module.hot.accept();
+          if (!module.hot.data) {
+            api.createRecord('$2d7314', $2d7314);
+          } else {
+            api.reload('$2d7314', $2d7314);
+          }
+        }
+
+        
+        var reloadCSS = require('_css_loader');
+        module.hot.dispose(reloadCSS);
+        module.hot.accept(reloadCSS);
+      
+      }
+    })();
+},{"axios":"node_modules/axios/index.js","_css_loader":"node_modules/parcel-bundler/src/builtins/css-loader.js","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/components/AddTodoListForm.vue":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = void 0;
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+var _default = {
+  name: "AddTodoListForm",
+
+  data() {
+    return {
+      form: {
+        listTitle: ""
+      }
+    };
+  },
+
+  methods: {
+    focusOnForm() {
+      this.$refs.listTitle.focus();
+    },
+
+    addTodoListRequest() {
+      this.$emit("add-todo-list", this.form.listTitle);
+      this.form.listTitle = "";
+      this.$bvModal.hide("modal-add-todo-list");
+    }
+
+  }
+};
+exports.default = _default;
+        var $baacd1 = exports.default || module.exports;
+      
+      if (typeof $baacd1 === 'function') {
+        $baacd1 = $baacd1.options;
+      }
+    
+        /* template */
+        Object.assign($baacd1, (function () {
+          var render = function() {
+  var _vm = this
+  var _h = _vm.$createElement
+  var _c = _vm._self._c || _h
+  return _c(
+    "div",
+    { attrs: { id: "add-todo-list-controls" } },
+    [
+      _c(
+        "b-button",
+        {
+          staticClass: "add-list-btn",
+          on: {
+            click: function($event) {
+              return _vm.$bvModal.show("modal-add-todo-list")
+            }
+          }
+        },
+        [_c("b-icon-plus")],
+        1
+      ),
+      _vm._v(" "),
+      _c(
+        "b-modal",
+        {
+          attrs: { id: "modal-add-todo-list", title: "Add list" },
+          on: { shown: _vm.focusOnForm }
+        },
+        [
+          _c(
+            "b-form",
+            {
+              on: {
+                submit: function($event) {
+                  $event.preventDefault()
+                  return _vm.addTodoListRequest($event)
+                }
+              }
+            },
+            [
+              _c(
+                "b-form-group",
+                { attrs: { label: "List Title" } },
+                [
+                  _c("b-form-input", {
+                    ref: "listTitle",
+                    model: {
+                      value: _vm.form.listTitle,
+                      callback: function($$v) {
+                        _vm.$set(_vm.form, "listTitle", $$v)
+                      },
+                      expression: "form.listTitle"
+                    }
+                  })
+                ],
+                1
+              ),
+              _vm._v(" "),
+              _c(
+                "b-button",
+                {
+                  staticClass: "ml-auto d-block",
+                  attrs: { type: "submit", variant: "success" }
+                },
+                [_vm._v("Add")]
+              )
+            ],
+            1
+          )
+        ],
+        1
+      )
+    ],
+    1
+  )
+}
+var staticRenderFns = []
+render._withStripped = true
+
+          return {
+            render: render,
+            staticRenderFns: staticRenderFns,
+            _compiled: true,
+            _scopeId: "data-v-baacd1",
+            functional: undefined
+          };
+        })());
+      
+    /* hot reload */
+    (function () {
+      if (module.hot) {
+        var api = require('vue-hot-reload-api');
+        api.install(require('vue'));
+        if (api.compatible) {
+          module.hot.accept();
+          if (!module.hot.data) {
+            api.createRecord('$baacd1', $baacd1);
+          } else {
+            api.reload('$baacd1', $baacd1);
+          }
+        }
+
+        
+        var reloadCSS = require('_css_loader');
+        module.hot.dispose(reloadCSS);
+        module.hot.accept(reloadCSS);
+      
+      }
+    })();
+},{"_css_loader":"node_modules/parcel-bundler/src/builtins/css-loader.js","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/components/TodoLists.vue":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = void 0;
+
+var _axios = _interopRequireDefault(require("axios"));
+
+var _vuex = require("vuex");
+
+var _TodoListPreview = _interopRequireDefault(require("./TodoListPreview"));
+
+var _AddTodoListForm = _interopRequireDefault(require("../components/AddTodoListForm"));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+var _default = {
+  components: {
+    TodoListPreview: _TodoListPreview.default,
+    AddTodoListForm: _AddTodoListForm.default
+  },
+  computed: (0, _vuex.mapState)({
+    todoLists: state => state.todoLists,
+    contributors: state => state.contributors,
+    loadingTodoLists: state => state.loadingTodoLists
+  }),
+  methods: {
+    async addTodoList(listTitle) {
+      await this.$store.dispatch("addTodoList", {
+        listTitle
+      });
+    },
+
+    async deleteTodoList(todoListId) {
+      await this.$store.dispatch("deleteTodoList", {
+        todoListId
+      });
+    }
+
+  }
+};
+exports.default = _default;
+        var $f31e3f = exports.default || module.exports;
+      
+      if (typeof $f31e3f === 'function') {
+        $f31e3f = $f31e3f.options;
+      }
+    
+        /* template */
+        Object.assign($f31e3f, (function () {
+          var render = function() {
+  var _vm = this
+  var _h = _vm.$createElement
+  var _c = _vm._self._c || _h
+  return _c(
+    "div",
+    [
+      !_vm.loadingTodoLists
+        ? _c(
+            "div",
+            _vm._l(_vm.todoLists, function(todoList) {
+              return _c("todo-list-preview", {
+                key: todoList.id,
+                attrs: { todoList: todoList },
+                on: { "delete-todo-list": _vm.deleteTodoList }
+              })
+            }),
+            1
+          )
+        : _vm._e(),
+      _vm._v(" "),
+      _c("AddTodoListForm", { on: { "add-todo-list": _vm.addTodoList } })
+    ],
+    1
+  )
+}
+var staticRenderFns = []
+render._withStripped = true
+
+          return {
+            render: render,
+            staticRenderFns: staticRenderFns,
+            _compiled: true,
+            _scopeId: null,
+            functional: undefined
+          };
+        })());
+      
+    /* hot reload */
+    (function () {
+      if (module.hot) {
+        var api = require('vue-hot-reload-api');
+        api.install(require('vue'));
+        if (api.compatible) {
+          module.hot.accept();
+          if (!module.hot.data) {
+            api.createRecord('$f31e3f', $f31e3f);
+          } else {
+            api.reload('$f31e3f', $f31e3f);
+          }
+        }
+
+        
+      }
+    })();
+},{"axios":"node_modules/axios/index.js","vuex":"node_modules/vuex/dist/vuex.esm.js","./TodoListPreview":"vue/components/TodoListPreview.vue","../components/AddTodoListForm":"vue/components/AddTodoListForm.vue","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"node_modules/moment/moment.js":[function(require,module,exports) {
 var define;
 var global = arguments[3];
 //! moment.js
@@ -37911,6 +37577,8 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 //
 //
 //
+//
+//
 var _default = {
   name: "TodoListItem",
   props: ["item"],
@@ -37976,122 +37644,147 @@ exports.default = _default;
   var _h = _vm.$createElement
   var _c = _vm._self._c || _h
   return _c(
-    "b-list-group-item",
-    {
-      staticClass: "todo-item bg-light",
-      class: { "align-items-center": !_vm.item.dueDate && !_vm.item.notes },
-      attrs: { "data-id": _vm.item.id }
-    },
+    "div",
     [
-      _c("div", { staticClass: "item-handle mr-2" }, [_c("b-icon-list")], 1),
-      _vm._v(" "),
-      _c("b-form-checkbox", {
-        staticClass: "todo-item-checkbox",
-        attrs: { disabled: _vm.item.hasSubItems },
-        model: {
-          value: _vm.itemCompletedState,
-          callback: function($$v) {
-            _vm.itemCompletedState = $$v
+      _c("EditTodoItemForm", {
+        attrs: { todoListItem: _vm.item },
+        on: {
+          "item-edited": _vm.sendItemEditedEvent,
+          "sub-items-completed": function($event) {
+            return _vm.sendCheckboxClickedEvent(true)
           },
-          expression: "itemCompletedState"
+          "sub-items-uncompleted": function($event) {
+            return _vm.sendCheckboxClickedEvent(false)
+          },
+          "sub-item-count-changed": _vm.sendSubItemCountChangedEvent
         }
       }),
       _vm._v(" "),
-      _c("div", { staticClass: "todo-item-details" }, [
-        _c(
-          "div",
-          {
-            staticClass: "todo-item-name",
-            class: { "mb-0": !_vm.item.dueDate && !_vm.item.notes }
-          },
-          [_vm._v(_vm._s(_vm.item.name))]
-        ),
-        _vm._v(" "),
-        _vm.item.dueDate
-          ? _c(
-              "div",
-              { staticClass: "todo-item-due-date" },
-              [
-                _c("b-icon-calendar"),
-                _vm._v(
-                  "\n      " +
-                    _vm._s(_vm._f("formatDate")(_vm.item.dueDate)) +
-                    "\n    "
-                )
-              ],
-              1
-            )
-          : _vm._e(),
-        _vm._v(" "),
-        _vm.item.notes
-          ? _c(
-              "div",
-              { staticClass: "todo-item-notes" },
-              [
-                _c("b-icon-text-left"),
-                _vm._v(
-                  "\n      " +
-                    _vm._s(_vm._f("truncate")(_vm.item.notes, 30, "...")) +
-                    "\n    "
-                )
-              ],
-              1
-            )
-          : _vm._e()
-      ]),
-      _vm._v(" "),
-      _c(
-        "div",
-        { staticClass: "todo-item-options" },
-        [
+      _c("div", { staticClass: "item" }, [
+        _c("div", { staticClass: "item-checkbox" }, [
           _c(
-            "b-button-group",
+            "label",
+            {
+              staticClass: "custom-checkbox",
+              class: { checked: _vm.itemCompletedState },
+              attrs: { for: "checkbox", disabled: _vm.item.hasSubItems }
+            },
             [
-              _c(
-                "b-button",
-                {
-                  attrs: { variant: "info" },
-                  on: {
-                    click: function($event) {
-                      return _vm.$bvModal.show("modal-" + _vm.item.id)
-                    }
-                  }
-                },
-                [_vm._v("View")]
-              ),
+              _c("b-icon-check"),
               _vm._v(" "),
-              _c(
-                "b-button",
-                {
-                  attrs: { variant: "danger" },
-                  on: {
-                    click: function($event) {
-                      return _vm.$emit("delete-item", _vm.item.id)
+              _c("input", {
+                directives: [
+                  {
+                    name: "model",
+                    rawName: "v-model",
+                    value: _vm.itemCompletedState,
+                    expression: "itemCompletedState"
+                  }
+                ],
+                staticClass: "sr-only",
+                attrs: { id: "checkbox", type: "checkbox" },
+                domProps: {
+                  checked: Array.isArray(_vm.itemCompletedState)
+                    ? _vm._i(_vm.itemCompletedState, null) > -1
+                    : _vm.itemCompletedState
+                },
+                on: {
+                  change: function($event) {
+                    var $$a = _vm.itemCompletedState,
+                      $$el = $event.target,
+                      $$c = $$el.checked ? true : false
+                    if (Array.isArray($$a)) {
+                      var $$v = null,
+                        $$i = _vm._i($$a, $$v)
+                      if ($$el.checked) {
+                        $$i < 0 && (_vm.itemCompletedState = $$a.concat([$$v]))
+                      } else {
+                        $$i > -1 &&
+                          (_vm.itemCompletedState = $$a
+                            .slice(0, $$i)
+                            .concat($$a.slice($$i + 1)))
+                      }
+                    } else {
+                      _vm.itemCompletedState = $$c
                     }
                   }
-                },
-                [_vm._v("Delete")]
-              )
+                }
+              })
             ],
             1
-          ),
+          )
+        ]),
+        _vm._v(" "),
+        _c("div", { staticClass: "item-details" }, [
+          _c("div", { staticClass: "item-name" }, [
+            _vm._v(_vm._s(_vm.item.name))
+          ]),
           _vm._v(" "),
-          _c("EditTodoItemForm", {
-            attrs: { todoListItem: _vm.item },
-            on: {
-              "item-edited": _vm.sendItemEditedEvent,
-              "sub-items-completed": function($event) {
-                return _vm.sendCheckboxClickedEvent(true)
+          _c("div", { staticClass: "item-content-preview" }, [
+            _vm.item.dueDate
+              ? _c(
+                  "div",
+                  { staticClass: "item-due-date" },
+                  [
+                    _c("b-icon-calendar"),
+                    _vm._v(
+                      "\n          " +
+                        _vm._s(_vm._f("formatDate")(_vm.item.dueDate)) +
+                        "\n        "
+                    )
+                  ],
+                  1
+                )
+              : _vm._e(),
+            _vm._v(" "),
+            _vm.item.notes
+              ? _c(
+                  "div",
+                  { staticClass: "item-notes" },
+                  [_c("b-icon-file-earmark-text")],
+                  1
+                )
+              : _vm._e()
+          ])
+        ]),
+        _vm._v(" "),
+        _c(
+          "div",
+          { staticClass: "item-controls" },
+          [
+            _c(
+              "b-button",
+              {
+                staticClass: "btn-view",
+                attrs: { variant: "link" },
+                on: {
+                  click: function($event) {
+                    return _vm.$bvModal.show("modal-" + _vm.item.id)
+                  }
+                }
               },
-              "sub-items-uncompleted": function($event) {
-                return _vm.sendCheckboxClickedEvent(false)
+              [_c("b-icon-info-circle")],
+              1
+            ),
+            _vm._v(" "),
+            _c(
+              "b-button",
+              {
+                staticClass: "btn-trash",
+                attrs: { variant: "link" },
+                on: {
+                  click: function($event) {
+                    return _vm.$emit("delete-item", _vm.item.id)
+                  }
+                }
               },
-              "sub-item-count-changed": _vm.sendSubItemCountChangedEvent
-            }
-          })
-        ],
-        1
-      )
+              [_c("b-icon-trash")],
+              1
+            )
+          ],
+          1
+        )
+      ])
     ],
     1
   )
@@ -38103,7 +37796,7 @@ render._withStripped = true
             render: render,
             staticRenderFns: staticRenderFns,
             _compiled: true,
-            _scopeId: "data-v-71ea3c",
+            _scopeId: null,
             functional: undefined
           };
         })());
@@ -38136,6 +37829,10 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.default = void 0;
+//
+//
+//
+//
 //
 //
 //
@@ -38219,15 +37916,20 @@ exports.default = _default;
     { attrs: { id: "add-todo-list-item" } },
     [
       _c(
-        "b-button",
+        "div",
         {
+          staticClass: "item item-add",
           on: {
             click: function($event) {
               return _vm.$bvModal.show("modal-add-todo-list-item")
             }
           }
         },
-        [_vm._v("Add item")]
+        [
+          _c("b-button", { staticClass: "btn-add" }, [_c("b-icon-plus")], 1),
+          _vm._v("Add item\n  ")
+        ],
+        1
       ),
       _vm._v(" "),
       _c(
@@ -38329,7 +38031,7 @@ render._withStripped = true
             render: render,
             staticRenderFns: staticRenderFns,
             _compiled: true,
-            _scopeId: null,
+            _scopeId: "data-v-aa59c0",
             functional: undefined
           };
         })());
@@ -38349,9 +38051,13 @@ render._withStripped = true
         }
 
         
+        var reloadCSS = require('_css_loader');
+        module.hot.dispose(reloadCSS);
+        module.hot.accept(reloadCSS);
+      
       }
     })();
-},{"vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/components/TodoListItems.vue":[function(require,module,exports) {
+},{"_css_loader":"node_modules/parcel-bundler/src/builtins/css-loader.js","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/components/TodoListItems.vue":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -38371,8 +38077,6 @@ var _AddTodoListItemForm = _interopRequireDefault(require("./AddTodoListItemForm
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-//
-//
 //
 //
 //
@@ -38582,7 +38286,7 @@ var _default = {
     await this.dispatchGetItemsAndLayout();
   },
 
-  mounted() {
+  async mounted() {
     // Item created
     this.$store.state.connection.on("ItemCreated", (todoListId, item) => {
       if (this.itemsBelongToList(todoListId)) {
@@ -38663,14 +38367,18 @@ exports.default = _default;
   var _h = _vm.$createElement
   var _c = _vm._self._c || _h
   return _c(
-    "b-list-group",
-    { staticClass: "todo-list-items" },
+    "div",
     [
+      _c("AddTodoListItemForm", {
+        attrs: { todoListId: _vm.todoListId },
+        on: { "add-item": _vm.dispatchAddItem }
+      }),
+      _vm._v(" "),
       !_vm.loadingItems
         ? _c(
             "Draggable",
             {
-              attrs: { handle: ".item-handle" },
+              attrs: { delay: "200" },
               on: { end: _vm.dispatchUpdateItemPosition },
               model: {
                 value: _vm.itemsLayout,
@@ -38698,17 +38406,7 @@ exports.default = _default;
             }),
             1
           )
-        : _vm._e(),
-      _vm._v(" "),
-      _vm.items.length === 0
-        ? _c("b-list-group-item", [_vm._v("Add an item to get started.")])
-        : _vm._e(),
-      _vm._v(" "),
-      _c("AddTodoListItemForm", {
-        staticClass: "mt-3",
-        attrs: { todoListId: _vm.todoListId },
-        on: { "add-item": _vm.dispatchAddItem }
-      })
+        : _vm._e()
     ],
     1
   )
@@ -38742,7 +38440,101 @@ render._withStripped = true
         
       }
     })();
-},{"vue":"node_modules/vue/dist/vue.runtime.esm.js","axios":"node_modules/axios/index.js","vuedraggable":"node_modules/vuedraggable/dist/vuedraggable.common.js","./TodoListItem":"vue/components/TodoListItem.vue","./AddTodoListItemForm.vue":"vue/components/AddTodoListItemForm.vue","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js"}],"vue/components/InviteContributorsForm.vue":[function(require,module,exports) {
+},{"vue":"node_modules/vue/dist/vue.runtime.esm.js","axios":"node_modules/axios/index.js","vuedraggable":"node_modules/vuedraggable/dist/vuedraggable.common.js","./TodoListItem":"vue/components/TodoListItem.vue","./AddTodoListItemForm.vue":"vue/components/AddTodoListItemForm.vue","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js"}],"vue/components/Contributors.vue":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = void 0;
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+var _default = {
+  name: "Contributors",
+  props: ['todoListContributors', 'accountContributors']
+};
+exports.default = _default;
+        var $370f63 = exports.default || module.exports;
+      
+      if (typeof $370f63 === 'function') {
+        $370f63 = $370f63.options;
+      }
+    
+        /* template */
+        Object.assign($370f63, (function () {
+          var render = function() {
+  var _vm = this
+  var _h = _vm.$createElement
+  var _c = _vm._self._c || _h
+  return _c(
+    "ul",
+    { staticClass: "contributors" },
+    _vm._l(_vm.todoListContributors, function(contributor) {
+      return _c("li", { key: contributor, staticClass: "contributor" }, [
+        _c("img", {
+          directives: [
+            {
+              name: "b-tooltip",
+              rawName: "v-b-tooltip.hover",
+              modifiers: { hover: true }
+            }
+          ],
+          attrs: {
+            src: _vm.accountContributors[contributor].pictureUrl,
+            alt: _vm.accountContributors[contributor].fullName,
+            title: _vm.accountContributors[contributor].fullName
+          }
+        })
+      ])
+    }),
+    0
+  )
+}
+var staticRenderFns = []
+render._withStripped = true
+
+          return {
+            render: render,
+            staticRenderFns: staticRenderFns,
+            _compiled: true,
+            _scopeId: "data-v-370f63",
+            functional: undefined
+          };
+        })());
+      
+    /* hot reload */
+    (function () {
+      if (module.hot) {
+        var api = require('vue-hot-reload-api');
+        api.install(require('vue'));
+        if (api.compatible) {
+          module.hot.accept();
+          if (!module.hot.data) {
+            api.createRecord('$370f63', $370f63);
+          } else {
+            api.reload('$370f63', $370f63);
+          }
+        }
+
+        
+        var reloadCSS = require('_css_loader');
+        module.hot.dispose(reloadCSS);
+        module.hot.accept(reloadCSS);
+      
+      }
+    })();
+},{"_css_loader":"node_modules/parcel-bundler/src/builtins/css-loader.js","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/components/InviteContributorsForm.vue":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -39030,46 +38822,10 @@ var _InviteContributorsForm = _interopRequireDefault(require("./InviteContributo
 
 var _Confetti = _interopRequireDefault(require("./Confetti"));
 
+var _vuedraggable = _interopRequireDefault(require("vuedraggable"));
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
 //
 //
 //
@@ -39099,14 +38855,16 @@ var _default = {
     },
 
     ...(0, _vuex.mapState)({
-      contributors: state => state.contributors
+      contributors: state => state.contributors,
+      loadingTodoLists: state => state.loadingTodoLists
     })
   },
   components: {
     TodoListItems: _TodoListItems.default,
     Contributors: _Contributors.default,
     InviteContributorsForm: _InviteContributorsForm.default,
-    Confetti: _Confetti.default
+    Confetti: _Confetti.default,
+    Draggable: _vuedraggable.default
   },
   methods: {
     async updateListTitle() {
@@ -39155,121 +38913,24 @@ exports.default = _default;
   var _vm = this
   var _h = _vm.$createElement
   var _c = _vm._self._c || _h
-  return _c(
-    "div",
-    { staticClass: "todo-list-wrapper" },
-    [
-      _vm.todoList.completed ? _c("Confetti") : _vm._e(),
-      _vm._v(" "),
-      _c(
+  return !_vm.loadingTodoLists
+    ? _c(
         "div",
-        { staticClass: "todo-list" },
+        { staticClass: "list-wrapper" },
         [
-          !_vm.editingTitle
-            ? _c(
-                "h1",
-                {
-                  staticClass: "todo-list-title mb-2",
-                  on: { click: _vm.showTitleEditor }
-                },
-                [_vm._v(_vm._s(_vm.todoList.listTitle))]
-              )
-            : _vm._e(),
+          _c("header", { staticClass: "list-header" }, [
+            _c("h2", { staticClass: "list-title" }, [
+              _vm._v(_vm._s(_vm.todoList.listTitle))
+            ]),
+            _vm._v(" "),
+            _c("div", { staticClass: "list-controls" })
+          ]),
           _vm._v(" "),
-          _vm.editingTitle
-            ? _c(
-                "b-form",
-                {
-                  staticClass: "list-title-editor",
-                  on: {
-                    submit: function($event) {
-                      $event.preventDefault()
-                      return _vm.updateListTitle($event)
-                    }
-                  }
-                },
-                [
-                  _c(
-                    "b-form-group",
-                    [
-                      _c("b-form-input", {
-                        ref: "listTitleInput",
-                        attrs: { id: "title", maxlength: "50", required: "" },
-                        model: {
-                          value: _vm.todoListForm.listTitle,
-                          callback: function($$v) {
-                            _vm.$set(_vm.todoListForm, "listTitle", $$v)
-                          },
-                          expression: "todoListForm.listTitle"
-                        }
-                      })
-                    ],
-                    1
-                  ),
-                  _vm._v(" "),
-                  _c(
-                    "b-button",
-                    {
-                      staticClass: "mb-3",
-                      attrs: { variant: "success", type: "submit" }
-                    },
-                    [_vm._v("Save")]
-                  )
-                ],
-                1
-              )
-            : _vm._e(),
-          _vm._v(" "),
-          _c("Contributors", {
-            staticClass: "mb-4",
-            attrs: {
-              todoListContributors: _vm.todoList.contributors,
-              accountContributors: _vm.contributors
-            }
-          }),
-          _vm._v(" "),
-          _c(
-            "b-row",
-            [
-              _c(
-                "b-col",
-                {
-                  staticClass: "mb-3",
-                  class: { "col-md-8": _vm.todoList.role == 3 }
-                },
-                [
-                  _c("TodoListItems", {
-                    attrs: { todoListId: _vm.todoListId },
-                    on: {
-                      "todo-list-completed": _vm.setTodoListCompleted,
-                      "todo-list-uncompleted": _vm.setTodoListUncompleted
-                    }
-                  })
-                ],
-                1
-              ),
-              _vm._v(" "),
-              _vm.todoList.role == 3
-                ? _c(
-                    "b-col",
-                    { attrs: { md: "4" } },
-                    [
-                      _c("InviteContributorsForm", {
-                        attrs: { listId: this.todoListId }
-                      })
-                    ],
-                    1
-                  )
-                : _vm._e()
-            ],
-            1
-          )
+          _c("TodoListItems", { attrs: { todoListId: _vm.todoList.id } })
         ],
         1
       )
-    ],
-    1
-  )
+    : _vm._e()
 }
 var staticRenderFns = []
 render._withStripped = true
@@ -39300,7 +38961,7 @@ render._withStripped = true
         
       }
     })();
-},{"vuex":"node_modules/vuex/dist/vuex.esm.js","./TodoListItems":"vue/components/TodoListItems.vue","./Contributors":"vue/components/Contributors.vue","./InviteContributorsForm":"vue/components/InviteContributorsForm.vue","./Confetti":"vue/components/Confetti.vue","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/views/TodoListView.vue":[function(require,module,exports) {
+},{"vuex":"node_modules/vuex/dist/vuex.esm.js","./TodoListItems":"vue/components/TodoListItems.vue","./Contributors":"vue/components/Contributors.vue","./InviteContributorsForm":"vue/components/InviteContributorsForm.vue","./Confetti":"vue/components/Confetti.vue","vuedraggable":"node_modules/vuedraggable/dist/vuedraggable.common.js","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/views/Home.vue":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -39308,7 +38969,11 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.default = void 0;
 
-var _vuex = require("vuex");
+var _axios = _interopRequireDefault(require("axios"));
+
+var _vuedraggable = _interopRequireDefault(require("vuedraggable"));
+
+var _TodoLists = _interopRequireDefault(require("../components/TodoLists"));
 
 var _TodoList = _interopRequireDefault(require("../components/TodoList"));
 
@@ -39324,48 +38989,198 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 var _default = {
-  name: "TodoListView",
-  props: ["todoListId"],
-  components: {
-    TodoList: _TodoList.default
+  name: "Home",
+  computed: {
+    user() {
+      return this.$store.getters.user;
+    },
+
+    firstName() {
+      const fullName = this.user.fullName.split(" ");
+      return fullName[0];
+    }
+
   },
-  computed: (0, _vuex.mapState)({
-    loadingTodoLists: state => state.loadingTodoLists
-  })
+  components: {
+    TodoLists: _TodoLists.default,
+    TodoList: _TodoList.default,
+    Draggable: _vuedraggable.default
+  }
 };
 exports.default = _default;
-        var $2f27a4 = exports.default || module.exports;
+        var $254769 = exports.default || module.exports;
       
-      if (typeof $2f27a4 === 'function') {
-        $2f27a4 = $2f27a4.options;
+      if (typeof $254769 === 'function') {
+        $254769 = $254769.options;
       }
     
         /* template */
-        Object.assign($2f27a4, (function () {
+        Object.assign($254769, (function () {
           var render = function() {
   var _vm = this
   var _h = _vm.$createElement
   var _c = _vm._self._c || _h
   return _c(
-    "b-container",
+    "div",
+    { attrs: { id: "content" } },
     [
       _c(
-        "b-button",
-        {
-          staticClass: "back-button mb-2",
-          attrs: { variant: "link", to: "/" }
-        },
+        "b-row",
+        { attrs: { "no-gutters": "" } },
         [
-          _c("b-icon", { attrs: { icon: "chevron-left" } }),
-          _vm._v("My Lists\n  ")
+          _c("b-col", { attrs: { md: "4", lg: "4", xl: "2" } }, [
+            _c("div", { staticClass: "sidebar" }, [
+              _c("div", { staticClass: "sidebar-header mb-3" }, [
+                _c(
+                  "a",
+                  { staticClass: "sidebar-brand", attrs: { href: "#" } },
+                  [_c("b-icon-check-all"), _vm._v("Todo\n          ")],
+                  1
+                )
+              ]),
+              _vm._v(" "),
+              _c("div", { staticClass: "sidebar-lists" }, [_c("TodoLists")], 1)
+            ])
+          ]),
+          _vm._v(" "),
+          _c(
+            "b-col",
+            [
+              _c("div", { staticClass: "account-options" }, [
+                _c(
+                  "a",
+                  { staticClass: "account-dropdown", attrs: { href: "#" } },
+                  [
+                    _c("div", { staticClass: "profile-picture" }, [
+                      _c("img", {
+                        attrs: { src: _vm.user.pictureUrl, alt: "" }
+                      })
+                    ]),
+                    _vm._v(" "),
+                    _c("div", { staticClass: "profile-name" }, [
+                      _vm._v(_vm._s(_vm.user.fullName))
+                    ]),
+                    _vm._v(" "),
+                    _c(
+                      "div",
+                      { staticClass: "dropdown-toggler" },
+                      [_c("b-icon-chevron-down")],
+                      1
+                    )
+                  ]
+                )
+              ]),
+              _vm._v(" "),
+              _c(
+                "b-row",
+                { attrs: { "no-gutters": "" } },
+                [
+                  _c(
+                    "b-col",
+                    { attrs: { md: "5" } },
+                    [_c("RouterView", { key: _vm.$route.fullPath })],
+                    1
+                  ),
+                  _vm._v(" "),
+                  _c("b-col", { attrs: { md: "7" } }, [
+                    _c("div", { staticClass: "item-content" }, [
+                      _c("h2", { staticClass: "item-name" }, [
+                        _vm._v("Lorem ipsum dolor sit.")
+                      ]),
+                      _vm._v(" "),
+                      _c("div", { staticClass: "item-meta" }, [
+                        _c(
+                          "div",
+                          { staticClass: "item-due-date" },
+                          [
+                            _c("b-icon-calendar"),
+                            _vm._v("Today\n              ")
+                          ],
+                          1
+                        )
+                      ]),
+                      _vm._v(" "),
+                      _c("div", { staticClass: "item-notes" }, [
+                        _vm._v(
+                          "Maecenas faucibus mollis interdum. Etiam porta sem malesuada magna mollis euismod. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Donec id elit non mi porta gravida at eget metus."
+                        )
+                      ]),
+                      _vm._v(" "),
+                      _c("div", { staticClass: "sub-items" }, [
+                        _c("div", { staticClass: "sub-item" }, [
+                          _vm._v("Item 1")
+                        ]),
+                        _vm._v(" "),
+                        _c("div", { staticClass: "sub-item" }, [
+                          _vm._v("Item 2")
+                        ]),
+                        _vm._v(" "),
+                        _c("div", { staticClass: "sub-item" }, [
+                          _vm._v("Item 3")
+                        ]),
+                        _vm._v(" "),
+                        _c("div", { staticClass: "sub-item" }, [
+                          _vm._v("Item 4")
+                        ])
+                      ])
+                    ])
+                  ])
+                ],
+                1
+              )
+            ],
+            1
+          )
         ],
         1
-      ),
-      _vm._v(" "),
-      !_vm.loadingTodoLists
-        ? _c("TodoList", { attrs: { todoListId: _vm.todoListId } })
-        : _vm._e()
+      )
     ],
     1
   )
@@ -39377,7 +39192,7 @@ render._withStripped = true
             render: render,
             staticRenderFns: staticRenderFns,
             _compiled: true,
-            _scopeId: "data-v-2f27a4",
+            _scopeId: null,
             functional: undefined
           };
         })());
@@ -39390,20 +39205,16 @@ render._withStripped = true
         if (api.compatible) {
           module.hot.accept();
           if (!module.hot.data) {
-            api.createRecord('$2f27a4', $2f27a4);
+            api.createRecord('$254769', $254769);
           } else {
-            api.reload('$2f27a4', $2f27a4);
+            api.reload('$254769', $254769);
           }
         }
 
         
-        var reloadCSS = require('_css_loader');
-        module.hot.dispose(reloadCSS);
-        module.hot.accept(reloadCSS);
-      
       }
     })();
-},{"vuex":"node_modules/vuex/dist/vuex.esm.js","../components/TodoList":"vue/components/TodoList.vue","_css_loader":"node_modules/parcel-bundler/src/builtins/css-loader.js","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/views/Login.vue":[function(require,module,exports) {
+},{"axios":"node_modules/axios/index.js","vuedraggable":"node_modules/vuedraggable/dist/vuedraggable.common.js","../components/TodoLists":"vue/components/TodoLists.vue","../components/TodoList":"vue/components/TodoList.vue","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/views/Login.vue":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -47984,7 +47795,7 @@ var _store = _interopRequireDefault(require("./store"));
 
 var _Home = _interopRequireDefault(require(".././vue/views/Home"));
 
-var _TodoListView = _interopRequireDefault(require(".././vue/views/TodoListView"));
+var _TodoList = _interopRequireDefault(require(".././vue/components/TodoList.vue"));
 
 var _Login = _interopRequireDefault(require(".././vue/views/Login"));
 
@@ -48003,15 +47814,12 @@ const router = new _vueRouter.default({
   }, {
     path: '/',
     component: _Home.default,
-    name: 'Home'
-  }, {
-    path: '/lists',
-    component: _Home.default,
-    name: 'My Lists'
-  }, {
-    path: '/lists/:todoListId',
-    component: _TodoListView.default,
-    props: true
+    name: 'Home',
+    children: [{
+      path: '/lists/:todoListId',
+      component: _TodoList.default,
+      props: true
+    }]
   }, {
     path: '/settings',
     component: _Settings.default
@@ -48045,7 +47853,7 @@ router.beforeEach(async (to, from, next) => {
 });
 var _default = router;
 exports.default = _default;
-},{"vue":"node_modules/vue/dist/vue.runtime.esm.js","vue-router":"node_modules/vue-router/dist/vue-router.esm.js","axios":"node_modules/axios/index.js","./store":"modules/store.js",".././vue/views/Home":"vue/views/Home.vue",".././vue/views/TodoListView":"vue/views/TodoListView.vue",".././vue/views/Login":"vue/views/Login.vue","../vue/views/Settings":"vue/views/Settings.vue"}],"vue/App.vue":[function(require,module,exports) {
+},{"vue":"node_modules/vue/dist/vue.runtime.esm.js","vue-router":"node_modules/vue-router/dist/vue-router.esm.js","axios":"node_modules/axios/index.js","./store":"modules/store.js",".././vue/views/Home":"vue/views/Home.vue",".././vue/components/TodoList.vue":"vue/components/TodoList.vue",".././vue/views/Login":"vue/views/Login.vue","../vue/views/Settings":"vue/views/Settings.vue"}],"vue/App.vue":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -48055,109 +47863,8 @@ exports.default = void 0;
 
 var _axios = _interopRequireDefault(require("axios"));
 
-var _vuedraggable = _interopRequireDefault(require("vuedraggable"));
-
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
 //
 //
 //
@@ -48169,18 +47876,6 @@ var _default = {
     return {
       test: false
     };
-  },
-
-  computed: {
-    user() {
-      return this.$store.getters.user;
-    },
-
-    firstName() {
-      const fullName = this.user.fullName.split(" ");
-      return fullName[0];
-    }
-
   },
 
   async created() {
@@ -48237,9 +47932,6 @@ var _default = {
       });
     }
 
-  },
-  components: {
-    Draggable: _vuedraggable.default
   }
 };
 exports.default = _default;
@@ -48255,271 +47947,7 @@ exports.default = _default;
   var _vm = this
   var _h = _vm.$createElement
   var _c = _vm._self._c || _h
-  return _c(
-    "div",
-    { attrs: { id: "content" } },
-    [
-      _c(
-        "b-row",
-        { attrs: { "no-gutters": "" } },
-        [
-          _c("b-col", { attrs: { md: "4", lg: "4", xl: "2" } }, [
-            _c("div", { staticClass: "sidebar" }, [
-              _c("div", { staticClass: "sidebar-header mb-3" }, [
-                _c(
-                  "a",
-                  { staticClass: "sidebar-brand", attrs: { href: "#" } },
-                  [_c("b-icon-check-all"), _vm._v("Todo\n          ")],
-                  1
-                )
-              ]),
-              _vm._v(" "),
-              _c(
-                "div",
-                { staticClass: "sidebar-lists" },
-                [
-                  _c("b-button", { staticClass: "sidebar-list selected" }, [
-                    _vm._v("\n            Design\n            "),
-                    _c("div", { staticClass: "sidebar-list-completed-state" }, [
-                      _vm._v("8")
-                    ])
-                  ]),
-                  _vm._v(" "),
-                  _c("b-button", { staticClass: "sidebar-list" }, [
-                    _vm._v("\n            Marketing\n            "),
-                    _c("div", { staticClass: "sidebar-list-completed-state" }, [
-                      _vm._v("6")
-                    ])
-                  ]),
-                  _vm._v(" "),
-                  _c("b-button", { staticClass: "sidebar-list" }, [
-                    _vm._v("\n            Development\n            "),
-                    _c("div", { staticClass: "sidebar-list-completed-state" }, [
-                      _vm._v("37")
-                    ])
-                  ])
-                ],
-                1
-              )
-            ])
-          ]),
-          _vm._v(" "),
-          _c(
-            "b-col",
-            [
-              _c("div", { staticClass: "account-options" }, [
-                _c(
-                  "a",
-                  { staticClass: "account-dropdown", attrs: { href: "#" } },
-                  [
-                    _c("div", { staticClass: "profile-picture" }, [
-                      _c("img", {
-                        attrs: { src: _vm.user.pictureUrl, alt: "" }
-                      })
-                    ]),
-                    _vm._v(" "),
-                    _c("div", { staticClass: "profile-name" }, [
-                      _vm._v(_vm._s(_vm.user.fullName))
-                    ]),
-                    _vm._v(" "),
-                    _c(
-                      "div",
-                      { staticClass: "dropdown-toggler" },
-                      [_c("b-icon-chevron-down")],
-                      1
-                    )
-                  ]
-                )
-              ]),
-              _vm._v(" "),
-              _c(
-                "b-row",
-                { attrs: { "no-gutters": "" } },
-                [
-                  _c("b-col", { attrs: { md: "5" } }, [
-                    _c("div", { staticClass: "list-wrapper" }, [
-                      _c("header", { staticClass: "list-header" }, [
-                        _c("h2", { staticClass: "list-title" }, [
-                          _vm._v("Design")
-                        ]),
-                        _vm._v(" "),
-                        _c("div", { staticClass: "list-controls" })
-                      ]),
-                      _vm._v(" "),
-                      _c(
-                        "div",
-                        { staticClass: "items" },
-                        [
-                          _c("Draggable", { attrs: { delay: "200" } }, [
-                            _c("div", { staticClass: "item" }, [
-                              _c("div", { staticClass: "item-checkbox" }, [
-                                _c(
-                                  "label",
-                                  {
-                                    staticClass: "custom-checkbox",
-                                    class: { checked: _vm.test },
-                                    attrs: { for: "checkbox" }
-                                  },
-                                  [
-                                    _c("b-icon-check"),
-                                    _vm._v(" "),
-                                    _c("input", {
-                                      directives: [
-                                        {
-                                          name: "model",
-                                          rawName: "v-model",
-                                          value: _vm.test,
-                                          expression: "test"
-                                        }
-                                      ],
-                                      staticClass: "sr-only",
-                                      attrs: {
-                                        id: "checkbox",
-                                        type: "checkbox"
-                                      },
-                                      domProps: {
-                                        checked: Array.isArray(_vm.test)
-                                          ? _vm._i(_vm.test, null) > -1
-                                          : _vm.test
-                                      },
-                                      on: {
-                                        change: function($event) {
-                                          var $$a = _vm.test,
-                                            $$el = $event.target,
-                                            $$c = $$el.checked ? true : false
-                                          if (Array.isArray($$a)) {
-                                            var $$v = null,
-                                              $$i = _vm._i($$a, $$v)
-                                            if ($$el.checked) {
-                                              $$i < 0 &&
-                                                (_vm.test = $$a.concat([$$v]))
-                                            } else {
-                                              $$i > -1 &&
-                                                (_vm.test = $$a
-                                                  .slice(0, $$i)
-                                                  .concat($$a.slice($$i + 1)))
-                                            }
-                                          } else {
-                                            _vm.test = $$c
-                                          }
-                                        }
-                                      }
-                                    })
-                                  ],
-                                  1
-                                )
-                              ]),
-                              _vm._v(" "),
-                              _c("div", { staticClass: "item-details" }, [
-                                _c("div", { staticClass: "item-name" }, [
-                                  _vm._v("Lorem ipsum dolor sit.")
-                                ]),
-                                _vm._v(" "),
-                                _c(
-                                  "div",
-                                  { staticClass: "item-content-preview" },
-                                  [
-                                    _c(
-                                      "div",
-                                      { staticClass: "item-due-date" },
-                                      [
-                                        _c("b-icon-calendar"),
-                                        _vm._v("Today\n                      ")
-                                      ],
-                                      1
-                                    ),
-                                    _vm._v(" "),
-                                    _c(
-                                      "div",
-                                      { staticClass: "item-notes" },
-                                      [_c("b-icon-file-earmark-text")],
-                                      1
-                                    )
-                                  ]
-                                )
-                              ]),
-                              _vm._v(" "),
-                              _c(
-                                "div",
-                                { staticClass: "item-controls" },
-                                [
-                                  _c(
-                                    "b-button",
-                                    {
-                                      staticClass: "btn-trash",
-                                      attrs: { variant: "link" }
-                                    },
-                                    [_c("b-icon-trash")],
-                                    1
-                                  )
-                                ],
-                                1
-                              )
-                            ])
-                          ])
-                        ],
-                        1
-                      )
-                    ])
-                  ]),
-                  _vm._v(" "),
-                  _c("b-col", { attrs: { md: "7" } }, [
-                    _c("div", { staticClass: "item-content" }, [
-                      _c("h2", { staticClass: "item-name" }, [
-                        _vm._v("Lorem ipsum dolor sit.")
-                      ]),
-                      _vm._v(" "),
-                      _c("div", { staticClass: "item-meta" }, [
-                        _c(
-                          "div",
-                          { staticClass: "item-due-date" },
-                          [
-                            _c("b-icon-calendar"),
-                            _vm._v("Today\n              ")
-                          ],
-                          1
-                        )
-                      ]),
-                      _vm._v(" "),
-                      _c("div", { staticClass: "item-notes" }, [
-                        _vm._v(
-                          "Maecenas faucibus mollis interdum. Etiam porta sem malesuada magna mollis euismod. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Donec id elit non mi porta gravida at eget metus."
-                        )
-                      ]),
-                      _vm._v(" "),
-                      _c("div", { staticClass: "sub-items" }, [
-                        _c("div", { staticClass: "sub-item" }, [
-                          _vm._v("Item 1")
-                        ]),
-                        _vm._v(" "),
-                        _c("div", { staticClass: "sub-item" }, [
-                          _vm._v("Item 2")
-                        ]),
-                        _vm._v(" "),
-                        _c("div", { staticClass: "sub-item" }, [
-                          _vm._v("Item 3")
-                        ]),
-                        _vm._v(" "),
-                        _c("div", { staticClass: "sub-item" }, [
-                          _vm._v("Item 4")
-                        ])
-                      ])
-                    ])
-                  ])
-                ],
-                1
-              )
-            ],
-            1
-          )
-        ],
-        1
-      ),
-      _vm._v(" "),
-      _c("b-button", { staticClass: "add-list-btn" }, [_c("b-icon-plus")], 1)
-    ],
-    1
-  )
+  return _c("RouterView")
 }
 var staticRenderFns = []
 render._withStripped = true
@@ -48554,7 +47982,7 @@ render._withStripped = true
       
       }
     })();
-},{"axios":"node_modules/axios/index.js","vuedraggable":"node_modules/vuedraggable/dist/vuedraggable.common.js","_css_loader":"node_modules/parcel-bundler/src/builtins/css-loader.js","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"node_modules/bootstrap-vue/esm/utils/vue.js":[function(require,module,exports) {
+},{"axios":"node_modules/axios/index.js","_css_loader":"node_modules/parcel-bundler/src/builtins/css-loader.js","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"node_modules/bootstrap-vue/esm/utils/vue.js":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
