@@ -1,9 +1,4 @@
-<template>
-  <b-container v-if="user.email">
-    <h1 class="mb-4">My Lists</h1>
-    <TodoLists></TodoLists>
-  </b-container>
-</template>
+<template></template>
 
 <script>
 import TodoLists from "../components/TodoLists";
