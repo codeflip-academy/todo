@@ -83,7 +83,7 @@ $red: #b71c1c;
   }
 
   &:not(:last-child) {
-    margin-bottom: 15px;
+    margin-bottom: 10px;
   }
 
   &.selected {

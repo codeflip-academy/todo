@@ -20,7 +20,7 @@
   background: rgba(76, 175, 80, 0.2) !important;
 }
 .sidebar-list[data-v-2d7314]:not(:last-child) {
-  margin-bottom: 15px;
+  margin-bottom: 10px;
 }
 .sidebar-list.selected[data-v-2d7314] {
   background: rgba(30, 136, 229, 0.2);
