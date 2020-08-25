@@ -63,8 +63,7 @@ namespace TodoWebAPI.DomainEventHandlers
                             _listRepository.UpdateListAsync(list);
                         }
                     }
-
-                    await _listRepository.RemoveTodoListAsync(list.Id);
+                    accountListOwner.MoveListToTrash();
                 }
                 else if (accountListContributor != null)
                 {

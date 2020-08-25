@@ -8,7 +8,7 @@ namespace Todo.Domain
 {
     public class ContributorLeft : INotification
     {
-        public Guid ListId { get; set; }
+        public Guid? ListId { get; set; }
         public Guid AccountId { get; set; }
     }
 }

@@ -34,7 +34,7 @@ namespace TodoWebAPI.DomainEventHandlers
         }
         public async Task Handle(ContributorLeft notification, CancellationToken cancellationToken)
         {
-            var list = await _todoListRepository.FindTodoListIdByIdAsync(notification.ListId);
+            var list = await _todoListRepository.FindTodoListIdByIdAsync(notification.ListId.GetValueOrDefault());
             var account = await _accountRepository.FindAccountByIdAsync(notification.AccountId);
 
             var usersExceptYou = RemoveSelfFromContributorSignalRHelper.RemoveContributor(list, account.Email);
