@@ -93,6 +93,9 @@ namespace Todo.Infrastructure
                 .Property(e => e.SubscriptionId)
                 .HasColumnName("SubscriptionID");
 
+                entity
+                    .Property(e => e.PaymentMethodDeletedPlan);
+
             });
 
             modelBuilder.Entity<TodoList>(entity =>

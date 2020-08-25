@@ -8,5 +8,6 @@ namespace TodoWebAPI.UserStories.DeletePaymentMethod
     {
         public string PaymentMethodId { get; set; }
         public Guid AccountId { get; set; }
+        public string Plan { get; set; }
     }
 }
