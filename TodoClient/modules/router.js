@@ -7,7 +7,8 @@ Vue.use(VueRouter);
 
 // Views
 import Home from '.././vue/views/Home';
-import TodoList from '.././vue/components/TodoList.vue';
+import TodoList from '.././vue/components/TodoList';
+import TodoItemDetails from '.././vue/components/TodoItemDetails';
 import Login from '.././vue/views/Login';
 import Settings from '../vue/views/Settings';
 
@@ -19,7 +20,12 @@ const router = new VueRouter({
       component: Home,
       name: 'Home',
       children: [
-        { path: '/lists/:todoListId', component: TodoList, props: true }
+        {
+          path: '/lists/:todoListId',
+          component: TodoList,
+          props: true,
+          children: [{ path: 'items/:itemId', component: TodoItemDetails }]
+        },
       ]
     },
     { path: '/settings', component: Settings },

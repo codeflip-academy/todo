@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div :data-id="item.id">
     <EditTodoItemForm
       :todoListItem="item"
       @item-edited="sendItemEditedEvent"
@@ -8,16 +8,16 @@
       @sub-item-count-changed="sendSubItemCountChangedEvent"
     ></EditTodoItemForm>
 
-    <div class="item">
+    <div class="item" @click="$emit('item-selected', item)">
       <div class="item-checkbox">
         <label
-          for="checkbox"
+          :for="item.id"
           class="custom-checkbox"
           :class="{ 'checked': itemCompletedState, }"
           :disabled="item.hasSubItems"
         >
           <b-icon-check></b-icon-check>
-          <input id="checkbox" v-model="itemCompletedState" type="checkbox" class="sr-only" />
+          <input :id="item.id" v-model="itemCompletedState" type="checkbox" class="sr-only" />
         </label>
       </div>
       <div class="item-details">
@@ -112,6 +112,7 @@ $red: #b71c1c;
 
   &:hover {
     background-color: lighten($light-gray, 2%);
+    cursor: pointer;
   }
 
   &:active {

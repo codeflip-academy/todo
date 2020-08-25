@@ -30630,7 +30630,371 @@ render._withStripped = true
         
       }
     })();
-},{"axios":"node_modules/axios/index.js","vuex":"node_modules/vuex/dist/vuex.esm.js","./TodoListPreview":"vue/components/TodoListPreview.vue","../components/AddTodoListForm":"vue/components/AddTodoListForm.vue","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"node_modules/moment/moment.js":[function(require,module,exports) {
+},{"axios":"node_modules/axios/index.js","vuex":"node_modules/vuex/dist/vuex.esm.js","./TodoListPreview":"vue/components/TodoListPreview.vue","../components/AddTodoListForm":"vue/components/AddTodoListForm.vue","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"node_modules/vue-confetti/dist/vue-confetti.js":[function(require,module,exports) {
+var define;
+!function(t,e){"object"==typeof exports&&"object"==typeof module?module.exports=e():"function"==typeof define&&define.amd?define([],e):"object"==typeof exports?exports["vue-confetti"]=e():t["vue-confetti"]=e()}(window,(function(){return function(t){var e={};function n(i){if(e[i])return e[i].exports;var r=e[i]={i:i,l:!1,exports:{}};return t[i].call(r.exports,r,r.exports,n),r.l=!0,r.exports}return n.m=t,n.c=e,n.d=function(t,e,i){n.o(t,e)||Object.defineProperty(t,e,{enumerable:!0,get:i})},n.r=function(t){"undefined"!=typeof Symbol&&Symbol.toStringTag&&Object.defineProperty(t,Symbol.toStringTag,{value:"Module"}),Object.defineProperty(t,"__esModule",{value:!0})},n.t=function(t,e){if(1&e&&(t=n(t)),8&e)return t;if(4&e&&"object"==typeof t&&t&&t.__esModule)return t;var i=Object.create(null);if(n.r(i),Object.defineProperty(i,"default",{enumerable:!0,value:t}),2&e&&"string"!=typeof t)for(var r in t)n.d(i,r,function(e){return t[e]}.bind(null,r));return i},n.n=function(t){var e=t&&t.__esModule?function(){return t.default}:function(){return t};return n.d(e,"a",e),e},n.o=function(t,e){return Object.prototype.hasOwnProperty.call(t,e)},n.p="",n(n.s=3)}([function(t,e,n){"use strict";n.r(e);var i=function(){var t=arguments.length>0&&void 0!==arguments[0]?arguments[0]:1,e=arguments.length>1&&void 0!==arguments[1]?arguments[1]:t+1,n=arguments.length>2&&void 0!==arguments[2]&&arguments[2],i=parseFloat(t),r=parseFloat(e),o=Math.random()*(r-i)+i;return n?Math.round(o):o};function r(t,e){for(var n=0;n<e.length;n++){var i=e[n];i.enumerable=i.enumerable||!1,i.configurable=!0,"value"in i&&(i.writable=!0),Object.defineProperty(t,i.key,i)}}var o=function(){function t(){var e=arguments.length>0&&void 0!==arguments[0]?arguments[0]:{},n=e.color,i=void 0===n?"blue":n,r=e.size,o=void 0===r?10:r,a=e.dropRate,c=void 0===a?10:a;!function(t,e){if(!(t instanceof e))throw new TypeError("Cannot call a class as a function")}(this,t),this.color=i,this.size=o,this.dropRate=c}var e,n,o;return e=t,(n=[{key:"setup",value:function(t){var e=t.canvas,n=t.wind,r=t.windPosCoef,o=t.windSpeedMax,a=t.count;return this.canvas=e,this.wind=n,this.windPosCoef=r,this.windSpeedMax=o,this.x=i(-35,this.canvas.width+35),this.y=i(-30,-35),this.d=i(150)+10,this.particleSize=i(this.size,2*this.size),this.tilt=i(10),this.tiltAngleIncremental=(i(0,.08)+.04)*(i()<.5?-1:1),this.tiltAngle=0,this.angle=i(2*Math.PI),this.count=a+1,this.remove=!1,this}},{key:"update",value:function(){this.tiltAngle+=this.tiltAngleIncremental*(.2*Math.cos(this.wind+(this.d+this.x+this.y)*this.windPosCoef)+1),this.y+=(Math.cos(this.angle+this.d)+parseInt(this.dropRate,10))/2,this.x+=Math.sin(this.angle),this.x+=Math.cos(this.wind+(this.d+this.x+this.y)*this.windPosCoef)*this.windSpeedMax,this.y+=Math.sin(this.wind+(this.d+this.x+this.y)*this.windPosCoef)*this.windSpeedMax,this.tilt=15*Math.sin(this.tiltAngle-this.count/3)}},{key:"pastBottom",value:function(){return this.y>this.canvas.height}},{key:"draw",value:function(){this.canvas.ctx.fillStyle=this.color,this.canvas.ctx.beginPath(),this.canvas.ctx.setTransform(Math.cos(this.tiltAngle),Math.sin(this.tiltAngle),0,1,this.x,this.y)}},{key:"kill",value:function(){this.remove=!0}}])&&r(e.prototype,n),o&&r(e,o),t}();function a(t){return(a="function"==typeof Symbol&&"symbol"==typeof Symbol.iterator?function(t){return typeof t}:function(t){return t&&"function"==typeof Symbol&&t.constructor===Symbol&&t!==Symbol.prototype?"symbol":typeof t})(t)}function c(t,e){for(var n=0;n<e.length;n++){var i=e[n];i.enumerable=i.enumerable||!1,i.configurable=!0,"value"in i&&(i.writable=!0),Object.defineProperty(t,i.key,i)}}function s(t,e){return!e||"object"!==a(e)&&"function"!=typeof e?function(t){if(void 0===t)throw new ReferenceError("this hasn't been initialised - super() hasn't been called");return t}(t):e}function l(t,e,n){return(l="undefined"!=typeof Reflect&&Reflect.get?Reflect.get:function(t,e,n){var i=function(t,e){for(;!Object.prototype.hasOwnProperty.call(t,e)&&null!==(t=u(t)););return t}(t,e);if(i){var r=Object.getOwnPropertyDescriptor(i,e);return r.get?r.get.call(n):r.value}})(t,e,n||t)}function u(t){return(u=Object.setPrototypeOf?Object.getPrototypeOf:function(t){return t.__proto__||Object.getPrototypeOf(t)})(t)}function f(t,e){return(f=Object.setPrototypeOf||function(t,e){return t.__proto__=e,t})(t,e)}var h=function(t){function e(){return function(t,e){if(!(t instanceof e))throw new TypeError("Cannot call a class as a function")}(this,e),s(this,u(e).apply(this,arguments))}var n,i,r;return function(t,e){if("function"!=typeof e&&null!==e)throw new TypeError("Super expression must either be null or a function");t.prototype=Object.create(e&&e.prototype,{constructor:{value:t,writable:!0,configurable:!0}}),e&&f(t,e)}(e,t),n=e,(i=[{key:"draw",value:function(){l(u(e.prototype),"draw",this).call(this),this.canvas.ctx.arc(0,0,this.particleSize/2,0,2*Math.PI,!1),this.canvas.ctx.fill()}}])&&c(n.prototype,i),r&&c(n,r),e}(o);function p(t){return(p="function"==typeof Symbol&&"symbol"==typeof Symbol.iterator?function(t){return typeof t}:function(t){return t&&"function"==typeof Symbol&&t.constructor===Symbol&&t!==Symbol.prototype?"symbol":typeof t})(t)}function y(t,e){for(var n=0;n<e.length;n++){var i=e[n];i.enumerable=i.enumerable||!1,i.configurable=!0,"value"in i&&(i.writable=!0),Object.defineProperty(t,i.key,i)}}function d(t,e){return!e||"object"!==p(e)&&"function"!=typeof e?function(t){if(void 0===t)throw new ReferenceError("this hasn't been initialised - super() hasn't been called");return t}(t):e}function v(t,e,n){return(v="undefined"!=typeof Reflect&&Reflect.get?Reflect.get:function(t,e,n){var i=function(t,e){for(;!Object.prototype.hasOwnProperty.call(t,e)&&null!==(t=b(t)););return t}(t,e);if(i){var r=Object.getOwnPropertyDescriptor(i,e);return r.get?r.get.call(n):r.value}})(t,e,n||t)}function b(t){return(b=Object.setPrototypeOf?Object.getPrototypeOf:function(t){return t.__proto__||Object.getPrototypeOf(t)})(t)}function m(t,e){return(m=Object.setPrototypeOf||function(t,e){return t.__proto__=e,t})(t,e)}var w=function(t){function e(){return function(t,e){if(!(t instanceof e))throw new TypeError("Cannot call a class as a function")}(this,e),d(this,b(e).apply(this,arguments))}var n,i,r;return function(t,e){if("function"!=typeof e&&null!==e)throw new TypeError("Super expression must either be null or a function");t.prototype=Object.create(e&&e.prototype,{constructor:{value:t,writable:!0,configurable:!0}}),e&&m(t,e)}(e,t),n=e,(i=[{key:"draw",value:function(){v(b(e.prototype),"draw",this).call(this),this.canvas.ctx.fillRect(0,0,this.particleSize,this.particleSize/2)}}])&&y(n.prototype,i),r&&y(n,r),e}(o);function g(t){return(g="function"==typeof Symbol&&"symbol"==typeof Symbol.iterator?function(t){return typeof t}:function(t){return t&&"function"==typeof Symbol&&t.constructor===Symbol&&t!==Symbol.prototype?"symbol":typeof t})(t)}function O(t,e){for(var n=0;n<e.length;n++){var i=e[n];i.enumerable=i.enumerable||!1,i.configurable=!0,"value"in i&&(i.writable=!0),Object.defineProperty(t,i.key,i)}}function P(t,e){return!e||"object"!==g(e)&&"function"!=typeof e?function(t){if(void 0===t)throw new ReferenceError("this hasn't been initialised - super() hasn't been called");return t}(t):e}function S(t,e,n){return(S="undefined"!=typeof Reflect&&Reflect.get?Reflect.get:function(t,e,n){var i=function(t,e){for(;!Object.prototype.hasOwnProperty.call(t,e)&&null!==(t=j(t)););return t}(t,e);if(i){var r=Object.getOwnPropertyDescriptor(i,e);return r.get?r.get.call(n):r.value}})(t,e,n||t)}function j(t){return(j=Object.setPrototypeOf?Object.getPrototypeOf:function(t){return t.__proto__||Object.getPrototypeOf(t)})(t)}function k(t,e){return(k=Object.setPrototypeOf||function(t,e){return t.__proto__=e,t})(t,e)}var x=function(t){function e(){return function(t,e){if(!(t instanceof e))throw new TypeError("Cannot call a class as a function")}(this,e),P(this,j(e).apply(this,arguments))}var n,i,r;return function(t,e){if("function"!=typeof e&&null!==e)throw new TypeError("Super expression must either be null or a function");t.prototype=Object.create(e&&e.prototype,{constructor:{value:t,writable:!0,configurable:!0}}),e&&k(t,e)}(e,t),n=e,(i=[{key:"draw",value:function(){var t=this;S(j(e.prototype),"draw",this).call(this);var n=function(e,n,i,r,o,a){t.canvas.ctx.bezierCurveTo(e*(t.particleSize/200),n*(t.particleSize/200),i*(t.particleSize/200),r*(t.particleSize/200),o*(t.particleSize/200),a*(t.particleSize/200))};this.canvas.ctx.moveTo(37.5/this.particleSize,20/this.particleSize),n(75,37,70,25,50,25),n(20,25,20,62.5,20,62.5),n(20,80,40,102,75,120),n(110,102,130,80,130,62.5),n(130,62.5,130,25,100,25),n(85,25,75,37,75,40),this.canvas.ctx.fill()}}])&&O(n.prototype,i),r&&O(n,r),e}(o);function M(t){return(M="function"==typeof Symbol&&"symbol"==typeof Symbol.iterator?function(t){return typeof t}:function(t){return t&&"function"==typeof Symbol&&t.constructor===Symbol&&t!==Symbol.prototype?"symbol":typeof t})(t)}function _(t,e){for(var n=0;n<e.length;n++){var i=e[n];i.enumerable=i.enumerable||!1,i.configurable=!0,"value"in i&&(i.writable=!0),Object.defineProperty(t,i.key,i)}}function E(t,e){return!e||"object"!==M(e)&&"function"!=typeof e?function(t){if(void 0===t)throw new ReferenceError("this hasn't been initialised - super() hasn't been called");return t}(t):e}function I(t,e,n){return(I="undefined"!=typeof Reflect&&Reflect.get?Reflect.get:function(t,e,n){var i=function(t,e){for(;!Object.prototype.hasOwnProperty.call(t,e)&&null!==(t=C(t)););return t}(t,e);if(i){var r=Object.getOwnPropertyDescriptor(i,e);return r.get?r.get.call(n):r.value}})(t,e,n||t)}function C(t){return(C=Object.setPrototypeOf?Object.getPrototypeOf:function(t){return t.__proto__||Object.getPrototypeOf(t)})(t)}function D(t,e){return(D=Object.setPrototypeOf||function(t,e){return t.__proto__=e,t})(t,e)}var R=function(t){function e(t,n){var i;return function(t,e){if(!(t instanceof e))throw new TypeError("Cannot call a class as a function")}(this,e),(i=E(this,C(e).call(this,t))).imgEl=n,i}var n,i,r;return function(t,e){if("function"!=typeof e&&null!==e)throw new TypeError("Super expression must either be null or a function");t.prototype=Object.create(e&&e.prototype,{constructor:{value:t,writable:!0,configurable:!0}}),e&&D(t,e)}(e,t),n=e,(i=[{key:"draw",value:function(){I(C(e.prototype),"draw",this).call(this),this.canvas.ctx.drawImage(this.imgEl,0,0,this.particleSize,this.particleSize)}}])&&_(n.prototype,i),r&&_(n,r),e}(o);function T(t,e){for(var n=0;n<e.length;n++){var i=e[n];i.enumerable=i.enumerable||!1,i.configurable=!0,"value"in i&&(i.writable=!0),Object.defineProperty(t,i.key,i)}}var z=function(){function t(){!function(t,e){if(!(t instanceof e))throw new TypeError("Cannot call a class as a function")}(this,t),this.cachedImage=null}var e,n,r;return e=t,(n=[{key:"createImageElement",value:function(t){var e=document.createElement("img");return e.setAttribute("src",t),e}},{key:"getImageElement",value:function(t){return this.cachedImage&&t===this.cachedImage.getAttribute("src")||(this.cachedImage=this.createImageElement(t)),this.cachedImage}},{key:"getRandomParticle",value:function(){var t=arguments.length>0&&void 0!==arguments[0]?arguments[0]:{},e=t.particles||[];return e.length<1?{}:e[Math.floor(Math.random()*e.length)]}},{key:"getDefaults",value:function(){var t=arguments.length>0&&void 0!==arguments[0]?arguments[0]:{};return{type:t.defaultType||"circle",size:t.defaultSize||10,dropRate:t.defaultDropRate||10,colors:t.defaultColors||["DodgerBlue","OliveDrab","Gold","pink","SlateBlue","lightblue","Violet","PaleGreen","SteelBlue","SandyBrown","Chocolate","Crimson"],url:null}}},{key:"create",value:function(t){var e=this.getDefaults(t),n=this.getRandomParticle(t),r=Object.assign(e,n),o=i(0,r.colors.length-1,!0);if(r.color=r.colors[o],"circle"===r.type)return new h(r);if("rect"===r.type)return new w(r);if("heart"===r.type)return new x(r);if("image"===r.type)return new R(r,this.getImageElement(r.url));throw Error('Unknown particle type: "'.concat(r.type,'"'))}}])&&T(e.prototype,n),r&&T(e,r),t}();function F(t,e){for(var n=0;n<e.length;n++){var i=e[n];i.enumerable=i.enumerable||!1,i.configurable=!0,"value"in i&&(i.writable=!0),Object.defineProperty(t,i.key,i)}}var A=function(){function t(e){!function(t,e){if(!(t instanceof e))throw new TypeError("Cannot call a class as a function")}(this,t),this.items=[],this.pool=[],this.particleOptions=e,this.particleFactory=new z}var e,n,i;return e=t,(n=[{key:"update",value:function(){var t,e=this,n=[],i=[];this.items.forEach((function(t){t.update(),t.pastBottom()?t.remove||(t.setup(e.particleOptions),n.push(t)):i.push(t)})),(t=this.pool).push.apply(t,n),this.items=i}},{key:"draw",value:function(){this.items.forEach((function(t){return t.draw()}))}},{key:"add",value:function(){this.pool.length>0?this.items.push(this.pool.pop().setup(this.particleOptions)):this.items.push(this.particleFactory.create(this.particleOptions).setup(this.particleOptions))}},{key:"refresh",value:function(){this.items.forEach((function(t){t.kill()})),this.pool=[]}}])&&F(e.prototype,n),i&&F(e,i),t}();function B(t,e){for(var n=0;n<e.length;n++){var i=e[n];i.enumerable=i.enumerable||!1,i.configurable=!0,"value"in i&&(i.writable=!0),Object.defineProperty(t,i.key,i)}}var H=function(){function t(e){!function(t,e){if(!(t instanceof e))throw new TypeError("Cannot call a class as a function")}(this,t);var n=document.getElementById(e);if(this.isDefault=null==e,!this.isDefault&&!n)throw new Error('No element found with ID "'.concat(e,'"'));if(this.canvas=n||t.createDefaultCanvas("confetti-canvas"),!(this.canvas instanceof HTMLCanvasElement))throw new Error('Element with ID "'.concat("confetti-canvas",'" is not a valid HTMLCanvasElement'));this.ctx=this.canvas.getContext("2d")}var e,n,i;return e=t,i=[{key:"createDefaultCanvas",value:function(t){var e=document.createElement("canvas");return e.style.display="block",e.style.position="fixed",e.style.pointerEvents="none",e.style.top=0,e.style.width="100vw",e.style.height="100vh",e.id=t,document.querySelector("body").appendChild(e),e}}],(n=[{key:"clear",value:function(){this.ctx.setTransform(1,0,0,1,0,0),this.ctx.clearRect(0,0,this.width,this.height)}},{key:"updateDimensions",value:function(){this.isDefault&&(this.width===window.innerWidth&&this.height===window.innerHeight||(this.canvas.width=window.innerWidth,this.canvas.height=window.innerHeight))}},{key:"width",get:function(){return this.canvas.width}},{key:"height",get:function(){return this.canvas.height}}])&&B(e.prototype,n),i&&B(e,i),t}();function L(t,e){for(var n=0;n<e.length;n++){var i=e[n];i.enumerable=i.enumerable||!1,i.configurable=!0,"value"in i&&(i.writable=!0),Object.defineProperty(t,i.key,i)}}var W=function(){function t(){!function(t,e){if(!(t instanceof e))throw new TypeError("Cannot call a class as a function")}(this,t),this.setDefaults()}var e,n,i;return e=t,(n=[{key:"setDefaults",value:function(){this.killed=!1,this.framesSinceDrop=0,this.canvas=null,this.canvasId=null,this.W=0,this.H=0,this.particleManager=null,this.particlesPerFrame=0,this.wind=0,this.windSpeed=1,this.windSpeedMax=1,this.windChange=.01,this.windPosCoef=.002,this.animationId=null}},{key:"getParticleOptions",value:function(t){var e={canvas:this.canvas,W:this.W,H:this.H,wind:this.wind,windPosCoef:this.windPosCoef,windSpeedMax:this.windSpeedMax,count:0};return Object.assign(e,t),e}},{key:"createParticles",value:function(){var t=arguments.length>0&&void 0!==arguments[0]?arguments[0]:{},e=this.getParticleOptions(t);this.particleManager=new A(e)}},{key:"start",value:function(){var t=arguments.length>0&&void 0!==arguments[0]?arguments[0]:{};this.canvas&&t.canvasId===this.canvasId||(this.canvas=new H(t.canvasId),this.canvasId=t.canvasId),this.animationId&&cancelAnimationFrame(this.animationId),this.createParticles(t),this.canvas.updateDimensions(),this.setParticlesPerFrame(t),this.animationId=requestAnimationFrame(this.mainLoop.bind(this))}},{key:"setParticlesPerFrame",value:function(t){this.particlesPerFrame=t.particlesPerFrame||2}},{key:"stop",value:function(){this.killed=!0,this.particlesPerFrame=0}},{key:"update",value:function(t){this.canvas&&t.canvasId!==this.canvasId&&(this.stop(),this.canvas.clear(),this.start(t)),this.setParticlesPerFrame(t),this.particleManager&&(this.particleManager.particleOptions=this.getParticleOptions(t),this.particleManager.refresh())}},{key:"remove",value:function(){this.stop(),this.animationId&&cancelAnimationFrame(this.animationId),this.canvas.clear(),this.setDefaults()}},{key:"mainLoop",value:function(t){this.canvas.updateDimensions(),this.canvas.clear(),this.windSpeed=Math.sin(t/8e3)*this.windSpeedMax,this.wind=this.particleManager.particleOptions.wind+=this.windChange;for(var e=this.framesSinceDrop*this.particlesPerFrame;e>=1;)this.particleManager.add(),e-=1,this.framesSinceDrop=0;this.particleManager.update(),this.particleManager.draw(),this.killed&&!this.particleManager.items.length||(this.animationId=requestAnimationFrame(this.mainLoop.bind(this))),this.framesSinceDrop+=1}}])&&L(e.prototype,n),i&&L(e,i),t}();n.d(e,"Confetti",(function(){return W}));e.default={install:function(t,e){this.installed||(this.installed=!0,t.prototype.$confetti=new W(e))}}},,,function(t,e,n){t.exports=n(0)}])}));
+},{}],"vue/components/Confetti.vue":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = void 0;
+
+var _vue = _interopRequireDefault(require("vue"));
+
+var _vueConfetti = _interopRequireDefault(require("vue-confetti"));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+//
+//
+_vue.default.use(_vueConfetti.default);
+
+var _default = {
+  name: "Confetti",
+
+  mounted() {
+    this.$nextTick(() => {
+      this.$confetti.start({
+        particles: [{
+          type: "rect"
+        }],
+        particlesPerFrame: 0.4,
+        dropRate: 8
+      });
+    });
+  },
+
+  beforeDestroy() {
+    this.$confetti.stop();
+  }
+
+};
+exports.default = _default;
+        var $1a387c = exports.default || module.exports;
+      
+      if (typeof $1a387c === 'function') {
+        $1a387c = $1a387c.options;
+      }
+    
+        /* template */
+        Object.assign($1a387c, (function () {
+          var render = function() {
+  var _vm = this
+  var _h = _vm.$createElement
+  var _c = _vm._self._c || _h
+  return _c("div")
+}
+var staticRenderFns = []
+render._withStripped = true
+
+          return {
+            render: render,
+            staticRenderFns: staticRenderFns,
+            _compiled: true,
+            _scopeId: null,
+            functional: undefined
+          };
+        })());
+      
+    /* hot reload */
+    (function () {
+      if (module.hot) {
+        var api = require('vue-hot-reload-api');
+        api.install(require('vue'));
+        if (api.compatible) {
+          module.hot.accept();
+          if (!module.hot.data) {
+            api.createRecord('$1a387c', $1a387c);
+          } else {
+            api.reload('$1a387c', $1a387c);
+          }
+        }
+
+        
+      }
+    })();
+},{"vue":"node_modules/vue/dist/vue.runtime.esm.js","vue-confetti":"node_modules/vue-confetti/dist/vue-confetti.js","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js"}],"vue/components/Contributors.vue":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = void 0;
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+var _default = {
+  name: "Contributors",
+  props: ['todoListContributors', 'accountContributors']
+};
+exports.default = _default;
+        var $370f63 = exports.default || module.exports;
+      
+      if (typeof $370f63 === 'function') {
+        $370f63 = $370f63.options;
+      }
+    
+        /* template */
+        Object.assign($370f63, (function () {
+          var render = function() {
+  var _vm = this
+  var _h = _vm.$createElement
+  var _c = _vm._self._c || _h
+  return _c(
+    "ul",
+    { staticClass: "contributors" },
+    _vm._l(_vm.todoListContributors, function(contributor) {
+      return _c("li", { key: contributor, staticClass: "contributor" }, [
+        _c("img", {
+          directives: [
+            {
+              name: "b-tooltip",
+              rawName: "v-b-tooltip.hover",
+              modifiers: { hover: true }
+            }
+          ],
+          attrs: {
+            src: _vm.accountContributors[contributor].pictureUrl,
+            alt: _vm.accountContributors[contributor].fullName,
+            title: _vm.accountContributors[contributor].fullName
+          }
+        })
+      ])
+    }),
+    0
+  )
+}
+var staticRenderFns = []
+render._withStripped = true
+
+          return {
+            render: render,
+            staticRenderFns: staticRenderFns,
+            _compiled: true,
+            _scopeId: "data-v-370f63",
+            functional: undefined
+          };
+        })());
+      
+    /* hot reload */
+    (function () {
+      if (module.hot) {
+        var api = require('vue-hot-reload-api');
+        api.install(require('vue'));
+        if (api.compatible) {
+          module.hot.accept();
+          if (!module.hot.data) {
+            api.createRecord('$370f63', $370f63);
+          } else {
+            api.reload('$370f63', $370f63);
+          }
+        }
+
+        
+        var reloadCSS = require('_css_loader');
+        module.hot.dispose(reloadCSS);
+        module.hot.accept(reloadCSS);
+      
+      }
+    })();
+},{"_css_loader":"node_modules/parcel-bundler/src/builtins/css-loader.js","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/components/InviteContributorsForm.vue":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = void 0;
+
+var _axios = _interopRequireDefault(require("axios"));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+var _default = {
+  props: ["listId"],
+
+  data() {
+    return {
+      form: {
+        email: ""
+      },
+      invitationSent: false,
+      dismissSecs: 5,
+      dismissCountDown: 0
+    };
+  },
+
+  methods: {
+    async invite() {
+      await (0, _axios.default)({
+        method: "POST",
+        url: "api/lists/".concat(this.listId, "/email"),
+        data: JSON.stringify({
+          email: this.form.email
+        }),
+        headers: {
+          "content-type": "application/json"
+        }
+      });
+      this.form.email = "";
+      this.showAlert();
+    },
+
+    countDownChanged(dismissCountDown) {
+      this.dismissCountDown = dismissCountDown;
+    },
+
+    showAlert() {
+      this.dismissCountDown = this.dismissSecs;
+    }
+
+  }
+};
+exports.default = _default;
+        var $3f1240 = exports.default || module.exports;
+      
+      if (typeof $3f1240 === 'function') {
+        $3f1240 = $3f1240.options;
+      }
+    
+        /* template */
+        Object.assign($3f1240, (function () {
+          var render = function() {
+  var _vm = this
+  var _h = _vm.$createElement
+  var _c = _vm._self._c || _h
+  return _c(
+    "b-card",
+    { attrs: { title: "Invite" } },
+    [
+      _c(
+        "b-form",
+        {
+          staticClass: "invitation-form",
+          on: {
+            submit: function($event) {
+              $event.preventDefault()
+              return _vm.invite($event)
+            }
+          }
+        },
+        [
+          _c(
+            "b-form-group",
+            {
+              staticClass: "email-group text-secondary",
+              attrs: { label: "Email" }
+            },
+            [
+              _c("b-form-input", {
+                attrs: { type: "email", required: "" },
+                model: {
+                  value: _vm.form.email,
+                  callback: function($$v) {
+                    _vm.$set(_vm.form, "email", $$v)
+                  },
+                  expression: "form.email"
+                }
+              })
+            ],
+            1
+          ),
+          _vm._v(" "),
+          _c("b-button", { attrs: { type: "submit" } }, [_vm._v("Send")]),
+          _vm._v(" "),
+          _c(
+            "b-alert",
+            {
+              staticClass: "mb-0 mt-3",
+              attrs: {
+                variant: "success",
+                show: _vm.dismissCountDown,
+                dismissable: "",
+                fade: ""
+              },
+              on: {
+                dismissed: function($event) {
+                  _vm.dismissCountDown = 0
+                },
+                "dismiss-count-down": _vm.countDownChanged
+              }
+            },
+            [_vm._v("Invitation sent!")]
+          )
+        ],
+        1
+      )
+    ],
+    1
+  )
+}
+var staticRenderFns = []
+render._withStripped = true
+
+          return {
+            render: render,
+            staticRenderFns: staticRenderFns,
+            _compiled: true,
+            _scopeId: "data-v-3f1240",
+            functional: undefined
+          };
+        })());
+      
+    /* hot reload */
+    (function () {
+      if (module.hot) {
+        var api = require('vue-hot-reload-api');
+        api.install(require('vue'));
+        if (api.compatible) {
+          module.hot.accept();
+          if (!module.hot.data) {
+            api.createRecord('$3f1240', $3f1240);
+          } else {
+            api.reload('$3f1240', $3f1240);
+          }
+        }
+
+        
+        var reloadCSS = require('_css_loader');
+        module.hot.dispose(reloadCSS);
+        module.hot.accept(reloadCSS);
+      
+      }
+    })();
+},{"axios":"node_modules/axios/index.js","_css_loader":"node_modules/parcel-bundler/src/builtins/css-loader.js","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"node_modules/moment/moment.js":[function(require,module,exports) {
 var define;
 var global = arguments[3];
 //! moment.js
@@ -36675,7 +37039,7 @@ exports.default = _default;
             "b-button",
             {
               ref: "addItemBtn",
-              staticClass: "mt-3",
+              staticClass: "mb-3",
               attrs: { size: "sm" },
               on: { click: _vm.focusForm }
             },
@@ -36773,6 +37137,7 @@ var _AddSubItemForm = _interopRequireDefault(require("./AddSubItemForm"));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
+//
 //
 //
 //
@@ -37040,6 +37405,11 @@ exports.default = _default;
     "div",
     { staticClass: "sub-items-wrapper" },
     [
+      _c("AddSubItemForm", {
+        attrs: { todoListItem: _vm.todoListItem },
+        on: { "add-sub-item": _vm.dispatchAddSubItem }
+      }),
+      _vm._v(" "),
       !_vm.loadingSubItems
         ? _c(
             "b-list-group",
@@ -37087,12 +37457,7 @@ exports.default = _default;
             ],
             1
           )
-        : _vm._e(),
-      _vm._v(" "),
-      _c("AddSubItemForm", {
-        attrs: { todoListItem: _vm.todoListItem },
-        on: { "add-sub-item": _vm.dispatchAddSubItem }
-      })
+        : _vm._e()
     ],
     1
   )
@@ -37648,6 +38013,7 @@ exports.default = _default;
   var _c = _vm._self._c || _h
   return _c(
     "div",
+    { attrs: { "data-id": _vm.item.id } },
     [
       _c("EditTodoItemForm", {
         attrs: { todoListItem: _vm.item },
@@ -37663,131 +38029,143 @@ exports.default = _default;
         }
       }),
       _vm._v(" "),
-      _c("div", { staticClass: "item" }, [
-        _c("div", { staticClass: "item-checkbox" }, [
-          _c(
-            "label",
-            {
-              staticClass: "custom-checkbox",
-              class: { checked: _vm.itemCompletedState },
-              attrs: { for: "checkbox", disabled: _vm.item.hasSubItems }
-            },
-            [
-              _c("b-icon-check"),
-              _vm._v(" "),
-              _c("input", {
-                directives: [
-                  {
-                    name: "model",
-                    rawName: "v-model",
-                    value: _vm.itemCompletedState,
-                    expression: "itemCompletedState"
-                  }
-                ],
-                staticClass: "sr-only",
-                attrs: { id: "checkbox", type: "checkbox" },
-                domProps: {
-                  checked: Array.isArray(_vm.itemCompletedState)
-                    ? _vm._i(_vm.itemCompletedState, null) > -1
-                    : _vm.itemCompletedState
-                },
-                on: {
-                  change: function($event) {
-                    var $$a = _vm.itemCompletedState,
-                      $$el = $event.target,
-                      $$c = $$el.checked ? true : false
-                    if (Array.isArray($$a)) {
-                      var $$v = null,
-                        $$i = _vm._i($$a, $$v)
-                      if ($$el.checked) {
-                        $$i < 0 && (_vm.itemCompletedState = $$a.concat([$$v]))
+      _c(
+        "div",
+        {
+          staticClass: "item",
+          on: {
+            click: function($event) {
+              return _vm.$emit("item-selected", _vm.item)
+            }
+          }
+        },
+        [
+          _c("div", { staticClass: "item-checkbox" }, [
+            _c(
+              "label",
+              {
+                staticClass: "custom-checkbox",
+                class: { checked: _vm.itemCompletedState },
+                attrs: { for: _vm.item.id, disabled: _vm.item.hasSubItems }
+              },
+              [
+                _c("b-icon-check"),
+                _vm._v(" "),
+                _c("input", {
+                  directives: [
+                    {
+                      name: "model",
+                      rawName: "v-model",
+                      value: _vm.itemCompletedState,
+                      expression: "itemCompletedState"
+                    }
+                  ],
+                  staticClass: "sr-only",
+                  attrs: { id: _vm.item.id, type: "checkbox" },
+                  domProps: {
+                    checked: Array.isArray(_vm.itemCompletedState)
+                      ? _vm._i(_vm.itemCompletedState, null) > -1
+                      : _vm.itemCompletedState
+                  },
+                  on: {
+                    change: function($event) {
+                      var $$a = _vm.itemCompletedState,
+                        $$el = $event.target,
+                        $$c = $$el.checked ? true : false
+                      if (Array.isArray($$a)) {
+                        var $$v = null,
+                          $$i = _vm._i($$a, $$v)
+                        if ($$el.checked) {
+                          $$i < 0 &&
+                            (_vm.itemCompletedState = $$a.concat([$$v]))
+                        } else {
+                          $$i > -1 &&
+                            (_vm.itemCompletedState = $$a
+                              .slice(0, $$i)
+                              .concat($$a.slice($$i + 1)))
+                        }
                       } else {
-                        $$i > -1 &&
-                          (_vm.itemCompletedState = $$a
-                            .slice(0, $$i)
-                            .concat($$a.slice($$i + 1)))
+                        _vm.itemCompletedState = $$c
                       }
-                    } else {
-                      _vm.itemCompletedState = $$c
                     }
                   }
-                }
-              })
+                })
+              ],
+              1
+            )
+          ]),
+          _vm._v(" "),
+          _c("div", { staticClass: "item-details" }, [
+            _c("div", { staticClass: "item-name" }, [
+              _vm._v(_vm._s(_vm.item.name))
+            ]),
+            _vm._v(" "),
+            _c("div", { staticClass: "item-content-preview" }, [
+              _vm.item.dueDate
+                ? _c(
+                    "div",
+                    { staticClass: "item-due-date" },
+                    [
+                      _c("b-icon-calendar"),
+                      _vm._v(
+                        "\n          " +
+                          _vm._s(_vm._f("formatDate")(_vm.item.dueDate)) +
+                          "\n        "
+                      )
+                    ],
+                    1
+                  )
+                : _vm._e(),
+              _vm._v(" "),
+              _vm.item.notes
+                ? _c(
+                    "div",
+                    { staticClass: "item-notes" },
+                    [_c("b-icon-file-earmark-text")],
+                    1
+                  )
+                : _vm._e()
+            ])
+          ]),
+          _vm._v(" "),
+          _c(
+            "div",
+            { staticClass: "item-controls" },
+            [
+              _c(
+                "b-button",
+                {
+                  staticClass: "btn-view",
+                  attrs: { variant: "link" },
+                  on: {
+                    click: function($event) {
+                      return _vm.$bvModal.show("modal-" + _vm.item.id)
+                    }
+                  }
+                },
+                [_c("b-icon-info-circle")],
+                1
+              ),
+              _vm._v(" "),
+              _c(
+                "b-button",
+                {
+                  staticClass: "btn-trash",
+                  attrs: { variant: "link" },
+                  on: {
+                    click: function($event) {
+                      return _vm.$emit("delete-item", _vm.item.id)
+                    }
+                  }
+                },
+                [_c("b-icon-trash")],
+                1
+              )
             ],
             1
           )
-        ]),
-        _vm._v(" "),
-        _c("div", { staticClass: "item-details" }, [
-          _c("div", { staticClass: "item-name" }, [
-            _vm._v(_vm._s(_vm.item.name))
-          ]),
-          _vm._v(" "),
-          _c("div", { staticClass: "item-content-preview" }, [
-            _vm.item.dueDate
-              ? _c(
-                  "div",
-                  { staticClass: "item-due-date" },
-                  [
-                    _c("b-icon-calendar"),
-                    _vm._v(
-                      "\n          " +
-                        _vm._s(_vm._f("formatDate")(_vm.item.dueDate)) +
-                        "\n        "
-                    )
-                  ],
-                  1
-                )
-              : _vm._e(),
-            _vm._v(" "),
-            _vm.item.notes
-              ? _c(
-                  "div",
-                  { staticClass: "item-notes" },
-                  [_c("b-icon-file-earmark-text")],
-                  1
-                )
-              : _vm._e()
-          ])
-        ]),
-        _vm._v(" "),
-        _c(
-          "div",
-          { staticClass: "item-controls" },
-          [
-            _c(
-              "b-button",
-              {
-                staticClass: "btn-view",
-                attrs: { variant: "link" },
-                on: {
-                  click: function($event) {
-                    return _vm.$bvModal.show("modal-" + _vm.item.id)
-                  }
-                }
-              },
-              [_c("b-icon-info-circle")],
-              1
-            ),
-            _vm._v(" "),
-            _c(
-              "b-button",
-              {
-                staticClass: "btn-trash",
-                attrs: { variant: "link" },
-                on: {
-                  click: function($event) {
-                    return _vm.$emit("delete-item", _vm.item.id)
-                  }
-                }
-              },
-              [_c("b-icon-trash")],
-              1
-            )
-          ],
-          1
-        )
-      ])
+        ]
+      )
     ],
     1
   )
@@ -38099,28 +38477,414 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 //
 //
 //
-//
-//
-//
-//
 var _default = {
   name: "TodoListItems",
-  props: ["todoListId"],
+  props: ["todoListId", "items", "itemsLayout"],
   components: {
     Draggable: _vuedraggable.default,
     TodoListItem: _TodoListItem.default,
     AddTodoListItemForm: _AddTodoListItemForm.default
   },
+  methods: {
+    sendItemSelectedEventToList(item) {
+      this.$emit("item-selected", item);
+    },
+
+    sendAddItemEvent(item) {
+      this.$emit("add-item", item);
+    },
+
+    sendUpdateItemPositionEvent(event) {
+      this.$emit("update-item-position", event);
+    },
+
+    sendCheckboxClickedEvent({
+      itemId,
+      completed
+    }) {
+      this.$emit("checkbox-clicked", {
+        itemId,
+        completed
+      });
+    },
+
+    sendItemEditedEvent(item) {
+      this.$emit("item-edited", item);
+    },
+
+    sendDeleteItemEvent(itemId) {
+      this.$emit("delete-item", itemId);
+    },
+
+    sendSubItemCountChangedEvent({
+      itemId,
+      hasSubItems
+    }) {
+      this.$emit("sub-item-count-changed", {
+        itemId,
+        hasSubItems
+      });
+    }
+
+  }
+};
+exports.default = _default;
+        var $642124 = exports.default || module.exports;
+      
+      if (typeof $642124 === 'function') {
+        $642124 = $642124.options;
+      }
+    
+        /* template */
+        Object.assign($642124, (function () {
+          var render = function() {
+  var _vm = this
+  var _h = _vm.$createElement
+  var _c = _vm._self._c || _h
+  return _c(
+    "div",
+    [
+      _c("AddTodoListItemForm", {
+        attrs: { todoListId: _vm.todoListId },
+        on: { "add-item": _vm.sendAddItemEvent }
+      }),
+      _vm._v(" "),
+      _c(
+        "Draggable",
+        {
+          attrs: { delay: "100" },
+          on: { end: _vm.sendUpdateItemPositionEvent },
+          model: {
+            value: _vm.itemsLayout,
+            callback: function($$v) {
+              _vm.itemsLayout = $$v
+            },
+            expression: "itemsLayout"
+          }
+        },
+        _vm._l(_vm.itemsLayout, function(itemId) {
+          return _c("TodoListItem", {
+            key: itemId,
+            attrs: {
+              item: _vm.items.find(function(i) {
+                return i.id === itemId
+              })
+            },
+            on: {
+              "item-selected": _vm.sendItemSelectedEventToList,
+              "checkbox-clicked": _vm.sendCheckboxClickedEvent,
+              "item-edited": _vm.sendItemEditedEvent,
+              "delete-item": _vm.sendDeleteItemEvent,
+              "sub-item-count-changed": _vm.sendSubItemCountChangedEvent
+            }
+          })
+        }),
+        1
+      )
+    ],
+    1
+  )
+}
+var staticRenderFns = []
+render._withStripped = true
+
+          return {
+            render: render,
+            staticRenderFns: staticRenderFns,
+            _compiled: true,
+            _scopeId: null,
+            functional: undefined
+          };
+        })());
+      
+    /* hot reload */
+    (function () {
+      if (module.hot) {
+        var api = require('vue-hot-reload-api');
+        api.install(require('vue'));
+        if (api.compatible) {
+          module.hot.accept();
+          if (!module.hot.data) {
+            api.createRecord('$642124', $642124);
+          } else {
+            api.reload('$642124', $642124);
+          }
+        }
+
+        
+      }
+    })();
+},{"vue":"node_modules/vue/dist/vue.runtime.esm.js","axios":"node_modules/axios/index.js","vuedraggable":"node_modules/vuedraggable/dist/vuedraggable.common.js","./TodoListItem":"vue/components/TodoListItem.vue","./AddTodoListItemForm.vue":"vue/components/AddTodoListItemForm.vue","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js"}],"vue/components/TodoItemDetails.vue":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = void 0;
+
+var _moment = _interopRequireDefault(require("moment"));
+
+var _SubItems = _interopRequireDefault(require("./SubItems"));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+var _default = {
+  name: "TodoItemDetails",
+  props: ["item"],
+  components: {
+    SubItems: _SubItems.default
+  },
+  filters: {
+    formatDate: function (value) {
+      return (0, _moment.default)(value).format("MM/D/YYYY");
+    },
+    truncate: function (text, length, suffix) {
+      return text.substring(0, length) + suffix;
+    }
+  },
+  methods: {
+    sendSubItemCountChangedEvent({
+      disabled
+    }) {
+      this.$emit("sub-item-count-changed", {
+        disabled
+      });
+    }
+
+  }
+};
+exports.default = _default;
+        var $a03f24 = exports.default || module.exports;
+      
+      if (typeof $a03f24 === 'function') {
+        $a03f24 = $a03f24.options;
+      }
+    
+        /* template */
+        Object.assign($a03f24, (function () {
+          var render = function() {
+  var _vm = this
+  var _h = _vm.$createElement
+  var _c = _vm._self._c || _h
+  return _c("b-col", [
+    _c(
+      "div",
+      { staticClass: "item-content" },
+      [
+        _c("h2", { staticClass: "item-name" }, [_vm._v(_vm._s(_vm.item.name))]),
+        _vm._v(" "),
+        _c("div", { staticClass: "item-meta" }, [
+          _vm.item.dueDate
+            ? _c(
+                "div",
+                { staticClass: "item-due-date" },
+                [
+                  _c("b-icon-calendar"),
+                  _vm._v(
+                    "\n        " +
+                      _vm._s(_vm._f("formatDate")(_vm.item.dueDate)) +
+                      "\n      "
+                  )
+                ],
+                1
+              )
+            : _vm._e()
+        ]),
+        _vm._v(" "),
+        _vm.item.notes
+          ? _c("div", { staticClass: "item-notes" }, [
+              _vm._v(_vm._s(_vm.item.notes))
+            ])
+          : _vm._e(),
+        _vm._v(" "),
+        _c("SubItems", {
+          key: _vm.item.id,
+          attrs: { todoListItem: _vm.item },
+          on: {
+            "sub-items-completed": function($event) {
+              return _vm.$emit("sub-items-completed")
+            },
+            "sub-items-uncompleted": function($event) {
+              return _vm.$emit("sub-items-uncompleted")
+            },
+            "sub-item-count-changed": _vm.sendSubItemCountChangedEvent
+          }
+        })
+      ],
+      1
+    )
+  ])
+}
+var staticRenderFns = []
+render._withStripped = true
+
+          return {
+            render: render,
+            staticRenderFns: staticRenderFns,
+            _compiled: true,
+            _scopeId: "data-v-a03f24",
+            functional: undefined
+          };
+        })());
+      
+    /* hot reload */
+    (function () {
+      if (module.hot) {
+        var api = require('vue-hot-reload-api');
+        api.install(require('vue'));
+        if (api.compatible) {
+          module.hot.accept();
+          if (!module.hot.data) {
+            api.createRecord('$a03f24', $a03f24);
+          } else {
+            api.reload('$a03f24', $a03f24);
+          }
+        }
+
+        
+        var reloadCSS = require('_css_loader');
+        module.hot.dispose(reloadCSS);
+        module.hot.accept(reloadCSS);
+      
+      }
+    })();
+},{"moment":"node_modules/moment/moment.js","./SubItems":"vue/components/SubItems.vue","_css_loader":"node_modules/parcel-bundler/src/builtins/css-loader.js","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/components/TodoList.vue":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = void 0;
+
+var _axios = _interopRequireDefault(require("axios"));
+
+var _vue = _interopRequireDefault(require("vue"));
+
+var _vuex = require("vuex");
+
+var _vuedraggable = _interopRequireDefault(require("vuedraggable"));
+
+var _Confetti = _interopRequireDefault(require("./Confetti"));
+
+var _Contributors = _interopRequireDefault(require("./Contributors"));
+
+var _InviteContributorsForm = _interopRequireDefault(require("./InviteContributorsForm"));
+
+var _TodoListItems = _interopRequireDefault(require("./TodoListItems"));
+
+var _TodoItemDetails = _interopRequireDefault(require("./TodoItemDetails.vue"));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+var _default = {
+  name: "TodoList",
+  props: ["todoListId"],
 
   data() {
     return {
       items: [],
       itemsLayout: [],
-      loadingItems: true
+      loadingItems: true,
+      selectedItem: null
     };
   },
 
+  computed: {
+    todoList() {
+      return this.$store.getters.getTodoListById(this.todoListId);
+    },
+
+    ...(0, _vuex.mapState)({
+      contributors: state => state.contributors,
+      loadingTodoLists: state => state.loadingTodoLists
+    })
+  },
+  components: {
+    TodoListItems: _TodoListItems.default,
+    Contributors: _Contributors.default,
+    InviteContributorsForm: _InviteContributorsForm.default,
+    Confetti: _Confetti.default,
+    Draggable: _vuedraggable.default,
+    TodoItemDetails: _TodoItemDetails.default
+  },
+
+  async created() {
+    await this.dispatchGetItemsAndLayout();
+  },
+
   methods: {
+    setTodoListCompleted() {
+      this.$store.commit("setTodoListCompletedState", {
+        todoListId: this.todoListId,
+        completed: true
+      });
+    },
+
+    setTodoListUncompleted() {
+      this.$store.commit("setTodoListCompletedState", {
+        todoListId: this.todoListId,
+        completed: false
+      });
+    },
+
+    selectItem(item) {
+      this.selectedItem = item;
+    },
+
     async dispatchGetItemsAndLayout() {
       await this.dispatchGetItemsLayout();
       await this.dispatchGetItems();
@@ -38285,10 +39049,6 @@ var _default = {
 
   },
 
-  async created() {
-    await this.dispatchGetItemsAndLayout();
-  },
-
   async mounted() {
     // Item created
     this.$store.state.connection.on("ItemCreated", (todoListId, item) => {
@@ -38357,559 +39117,6 @@ var _default = {
   }
 };
 exports.default = _default;
-        var $642124 = exports.default || module.exports;
-      
-      if (typeof $642124 === 'function') {
-        $642124 = $642124.options;
-      }
-    
-        /* template */
-        Object.assign($642124, (function () {
-          var render = function() {
-  var _vm = this
-  var _h = _vm.$createElement
-  var _c = _vm._self._c || _h
-  return _c(
-    "div",
-    [
-      _c("AddTodoListItemForm", {
-        attrs: { todoListId: _vm.todoListId },
-        on: { "add-item": _vm.dispatchAddItem }
-      }),
-      _vm._v(" "),
-      !_vm.loadingItems
-        ? _c(
-            "Draggable",
-            {
-              attrs: { delay: "200" },
-              on: { end: _vm.dispatchUpdateItemPosition },
-              model: {
-                value: _vm.itemsLayout,
-                callback: function($$v) {
-                  _vm.itemsLayout = $$v
-                },
-                expression: "itemsLayout"
-              }
-            },
-            _vm._l(_vm.itemsLayout, function(itemId) {
-              return _c("TodoListItem", {
-                key: itemId,
-                attrs: {
-                  item: _vm.items.find(function(i) {
-                    return i.id === itemId
-                  })
-                },
-                on: {
-                  "checkbox-clicked": _vm.dispatchSetItemCompletedState,
-                  "item-edited": _vm.dispatchUpdateItem,
-                  "delete-item": _vm.dispatchDeleteItem,
-                  "sub-item-count-changed": _vm.commitUpdateHasSubItems
-                }
-              })
-            }),
-            1
-          )
-        : _vm._e()
-    ],
-    1
-  )
-}
-var staticRenderFns = []
-render._withStripped = true
-
-          return {
-            render: render,
-            staticRenderFns: staticRenderFns,
-            _compiled: true,
-            _scopeId: null,
-            functional: undefined
-          };
-        })());
-      
-    /* hot reload */
-    (function () {
-      if (module.hot) {
-        var api = require('vue-hot-reload-api');
-        api.install(require('vue'));
-        if (api.compatible) {
-          module.hot.accept();
-          if (!module.hot.data) {
-            api.createRecord('$642124', $642124);
-          } else {
-            api.reload('$642124', $642124);
-          }
-        }
-
-        
-      }
-    })();
-},{"vue":"node_modules/vue/dist/vue.runtime.esm.js","axios":"node_modules/axios/index.js","vuedraggable":"node_modules/vuedraggable/dist/vuedraggable.common.js","./TodoListItem":"vue/components/TodoListItem.vue","./AddTodoListItemForm.vue":"vue/components/AddTodoListItemForm.vue","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js"}],"vue/components/Contributors.vue":[function(require,module,exports) {
-"use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.default = void 0;
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-var _default = {
-  name: "Contributors",
-  props: ['todoListContributors', 'accountContributors']
-};
-exports.default = _default;
-        var $370f63 = exports.default || module.exports;
-      
-      if (typeof $370f63 === 'function') {
-        $370f63 = $370f63.options;
-      }
-    
-        /* template */
-        Object.assign($370f63, (function () {
-          var render = function() {
-  var _vm = this
-  var _h = _vm.$createElement
-  var _c = _vm._self._c || _h
-  return _c(
-    "ul",
-    { staticClass: "contributors" },
-    _vm._l(_vm.todoListContributors, function(contributor) {
-      return _c("li", { key: contributor, staticClass: "contributor" }, [
-        _c("img", {
-          directives: [
-            {
-              name: "b-tooltip",
-              rawName: "v-b-tooltip.hover",
-              modifiers: { hover: true }
-            }
-          ],
-          attrs: {
-            src: _vm.accountContributors[contributor].pictureUrl,
-            alt: _vm.accountContributors[contributor].fullName,
-            title: _vm.accountContributors[contributor].fullName
-          }
-        })
-      ])
-    }),
-    0
-  )
-}
-var staticRenderFns = []
-render._withStripped = true
-
-          return {
-            render: render,
-            staticRenderFns: staticRenderFns,
-            _compiled: true,
-            _scopeId: "data-v-370f63",
-            functional: undefined
-          };
-        })());
-      
-    /* hot reload */
-    (function () {
-      if (module.hot) {
-        var api = require('vue-hot-reload-api');
-        api.install(require('vue'));
-        if (api.compatible) {
-          module.hot.accept();
-          if (!module.hot.data) {
-            api.createRecord('$370f63', $370f63);
-          } else {
-            api.reload('$370f63', $370f63);
-          }
-        }
-
-        
-        var reloadCSS = require('_css_loader');
-        module.hot.dispose(reloadCSS);
-        module.hot.accept(reloadCSS);
-      
-      }
-    })();
-},{"_css_loader":"node_modules/parcel-bundler/src/builtins/css-loader.js","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/components/InviteContributorsForm.vue":[function(require,module,exports) {
-"use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.default = void 0;
-
-var _axios = _interopRequireDefault(require("axios"));
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-var _default = {
-  props: ["listId"],
-
-  data() {
-    return {
-      form: {
-        email: ""
-      },
-      invitationSent: false,
-      dismissSecs: 5,
-      dismissCountDown: 0
-    };
-  },
-
-  methods: {
-    async invite() {
-      await (0, _axios.default)({
-        method: "POST",
-        url: "api/lists/".concat(this.listId, "/email"),
-        data: JSON.stringify({
-          email: this.form.email
-        }),
-        headers: {
-          "content-type": "application/json"
-        }
-      });
-      this.form.email = "";
-      this.showAlert();
-    },
-
-    countDownChanged(dismissCountDown) {
-      this.dismissCountDown = dismissCountDown;
-    },
-
-    showAlert() {
-      this.dismissCountDown = this.dismissSecs;
-    }
-
-  }
-};
-exports.default = _default;
-        var $3f1240 = exports.default || module.exports;
-      
-      if (typeof $3f1240 === 'function') {
-        $3f1240 = $3f1240.options;
-      }
-    
-        /* template */
-        Object.assign($3f1240, (function () {
-          var render = function() {
-  var _vm = this
-  var _h = _vm.$createElement
-  var _c = _vm._self._c || _h
-  return _c(
-    "b-card",
-    { attrs: { title: "Invite" } },
-    [
-      _c(
-        "b-form",
-        {
-          staticClass: "invitation-form",
-          on: {
-            submit: function($event) {
-              $event.preventDefault()
-              return _vm.invite($event)
-            }
-          }
-        },
-        [
-          _c(
-            "b-form-group",
-            {
-              staticClass: "email-group text-secondary",
-              attrs: { label: "Email" }
-            },
-            [
-              _c("b-form-input", {
-                attrs: { type: "email", required: "" },
-                model: {
-                  value: _vm.form.email,
-                  callback: function($$v) {
-                    _vm.$set(_vm.form, "email", $$v)
-                  },
-                  expression: "form.email"
-                }
-              })
-            ],
-            1
-          ),
-          _vm._v(" "),
-          _c("b-button", { attrs: { type: "submit" } }, [_vm._v("Send")]),
-          _vm._v(" "),
-          _c(
-            "b-alert",
-            {
-              staticClass: "mb-0 mt-3",
-              attrs: {
-                variant: "success",
-                show: _vm.dismissCountDown,
-                dismissable: "",
-                fade: ""
-              },
-              on: {
-                dismissed: function($event) {
-                  _vm.dismissCountDown = 0
-                },
-                "dismiss-count-down": _vm.countDownChanged
-              }
-            },
-            [_vm._v("Invitation sent!")]
-          )
-        ],
-        1
-      )
-    ],
-    1
-  )
-}
-var staticRenderFns = []
-render._withStripped = true
-
-          return {
-            render: render,
-            staticRenderFns: staticRenderFns,
-            _compiled: true,
-            _scopeId: "data-v-3f1240",
-            functional: undefined
-          };
-        })());
-      
-    /* hot reload */
-    (function () {
-      if (module.hot) {
-        var api = require('vue-hot-reload-api');
-        api.install(require('vue'));
-        if (api.compatible) {
-          module.hot.accept();
-          if (!module.hot.data) {
-            api.createRecord('$3f1240', $3f1240);
-          } else {
-            api.reload('$3f1240', $3f1240);
-          }
-        }
-
-        
-        var reloadCSS = require('_css_loader');
-        module.hot.dispose(reloadCSS);
-        module.hot.accept(reloadCSS);
-      
-      }
-    })();
-},{"axios":"node_modules/axios/index.js","_css_loader":"node_modules/parcel-bundler/src/builtins/css-loader.js","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"node_modules/vue-confetti/dist/vue-confetti.js":[function(require,module,exports) {
-var define;
-!function(t,e){"object"==typeof exports&&"object"==typeof module?module.exports=e():"function"==typeof define&&define.amd?define([],e):"object"==typeof exports?exports["vue-confetti"]=e():t["vue-confetti"]=e()}(window,(function(){return function(t){var e={};function n(i){if(e[i])return e[i].exports;var r=e[i]={i:i,l:!1,exports:{}};return t[i].call(r.exports,r,r.exports,n),r.l=!0,r.exports}return n.m=t,n.c=e,n.d=function(t,e,i){n.o(t,e)||Object.defineProperty(t,e,{enumerable:!0,get:i})},n.r=function(t){"undefined"!=typeof Symbol&&Symbol.toStringTag&&Object.defineProperty(t,Symbol.toStringTag,{value:"Module"}),Object.defineProperty(t,"__esModule",{value:!0})},n.t=function(t,e){if(1&e&&(t=n(t)),8&e)return t;if(4&e&&"object"==typeof t&&t&&t.__esModule)return t;var i=Object.create(null);if(n.r(i),Object.defineProperty(i,"default",{enumerable:!0,value:t}),2&e&&"string"!=typeof t)for(var r in t)n.d(i,r,function(e){return t[e]}.bind(null,r));return i},n.n=function(t){var e=t&&t.__esModule?function(){return t.default}:function(){return t};return n.d(e,"a",e),e},n.o=function(t,e){return Object.prototype.hasOwnProperty.call(t,e)},n.p="",n(n.s=3)}([function(t,e,n){"use strict";n.r(e);var i=function(){var t=arguments.length>0&&void 0!==arguments[0]?arguments[0]:1,e=arguments.length>1&&void 0!==arguments[1]?arguments[1]:t+1,n=arguments.length>2&&void 0!==arguments[2]&&arguments[2],i=parseFloat(t),r=parseFloat(e),o=Math.random()*(r-i)+i;return n?Math.round(o):o};function r(t,e){for(var n=0;n<e.length;n++){var i=e[n];i.enumerable=i.enumerable||!1,i.configurable=!0,"value"in i&&(i.writable=!0),Object.defineProperty(t,i.key,i)}}var o=function(){function t(){var e=arguments.length>0&&void 0!==arguments[0]?arguments[0]:{},n=e.color,i=void 0===n?"blue":n,r=e.size,o=void 0===r?10:r,a=e.dropRate,c=void 0===a?10:a;!function(t,e){if(!(t instanceof e))throw new TypeError("Cannot call a class as a function")}(this,t),this.color=i,this.size=o,this.dropRate=c}var e,n,o;return e=t,(n=[{key:"setup",value:function(t){var e=t.canvas,n=t.wind,r=t.windPosCoef,o=t.windSpeedMax,a=t.count;return this.canvas=e,this.wind=n,this.windPosCoef=r,this.windSpeedMax=o,this.x=i(-35,this.canvas.width+35),this.y=i(-30,-35),this.d=i(150)+10,this.particleSize=i(this.size,2*this.size),this.tilt=i(10),this.tiltAngleIncremental=(i(0,.08)+.04)*(i()<.5?-1:1),this.tiltAngle=0,this.angle=i(2*Math.PI),this.count=a+1,this.remove=!1,this}},{key:"update",value:function(){this.tiltAngle+=this.tiltAngleIncremental*(.2*Math.cos(this.wind+(this.d+this.x+this.y)*this.windPosCoef)+1),this.y+=(Math.cos(this.angle+this.d)+parseInt(this.dropRate,10))/2,this.x+=Math.sin(this.angle),this.x+=Math.cos(this.wind+(this.d+this.x+this.y)*this.windPosCoef)*this.windSpeedMax,this.y+=Math.sin(this.wind+(this.d+this.x+this.y)*this.windPosCoef)*this.windSpeedMax,this.tilt=15*Math.sin(this.tiltAngle-this.count/3)}},{key:"pastBottom",value:function(){return this.y>this.canvas.height}},{key:"draw",value:function(){this.canvas.ctx.fillStyle=this.color,this.canvas.ctx.beginPath(),this.canvas.ctx.setTransform(Math.cos(this.tiltAngle),Math.sin(this.tiltAngle),0,1,this.x,this.y)}},{key:"kill",value:function(){this.remove=!0}}])&&r(e.prototype,n),o&&r(e,o),t}();function a(t){return(a="function"==typeof Symbol&&"symbol"==typeof Symbol.iterator?function(t){return typeof t}:function(t){return t&&"function"==typeof Symbol&&t.constructor===Symbol&&t!==Symbol.prototype?"symbol":typeof t})(t)}function c(t,e){for(var n=0;n<e.length;n++){var i=e[n];i.enumerable=i.enumerable||!1,i.configurable=!0,"value"in i&&(i.writable=!0),Object.defineProperty(t,i.key,i)}}function s(t,e){return!e||"object"!==a(e)&&"function"!=typeof e?function(t){if(void 0===t)throw new ReferenceError("this hasn't been initialised - super() hasn't been called");return t}(t):e}function l(t,e,n){return(l="undefined"!=typeof Reflect&&Reflect.get?Reflect.get:function(t,e,n){var i=function(t,e){for(;!Object.prototype.hasOwnProperty.call(t,e)&&null!==(t=u(t)););return t}(t,e);if(i){var r=Object.getOwnPropertyDescriptor(i,e);return r.get?r.get.call(n):r.value}})(t,e,n||t)}function u(t){return(u=Object.setPrototypeOf?Object.getPrototypeOf:function(t){return t.__proto__||Object.getPrototypeOf(t)})(t)}function f(t,e){return(f=Object.setPrototypeOf||function(t,e){return t.__proto__=e,t})(t,e)}var h=function(t){function e(){return function(t,e){if(!(t instanceof e))throw new TypeError("Cannot call a class as a function")}(this,e),s(this,u(e).apply(this,arguments))}var n,i,r;return function(t,e){if("function"!=typeof e&&null!==e)throw new TypeError("Super expression must either be null or a function");t.prototype=Object.create(e&&e.prototype,{constructor:{value:t,writable:!0,configurable:!0}}),e&&f(t,e)}(e,t),n=e,(i=[{key:"draw",value:function(){l(u(e.prototype),"draw",this).call(this),this.canvas.ctx.arc(0,0,this.particleSize/2,0,2*Math.PI,!1),this.canvas.ctx.fill()}}])&&c(n.prototype,i),r&&c(n,r),e}(o);function p(t){return(p="function"==typeof Symbol&&"symbol"==typeof Symbol.iterator?function(t){return typeof t}:function(t){return t&&"function"==typeof Symbol&&t.constructor===Symbol&&t!==Symbol.prototype?"symbol":typeof t})(t)}function y(t,e){for(var n=0;n<e.length;n++){var i=e[n];i.enumerable=i.enumerable||!1,i.configurable=!0,"value"in i&&(i.writable=!0),Object.defineProperty(t,i.key,i)}}function d(t,e){return!e||"object"!==p(e)&&"function"!=typeof e?function(t){if(void 0===t)throw new ReferenceError("this hasn't been initialised - super() hasn't been called");return t}(t):e}function v(t,e,n){return(v="undefined"!=typeof Reflect&&Reflect.get?Reflect.get:function(t,e,n){var i=function(t,e){for(;!Object.prototype.hasOwnProperty.call(t,e)&&null!==(t=b(t)););return t}(t,e);if(i){var r=Object.getOwnPropertyDescriptor(i,e);return r.get?r.get.call(n):r.value}})(t,e,n||t)}function b(t){return(b=Object.setPrototypeOf?Object.getPrototypeOf:function(t){return t.__proto__||Object.getPrototypeOf(t)})(t)}function m(t,e){return(m=Object.setPrototypeOf||function(t,e){return t.__proto__=e,t})(t,e)}var w=function(t){function e(){return function(t,e){if(!(t instanceof e))throw new TypeError("Cannot call a class as a function")}(this,e),d(this,b(e).apply(this,arguments))}var n,i,r;return function(t,e){if("function"!=typeof e&&null!==e)throw new TypeError("Super expression must either be null or a function");t.prototype=Object.create(e&&e.prototype,{constructor:{value:t,writable:!0,configurable:!0}}),e&&m(t,e)}(e,t),n=e,(i=[{key:"draw",value:function(){v(b(e.prototype),"draw",this).call(this),this.canvas.ctx.fillRect(0,0,this.particleSize,this.particleSize/2)}}])&&y(n.prototype,i),r&&y(n,r),e}(o);function g(t){return(g="function"==typeof Symbol&&"symbol"==typeof Symbol.iterator?function(t){return typeof t}:function(t){return t&&"function"==typeof Symbol&&t.constructor===Symbol&&t!==Symbol.prototype?"symbol":typeof t})(t)}function O(t,e){for(var n=0;n<e.length;n++){var i=e[n];i.enumerable=i.enumerable||!1,i.configurable=!0,"value"in i&&(i.writable=!0),Object.defineProperty(t,i.key,i)}}function P(t,e){return!e||"object"!==g(e)&&"function"!=typeof e?function(t){if(void 0===t)throw new ReferenceError("this hasn't been initialised - super() hasn't been called");return t}(t):e}function S(t,e,n){return(S="undefined"!=typeof Reflect&&Reflect.get?Reflect.get:function(t,e,n){var i=function(t,e){for(;!Object.prototype.hasOwnProperty.call(t,e)&&null!==(t=j(t)););return t}(t,e);if(i){var r=Object.getOwnPropertyDescriptor(i,e);return r.get?r.get.call(n):r.value}})(t,e,n||t)}function j(t){return(j=Object.setPrototypeOf?Object.getPrototypeOf:function(t){return t.__proto__||Object.getPrototypeOf(t)})(t)}function k(t,e){return(k=Object.setPrototypeOf||function(t,e){return t.__proto__=e,t})(t,e)}var x=function(t){function e(){return function(t,e){if(!(t instanceof e))throw new TypeError("Cannot call a class as a function")}(this,e),P(this,j(e).apply(this,arguments))}var n,i,r;return function(t,e){if("function"!=typeof e&&null!==e)throw new TypeError("Super expression must either be null or a function");t.prototype=Object.create(e&&e.prototype,{constructor:{value:t,writable:!0,configurable:!0}}),e&&k(t,e)}(e,t),n=e,(i=[{key:"draw",value:function(){var t=this;S(j(e.prototype),"draw",this).call(this);var n=function(e,n,i,r,o,a){t.canvas.ctx.bezierCurveTo(e*(t.particleSize/200),n*(t.particleSize/200),i*(t.particleSize/200),r*(t.particleSize/200),o*(t.particleSize/200),a*(t.particleSize/200))};this.canvas.ctx.moveTo(37.5/this.particleSize,20/this.particleSize),n(75,37,70,25,50,25),n(20,25,20,62.5,20,62.5),n(20,80,40,102,75,120),n(110,102,130,80,130,62.5),n(130,62.5,130,25,100,25),n(85,25,75,37,75,40),this.canvas.ctx.fill()}}])&&O(n.prototype,i),r&&O(n,r),e}(o);function M(t){return(M="function"==typeof Symbol&&"symbol"==typeof Symbol.iterator?function(t){return typeof t}:function(t){return t&&"function"==typeof Symbol&&t.constructor===Symbol&&t!==Symbol.prototype?"symbol":typeof t})(t)}function _(t,e){for(var n=0;n<e.length;n++){var i=e[n];i.enumerable=i.enumerable||!1,i.configurable=!0,"value"in i&&(i.writable=!0),Object.defineProperty(t,i.key,i)}}function E(t,e){return!e||"object"!==M(e)&&"function"!=typeof e?function(t){if(void 0===t)throw new ReferenceError("this hasn't been initialised - super() hasn't been called");return t}(t):e}function I(t,e,n){return(I="undefined"!=typeof Reflect&&Reflect.get?Reflect.get:function(t,e,n){var i=function(t,e){for(;!Object.prototype.hasOwnProperty.call(t,e)&&null!==(t=C(t)););return t}(t,e);if(i){var r=Object.getOwnPropertyDescriptor(i,e);return r.get?r.get.call(n):r.value}})(t,e,n||t)}function C(t){return(C=Object.setPrototypeOf?Object.getPrototypeOf:function(t){return t.__proto__||Object.getPrototypeOf(t)})(t)}function D(t,e){return(D=Object.setPrototypeOf||function(t,e){return t.__proto__=e,t})(t,e)}var R=function(t){function e(t,n){var i;return function(t,e){if(!(t instanceof e))throw new TypeError("Cannot call a class as a function")}(this,e),(i=E(this,C(e).call(this,t))).imgEl=n,i}var n,i,r;return function(t,e){if("function"!=typeof e&&null!==e)throw new TypeError("Super expression must either be null or a function");t.prototype=Object.create(e&&e.prototype,{constructor:{value:t,writable:!0,configurable:!0}}),e&&D(t,e)}(e,t),n=e,(i=[{key:"draw",value:function(){I(C(e.prototype),"draw",this).call(this),this.canvas.ctx.drawImage(this.imgEl,0,0,this.particleSize,this.particleSize)}}])&&_(n.prototype,i),r&&_(n,r),e}(o);function T(t,e){for(var n=0;n<e.length;n++){var i=e[n];i.enumerable=i.enumerable||!1,i.configurable=!0,"value"in i&&(i.writable=!0),Object.defineProperty(t,i.key,i)}}var z=function(){function t(){!function(t,e){if(!(t instanceof e))throw new TypeError("Cannot call a class as a function")}(this,t),this.cachedImage=null}var e,n,r;return e=t,(n=[{key:"createImageElement",value:function(t){var e=document.createElement("img");return e.setAttribute("src",t),e}},{key:"getImageElement",value:function(t){return this.cachedImage&&t===this.cachedImage.getAttribute("src")||(this.cachedImage=this.createImageElement(t)),this.cachedImage}},{key:"getRandomParticle",value:function(){var t=arguments.length>0&&void 0!==arguments[0]?arguments[0]:{},e=t.particles||[];return e.length<1?{}:e[Math.floor(Math.random()*e.length)]}},{key:"getDefaults",value:function(){var t=arguments.length>0&&void 0!==arguments[0]?arguments[0]:{};return{type:t.defaultType||"circle",size:t.defaultSize||10,dropRate:t.defaultDropRate||10,colors:t.defaultColors||["DodgerBlue","OliveDrab","Gold","pink","SlateBlue","lightblue","Violet","PaleGreen","SteelBlue","SandyBrown","Chocolate","Crimson"],url:null}}},{key:"create",value:function(t){var e=this.getDefaults(t),n=this.getRandomParticle(t),r=Object.assign(e,n),o=i(0,r.colors.length-1,!0);if(r.color=r.colors[o],"circle"===r.type)return new h(r);if("rect"===r.type)return new w(r);if("heart"===r.type)return new x(r);if("image"===r.type)return new R(r,this.getImageElement(r.url));throw Error('Unknown particle type: "'.concat(r.type,'"'))}}])&&T(e.prototype,n),r&&T(e,r),t}();function F(t,e){for(var n=0;n<e.length;n++){var i=e[n];i.enumerable=i.enumerable||!1,i.configurable=!0,"value"in i&&(i.writable=!0),Object.defineProperty(t,i.key,i)}}var A=function(){function t(e){!function(t,e){if(!(t instanceof e))throw new TypeError("Cannot call a class as a function")}(this,t),this.items=[],this.pool=[],this.particleOptions=e,this.particleFactory=new z}var e,n,i;return e=t,(n=[{key:"update",value:function(){var t,e=this,n=[],i=[];this.items.forEach((function(t){t.update(),t.pastBottom()?t.remove||(t.setup(e.particleOptions),n.push(t)):i.push(t)})),(t=this.pool).push.apply(t,n),this.items=i}},{key:"draw",value:function(){this.items.forEach((function(t){return t.draw()}))}},{key:"add",value:function(){this.pool.length>0?this.items.push(this.pool.pop().setup(this.particleOptions)):this.items.push(this.particleFactory.create(this.particleOptions).setup(this.particleOptions))}},{key:"refresh",value:function(){this.items.forEach((function(t){t.kill()})),this.pool=[]}}])&&F(e.prototype,n),i&&F(e,i),t}();function B(t,e){for(var n=0;n<e.length;n++){var i=e[n];i.enumerable=i.enumerable||!1,i.configurable=!0,"value"in i&&(i.writable=!0),Object.defineProperty(t,i.key,i)}}var H=function(){function t(e){!function(t,e){if(!(t instanceof e))throw new TypeError("Cannot call a class as a function")}(this,t);var n=document.getElementById(e);if(this.isDefault=null==e,!this.isDefault&&!n)throw new Error('No element found with ID "'.concat(e,'"'));if(this.canvas=n||t.createDefaultCanvas("confetti-canvas"),!(this.canvas instanceof HTMLCanvasElement))throw new Error('Element with ID "'.concat("confetti-canvas",'" is not a valid HTMLCanvasElement'));this.ctx=this.canvas.getContext("2d")}var e,n,i;return e=t,i=[{key:"createDefaultCanvas",value:function(t){var e=document.createElement("canvas");return e.style.display="block",e.style.position="fixed",e.style.pointerEvents="none",e.style.top=0,e.style.width="100vw",e.style.height="100vh",e.id=t,document.querySelector("body").appendChild(e),e}}],(n=[{key:"clear",value:function(){this.ctx.setTransform(1,0,0,1,0,0),this.ctx.clearRect(0,0,this.width,this.height)}},{key:"updateDimensions",value:function(){this.isDefault&&(this.width===window.innerWidth&&this.height===window.innerHeight||(this.canvas.width=window.innerWidth,this.canvas.height=window.innerHeight))}},{key:"width",get:function(){return this.canvas.width}},{key:"height",get:function(){return this.canvas.height}}])&&B(e.prototype,n),i&&B(e,i),t}();function L(t,e){for(var n=0;n<e.length;n++){var i=e[n];i.enumerable=i.enumerable||!1,i.configurable=!0,"value"in i&&(i.writable=!0),Object.defineProperty(t,i.key,i)}}var W=function(){function t(){!function(t,e){if(!(t instanceof e))throw new TypeError("Cannot call a class as a function")}(this,t),this.setDefaults()}var e,n,i;return e=t,(n=[{key:"setDefaults",value:function(){this.killed=!1,this.framesSinceDrop=0,this.canvas=null,this.canvasId=null,this.W=0,this.H=0,this.particleManager=null,this.particlesPerFrame=0,this.wind=0,this.windSpeed=1,this.windSpeedMax=1,this.windChange=.01,this.windPosCoef=.002,this.animationId=null}},{key:"getParticleOptions",value:function(t){var e={canvas:this.canvas,W:this.W,H:this.H,wind:this.wind,windPosCoef:this.windPosCoef,windSpeedMax:this.windSpeedMax,count:0};return Object.assign(e,t),e}},{key:"createParticles",value:function(){var t=arguments.length>0&&void 0!==arguments[0]?arguments[0]:{},e=this.getParticleOptions(t);this.particleManager=new A(e)}},{key:"start",value:function(){var t=arguments.length>0&&void 0!==arguments[0]?arguments[0]:{};this.canvas&&t.canvasId===this.canvasId||(this.canvas=new H(t.canvasId),this.canvasId=t.canvasId),this.animationId&&cancelAnimationFrame(this.animationId),this.createParticles(t),this.canvas.updateDimensions(),this.setParticlesPerFrame(t),this.animationId=requestAnimationFrame(this.mainLoop.bind(this))}},{key:"setParticlesPerFrame",value:function(t){this.particlesPerFrame=t.particlesPerFrame||2}},{key:"stop",value:function(){this.killed=!0,this.particlesPerFrame=0}},{key:"update",value:function(t){this.canvas&&t.canvasId!==this.canvasId&&(this.stop(),this.canvas.clear(),this.start(t)),this.setParticlesPerFrame(t),this.particleManager&&(this.particleManager.particleOptions=this.getParticleOptions(t),this.particleManager.refresh())}},{key:"remove",value:function(){this.stop(),this.animationId&&cancelAnimationFrame(this.animationId),this.canvas.clear(),this.setDefaults()}},{key:"mainLoop",value:function(t){this.canvas.updateDimensions(),this.canvas.clear(),this.windSpeed=Math.sin(t/8e3)*this.windSpeedMax,this.wind=this.particleManager.particleOptions.wind+=this.windChange;for(var e=this.framesSinceDrop*this.particlesPerFrame;e>=1;)this.particleManager.add(),e-=1,this.framesSinceDrop=0;this.particleManager.update(),this.particleManager.draw(),this.killed&&!this.particleManager.items.length||(this.animationId=requestAnimationFrame(this.mainLoop.bind(this))),this.framesSinceDrop+=1}}])&&L(e.prototype,n),i&&L(e,i),t}();n.d(e,"Confetti",(function(){return W}));e.default={install:function(t,e){this.installed||(this.installed=!0,t.prototype.$confetti=new W(e))}}},,,function(t,e,n){t.exports=n(0)}])}));
-},{}],"vue/components/Confetti.vue":[function(require,module,exports) {
-"use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.default = void 0;
-
-var _vue = _interopRequireDefault(require("vue"));
-
-var _vueConfetti = _interopRequireDefault(require("vue-confetti"));
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-//
-//
-_vue.default.use(_vueConfetti.default);
-
-var _default = {
-  name: "Confetti",
-
-  mounted() {
-    this.$nextTick(() => {
-      this.$confetti.start({
-        particles: [{
-          type: "rect"
-        }],
-        particlesPerFrame: 0.4,
-        dropRate: 8
-      });
-    });
-  },
-
-  beforeDestroy() {
-    this.$confetti.stop();
-  }
-
-};
-exports.default = _default;
-        var $1a387c = exports.default || module.exports;
-      
-      if (typeof $1a387c === 'function') {
-        $1a387c = $1a387c.options;
-      }
-    
-        /* template */
-        Object.assign($1a387c, (function () {
-          var render = function() {
-  var _vm = this
-  var _h = _vm.$createElement
-  var _c = _vm._self._c || _h
-  return _c("div")
-}
-var staticRenderFns = []
-render._withStripped = true
-
-          return {
-            render: render,
-            staticRenderFns: staticRenderFns,
-            _compiled: true,
-            _scopeId: null,
-            functional: undefined
-          };
-        })());
-      
-    /* hot reload */
-    (function () {
-      if (module.hot) {
-        var api = require('vue-hot-reload-api');
-        api.install(require('vue'));
-        if (api.compatible) {
-          module.hot.accept();
-          if (!module.hot.data) {
-            api.createRecord('$1a387c', $1a387c);
-          } else {
-            api.reload('$1a387c', $1a387c);
-          }
-        }
-
-        
-      }
-    })();
-},{"vue":"node_modules/vue/dist/vue.runtime.esm.js","vue-confetti":"node_modules/vue-confetti/dist/vue-confetti.js","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js"}],"vue/components/TodoList.vue":[function(require,module,exports) {
-"use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.default = void 0;
-
-var _vuex = require("vuex");
-
-var _TodoListItems = _interopRequireDefault(require("./TodoListItems"));
-
-var _Contributors = _interopRequireDefault(require("./Contributors"));
-
-var _InviteContributorsForm = _interopRequireDefault(require("./InviteContributorsForm"));
-
-var _Confetti = _interopRequireDefault(require("./Confetti"));
-
-var _vuedraggable = _interopRequireDefault(require("vuedraggable"));
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-var _default = {
-  name: "TodoList",
-  props: ["todoListId"],
-
-  data() {
-    return {
-      editingTitle: false,
-      todoListForm: {
-        listTitle: ""
-      }
-    };
-  },
-
-  computed: {
-    todoList() {
-      return this.$store.getters.getTodoListById(this.todoListId);
-    },
-
-    ...(0, _vuex.mapState)({
-      contributors: state => state.contributors,
-      loadingTodoLists: state => state.loadingTodoLists
-    })
-  },
-  components: {
-    TodoListItems: _TodoListItems.default,
-    Contributors: _Contributors.default,
-    InviteContributorsForm: _InviteContributorsForm.default,
-    Confetti: _Confetti.default,
-    Draggable: _vuedraggable.default
-  },
-  methods: {
-    async updateListTitle() {
-      this.editingTitle = false;
-      await this.$store.dispatch("updateTodoListTitle", {
-        todoListId: this.todoListId,
-        listTitle: this.todoListForm.listTitle
-      });
-      this.todoListForm.listTitle = "";
-    },
-
-    showTitleEditor() {
-      this.editingTitle = true;
-      this.$nextTick(() => {
-        this.$refs.listTitleInput.focus();
-      });
-      this.todoListForm.listTitle = this.todoList.listTitle;
-    },
-
-    setTodoListCompleted() {
-      this.$store.commit("setTodoListCompletedState", {
-        todoListId: this.todoListId,
-        completed: true
-      });
-    },
-
-    setTodoListUncompleted() {
-      this.$store.commit("setTodoListCompletedState", {
-        todoListId: this.todoListId,
-        completed: false
-      });
-    }
-
-  }
-};
-exports.default = _default;
         var $98e7b1 = exports.default || module.exports;
       
       if (typeof $98e7b1 === 'function') {
@@ -38922,32 +39129,58 @@ exports.default = _default;
   var _vm = this
   var _h = _vm.$createElement
   var _c = _vm._self._c || _h
-  return !_vm.loadingTodoLists
-    ? _c(
-        "div",
-        { staticClass: "list-wrapper" },
-        [
-          _vm.todoList.completed ? _c("Confetti") : _vm._e(),
-          _vm._v(" "),
-          _c("header", { staticClass: "list-header" }, [
-            _c("h2", { staticClass: "list-title" }, [
-              _vm._v(_vm._s(_vm.todoList.listTitle))
-            ]),
-            _vm._v(" "),
-            _c("div", { staticClass: "list-controls" })
-          ]),
-          _vm._v(" "),
-          _c("TodoListItems", {
-            attrs: { todoListId: _vm.todoList.id },
-            on: {
-              "todo-list-completed": _vm.setTodoListCompleted,
-              "todo-list-uncompleted": _vm.setTodoListUncompleted
-            }
-          })
-        ],
-        1
-      )
-    : _vm._e()
+  return _c(
+    "b-row",
+    { attrs: { "no-gutters": "" } },
+    [
+      _c("b-col", [
+        !_vm.loadingTodoLists
+          ? _c(
+              "div",
+              { staticClass: "list-wrapper" },
+              [
+                _vm.todoList.completed ? _c("Confetti") : _vm._e(),
+                _vm._v(" "),
+                _c("header", { staticClass: "list-header" }, [
+                  _c("h2", { staticClass: "list-title" }, [
+                    _vm._v(_vm._s(_vm.todoList.listTitle))
+                  ]),
+                  _vm._v(" "),
+                  _c("div", { staticClass: "list-controls" })
+                ]),
+                _vm._v(" "),
+                !_vm.loadingItems
+                  ? _c("TodoListItems", {
+                      attrs: {
+                        todoListId: _vm.todoList.id,
+                        items: _vm.items,
+                        itemsLayout: _vm.itemsLayout
+                      },
+                      on: {
+                        "item-selected": _vm.selectItem,
+                        "todo-list-completed": _vm.setTodoListCompleted,
+                        "todo-list-uncompleted": _vm.setTodoListUncompleted,
+                        "checkbox-clicked": _vm.dispatchSetItemCompletedState,
+                        "item-edited": _vm.dispatchUpdateItem,
+                        "add-item": _vm.dispatchAddItem,
+                        "update-item-position": _vm.dispatchUpdateItemPosition,
+                        "delete-item": _vm.dispatchDeleteItem,
+                        "sub-item-count-changed": _vm.commitUpdateHasSubItems
+                      }
+                    })
+                  : _vm._e()
+              ],
+              1
+            )
+          : _vm._e()
+      ]),
+      _vm._v(" "),
+      _vm.selectedItem
+        ? _c("TodoItemDetails", { attrs: { item: _vm.selectedItem } })
+        : _vm._e()
+    ],
+    1
+  )
 }
 var staticRenderFns = []
 render._withStripped = true
@@ -38978,7 +39211,7 @@ render._withStripped = true
         
       }
     })();
-},{"vuex":"node_modules/vuex/dist/vuex.esm.js","./TodoListItems":"vue/components/TodoListItems.vue","./Contributors":"vue/components/Contributors.vue","./InviteContributorsForm":"vue/components/InviteContributorsForm.vue","./Confetti":"vue/components/Confetti.vue","vuedraggable":"node_modules/vuedraggable/dist/vuedraggable.common.js","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/views/Home.vue":[function(require,module,exports) {
+},{"axios":"node_modules/axios/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js","vuex":"node_modules/vuex/dist/vuex.esm.js","vuedraggable":"node_modules/vuedraggable/dist/vuedraggable.common.js","./Confetti":"vue/components/Confetti.vue","./Contributors":"vue/components/Contributors.vue","./InviteContributorsForm":"vue/components/InviteContributorsForm.vue","./TodoListItems":"vue/components/TodoListItems.vue","./TodoItemDetails.vue":"vue/components/TodoItemDetails.vue","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js"}],"vue/views/Home.vue":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -38996,29 +39229,6 @@ var _TodoList = _interopRequireDefault(require("../components/TodoList"));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
 //
 //
 //
@@ -39135,63 +39345,7 @@ exports.default = _default;
                 )
               ]),
               _vm._v(" "),
-              _c(
-                "b-row",
-                { attrs: { "no-gutters": "" } },
-                [
-                  _c(
-                    "b-col",
-                    { attrs: { md: "5" } },
-                    [_c("RouterView", { key: _vm.$route.fullPath })],
-                    1
-                  ),
-                  _vm._v(" "),
-                  _c("b-col", { attrs: { md: "7" } }, [
-                    _c("div", { staticClass: "item-content" }, [
-                      _c("h2", { staticClass: "item-name" }, [
-                        _vm._v("Lorem ipsum dolor sit.")
-                      ]),
-                      _vm._v(" "),
-                      _c("div", { staticClass: "item-meta" }, [
-                        _c(
-                          "div",
-                          { staticClass: "item-due-date" },
-                          [
-                            _c("b-icon-calendar"),
-                            _vm._v("Today\n              ")
-                          ],
-                          1
-                        )
-                      ]),
-                      _vm._v(" "),
-                      _c("div", { staticClass: "item-notes" }, [
-                        _vm._v(
-                          "Maecenas faucibus mollis interdum. Etiam porta sem malesuada magna mollis euismod. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Donec id elit non mi porta gravida at eget metus."
-                        )
-                      ]),
-                      _vm._v(" "),
-                      _c("div", { staticClass: "sub-items" }, [
-                        _c("div", { staticClass: "sub-item" }, [
-                          _vm._v("Item 1")
-                        ]),
-                        _vm._v(" "),
-                        _c("div", { staticClass: "sub-item" }, [
-                          _vm._v("Item 2")
-                        ]),
-                        _vm._v(" "),
-                        _c("div", { staticClass: "sub-item" }, [
-                          _vm._v("Item 3")
-                        ]),
-                        _vm._v(" "),
-                        _c("div", { staticClass: "sub-item" }, [
-                          _vm._v("Item 4")
-                        ])
-                      ])
-                    ])
-                  ])
-                ],
-                1
-              )
+              _c("RouterView", { key: _vm.$route.fullPath })
             ],
             1
           )
@@ -47812,7 +47966,9 @@ var _store = _interopRequireDefault(require("./store"));
 
 var _Home = _interopRequireDefault(require(".././vue/views/Home"));
 
-var _TodoList = _interopRequireDefault(require(".././vue/components/TodoList.vue"));
+var _TodoList = _interopRequireDefault(require(".././vue/components/TodoList"));
+
+var _TodoItemDetails = _interopRequireDefault(require(".././vue/components/TodoItemDetails"));
 
 var _Login = _interopRequireDefault(require(".././vue/views/Login"));
 
@@ -47835,7 +47991,11 @@ const router = new _vueRouter.default({
     children: [{
       path: '/lists/:todoListId',
       component: _TodoList.default,
-      props: true
+      props: true,
+      children: [{
+        path: 'items/:itemId',
+        component: _TodoItemDetails.default
+      }]
     }]
   }, {
     path: '/settings',
@@ -47870,7 +48030,7 @@ router.beforeEach(async (to, from, next) => {
 });
 var _default = router;
 exports.default = _default;
-},{"vue":"node_modules/vue/dist/vue.runtime.esm.js","vue-router":"node_modules/vue-router/dist/vue-router.esm.js","axios":"node_modules/axios/index.js","./store":"modules/store.js",".././vue/views/Home":"vue/views/Home.vue",".././vue/components/TodoList.vue":"vue/components/TodoList.vue",".././vue/views/Login":"vue/views/Login.vue","../vue/views/Settings":"vue/views/Settings.vue"}],"vue/App.vue":[function(require,module,exports) {
+},{"vue":"node_modules/vue/dist/vue.runtime.esm.js","vue-router":"node_modules/vue-router/dist/vue-router.esm.js","axios":"node_modules/axios/index.js","./store":"modules/store.js",".././vue/views/Home":"vue/views/Home.vue",".././vue/components/TodoList":"vue/components/TodoList.vue",".././vue/components/TodoItemDetails":"vue/components/TodoItemDetails.vue",".././vue/views/Login":"vue/views/Login.vue","../vue/views/Settings":"vue/views/Settings.vue"}],"vue/App.vue":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -98855,7 +99015,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "61589" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "50741" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};

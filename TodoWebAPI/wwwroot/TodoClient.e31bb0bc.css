@@ -72,6 +72,33 @@
   border: none !important;
   background: #ff5d2a !important;
 }
+.b-tooltip[data-v-370f63] {
+  font-weight: bold;
+  font-family: "Nunito", sans-serif;
+}
+.contributors[data-v-370f63] {
+  display: flex;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.contributors .contributor[data-v-370f63] {
+  position: relative;
+}
+.contributors .contributor[data-v-370f63]:not(:first-child) {
+  margin-left: -10px;
+}
+.contributors .contributor img[data-v-370f63] {
+  max-width: 36px;
+  border-radius: 100px;
+}
+h3[data-v-3f1240] {
+  font-size: 24px;
+}
+.invitation-form .email-group[data-v-3f1240] {
+  font-family: "Nunito", sans-serif;
+  font-weight: bold;
+}
 .item {
   padding: 25px;
   background: #f5f6f7;
@@ -82,6 +109,7 @@
 }
 .item:hover {
   background-color: #fbfbfc;
+  cursor: pointer;
 }
 .item:active {
   background-color: white;
@@ -212,33 +240,6 @@
 .btn-add.btn[data-v-aa59c0]:active, .btn-add.btnfocus[data-v-aa59c0] {
   box-shadow: 0 10px 30px rgba(76, 175, 80, 0.3) !important;
   background-color: #3d8b40 !important;
-}
-.b-tooltip[data-v-370f63] {
-  font-weight: bold;
-  font-family: "Nunito", sans-serif;
-}
-.contributors[data-v-370f63] {
-  display: flex;
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-.contributors .contributor[data-v-370f63] {
-  position: relative;
-}
-.contributors .contributor[data-v-370f63]:not(:first-child) {
-  margin-left: -10px;
-}
-.contributors .contributor img[data-v-370f63] {
-  max-width: 36px;
-  border-radius: 100px;
-}
-h3[data-v-3f1240] {
-  font-size: 24px;
-}
-.invitation-form .email-group[data-v-3f1240] {
-  font-family: "Nunito", sans-serif;
-  font-weight: bold;
 }
 #login .title {
   font-size: 60px;
@@ -401,7 +402,26 @@ body {
   margin-bottom: 36px;
 }
 
-.modal-footer {
+.modal .modal-title {
+  font-size: 18px;
+  font-weight: bold;
+  text-transform: uppercase;
+  color: #455a64;
+}
+.modal .modal-content {
+  border-radius: 0 !important;
+  border: none !important;
+}
+.modal .modal-content .form-group {
+  color: #455a64;
+}
+.modal .modal-content .form-group .form-control {
+  border-radius: 0;
+}
+.modal .modal-content .btn {
+  border-radius: 0;
+}
+.modal .modal-footer {
   display: none !important;
 }
 /*!

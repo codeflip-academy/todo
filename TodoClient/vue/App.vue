@@ -235,7 +235,33 @@ body {
   }
 }
 
-.modal-footer {
-  display: none !important;
+.modal {
+  .modal-title {
+    font-size: 18px;
+    font-weight: bold;
+    text-transform: uppercase;
+    color: $gray;
+  }
+
+  .modal-content {
+    border-radius: 0 !important;
+    border: none !important;
+
+    .form-group {
+      color: $gray;
+
+      .form-control {
+        border-radius: 0;
+      }
+    }
+
+    .btn {
+      border-radius: 0;
+    }
+  }
+
+  .modal-footer {
+    display: none !important;
+  }
 }
 </style>

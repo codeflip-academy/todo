@@ -2,7 +2,7 @@
   <b-form id="add-sub-item-form" @submit.prevent="addSubItem">
     <b-button
       ref="addItemBtn"
-      class="mt-3"
+      class="mb-3"
       size="sm"
       @click="focusForm"
       v-if="!formActive"
