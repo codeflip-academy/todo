@@ -14,6 +14,7 @@ using Microsoft.AspNetCore.Authorization;
 using Todo.Domain;
 using Todo.Domain.Repositories;
 using TodoWebAPI.ViewModels;
+using TodoWebAPI.UserStories;
 
 namespace TodoWebAPI.Controllers
 {
@@ -206,6 +207,12 @@ namespace TodoWebAPI.Controllers
             }
 
             return Forbid();
+        }
+
+        [HttpGet("api/lists/{listId}/todos")]
+        public async Task<IActionResult> GetNumberOfItemsLeft([FromBody] GetUncompletedItemCount uncompletedItemCount)
+        {
+            return Ok(await _mediator.Send(uncompletedItemCount));
         }
     }
 }

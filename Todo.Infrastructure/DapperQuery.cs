@@ -124,6 +124,17 @@ namespace TodoWebAPI
             }
         }
 
+        public async Task<List<TodoListItem>> GetUncompletedItemsByListIdAsync(Guid listId)
+        {
+            using (var connection = new SqlConnection(_connectionString))
+            {
+                await connection.OpenAsync();
+                var result = await connection.QueryAsync<TodoListItem>("Select * from TodoListItems Where Completed = 0 and ListID = @listId", new { listId = listId });
+                return result.ToList();
+            }
+        }
+
+
         public async Task<TodoItemLayoutDto> GetTodoItemLayoutAsync(Guid itemId)
         {
             using (var connection = new SqlConnection(_connectionString))
