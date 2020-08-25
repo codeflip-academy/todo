@@ -35,7 +35,7 @@ namespace TodoWebAPI.DomainEventHandlers.Invitation
 
         public async Task Handle(InvitationSent notification, CancellationToken cancellationToken)
         {
-            var list = await _todoListRepository.FindTodoListIdByIdAsync(notification.ListId);
+            var list = await _todoListRepository.FindTodoListIdByIdAsync(notification.ListId.GetValueOrDefault());
             var invitee = await _accountRepository.FindAccountByIdAsync(notification.InviteeAccountId);
             var accountsLists = await _accountsListsRepository.FindAccountsListsByAccountIdAndListIdAsync(invitee.Id, list.Id);
 

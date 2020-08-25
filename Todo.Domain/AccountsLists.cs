@@ -12,7 +12,7 @@ namespace Todo.Domain
     {
         public Guid Id { get; set; }
         public Guid AccountId { get; set; }
-        public Guid ListId { get; set; }
+        public Guid? ListId { get; set; }
         public byte Role { get; protected set; }
         public bool UserIsOwner(Guid accountId) => AccountId == accountId && Role == Roles.Owner;
         public bool UserIsAlreadyInvited(Guid accountId)
@@ -22,6 +22,13 @@ namespace Todo.Domain
                 return true;
             }
             return false;
+        }
+
+        public void MoveListToTrash()
+        {
+            var listId = this.ListId;
+
+            this.ListId = null;
         }
         private protected AccountsLists() { }
     }

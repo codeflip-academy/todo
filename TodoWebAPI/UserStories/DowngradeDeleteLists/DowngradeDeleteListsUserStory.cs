@@ -41,7 +41,7 @@ namespace TodoWebAPI.UserStories
 
                 if (accountList.UserIsOwner(request.AccountId))
                 {
-                    await _listRepository.RemoveTodoListAsync(list.Id);
+                    accountList.MoveListToTrash();
 
                     var contributors = list.Contributors;
 
