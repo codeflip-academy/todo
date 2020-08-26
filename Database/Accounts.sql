@@ -2,7 +2,7 @@ USE [ToDo]
 
 GO
 
-Create Table [Accounts]
+CREATE TABLE [Accounts]
 (
     [ID] UNIQUEIDENTIFIER PRIMARY KEY,
     [FullName] NVARCHAR(50),
