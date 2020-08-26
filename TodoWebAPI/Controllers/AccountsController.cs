@@ -138,7 +138,7 @@ namespace TodoWebAPI.Controllers
         {
             var accountId = Guid.Parse(User.FindFirst(c => c.Type == "urn:codefliptodo:accountid").Value);
 
-            return Ok(await _dapper.GetEmailFilterAsync(accountId););
+            return Ok(await _dapper.GetEmailFilterAsync(accountId));
         }
     }
 }
