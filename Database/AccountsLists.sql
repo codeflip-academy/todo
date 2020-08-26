@@ -1,4 +1,4 @@
-USE [ToDo]
+USE [Todo]
 
 GO
 

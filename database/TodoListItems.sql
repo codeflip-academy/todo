@@ -5,9 +5,9 @@ GO
 CREATE TABLE [TodoListItems]
 (
     [ID] UNIQUEIDENTIFIER PRIMARY KEY,
-    [Notes] VARCHAR(200),
+    [Notes] NVARCHAR(200),
     [Completed] BIT NOT NULL DEFAULT(0),
-    [Name] VARCHAR(50),
+    [Name] NVARCHAR(50),
     [DueDate] DATETIME,
     [ListID] UNIQUEIDENTIFIER,
     [HasSubItems] BIT NOT NULL DEFAULT(0)

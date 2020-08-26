@@ -46,6 +46,9 @@ namespace Todo.Infrastructure
         public virtual DbSet<Plan> Plans { get; set; }
         public virtual DbSet<Payment> PaymentMethods { get; set; }
         public virtual DbSet<Downgrade> Downgrades { get; set; }
+        public virtual DbSet<Discount> Discounts { get; set; }
+        public virtual DbSet<AccountDiscount> AccountsDiscounts { get; set; }
+
         public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         {
             var saveChanges = await base.SaveChangesAsync(cancellationToken);
@@ -100,6 +103,7 @@ namespace Todo.Infrastructure
 
                 entity
                     .Property(e => e.ListTitle)
+                    .HasColumnType("nvarchar(max)")
                     .IsRequired()
                     .HasMaxLength(50)
                     .IsUnicode(false);
@@ -122,12 +126,14 @@ namespace Todo.Infrastructure
 
                 entity
                     .Property(e => e.Name)
+                    .HasColumnType("nvarchar(max)")
                     .HasColumnName("Name")
                     .HasMaxLength(50)
                     .IsUnicode(false);
 
                 entity
                     .Property(e => e.Notes)
+                    .HasColumnType("nvarchar(max)")
                     .HasMaxLength(200)
                     .IsUnicode(false);
 
@@ -188,6 +194,7 @@ namespace Todo.Infrastructure
 
                 entity
                     .Property(e => e.Name)
+                    .HasColumnType("nvarchar(max)")
                     .HasColumnName("Name")
                     .HasMaxLength(50)
                     .IsUnicode(false);
@@ -274,6 +281,36 @@ namespace Todo.Infrastructure
                     .Property(e => e.PlanId)
                     .HasColumnName("PlanID");
 
+            });
+
+            modelBuilder.Entity<Discount>(entity =>
+            {
+                entity
+                    .HasKey(e => e.Id);
+
+                entity
+                    .Property(e => e.Name);
+
+                entity
+                    .Property(e => e.Percentage);
+
+                entity
+                    .Property(e => e.BillingCycles);
+            });
+
+            modelBuilder.Entity<AccountDiscount>(entity =>
+            {
+                entity
+                    .HasKey(e => e.Id);
+
+                entity
+                    .Property(e => e.AccountId);
+
+                entity
+                    .Property(e => e.DiscountId);
+
+                entity
+                    .Property(e => e.AppliedToSubscription);
             });
         }
     }

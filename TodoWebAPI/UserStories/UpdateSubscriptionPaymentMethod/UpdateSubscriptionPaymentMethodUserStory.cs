@@ -23,17 +23,11 @@ namespace TodoWebAPI.UserStories
         {
             var account = await _account.FindAccountByIdAsync(request.AccountId);
             var gateway = _braintreeConfiguration.GetGateway();
-            var subscriptionId = Guid.NewGuid().ToString();
 
-            var subscriptionUpdated = await gateway.Subscription.UpdateAsync(account.SubscriptionId, new SubscriptionRequest
+            var subscriptionUpdatedResult = await gateway.Subscription.UpdateAsync(account.SubscriptionId, new SubscriptionRequest
             {
-                Id = subscriptionId,
                 PaymentMethodToken = account.PaymentMethodId,
             });
-
-            account.SubscriptionId = subscriptionId;
-
-            await _account.SaveChangesAsync();
         }
     }
 }
