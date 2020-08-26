@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Todo.Infrastructure;
 using TodoWebAPI.UserStories.DeleteAccount;
+using TodoWebAPI.UserStories.EmailFilter;
 using TodoWebAPI.UserStories.RoleChanges;
 
 namespace TodoWebAPI.Controllers
@@ -19,13 +20,16 @@ namespace TodoWebAPI.Controllers
     {
         private readonly IMediator _mediator;
         private readonly TodoDatabaseContext _todoDatabaseContext;
+        private readonly DapperQuery _dapper;
         private readonly IConfiguration _config;
         public AccountsController(IConfiguration config,
-            IMediator mediator, TodoDatabaseContext todoDatabaseContext)
+            IMediator mediator, TodoDatabaseContext todoDatabaseContext,
+            DapperQuery dapper)
         {
             _config = config;
             _mediator = mediator;
             _todoDatabaseContext = todoDatabaseContext;
+            _dapper = dapper;
         }
 
         [AllowAnonymous]
@@ -115,6 +119,26 @@ namespace TodoWebAPI.Controllers
                 return BadRequest();
             }
             return Ok();
+        }
+
+        [Authorize]
+        [HttpPut("api/accounts/emailFilter")]
+        public async Task<IActionResult> FilterEmailAsync([FromBody] EmailFilter emailFilter)
+        {
+            emailFilter.AccountId = Guid.Parse(User.FindFirst(c => c.Type == "urn:codefliptodo:accountid").Value);
+
+            await _mediator.Send(emailFilter);
+
+            return Ok();
+        }
+
+        [Authorize]
+        [HttpGet("api/accounts/emailFilter")]
+        public async Task<IActionResult> GetEmailFilter()
+        {
+            var accountId = Guid.Parse(User.FindFirst(c => c.Type == "urn:codefliptodo:accountid").Value);
+
+            return Ok(await _dapper.GetEmailFilterAsync(accountId););
         }
     }
 }

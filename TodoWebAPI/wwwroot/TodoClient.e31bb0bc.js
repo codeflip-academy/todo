@@ -22423,14 +22423,14 @@ var _default = {
   props: ['todoListContributors', 'accountContributors']
 };
 exports.default = _default;
-        var $370f63 = exports.default || module.exports;
+        var $c44f16 = exports.default || module.exports;
       
-      if (typeof $370f63 === 'function') {
-        $370f63 = $370f63.options;
+      if (typeof $c44f16 === 'function') {
+        $c44f16 = $c44f16.options;
       }
     
         /* template */
-        Object.assign($370f63, (function () {
+        Object.assign($c44f16, (function () {
           var render = function() {
   var _vm = this
   var _h = _vm.$createElement
@@ -22466,7 +22466,7 @@ render._withStripped = true
             render: render,
             staticRenderFns: staticRenderFns,
             _compiled: true,
-            _scopeId: "data-v-370f63",
+            _scopeId: "data-v-c44f16",
             functional: undefined
           };
         })());
@@ -22479,9 +22479,9 @@ render._withStripped = true
         if (api.compatible) {
           module.hot.accept();
           if (!module.hot.data) {
-            api.createRecord('$370f63', $370f63);
+            api.createRecord('$c44f16', $c44f16);
           } else {
-            api.reload('$370f63', $370f63);
+            api.reload('$c44f16', $c44f16);
           }
         }
 
@@ -22591,14 +22591,14 @@ var _default = {
   }
 };
 exports.default = _default;
-        var $2d7314 = exports.default || module.exports;
+        var $77e2d2 = exports.default || module.exports;
       
-      if (typeof $2d7314 === 'function') {
-        $2d7314 = $2d7314.options;
+      if (typeof $77e2d2 === 'function') {
+        $77e2d2 = $77e2d2.options;
       }
     
         /* template */
-        Object.assign($2d7314, (function () {
+        Object.assign($77e2d2, (function () {
           var render = function() {
   var _vm = this
   var _h = _vm.$createElement
@@ -22756,7 +22756,7 @@ render._withStripped = true
             render: render,
             staticRenderFns: staticRenderFns,
             _compiled: true,
-            _scopeId: "data-v-2d7314",
+            _scopeId: "data-v-77e2d2",
             functional: undefined
           };
         })());
@@ -22769,9 +22769,9 @@ render._withStripped = true
         if (api.compatible) {
           module.hot.accept();
           if (!module.hot.data) {
-            api.createRecord('$2d7314', $2d7314);
+            api.createRecord('$77e2d2', $77e2d2);
           } else {
-            api.reload('$2d7314', $2d7314);
+            api.reload('$77e2d2', $77e2d2);
           }
         }
 
@@ -22830,14 +22830,14 @@ var _default = {
   }
 };
 exports.default = _default;
-        var $baacd1 = exports.default || module.exports;
+        var $999c84 = exports.default || module.exports;
       
-      if (typeof $baacd1 === 'function') {
-        $baacd1 = $baacd1.options;
+      if (typeof $999c84 === 'function') {
+        $999c84 = $999c84.options;
       }
     
         /* template */
-        Object.assign($baacd1, (function () {
+        Object.assign($999c84, (function () {
           var render = function() {
   var _vm = this
   var _h = _vm.$createElement
@@ -22932,9 +22932,9 @@ render._withStripped = true
         if (api.compatible) {
           module.hot.accept();
           if (!module.hot.data) {
-            api.createRecord('$baacd1', $baacd1);
+            api.createRecord('$999c84', $999c84);
           } else {
-            api.reload('$baacd1', $baacd1);
+            api.reload('$999c84', $999c84);
           }
         }
 
@@ -23000,14 +23000,14 @@ var _default = {
   }
 };
 exports.default = _default;
-        var $f31e3f = exports.default || module.exports;
+        var $b12203 = exports.default || module.exports;
       
-      if (typeof $f31e3f === 'function') {
-        $f31e3f = $f31e3f.options;
+      if (typeof $b12203 === 'function') {
+        $b12203 = $b12203.options;
       }
     
         /* template */
-        Object.assign($f31e3f, (function () {
+        Object.assign($b12203, (function () {
           var render = function() {
   var _vm = this
   var _h = _vm.$createElement
@@ -23054,9 +23054,9 @@ render._withStripped = true
         if (api.compatible) {
           module.hot.accept();
           if (!module.hot.data) {
-            api.createRecord('$f31e3f', $f31e3f);
+            api.createRecord('$b12203', $b12203);
           } else {
-            api.reload('$f31e3f', $f31e3f);
+            api.reload('$b12203', $b12203);
           }
         }
 
@@ -23100,14 +23100,14 @@ var _default = {
   }
 };
 exports.default = _default;
-        var $254769 = exports.default || module.exports;
+        var $5072a3 = exports.default || module.exports;
       
-      if (typeof $254769 === 'function') {
-        $254769 = $254769.options;
+      if (typeof $5072a3 === 'function') {
+        $5072a3 = $5072a3.options;
       }
     
         /* template */
-        Object.assign($254769, (function () {
+        Object.assign($5072a3, (function () {
           var render = function() {
   var _vm = this
   var _h = _vm.$createElement
@@ -23144,9 +23144,9 @@ render._withStripped = true
         if (api.compatible) {
           module.hot.accept();
           if (!module.hot.data) {
-            api.createRecord('$254769', $254769);
+            api.createRecord('$5072a3', $5072a3);
           } else {
-            api.reload('$254769', $254769);
+            api.reload('$5072a3', $5072a3);
           }
         }
 
@@ -36559,14 +36559,14 @@ var _default = {
   }
 };
 exports.default = _default;
-        var $7b87e9 = exports.default || module.exports;
+        var $2fc84d = exports.default || module.exports;
       
-      if (typeof $7b87e9 === 'function') {
-        $7b87e9 = $7b87e9.options;
+      if (typeof $2fc84d === 'function') {
+        $2fc84d = $2fc84d.options;
       }
     
         /* template */
-        Object.assign($7b87e9, (function () {
+        Object.assign($2fc84d, (function () {
           var render = function() {
   var _vm = this
   var _h = _vm.$createElement
@@ -36718,9 +36718,9 @@ render._withStripped = true
         if (api.compatible) {
           module.hot.accept();
           if (!module.hot.data) {
-            api.createRecord('$7b87e9', $7b87e9);
+            api.createRecord('$2fc84d', $2fc84d);
           } else {
-            api.reload('$7b87e9', $7b87e9);
+            api.reload('$2fc84d', $2fc84d);
           }
         }
 
@@ -36797,14 +36797,14 @@ var _default = {
   }
 };
 exports.default = _default;
-        var $efb0d1 = exports.default || module.exports;
+        var $fab093 = exports.default || module.exports;
       
-      if (typeof $efb0d1 === 'function') {
-        $efb0d1 = $efb0d1.options;
+      if (typeof $fab093 === 'function') {
+        $fab093 = $fab093.options;
       }
     
         /* template */
-        Object.assign($efb0d1, (function () {
+        Object.assign($fab093, (function () {
           var render = function() {
   var _vm = this
   var _h = _vm.$createElement
@@ -36897,9 +36897,9 @@ render._withStripped = true
         if (api.compatible) {
           module.hot.accept();
           if (!module.hot.data) {
-            api.createRecord('$efb0d1', $efb0d1);
+            api.createRecord('$fab093', $fab093);
           } else {
-            api.reload('$efb0d1', $efb0d1);
+            api.reload('$fab093', $fab093);
           }
         }
 
@@ -37175,14 +37175,14 @@ var _default = {
   }
 };
 exports.default = _default;
-        var $9ad823 = exports.default || module.exports;
+        var $4fbb86 = exports.default || module.exports;
       
-      if (typeof $9ad823 === 'function') {
-        $9ad823 = $9ad823.options;
+      if (typeof $4fbb86 === 'function') {
+        $4fbb86 = $4fbb86.options;
       }
     
         /* template */
-        Object.assign($9ad823, (function () {
+        Object.assign($4fbb86, (function () {
           var render = function() {
   var _vm = this
   var _h = _vm.$createElement
@@ -37268,9 +37268,9 @@ render._withStripped = true
         if (api.compatible) {
           module.hot.accept();
           if (!module.hot.data) {
-            api.createRecord('$9ad823', $9ad823);
+            api.createRecord('$4fbb86', $4fbb86);
           } else {
-            api.reload('$9ad823', $9ad823);
+            api.reload('$4fbb86', $4fbb86);
           }
         }
 
@@ -37435,14 +37435,14 @@ var _default = {
   }
 };
 exports.default = _default;
-        var $1d8a45 = exports.default || module.exports;
+        var $ec928f = exports.default || module.exports;
       
-      if (typeof $1d8a45 === 'function') {
-        $1d8a45 = $1d8a45.options;
+      if (typeof $ec928f === 'function') {
+        $ec928f = $ec928f.options;
       }
     
         /* template */
-        Object.assign($1d8a45, (function () {
+        Object.assign($ec928f, (function () {
           var render = function() {
   var _vm = this
   var _h = _vm.$createElement
@@ -37647,7 +37647,7 @@ render._withStripped = true
             render: render,
             staticRenderFns: staticRenderFns,
             _compiled: true,
-            _scopeId: "data-v-1d8a45",
+            _scopeId: "data-v-ec928f",
             functional: undefined
           };
         })());
@@ -37660,9 +37660,9 @@ render._withStripped = true
         if (api.compatible) {
           module.hot.accept();
           if (!module.hot.data) {
-            api.createRecord('$1d8a45', $1d8a45);
+            api.createRecord('$ec928f', $ec928f);
           } else {
-            api.reload('$1d8a45', $1d8a45);
+            api.reload('$ec928f', $ec928f);
           }
         }
 
@@ -37783,14 +37783,14 @@ var _default = {
   }
 };
 exports.default = _default;
-        var $71ea3c = exports.default || module.exports;
+        var $b8ebde = exports.default || module.exports;
       
-      if (typeof $71ea3c === 'function') {
-        $71ea3c = $71ea3c.options;
+      if (typeof $b8ebde === 'function') {
+        $b8ebde = $b8ebde.options;
       }
     
         /* template */
-        Object.assign($71ea3c, (function () {
+        Object.assign($b8ebde, (function () {
           var render = function() {
   var _vm = this
   var _h = _vm.$createElement
@@ -37923,7 +37923,7 @@ render._withStripped = true
             render: render,
             staticRenderFns: staticRenderFns,
             _compiled: true,
-            _scopeId: "data-v-71ea3c",
+            _scopeId: "data-v-b8ebde",
             functional: undefined
           };
         })());
@@ -37936,9 +37936,9 @@ render._withStripped = true
         if (api.compatible) {
           module.hot.accept();
           if (!module.hot.data) {
-            api.createRecord('$71ea3c', $71ea3c);
+            api.createRecord('$b8ebde', $b8ebde);
           } else {
-            api.reload('$71ea3c', $71ea3c);
+            api.reload('$b8ebde', $b8ebde);
           }
         }
 
@@ -38022,14 +38022,14 @@ var _default = {
   }
 };
 exports.default = _default;
-        var $aa59c0 = exports.default || module.exports;
+        var $38fd75 = exports.default || module.exports;
       
-      if (typeof $aa59c0 === 'function') {
-        $aa59c0 = $aa59c0.options;
+      if (typeof $38fd75 === 'function') {
+        $38fd75 = $38fd75.options;
       }
     
         /* template */
-        Object.assign($aa59c0, (function () {
+        Object.assign($38fd75, (function () {
           var render = function() {
   var _vm = this
   var _h = _vm.$createElement
@@ -38162,9 +38162,9 @@ render._withStripped = true
         if (api.compatible) {
           module.hot.accept();
           if (!module.hot.data) {
-            api.createRecord('$aa59c0', $aa59c0);
+            api.createRecord('$38fd75', $38fd75);
           } else {
-            api.reload('$aa59c0', $aa59c0);
+            api.reload('$38fd75', $38fd75);
           }
         }
 
@@ -38470,14 +38470,14 @@ var _default = {
   }
 };
 exports.default = _default;
-        var $642124 = exports.default || module.exports;
+        var $2b69d1 = exports.default || module.exports;
       
-      if (typeof $642124 === 'function') {
-        $642124 = $642124.options;
+      if (typeof $2b69d1 === 'function') {
+        $2b69d1 = $2b69d1.options;
       }
     
         /* template */
-        Object.assign($642124, (function () {
+        Object.assign($2b69d1, (function () {
           var render = function() {
   var _vm = this
   var _h = _vm.$createElement
@@ -38553,9 +38553,9 @@ render._withStripped = true
         if (api.compatible) {
           module.hot.accept();
           if (!module.hot.data) {
-            api.createRecord('$642124', $642124);
+            api.createRecord('$2b69d1', $2b69d1);
           } else {
-            api.reload('$642124', $642124);
+            api.reload('$2b69d1', $2b69d1);
           }
         }
 
@@ -38637,14 +38637,14 @@ var _default = {
   }
 };
 exports.default = _default;
-        var $3f1240 = exports.default || module.exports;
+        var $e8e650 = exports.default || module.exports;
       
-      if (typeof $3f1240 === 'function') {
-        $3f1240 = $3f1240.options;
+      if (typeof $e8e650 === 'function') {
+        $e8e650 = $e8e650.options;
       }
     
         /* template */
-        Object.assign($3f1240, (function () {
+        Object.assign($e8e650, (function () {
           var render = function() {
   var _vm = this
   var _h = _vm.$createElement
@@ -38721,7 +38721,7 @@ render._withStripped = true
             render: render,
             staticRenderFns: staticRenderFns,
             _compiled: true,
-            _scopeId: "data-v-3f1240",
+            _scopeId: "data-v-e8e650",
             functional: undefined
           };
         })());
@@ -38734,9 +38734,9 @@ render._withStripped = true
         if (api.compatible) {
           module.hot.accept();
           if (!module.hot.data) {
-            api.createRecord('$3f1240', $3f1240);
+            api.createRecord('$e8e650', $e8e650);
           } else {
-            api.reload('$3f1240', $3f1240);
+            api.reload('$e8e650', $e8e650);
           }
         }
 
@@ -38789,14 +38789,14 @@ var _default = {
 
 };
 exports.default = _default;
-        var $1a387c = exports.default || module.exports;
+        var $5ee40d = exports.default || module.exports;
       
-      if (typeof $1a387c === 'function') {
-        $1a387c = $1a387c.options;
+      if (typeof $5ee40d === 'function') {
+        $5ee40d = $5ee40d.options;
       }
     
         /* template */
-        Object.assign($1a387c, (function () {
+        Object.assign($5ee40d, (function () {
           var render = function() {
   var _vm = this
   var _h = _vm.$createElement
@@ -38823,9 +38823,9 @@ render._withStripped = true
         if (api.compatible) {
           module.hot.accept();
           if (!module.hot.data) {
-            api.createRecord('$1a387c', $1a387c);
+            api.createRecord('$5ee40d', $5ee40d);
           } else {
-            api.reload('$1a387c', $1a387c);
+            api.reload('$5ee40d', $5ee40d);
           }
         }
 
@@ -38963,14 +38963,14 @@ var _default = {
   }
 };
 exports.default = _default;
-        var $98e7b1 = exports.default || module.exports;
+        var $20d7fb = exports.default || module.exports;
       
-      if (typeof $98e7b1 === 'function') {
-        $98e7b1 = $98e7b1.options;
+      if (typeof $20d7fb === 'function') {
+        $20d7fb = $20d7fb.options;
       }
     
         /* template */
-        Object.assign($98e7b1, (function () {
+        Object.assign($20d7fb, (function () {
           var render = function() {
   var _vm = this
   var _h = _vm.$createElement
@@ -39111,9 +39111,9 @@ render._withStripped = true
         if (api.compatible) {
           module.hot.accept();
           if (!module.hot.data) {
-            api.createRecord('$98e7b1', $98e7b1);
+            api.createRecord('$20d7fb', $20d7fb);
           } else {
-            api.reload('$98e7b1', $98e7b1);
+            api.reload('$20d7fb', $20d7fb);
           }
         }
 
@@ -39155,14 +39155,14 @@ var _default = {
   })
 };
 exports.default = _default;
-        var $2f27a4 = exports.default || module.exports;
+        var $090fa3 = exports.default || module.exports;
       
-      if (typeof $2f27a4 === 'function') {
-        $2f27a4 = $2f27a4.options;
+      if (typeof $090fa3 === 'function') {
+        $090fa3 = $090fa3.options;
       }
     
         /* template */
-        Object.assign($2f27a4, (function () {
+        Object.assign($090fa3, (function () {
           var render = function() {
   var _vm = this
   var _h = _vm.$createElement
@@ -39197,7 +39197,7 @@ render._withStripped = true
             render: render,
             staticRenderFns: staticRenderFns,
             _compiled: true,
-            _scopeId: "data-v-2f27a4",
+            _scopeId: "data-v-090fa3",
             functional: undefined
           };
         })());
@@ -39210,9 +39210,9 @@ render._withStripped = true
         if (api.compatible) {
           module.hot.accept();
           if (!module.hot.data) {
-            api.createRecord('$2f27a4', $2f27a4);
+            api.createRecord('$090fa3', $090fa3);
           } else {
-            api.reload('$2f27a4', $2f27a4);
+            api.reload('$090fa3', $090fa3);
           }
         }
 
@@ -39263,14 +39263,14 @@ var _default = {
   }
 };
 exports.default = _default;
-        var $d02f84 = exports.default || module.exports;
+        var $76be99 = exports.default || module.exports;
       
-      if (typeof $d02f84 === 'function') {
-        $d02f84 = $d02f84.options;
+      if (typeof $76be99 === 'function') {
+        $76be99 = $76be99.options;
       }
     
         /* template */
-        Object.assign($d02f84, (function () {
+        Object.assign($76be99, (function () {
           var render = function() {
   var _vm = this
   var _h = _vm.$createElement
@@ -39322,9 +39322,9 @@ render._withStripped = true
         if (api.compatible) {
           module.hot.accept();
           if (!module.hot.data) {
-            api.createRecord('$d02f84', $d02f84);
+            api.createRecord('$76be99', $76be99);
           } else {
-            api.reload('$d02f84', $d02f84);
+            api.reload('$76be99', $76be99);
           }
         }
 
@@ -39366,14 +39366,14 @@ var _default = {
   })
 };
 exports.default = _default;
-        var $6ce1f6 = exports.default || module.exports;
+        var $21ef28 = exports.default || module.exports;
       
-      if (typeof $6ce1f6 === 'function') {
-        $6ce1f6 = $6ce1f6.options;
+      if (typeof $21ef28 === 'function') {
+        $21ef28 = $21ef28.options;
       }
     
         /* template */
-        Object.assign($6ce1f6, (function () {
+        Object.assign($21ef28, (function () {
           var render = function() {
   var _vm = this
   var _h = _vm.$createElement
@@ -39416,7 +39416,7 @@ render._withStripped = true
             render: render,
             staticRenderFns: staticRenderFns,
             _compiled: true,
-            _scopeId: "data-v-6ce1f6",
+            _scopeId: "data-v-21ef28",
             functional: undefined
           };
         })());
@@ -39429,9 +39429,9 @@ render._withStripped = true
         if (api.compatible) {
           module.hot.accept();
           if (!module.hot.data) {
-            api.createRecord('$6ce1f6', $6ce1f6);
+            api.createRecord('$21ef28', $21ef28);
           } else {
-            api.reload('$6ce1f6', $6ce1f6);
+            api.reload('$21ef28', $21ef28);
           }
         }
 
@@ -39469,14 +39469,14 @@ var _default = {
   }
 };
 exports.default = _default;
-        var $5e4d3b = exports.default || module.exports;
+        var $a848c0 = exports.default || module.exports;
       
-      if (typeof $5e4d3b === 'function') {
-        $5e4d3b = $5e4d3b.options;
+      if (typeof $a848c0 === 'function') {
+        $a848c0 = $a848c0.options;
       }
     
         /* template */
-        Object.assign($5e4d3b, (function () {
+        Object.assign($a848c0, (function () {
           var render = function() {
   var _vm = this
   var _h = _vm.$createElement
@@ -39528,9 +39528,9 @@ render._withStripped = true
         if (api.compatible) {
           module.hot.accept();
           if (!module.hot.data) {
-            api.createRecord('$5e4d3b', $5e4d3b);
+            api.createRecord('$a848c0', $a848c0);
           } else {
-            api.reload('$5e4d3b', $5e4d3b);
+            api.reload('$a848c0', $a848c0);
           }
         }
 
@@ -46835,14 +46835,14 @@ var _default = {
   }
 };
 exports.default = _default;
-        var $8dae8a = exports.default || module.exports;
+        var $81fc0e = exports.default || module.exports;
       
-      if (typeof $8dae8a === 'function') {
-        $8dae8a = $8dae8a.options;
+      if (typeof $81fc0e === 'function') {
+        $81fc0e = $81fc0e.options;
       }
     
         /* template */
-        Object.assign($8dae8a, (function () {
+        Object.assign($81fc0e, (function () {
           var render = function() {
   var _vm = this
   var _h = _vm.$createElement
@@ -46942,9 +46942,9 @@ render._withStripped = true
         if (api.compatible) {
           module.hot.accept();
           if (!module.hot.data) {
-            api.createRecord('$8dae8a', $8dae8a);
+            api.createRecord('$81fc0e', $81fc0e);
           } else {
-            api.reload('$8dae8a', $8dae8a);
+            api.reload('$81fc0e', $81fc0e);
           }
         }
 
@@ -47048,14 +47048,14 @@ var _default = {
   }
 };
 exports.default = _default;
-        var $4638de = exports.default || module.exports;
+        var $be781d = exports.default || module.exports;
       
-      if (typeof $4638de === 'function') {
-        $4638de = $4638de.options;
+      if (typeof $be781d === 'function') {
+        $be781d = $be781d.options;
       }
     
         /* template */
-        Object.assign($4638de, (function () {
+        Object.assign($be781d, (function () {
           var render = function() {
   var _vm = this
   var _h = _vm.$createElement
@@ -47216,9 +47216,9 @@ render._withStripped = true
         if (api.compatible) {
           module.hot.accept();
           if (!module.hot.data) {
-            api.createRecord('$4638de', $4638de);
+            api.createRecord('$be781d', $be781d);
           } else {
-            api.reload('$4638de', $4638de);
+            api.reload('$be781d', $be781d);
           }
         }
 
@@ -47329,14 +47329,14 @@ var _default = {
   }
 };
 exports.default = _default;
-        var $96dd18 = exports.default || module.exports;
+        var $77fbb6 = exports.default || module.exports;
       
-      if (typeof $96dd18 === 'function') {
-        $96dd18 = $96dd18.options;
+      if (typeof $77fbb6 === 'function') {
+        $77fbb6 = $77fbb6.options;
       }
     
         /* template */
-        Object.assign($96dd18, (function () {
+        Object.assign($77fbb6, (function () {
           var render = function() {
   var _vm = this
   var _h = _vm.$createElement
@@ -47486,9 +47486,9 @@ render._withStripped = true
         if (api.compatible) {
           module.hot.accept();
           if (!module.hot.data) {
-            api.createRecord('$96dd18', $96dd18);
+            api.createRecord('$77fbb6', $77fbb6);
           } else {
-            api.reload('$96dd18', $96dd18);
+            api.reload('$77fbb6', $77fbb6);
           }
         }
 
@@ -47574,14 +47574,14 @@ var _default = {
   }
 };
 exports.default = _default;
-        var $1c308f = exports.default || module.exports;
+        var $e2b67e = exports.default || module.exports;
       
-      if (typeof $1c308f === 'function') {
-        $1c308f = $1c308f.options;
+      if (typeof $e2b67e === 'function') {
+        $e2b67e = $e2b67e.options;
       }
     
         /* template */
-        Object.assign($1c308f, (function () {
+        Object.assign($e2b67e, (function () {
           var render = function() {
   var _vm = this
   var _h = _vm.$createElement
@@ -47634,7 +47634,7 @@ render._withStripped = true
             render: render,
             staticRenderFns: staticRenderFns,
             _compiled: true,
-            _scopeId: "data-v-1c308f",
+            _scopeId: "data-v-e2b67e",
             functional: undefined
           };
         })());
@@ -47647,9 +47647,9 @@ render._withStripped = true
         if (api.compatible) {
           module.hot.accept();
           if (!module.hot.data) {
-            api.createRecord('$1c308f', $1c308f);
+            api.createRecord('$e2b67e', $e2b67e);
           } else {
-            api.reload('$1c308f', $1c308f);
+            api.reload('$e2b67e', $e2b67e);
           }
         }
 
@@ -47672,6 +47672,10 @@ var _SettingsAccount = _interopRequireDefault(require("../components/SettingsAcc
 
 var _SettingsBilling = _interopRequireDefault(require("../components/SettingsBilling"));
 
+var _axios = _interopRequireDefault(require("axios"));
+
+var _moment = require("moment");
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 //
@@ -47691,22 +47695,67 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 var _default = {
   name: "Settings",
+
+  data() {
+    return {
+      emailDueDate: false,
+      emailCompleted: false
+    };
+  },
+
+  methods: {
+    async updateSettings() {
+      await (0, _axios.default)({
+        method: "PUT",
+        url: "api/accounts/emailFilter",
+        headers: {
+          "content-type": "application/json"
+        },
+        data: JSON.stringify({
+          emailDueDate: this.emailDueDate,
+          emailCompleted: this.emailCompleted
+        })
+      });
+    }
+
+  },
+  watch: {
+    emailDueDate() {
+      this.updateSettings();
+    },
+
+    emailCompleted() {
+      this.updateSettings();
+    }
+
+  },
   components: {
     SettingsAccount: _SettingsAccount.default,
     SettingsBilling: _SettingsBilling.default
   }
 };
 exports.default = _default;
-        var $a8fd0e = exports.default || module.exports;
+        var $7cc9c9 = exports.default || module.exports;
       
-      if (typeof $a8fd0e === 'function') {
-        $a8fd0e = $a8fd0e.options;
+      if (typeof $7cc9c9 === 'function') {
+        $7cc9c9 = $7cc9c9.options;
       }
     
         /* template */
-        Object.assign($a8fd0e, (function () {
+        Object.assign($7cc9c9, (function () {
           var render = function() {
   var _vm = this
   var _h = _vm.$createElement
@@ -47742,6 +47791,57 @@ exports.default = _default;
                   _c("SettingsBilling")
                 ],
                 1
+              ),
+              _vm._v(" "),
+              _c(
+                "b-tab",
+                { attrs: { title: "Notifications", active: "" } },
+                [
+                  _c("h2", [_vm._v("Notifications")]),
+                  _vm._v(" "),
+                  _c(
+                    "b-form",
+                    [
+                      _c(
+                        "b-form-checkbox",
+                        {
+                          model: {
+                            value: _vm.emailDueDate,
+                            callback: function($$v) {
+                              _vm.emailDueDate = $$v
+                            },
+                            expression: "emailDueDate"
+                          }
+                        },
+                        [
+                          _vm._v(
+                            "Enable Notifications for items that are due today."
+                          )
+                        ]
+                      ),
+                      _vm._v(" "),
+                      _c(
+                        "b-form-checkbox",
+                        {
+                          model: {
+                            value: _vm.emailCompleted,
+                            callback: function($$v) {
+                              _vm.emailCompleted = $$v
+                            },
+                            expression: "emailCompleted"
+                          }
+                        },
+                        [
+                          _vm._v(
+                            "Enable Notifications for lists that have been completed."
+                          )
+                        ]
+                      )
+                    ],
+                    1
+                  )
+                ],
+                1
               )
             ],
             1
@@ -47773,9 +47873,9 @@ render._withStripped = true
         if (api.compatible) {
           module.hot.accept();
           if (!module.hot.data) {
-            api.createRecord('$a8fd0e', $a8fd0e);
+            api.createRecord('$7cc9c9', $7cc9c9);
           } else {
-            api.reload('$a8fd0e', $a8fd0e);
+            api.reload('$7cc9c9', $7cc9c9);
           }
         }
 
@@ -47786,7 +47886,7 @@ render._withStripped = true
       
       }
     })();
-},{"../components/SettingsAccount":"vue/components/SettingsAccount.vue","../components/SettingsBilling":"vue/components/SettingsBilling.vue","_css_loader":"node_modules/parcel-bundler/src/builtins/css-loader.js","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"modules/router.js":[function(require,module,exports) {
+},{"../components/SettingsAccount":"vue/components/SettingsAccount.vue","../components/SettingsBilling":"vue/components/SettingsBilling.vue","axios":"node_modules/axios/index.js","moment":"node_modules/moment/moment.js","_css_loader":"node_modules/parcel-bundler/src/builtins/css-loader.js","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"modules/router.js":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -47950,14 +48050,14 @@ var _default = {
   }
 };
 exports.default = _default;
-        var $f4778d = exports.default || module.exports;
+        var $85f3a2 = exports.default || module.exports;
       
-      if (typeof $f4778d === 'function') {
-        $f4778d = $f4778d.options;
+      if (typeof $85f3a2 === 'function') {
+        $85f3a2 = $85f3a2.options;
       }
     
         /* template */
-        Object.assign($f4778d, (function () {
+        Object.assign($85f3a2, (function () {
           var render = function() {
   var _vm = this
   var _h = _vm.$createElement
@@ -48068,9 +48168,9 @@ render._withStripped = true
         if (api.compatible) {
           module.hot.accept();
           if (!module.hot.data) {
-            api.createRecord('$f4778d', $f4778d);
+            api.createRecord('$85f3a2', $85f3a2);
           } else {
-            api.reload('$f4778d', $f4778d);
+            api.reload('$85f3a2', $85f3a2);
           }
         }
 
@@ -48133,14 +48233,14 @@ var _default = {
 
 };
 exports.default = _default;
-        var $fcc03e = exports.default || module.exports;
+        var $06aed4 = exports.default || module.exports;
       
-      if (typeof $fcc03e === 'function') {
-        $fcc03e = $fcc03e.options;
+      if (typeof $06aed4 === 'function') {
+        $06aed4 = $06aed4.options;
       }
     
         /* template */
-        Object.assign($fcc03e, (function () {
+        Object.assign($06aed4, (function () {
           var render = function() {
   var _vm = this
   var _h = _vm.$createElement
@@ -48172,9 +48272,9 @@ render._withStripped = true
         if (api.compatible) {
           module.hot.accept();
           if (!module.hot.data) {
-            api.createRecord('$fcc03e', $fcc03e);
+            api.createRecord('$06aed4', $06aed4);
           } else {
-            api.reload('$fcc03e', $fcc03e);
+            api.reload('$06aed4', $06aed4);
           }
         }
 
@@ -97515,7 +97615,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "63322" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "52249" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};

@@ -168,6 +168,17 @@ namespace TodoWebAPI
             }
         }
 
+        public async Task<EmailFilterDto> GetEmailFilterAsync(Guid accountId)
+        {
+            using (var connection = new SqlConnection(_connectionString))
+            {
+                await connection.OpenAsync();
+
+                var result = await connection.QueryAsync<EmailFilterDto>("SELECT EmailDueDate, EmailCompleted FROM Accounts Where ID = @accountId", new { accountId = accountId });
+                return result.FirstOrDefault();
+            }
+        }
+
         public async Task<Guid> GetAccountIdByEmailAsync(string email)
         {
             using (var connection = new SqlConnection(_connectionString))

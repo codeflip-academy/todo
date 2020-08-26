@@ -90,6 +90,12 @@ namespace Todo.Infrastructure
                 .Property(e => e.SubscriptionId)
                 .HasColumnName("SubscriptionID");
 
+                entity
+                    .Property(e => e.EmailCompleted);
+
+                entity
+                    .Property(e => e.EmailDueDate);
+
             });
 
             modelBuilder.Entity<TodoList>(entity =>

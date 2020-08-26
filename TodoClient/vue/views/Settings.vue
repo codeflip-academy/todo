@@ -10,6 +10,17 @@
           <h2>Billing</h2>
           <SettingsBilling></SettingsBilling>
         </b-tab>
+        <b-tab title="Notifications" active>
+          <h2>Notifications</h2>
+          <b-form>
+            <b-form-checkbox
+              v-model="emailDueDate"
+            >Enable Notifications for items that are due today.</b-form-checkbox>
+            <b-form-checkbox
+              v-model="emailCompleted"
+            >Enable Notifications for lists that have been completed.</b-form-checkbox>
+          </b-form>
+        </b-tab>
       </b-tabs>
     </b-container>
   </section>
@@ -18,9 +29,38 @@
 <script>
 import SettingsAccount from "../components/SettingsAccount";
 import SettingsBilling from "../components/SettingsBilling";
+import axios from "axios";
+import { updateLocale } from "moment";
 
 export default {
   name: "Settings",
+  data() {
+    return {
+      emailDueDate: false,
+      emailCompleted: false,
+    };
+  },
+  methods: {
+    async updateSettings() {
+      await axios({
+        method: "PUT",
+        url: "api/accounts/emailFilter",
+        headers: { "content-type": "application/json" },
+        data: JSON.stringify({
+          emailDueDate: this.emailDueDate,
+          emailCompleted: this.emailCompleted,
+        }),
+      });
+    },
+  },
+  watch: {
+    emailDueDate() {
+      this.updateSettings();
+    },
+    emailCompleted() {
+      this.updateSettings();
+    },
+  },
   components: {
     SettingsAccount,
     SettingsBilling,
