@@ -5,7 +5,7 @@
     :class="{ 'selected': $route.params.todoListId == todoList.id, 'completed': todoList.completed }"
   >
     {{ todoList.listTitle }}
-    <div class="sidebar-list-completed-state">8</div>
+    <div class="sidebar-list-completed-state">{{ todoList.incompleteCount }}</div>
   </b-button>
 </template>
 

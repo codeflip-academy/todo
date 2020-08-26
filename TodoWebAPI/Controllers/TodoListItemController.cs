@@ -208,11 +208,5 @@ namespace TodoWebAPI.Controllers
 
             return Forbid();
         }
-
-        [HttpGet("api/lists/{listId}/todos")]
-        public async Task<IActionResult> GetNumberOfItemsLeft([FromBody] GetUncompletedItemCount uncompletedItemCount)
-        {
-            return Ok(await _mediator.Send(uncompletedItemCount));
-        }
     }
 }

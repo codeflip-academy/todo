@@ -30305,7 +30305,9 @@ exports.default = _default;
     },
     [
       _vm._v("\n  " + _vm._s(_vm.todoList.listTitle) + "\n  "),
-      _c("div", { staticClass: "sidebar-list-completed-state" }, [_vm._v("8")])
+      _c("div", { staticClass: "sidebar-list-completed-state" }, [
+        _vm._v(_vm._s(_vm.todoList.incompleteCount))
+      ])
     ]
   )
 }
