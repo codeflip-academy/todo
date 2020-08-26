@@ -35,8 +35,8 @@
       <SubItems
         :key="item.id"
         :todoListItem="item"
-        @sub-items-completed="$emit('sub-items-completed')"
-        @sub-items-uncompleted="$emit('sub-items-uncompleted')"
+        @sub-items-completed="sendSubItemsCompletedEvent"
+        @sub-items-uncompleted="sendSubItemsUncompletedEvent"
         @sub-item-count-changed="sendSubItemCountChangedEvent"
       ></SubItems>
     </div>
@@ -63,11 +63,26 @@ export default {
     };
   },
   methods: {
-    sendSubItemCountChangedEvent({ disabled }) {
-      this.$emit("sub-item-count-changed", { disabled });
+    sendSubItemCountChangedEvent({ hasSubItems }) {
+      this.$emit("sub-item-count-changed", {
+        itemId: this.item.id,
+        hasSubItems,
+      });
     },
     sendItemEditedEvent() {
       this.$emit("item-edited", this.form);
+    },
+    sendSubItemsCompletedEvent() {
+      this.$emit("sub-items-completed", {
+        itemId: this.item.id,
+        completed: true,
+      });
+    },
+    sendSubItemsUncompletedEvent() {
+      this.$emit("sub-items-uncompleted", {
+        itemId: this.item.id,
+        completed: false,
+      });
     },
   },
   computed: mapState({

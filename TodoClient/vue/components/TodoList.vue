@@ -18,11 +18,17 @@
           @add-item="dispatchAddItem"
           @update-item-position="dispatchUpdateItemPosition"
           @delete-item="dispatchDeleteItem"
-          @sub-item-count-changed="commitUpdateHasSubItems"
         ></TodoListItems>
       </div>
     </b-col>
-    <TodoItemDetails v-if="selectedItem" :item="selectedItem" @item-edited="dispatchUpdateItem"></TodoItemDetails>
+    <TodoItemDetails
+      v-if="selectedItem"
+      :item="selectedItem"
+      @item-edited="dispatchUpdateItem"
+      @sub-items-completed="dispatchSetItemCompletedState"
+      @sub-items-uncompleted="dispatchSetItemCompletedState"
+      @sub-item-count-changed="commitUpdateHasSubItems"
+    ></TodoItemDetails>
   </b-row>
 </template>
 

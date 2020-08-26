@@ -228,9 +228,9 @@ export default {
     },
     triggerSubItemCountChangedEvent() {
       if (this.subItems.length > 0) {
-        this.$emit("sub-item-count-changed", { disabled: true });
+        this.$emit("sub-item-count-changed", { hasSubItems: true });
       } else {
-        this.$emit("sub-item-count-changed", { disabled: false });
+        this.$emit("sub-item-count-changed", { hasSubItems: false });
       }
     },
     subItemsBelongToItem(itemId) {

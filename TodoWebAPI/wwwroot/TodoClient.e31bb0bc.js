@@ -37380,11 +37380,11 @@ var _default = {
     triggerSubItemCountChangedEvent() {
       if (this.subItems.length > 0) {
         this.$emit("sub-item-count-changed", {
-          disabled: true
+          hasSubItems: true
         });
       } else {
         this.$emit("sub-item-count-changed", {
-          disabled: false
+          hasSubItems: false
         });
       }
     },
@@ -37955,8 +37955,6 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 //
 //
 //
-//
-//
 var _default = {
   name: "TodoListItem",
   props: ["item"],
@@ -38029,12 +38027,6 @@ exports.default = _default;
         attrs: { todoListItem: _vm.item },
         on: {
           "item-edited": _vm.sendItemEditedEvent,
-          "sub-items-completed": function($event) {
-            return _vm.sendCheckboxClickedEvent(true)
-          },
-          "sub-items-uncompleted": function($event) {
-            return _vm.sendCheckboxClickedEvent(false)
-          },
           "sub-item-count-changed": _vm.sendSubItemCountChangedEvent
         }
       }),
@@ -38686,15 +38678,30 @@ var _default = {
 
   methods: {
     sendSubItemCountChangedEvent({
-      disabled
+      hasSubItems
     }) {
       this.$emit("sub-item-count-changed", {
-        disabled
+        itemId: this.item.id,
+        hasSubItems
       });
     },
 
     sendItemEditedEvent() {
       this.$emit("item-edited", this.form);
+    },
+
+    sendSubItemsCompletedEvent() {
+      this.$emit("sub-items-completed", {
+        itemId: this.item.id,
+        completed: true
+      });
+    },
+
+    sendSubItemsUncompletedEvent() {
+      this.$emit("sub-items-uncompleted", {
+        itemId: this.item.id,
+        completed: false
+      });
     }
 
   },
@@ -38807,12 +38814,8 @@ exports.default = _default;
           key: _vm.item.id,
           attrs: { todoListItem: _vm.item },
           on: {
-            "sub-items-completed": function($event) {
-              return _vm.$emit("sub-items-completed")
-            },
-            "sub-items-uncompleted": function($event) {
-              return _vm.$emit("sub-items-uncompleted")
-            },
+            "sub-items-completed": _vm.sendSubItemsCompletedEvent,
+            "sub-items-uncompleted": _vm.sendSubItemsUncompletedEvent,
             "sub-item-count-changed": _vm.sendSubItemCountChangedEvent
           }
         })
@@ -38882,6 +38885,12 @@ var _TodoItemDetails = _interopRequireDefault(require("./TodoItemDetails.vue"));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
+//
+//
+//
+//
+//
+//
 //
 //
 //
@@ -39239,8 +39248,7 @@ exports.default = _default;
                     "checkbox-clicked": _vm.dispatchSetItemCompletedState,
                     "add-item": _vm.dispatchAddItem,
                     "update-item-position": _vm.dispatchUpdateItemPosition,
-                    "delete-item": _vm.dispatchDeleteItem,
-                    "sub-item-count-changed": _vm.commitUpdateHasSubItems
+                    "delete-item": _vm.dispatchDeleteItem
                   }
                 })
               : _vm._e()
@@ -39252,7 +39260,12 @@ exports.default = _default;
       _vm.selectedItem
         ? _c("TodoItemDetails", {
             attrs: { item: _vm.selectedItem },
-            on: { "item-edited": _vm.dispatchUpdateItem }
+            on: {
+              "item-edited": _vm.dispatchUpdateItem,
+              "sub-items-completed": _vm.dispatchSetItemCompletedState,
+              "sub-items-uncompleted": _vm.dispatchSetItemCompletedState,
+              "sub-item-count-changed": _vm.commitUpdateHasSubItems
+            }
           })
         : _vm._e()
     ],

@@ -3,8 +3,6 @@
     <EditTodoItemForm
       :todoListItem="item"
       @item-edited="sendItemEditedEvent"
-      @sub-items-completed="sendCheckboxClickedEvent(true)"
-      @sub-items-uncompleted="sendCheckboxClickedEvent(false)"
       @sub-item-count-changed="sendSubItemCountChangedEvent"
     ></EditTodoItemForm>
 
