@@ -1,8 +1,9 @@
-USE ToDO
+USE [Todo]
 
 GO
 
-Create TABLE [TodoListLayouts](
+CREATE TABLE [TodoListLayouts]
+(
     ID UNIQUEIDENTIFIER PRIMARY KEY,
     ListId UNIQUEIDENTIFIER,
     Layout VARCHAR(max) NOT NULL,

@@ -1,4 +1,4 @@
-USE Todo
+USE [Todo]
 
 GO
 
@@ -7,6 +7,8 @@ INSERT INTO Discounts
     ([ID], [Name], [Percentage], [BillingCycles])
 VALUES
     (1, 'FreeMonth', 100, 1)
+    
+GO
 
 -- 20% Off
 INSERT INTO Discounts
