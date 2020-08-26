@@ -19200,6 +19200,13 @@ const store = new _vuex.default.Store({
       role
     }) {
       state.todoLists[state.todoLists.findIndex(t => t.id === todoListId)].role = role;
+    },
+
+    updateTodoListUncompletedItems(state, {
+      listId,
+      uncompletedItems
+    }) {
+      state.todoLists[state.todoLists.findIndex(t => t.id === listId)].incompleteCount = uncompletedItems;
     }
 
   },
@@ -38932,14 +38939,18 @@ var _default = {
     };
   },
 
-  computed: {
+  computed: { ...(0, _vuex.mapState)({
+      contributors: state => state.contributors
+    }),
+
     todoList() {
       return this.$store.getters.getTodoListById(this.todoListId);
     },
 
-    ...(0, _vuex.mapState)({
-      contributors: state => state.contributors
-    })
+    uncompletedItems() {
+      return this.items.filter(item => item.completed === false).length;
+    }
+
   },
   components: {
     TodoListItems: _TodoListItems.default,
@@ -39200,6 +39211,13 @@ var _default = {
   watch: {
     items() {
       this.triggerTodoListCompleted();
+    },
+
+    uncompletedItems() {
+      this.$store.commit("updateTodoListUncompletedItems", {
+        listId: this.todoList.id,
+        uncompletedItems: this.uncompletedItems
+      });
     }
 
   }

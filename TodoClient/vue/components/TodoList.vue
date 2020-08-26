@@ -56,12 +56,15 @@ export default {
     };
   },
   computed: {
-    todoList() {
-      return this.$store.getters.getTodoListById(this.todoListId);
-    },
     ...mapState({
       contributors: (state) => state.contributors,
     }),
+    todoList() {
+      return this.$store.getters.getTodoListById(this.todoListId);
+    },
+    uncompletedItems() {
+      return this.items.filter((item) => item.completed === false).length;
+    },
   },
   components: {
     TodoListItems,
@@ -317,6 +320,12 @@ export default {
   watch: {
     items() {
       this.triggerTodoListCompleted();
+    },
+    uncompletedItems() {
+      this.$store.commit("updateTodoListUncompletedItems", {
+        listId: this.todoList.id,
+        uncompletedItems: this.uncompletedItems,
+      });
     },
   },
 };
