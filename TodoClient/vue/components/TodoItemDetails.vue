@@ -1,19 +1,36 @@
 <template>
   <b-col>
     <div class="item-content">
-      <b-form @submit.prevent="saveChanges">
-        <b-form-group class="mb-0">
-          <b-input type="text" class="item-name item-name-input" v-model.lazy="item.name"></b-input>
-          <b-button type="submit" class="sr-only">Save</b-button>
-        </b-form-group>
-      </b-form>
+      <b-form-group class="mb-0">
+        <b-input
+          type="text"
+          class="item-name item-name-input"
+          v-model="form.name"
+          @keyup.enter="$event.target.blur()"
+          @change="sendItemEditedEvent"
+        ></b-input>
+      </b-form-group>
 
-      <div class="item-meta">
+      <div class="item-meta mb-3">
         <b-form-group v-if="plan.canAddDueDates">
-          <b-form-datepicker id="due-date" v-model="item.dueDate" class="item-due-date"></b-form-datepicker>
+          <b-form-datepicker
+            id="due-date"
+            v-model="form.dueDate"
+            class="item-due-date"
+            @input="sendItemEditedEvent"
+          ></b-form-datepicker>
         </b-form-group>
       </div>
-      <div class="item-notes" v-if="item.notes">{{ item.notes }}</div>
+      <b-form-group class="item-notes">
+        <b-form-textarea
+          id="item-notes"
+          v-model="form.notes"
+          @input="sendItemEditedEvent"
+          placeholder="Add notes here..."
+          rows="1"
+          max-rows="12"
+        ></b-form-textarea>
+      </b-form-group>
 
       <SubItems
         :key="item.id"
@@ -40,15 +57,17 @@ export default {
   },
   data() {
     return {
-      edited: false,
+      form: {
+        ...this.item,
+      },
     };
   },
   methods: {
     sendSubItemCountChangedEvent({ disabled }) {
       this.$emit("sub-item-count-changed", { disabled });
     },
-    saveChanges() {
-      this.edited = true;
+    sendItemEditedEvent() {
+      this.$emit("item-edited", this.form);
     },
   },
   computed: mapState({
@@ -76,8 +95,6 @@ $red: #b71c1c;
   }
 
   .item-meta {
-    margin-bottom: 36px;
-
     .item-due-date {
       font-size: 13px;
       color: darken($light-gray, 40%) !important;
@@ -96,7 +113,10 @@ $red: #b71c1c;
     color: $gray;
     font-size: 14px;
     line-height: 1.5;
-    margin-bottom: 36px;
+
+    textarea {
+      overflow-y: auto !important;
+    }
   }
 }
 

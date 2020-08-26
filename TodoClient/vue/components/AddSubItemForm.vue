@@ -2,11 +2,14 @@
   <b-form id="add-sub-item-form" @submit.prevent="addSubItem">
     <b-button
       ref="addItemBtn"
-      class="mb-3"
+      class="mb-3 p-0 add-sub-item-btn"
       size="sm"
+      variant="link"
       @click="focusForm"
       v-if="!formActive"
-    >Add an item</b-button>
+    >
+      <b-icon-plus class="add-item-btn-icon"></b-icon-plus>Add item
+    </b-button>
 
     <div class="add-sub-item-input-wrapper mt-3" v-if="formActive">
       <b-form-group label="Name">
@@ -57,3 +60,23 @@ export default {
   },
 };
 </script>
+
+<style lang="scss" scoped>
+$light-gray: #f5f6f7;
+$gray: #455a64;
+$blue: #1e88e5;
+$orange: #ff7043;
+$green: #4caf50;
+$red: #b71c1c;
+
+.add-sub-item-btn {
+  .add-item-btn-icon {
+    color: $gray;
+    margin-right: 5px;
+  }
+
+  &:hover {
+    text-decoration: none;
+  }
+}
+</style>

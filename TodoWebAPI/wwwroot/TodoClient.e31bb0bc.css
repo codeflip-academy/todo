@@ -217,6 +217,13 @@ h3[data-v-3f1240] {
   padding: 12px;
   width: 100%;
 }
+.add-sub-item-btn .add-item-btn-icon[data-v-efb0d1] {
+  color: #455a64;
+  margin-right: 5px;
+}
+.add-sub-item-btn[data-v-efb0d1]:hover {
+  text-decoration: none;
+}
 .btn-add.btn[data-v-aa59c0] {
   display: flex;
   align-items: center;
@@ -250,9 +257,6 @@ h3[data-v-3f1240] {
   color: #455a64;
   line-height: 1.1;
 }
-.item-content .item-meta {
-  margin-bottom: 36px;
-}
 .item-content .item-meta .item-due-date {
   font-size: 13px;
   color: #84909c !important;
@@ -267,7 +271,9 @@ h3[data-v-3f1240] {
   color: #455a64;
   font-size: 14px;
   line-height: 1.5;
-  margin-bottom: 36px;
+}
+.item-content .item-notes textarea {
+  overflow-y: auto !important;
 }
 
 .form-group {

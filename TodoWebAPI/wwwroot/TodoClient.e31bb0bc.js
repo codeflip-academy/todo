@@ -36974,6 +36974,9 @@ exports.default = void 0;
 //
 //
 //
+//
+//
+//
 var _default = {
   name: "AddSubItemForm",
   props: ["todoListItem"],
@@ -37041,11 +37044,15 @@ exports.default = _default;
             "b-button",
             {
               ref: "addItemBtn",
-              staticClass: "mb-3",
-              attrs: { size: "sm" },
+              staticClass: "mb-3 p-0 add-sub-item-btn",
+              attrs: { size: "sm", variant: "link" },
               on: { click: _vm.focusForm }
             },
-            [_vm._v("Add an item")]
+            [
+              _c("b-icon-plus", { staticClass: "add-item-btn-icon" }),
+              _vm._v("Add item\n  ")
+            ],
+            1
           )
         : _vm._e(),
       _vm._v(" "),
@@ -37099,7 +37106,7 @@ render._withStripped = true
             render: render,
             staticRenderFns: staticRenderFns,
             _compiled: true,
-            _scopeId: null,
+            _scopeId: "data-v-efb0d1",
             functional: undefined
           };
         })());
@@ -37119,9 +37126,13 @@ render._withStripped = true
         }
 
         
+        var reloadCSS = require('_css_loader');
+        module.hot.dispose(reloadCSS);
+        module.hot.accept(reloadCSS);
+      
       }
     })();
-},{"vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/components/SubItems.vue":[function(require,module,exports) {
+},{"_css_loader":"node_modules/parcel-bundler/src/builtins/css-loader.js","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/components/SubItems.vue":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -38642,6 +38653,23 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 var _default = {
   name: "TodoItemDetails",
   props: ["item"],
@@ -38651,7 +38679,8 @@ var _default = {
 
   data() {
     return {
-      edited: false
+      form: { ...this.item
+      }
     };
   },
 
@@ -38664,8 +38693,8 @@ var _default = {
       });
     },
 
-    saveChanges() {
-      this.edited = true;
+    sendItemEditedEvent() {
+      this.$emit("item-edited", this.form);
     }
 
   },
@@ -38692,47 +38721,39 @@ exports.default = _default;
       { staticClass: "item-content" },
       [
         _c(
-          "b-form",
-          {
-            on: {
-              submit: function($event) {
-                $event.preventDefault()
-                return _vm.saveChanges($event)
-              }
-            }
-          },
+          "b-form-group",
+          { staticClass: "mb-0" },
           [
-            _c(
-              "b-form-group",
-              { staticClass: "mb-0" },
-              [
-                _c("b-input", {
-                  staticClass: "item-name item-name-input",
-                  attrs: { type: "text" },
-                  model: {
-                    value: _vm.item.name,
-                    callback: function($$v) {
-                      _vm.$set(_vm.item, "name", $$v)
-                    },
-                    expression: "item.name"
+            _c("b-input", {
+              staticClass: "item-name item-name-input",
+              attrs: { type: "text" },
+              on: {
+                keyup: function($event) {
+                  if (
+                    !$event.type.indexOf("key") &&
+                    _vm._k($event.keyCode, "enter", 13, $event.key, "Enter")
+                  ) {
+                    return null
                   }
-                }),
-                _vm._v(" "),
-                _c(
-                  "b-button",
-                  { staticClass: "sr-only", attrs: { type: "submit" } },
-                  [_vm._v("Save")]
-                )
-              ],
-              1
-            )
+                  return $event.target.blur()
+                },
+                change: _vm.sendItemEditedEvent
+              },
+              model: {
+                value: _vm.form.name,
+                callback: function($$v) {
+                  _vm.$set(_vm.form, "name", $$v)
+                },
+                expression: "form.name"
+              }
+            })
           ],
           1
         ),
         _vm._v(" "),
         _c(
           "div",
-          { staticClass: "item-meta" },
+          { staticClass: "item-meta mb-3" },
           [
             _vm.plan.canAddDueDates
               ? _c(
@@ -38741,12 +38762,13 @@ exports.default = _default;
                     _c("b-form-datepicker", {
                       staticClass: "item-due-date",
                       attrs: { id: "due-date" },
+                      on: { input: _vm.sendItemEditedEvent },
                       model: {
-                        value: _vm.item.dueDate,
+                        value: _vm.form.dueDate,
                         callback: function($$v) {
-                          _vm.$set(_vm.item, "dueDate", $$v)
+                          _vm.$set(_vm.form, "dueDate", $$v)
                         },
-                        expression: "item.dueDate"
+                        expression: "form.dueDate"
                       }
                     })
                   ],
@@ -38757,11 +38779,29 @@ exports.default = _default;
           1
         ),
         _vm._v(" "),
-        _vm.item.notes
-          ? _c("div", { staticClass: "item-notes" }, [
-              _vm._v(_vm._s(_vm.item.notes))
-            ])
-          : _vm._e(),
+        _c(
+          "b-form-group",
+          { staticClass: "item-notes" },
+          [
+            _c("b-form-textarea", {
+              attrs: {
+                id: "item-notes",
+                placeholder: "Add notes here...",
+                rows: "1",
+                "max-rows": "12"
+              },
+              on: { input: _vm.sendItemEditedEvent },
+              model: {
+                value: _vm.form.notes,
+                callback: function($$v) {
+                  _vm.$set(_vm.form, "notes", $$v)
+                },
+                expression: "form.notes"
+              }
+            })
+          ],
+          1
+        ),
         _vm._v(" "),
         _c("SubItems", {
           key: _vm.item.id,
