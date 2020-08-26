@@ -103,6 +103,7 @@ namespace Todo.Infrastructure
 
                 entity
                     .Property(e => e.ListTitle)
+                    .HasColumnType("nvarchar(max)")
                     .IsRequired()
                     .HasMaxLength(50)
                     .IsUnicode(false);
@@ -125,12 +126,14 @@ namespace Todo.Infrastructure
 
                 entity
                     .Property(e => e.Name)
+                    .HasColumnType("nvarchar(max)")
                     .HasColumnName("Name")
                     .HasMaxLength(50)
                     .IsUnicode(false);
 
                 entity
                     .Property(e => e.Notes)
+                    .HasColumnType("nvarchar(max)")
                     .HasMaxLength(200)
                     .IsUnicode(false);
 
@@ -191,6 +194,7 @@ namespace Todo.Infrastructure
 
                 entity
                     .Property(e => e.Name)
+                    .HasColumnType("nvarchar(max)")
                     .HasColumnName("Name")
                     .HasMaxLength(50)
                     .IsUnicode(false);

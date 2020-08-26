@@ -2,11 +2,12 @@ USE [Todo]
 
 GO
 
-CREATE TABLE [TodoLists](
+CREATE TABLE [TodoLists]
+(
     [ID] UNIQUEIDENTIFIER PRIMARY KEY,
-    [ListTitle] VARCHAR(50) NOT NULL,
+    [ListTitle] NVARCHAR(50) NOT NULL,
     [Completed] BIT NOT NULL DEFAULT(0),
-    [Contributors] VARCHAR(max) NOT NULL
+    [Contributors] NVARCHAR(max) NOT NULL
 )
 
 GO
