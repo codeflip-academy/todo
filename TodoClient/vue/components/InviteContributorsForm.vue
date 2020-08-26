@@ -1,5 +1,6 @@
 <template>
-  <b-card title="Invite">
+  <div>
+    <!-- <b-card title="Invite">
     <b-form @submit.prevent="invite" class="invitation-form">
       <b-form-group class="email-group text-secondary" label="Email">
         <b-form-input v-model="form.email" type="email" required></b-form-input>
@@ -17,7 +18,12 @@
         @dismiss-count-down="countDownChanged"
       >Invitation sent!</b-alert>
     </b-form>
-  </b-card>
+    </b-card>-->
+    <b-button class="invitation-btn" size="sm">
+      <span class="sr-only">Invite</span>
+      <b-icon-plus></b-icon-plus>
+    </b-button>
+  </div>
 </template>
 
 <script>
@@ -68,5 +74,16 @@ h3 {
     font-family: "Nunito", sans-serif;
     font-weight: bold;
   }
+}
+
+.invitation-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  width: 30px;
+  height: 30px;
+  border-radius: 100px;
+  margin-left: -10px;
 }
 </style>

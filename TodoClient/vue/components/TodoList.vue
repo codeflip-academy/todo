@@ -5,8 +5,22 @@
         <Confetti v-if="todoList.completed"></Confetti>
 
         <header class="list-header">
-          <h2 class="list-title">{{ todoList.listTitle }}</h2>
-          <div class="list-controls"></div>
+          <b-row class="align-items-center">
+            <b-col>
+              <h2 class="list-title">{{ todoList.listTitle }}</h2>
+            </b-col>
+            <b-col>
+              <div class="contributors-wrapper">
+                <Contributors
+                  :todoListContributors="todoList.contributors"
+                  :accountContributors="contributors"
+                ></Contributors>
+                <div class="list-settings">
+                  <InviteContributorsForm :listId="todoList.id"></InviteContributorsForm>
+                </div>
+              </div>
+            </b-col>
+          </b-row>
         </header>
         <TodoListItems
           v-if="!loadingItems"
@@ -330,3 +344,11 @@ export default {
   },
 };
 </script>
+
+<style lang="scss" scoped>
+.contributors-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+</style>

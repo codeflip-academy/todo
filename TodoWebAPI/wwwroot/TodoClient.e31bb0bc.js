@@ -30746,7 +30746,7 @@ exports.default = void 0;
 //
 var _default = {
   name: "Contributors",
-  props: ['todoListContributors', 'accountContributors']
+  props: ["todoListContributors", "accountContributors"]
 };
 exports.default = _default;
         var $370f63 = exports.default || module.exports;
@@ -30852,6 +30852,12 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 //
 //
 //
+//
+//
+//
+//
+//
+//
 var _default = {
   props: ["listId"],
 
@@ -30906,63 +30912,15 @@ exports.default = _default;
   var _h = _vm.$createElement
   var _c = _vm._self._c || _h
   return _c(
-    "b-card",
-    { attrs: { title: "Invite" } },
+    "div",
     [
       _c(
-        "b-form",
-        {
-          staticClass: "invitation-form",
-          on: {
-            submit: function($event) {
-              $event.preventDefault()
-              return _vm.invite($event)
-            }
-          }
-        },
+        "b-button",
+        { staticClass: "invitation-btn", attrs: { size: "sm" } },
         [
-          _c(
-            "b-form-group",
-            {
-              staticClass: "email-group text-secondary",
-              attrs: { label: "Email" }
-            },
-            [
-              _c("b-form-input", {
-                attrs: { type: "email", required: "" },
-                model: {
-                  value: _vm.form.email,
-                  callback: function($$v) {
-                    _vm.$set(_vm.form, "email", $$v)
-                  },
-                  expression: "form.email"
-                }
-              })
-            ],
-            1
-          ),
+          _c("span", { staticClass: "sr-only" }, [_vm._v("Invite")]),
           _vm._v(" "),
-          _c("b-button", { attrs: { type: "submit" } }, [_vm._v("Send")]),
-          _vm._v(" "),
-          _c(
-            "b-alert",
-            {
-              staticClass: "mb-0 mt-3",
-              attrs: {
-                variant: "success",
-                show: _vm.dismissCountDown,
-                dismissable: "",
-                fade: ""
-              },
-              on: {
-                dismissed: function($event) {
-                  _vm.dismissCountDown = 0
-                },
-                "dismiss-count-down": _vm.countDownChanged
-              }
-            },
-            [_vm._v("Invitation sent!")]
-          )
+          _c("b-icon-plus")
         ],
         1
       )
@@ -38926,6 +38884,20 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 var _default = {
   name: "TodoList",
   props: ["todoListId"],
@@ -39246,13 +39218,52 @@ exports.default = _default;
           [
             _vm.todoList.completed ? _c("Confetti") : _vm._e(),
             _vm._v(" "),
-            _c("header", { staticClass: "list-header" }, [
-              _c("h2", { staticClass: "list-title" }, [
-                _vm._v(_vm._s(_vm.todoList.listTitle))
-              ]),
-              _vm._v(" "),
-              _c("div", { staticClass: "list-controls" })
-            ]),
+            _c(
+              "header",
+              { staticClass: "list-header" },
+              [
+                _c(
+                  "b-row",
+                  { staticClass: "align-items-center" },
+                  [
+                    _c("b-col", [
+                      _c("h2", { staticClass: "list-title" }, [
+                        _vm._v(_vm._s(_vm.todoList.listTitle))
+                      ])
+                    ]),
+                    _vm._v(" "),
+                    _c("b-col", [
+                      _c(
+                        "div",
+                        { staticClass: "contributors-wrapper" },
+                        [
+                          _c("Contributors", {
+                            attrs: {
+                              todoListContributors: _vm.todoList.contributors,
+                              accountContributors: _vm.contributors
+                            }
+                          }),
+                          _vm._v(" "),
+                          _c(
+                            "div",
+                            { staticClass: "list-settings" },
+                            [
+                              _c("InviteContributorsForm", {
+                                attrs: { listId: _vm.todoList.id }
+                              })
+                            ],
+                            1
+                          )
+                        ],
+                        1
+                      )
+                    ])
+                  ],
+                  1
+                )
+              ],
+              1
+            ),
             _vm._v(" "),
             !_vm.loadingItems
               ? _c("TodoListItems", {
@@ -39297,7 +39308,7 @@ render._withStripped = true
             render: render,
             staticRenderFns: staticRenderFns,
             _compiled: true,
-            _scopeId: null,
+            _scopeId: "data-v-98e7b1",
             functional: undefined
           };
         })());
@@ -39317,9 +39328,13 @@ render._withStripped = true
         }
 
         
+        var reloadCSS = require('_css_loader');
+        module.hot.dispose(reloadCSS);
+        module.hot.accept(reloadCSS);
+      
       }
     })();
-},{"axios":"node_modules/axios/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js","vuex":"node_modules/vuex/dist/vuex.esm.js","vuedraggable":"node_modules/vuedraggable/dist/vuedraggable.common.js","./Confetti":"vue/components/Confetti.vue","./Contributors":"vue/components/Contributors.vue","./InviteContributorsForm":"vue/components/InviteContributorsForm.vue","./TodoListItems":"vue/components/TodoListItems.vue","./TodoItemDetails.vue":"vue/components/TodoItemDetails.vue","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js"}],"vue/views/Home.vue":[function(require,module,exports) {
+},{"axios":"node_modules/axios/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js","vuex":"node_modules/vuex/dist/vuex.esm.js","vuedraggable":"node_modules/vuedraggable/dist/vuedraggable.common.js","./Confetti":"vue/components/Confetti.vue","./Contributors":"vue/components/Contributors.vue","./InviteContributorsForm":"vue/components/InviteContributorsForm.vue","./TodoListItems":"vue/components/TodoListItems.vue","./TodoItemDetails.vue":"vue/components/TodoItemDetails.vue","_css_loader":"node_modules/parcel-bundler/src/builtins/css-loader.js","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js"}],"vue/views/Home.vue":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
