@@ -203,38 +203,6 @@ body {
   }
 }
 
-.item-content {
-  padding: 40px 50px;
-
-  .item-name {
-    font-size: 24px;
-    font-weight: bold;
-    color: $gray;
-    line-height: 1.1;
-    margin-bottom: 16px;
-  }
-
-  .item-meta {
-    margin-bottom: 36px;
-
-    .item-due-date {
-      font-size: 13px;
-      color: darken($light-gray, 40%);
-
-      svg {
-        margin-right: 6px;
-      }
-    }
-  }
-
-  .item-notes {
-    color: $gray;
-    font-size: 14px;
-    line-height: 1.5;
-    margin-bottom: 36px;
-  }
-}
-
 .modal {
   .modal-title {
     font-size: 18px;
@@ -246,22 +214,22 @@ body {
   .modal-content {
     border-radius: 0 !important;
     border: none !important;
-
-    .form-group {
-      color: $gray;
-
-      .form-control {
-        border-radius: 0;
-      }
-    }
-
-    .btn {
-      border-radius: 0;
-    }
   }
 
   .modal-footer {
     display: none !important;
+  }
+
+  .form-group {
+    color: $gray;
+
+    .form-control {
+      border-radius: 0;
+    }
+  }
+
+  .btn {
+    border-radius: 0;
   }
 }
 </style>

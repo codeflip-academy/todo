@@ -37944,9 +37944,6 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 //
 //
 //
-//
-//
-//
 var _default = {
   name: "TodoListItem",
   props: ["item"],
@@ -37969,7 +37966,7 @@ var _default = {
   },
   filters: {
     formatDate: function (value) {
-      return (0, _moment.default)(value).format("MM/D/YYYY");
+      return (0, _moment.default)(value).format("dddd, MMMM Do, YYYY");
     },
     truncate: function (text, length, suffix) {
       return text.substring(0, length) + suffix;
@@ -38132,21 +38129,6 @@ exports.default = _default;
             "div",
             { staticClass: "item-controls" },
             [
-              _c(
-                "b-button",
-                {
-                  staticClass: "btn-view",
-                  attrs: { variant: "link" },
-                  on: {
-                    click: function($event) {
-                      return _vm.$bvModal.show("modal-" + _vm.item.id)
-                    }
-                  }
-                },
-                [_c("b-icon-info-circle")],
-                1
-              ),
-              _vm._v(" "),
               _c(
                 "b-button",
                 {
@@ -38624,10 +38606,17 @@ exports.default = void 0;
 
 var _moment = _interopRequireDefault(require("moment"));
 
+var _vuex = require("vuex");
+
 var _SubItems = _interopRequireDefault(require("./SubItems"));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
+//
+//
+//
+//
+//
 //
 //
 //
@@ -38657,14 +38646,13 @@ var _default = {
   components: {
     SubItems: _SubItems.default
   },
-  filters: {
-    formatDate: function (value) {
-      return (0, _moment.default)(value).format("MM/D/YYYY");
-    },
-    truncate: function (text, length, suffix) {
-      return text.substring(0, length) + suffix;
-    }
+
+  data() {
+    return {
+      edited: false
+    };
   },
+
   methods: {
     sendSubItemCountChangedEvent({
       disabled
@@ -38672,9 +38660,16 @@ var _default = {
       this.$emit("sub-item-count-changed", {
         disabled
       });
+    },
+
+    saveChanges() {
+      this.edited = true;
     }
 
-  }
+  },
+  computed: (0, _vuex.mapState)({
+    plan: state => state.plan
+  })
 };
 exports.default = _default;
         var $a03f24 = exports.default || module.exports;
@@ -38694,25 +38689,71 @@ exports.default = _default;
       "div",
       { staticClass: "item-content" },
       [
-        _c("h2", { staticClass: "item-name" }, [_vm._v(_vm._s(_vm.item.name))]),
+        _c(
+          "b-form",
+          {
+            on: {
+              submit: function($event) {
+                $event.preventDefault()
+                return _vm.saveChanges($event)
+              }
+            }
+          },
+          [
+            _c(
+              "b-form-group",
+              { staticClass: "mb-0" },
+              [
+                _c("b-input", {
+                  staticClass: "item-name item-name-input",
+                  attrs: { type: "text" },
+                  model: {
+                    value: _vm.item.name,
+                    callback: function($$v) {
+                      _vm.$set(_vm.item, "name", $$v)
+                    },
+                    expression: "item.name"
+                  }
+                }),
+                _vm._v(" "),
+                _c(
+                  "b-button",
+                  { staticClass: "sr-only", attrs: { type: "submit" } },
+                  [_vm._v("Save")]
+                )
+              ],
+              1
+            )
+          ],
+          1
+        ),
         _vm._v(" "),
-        _c("div", { staticClass: "item-meta" }, [
-          _vm.item.dueDate
-            ? _c(
-                "div",
-                { staticClass: "item-due-date" },
-                [
-                  _c("b-icon-calendar"),
-                  _vm._v(
-                    "\n        " +
-                      _vm._s(_vm._f("formatDate")(_vm.item.dueDate)) +
-                      "\n      "
-                  )
-                ],
-                1
-              )
-            : _vm._e()
-        ]),
+        _c(
+          "div",
+          { staticClass: "item-meta" },
+          [
+            _vm.plan.canAddDueDates
+              ? _c(
+                  "b-form-group",
+                  [
+                    _c("b-form-datepicker", {
+                      staticClass: "item-due-date",
+                      attrs: { id: "due-date" },
+                      model: {
+                        value: _vm.item.dueDate,
+                        callback: function($$v) {
+                          _vm.$set(_vm.item, "dueDate", $$v)
+                        },
+                        expression: "item.dueDate"
+                      }
+                    })
+                  ],
+                  1
+                )
+              : _vm._e()
+          ],
+          1
+        ),
         _vm._v(" "),
         _vm.item.notes
           ? _c("div", { staticClass: "item-notes" }, [
@@ -38745,7 +38786,7 @@ render._withStripped = true
             render: render,
             staticRenderFns: staticRenderFns,
             _compiled: true,
-            _scopeId: "data-v-a03f24",
+            _scopeId: null,
             functional: undefined
           };
         })());
@@ -38771,7 +38812,7 @@ render._withStripped = true
       
       }
     })();
-},{"moment":"node_modules/moment/moment.js","./SubItems":"vue/components/SubItems.vue","_css_loader":"node_modules/parcel-bundler/src/builtins/css-loader.js","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/components/TodoList.vue":[function(require,module,exports) {
+},{"moment":"node_modules/moment/moment.js","vuex":"node_modules/vuex/dist/vuex.esm.js","./SubItems":"vue/components/SubItems.vue","_css_loader":"node_modules/parcel-bundler/src/builtins/css-loader.js","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/components/TodoList.vue":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -38827,9 +38868,6 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 //
 //
 //
-//
-//
-//
 var _default = {
   name: "TodoList",
   props: ["todoListId"],
@@ -38849,8 +38887,7 @@ var _default = {
     },
 
     ...(0, _vuex.mapState)({
-      contributors: state => state.contributors,
-      loadingTodoLists: state => state.loadingTodoLists
+      contributors: state => state.contributors
     })
   },
   components: {
@@ -39004,7 +39041,7 @@ var _default = {
 
     commitSetItemCompletedState(itemId, completed) {
       this.items[this.items.findIndex(i => i.id === itemId)].completed = completed;
-      this.triggerTodoListCompletedEvent();
+      this.triggerTodoListCompleted();
     },
 
     commitUpdateItem(item) {
@@ -39033,13 +39070,13 @@ var _default = {
       this.itemsLayout = itemsLayout;
     },
 
-    triggerTodoListCompletedEvent() {
+    triggerTodoListCompleted() {
       const listCompleted = this.items.length > 0 && this.items.every(item => item.completed);
 
       if (listCompleted) {
-        this.$emit("todo-list-completed");
+        this.setTodoListCompleted();
       } else {
-        this.$emit("todo-list-uncompleted");
+        this.setTodoListUncompleted();
       }
     },
 
@@ -39111,7 +39148,7 @@ var _default = {
 
   watch: {
     items() {
-      this.triggerTodoListCompletedEvent();
+      this.triggerTodoListCompleted();
     }
 
   }
@@ -39134,49 +39171,47 @@ exports.default = _default;
     { attrs: { "no-gutters": "" } },
     [
       _c("b-col", [
-        !_vm.loadingTodoLists
-          ? _c(
-              "div",
-              { staticClass: "list-wrapper" },
-              [
-                _vm.todoList.completed ? _c("Confetti") : _vm._e(),
-                _vm._v(" "),
-                _c("header", { staticClass: "list-header" }, [
-                  _c("h2", { staticClass: "list-title" }, [
-                    _vm._v(_vm._s(_vm.todoList.listTitle))
-                  ]),
-                  _vm._v(" "),
-                  _c("div", { staticClass: "list-controls" })
-                ]),
-                _vm._v(" "),
-                !_vm.loadingItems
-                  ? _c("TodoListItems", {
-                      attrs: {
-                        todoListId: _vm.todoList.id,
-                        items: _vm.items,
-                        itemsLayout: _vm.itemsLayout
-                      },
-                      on: {
-                        "item-selected": _vm.selectItem,
-                        "todo-list-completed": _vm.setTodoListCompleted,
-                        "todo-list-uncompleted": _vm.setTodoListUncompleted,
-                        "checkbox-clicked": _vm.dispatchSetItemCompletedState,
-                        "item-edited": _vm.dispatchUpdateItem,
-                        "add-item": _vm.dispatchAddItem,
-                        "update-item-position": _vm.dispatchUpdateItemPosition,
-                        "delete-item": _vm.dispatchDeleteItem,
-                        "sub-item-count-changed": _vm.commitUpdateHasSubItems
-                      }
-                    })
-                  : _vm._e()
-              ],
-              1
-            )
-          : _vm._e()
+        _c(
+          "div",
+          { staticClass: "list-wrapper" },
+          [
+            _vm.todoList.completed ? _c("Confetti") : _vm._e(),
+            _vm._v(" "),
+            _c("header", { staticClass: "list-header" }, [
+              _c("h2", { staticClass: "list-title" }, [
+                _vm._v(_vm._s(_vm.todoList.listTitle))
+              ]),
+              _vm._v(" "),
+              _c("div", { staticClass: "list-controls" })
+            ]),
+            _vm._v(" "),
+            !_vm.loadingItems
+              ? _c("TodoListItems", {
+                  attrs: {
+                    todoListId: _vm.todoList.id,
+                    items: _vm.items,
+                    itemsLayout: _vm.itemsLayout
+                  },
+                  on: {
+                    "item-selected": _vm.selectItem,
+                    "checkbox-clicked": _vm.dispatchSetItemCompletedState,
+                    "add-item": _vm.dispatchAddItem,
+                    "update-item-position": _vm.dispatchUpdateItemPosition,
+                    "delete-item": _vm.dispatchDeleteItem,
+                    "sub-item-count-changed": _vm.commitUpdateHasSubItems
+                  }
+                })
+              : _vm._e()
+          ],
+          1
+        )
       ]),
       _vm._v(" "),
       _vm.selectedItem
-        ? _c("TodoItemDetails", { attrs: { item: _vm.selectedItem } })
+        ? _c("TodoItemDetails", {
+            attrs: { item: _vm.selectedItem },
+            on: { "item-edited": _vm.dispatchUpdateItem }
+          })
         : _vm._e()
     ],
     1
@@ -39220,6 +39255,8 @@ Object.defineProperty(exports, "__esModule", {
 exports.default = void 0;
 
 var _axios = _interopRequireDefault(require("axios"));
+
+var _vuex = require("vuex");
 
 var _vuedraggable = _interopRequireDefault(require("vuedraggable"));
 
@@ -39272,8 +39309,11 @@ var _default = {
     firstName() {
       const fullName = this.user.fullName.split(" ");
       return fullName[0];
-    }
+    },
 
+    ...(0, _vuex.mapState)({
+      loadingTodoLists: state => state.loadingTodoLists
+    })
   },
   components: {
     TodoLists: _TodoLists.default,
@@ -39345,7 +39385,9 @@ exports.default = _default;
                 )
               ]),
               _vm._v(" "),
-              _c("RouterView", { key: _vm.$route.fullPath })
+              !_vm.loadingTodoLists
+                ? _c("RouterView", { key: _vm.$route.fullPath })
+                : _vm._e()
             ],
             1
           )
@@ -39385,7 +39427,7 @@ render._withStripped = true
         
       }
     })();
-},{"axios":"node_modules/axios/index.js","vuedraggable":"node_modules/vuedraggable/dist/vuedraggable.common.js","../components/TodoLists":"vue/components/TodoLists.vue","../components/TodoList":"vue/components/TodoList.vue","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/views/Login.vue":[function(require,module,exports) {
+},{"axios":"node_modules/axios/index.js","vuex":"node_modules/vuex/dist/vuex.esm.js","vuedraggable":"node_modules/vuedraggable/dist/vuedraggable.common.js","../components/TodoLists":"vue/components/TodoLists.vue","../components/TodoList":"vue/components/TodoList.vue","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/views/Login.vue":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -99015,7 +99057,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "50741" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "59071" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};

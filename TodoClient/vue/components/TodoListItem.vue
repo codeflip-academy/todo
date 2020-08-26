@@ -33,9 +33,6 @@
         </div>
       </div>
       <div class="item-controls">
-        <b-button variant="link" class="btn-view" @click="$bvModal.show(`modal-${item.id}`)">
-          <b-icon-info-circle></b-icon-info-circle>
-        </b-button>
         <b-button variant="link" class="btn-trash" @click="$emit('delete-item', item.id)">
           <b-icon-trash></b-icon-trash>
         </b-button>
@@ -68,7 +65,7 @@ export default {
   },
   filters: {
     formatDate: function (value) {
-      return moment(value).format("MM/D/YYYY");
+      return moment(value).format("dddd, MMMM Do, YYYY");
     },
     truncate: function (text, length, suffix) {
       return text.substring(0, length) + suffix;

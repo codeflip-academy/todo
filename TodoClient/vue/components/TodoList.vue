@@ -1,7 +1,7 @@
 <template>
   <b-row no-gutters>
     <b-col>
-      <div class="list-wrapper" v-if="!loadingTodoLists">
+      <div class="list-wrapper">
         <Confetti v-if="todoList.completed"></Confetti>
 
         <header class="list-header">
@@ -14,10 +14,7 @@
           :items="items"
           :itemsLayout="itemsLayout"
           @item-selected="selectItem"
-          @todo-list-completed="setTodoListCompleted"
-          @todo-list-uncompleted="setTodoListUncompleted"
           @checkbox-clicked="dispatchSetItemCompletedState"
-          @item-edited="dispatchUpdateItem"
           @add-item="dispatchAddItem"
           @update-item-position="dispatchUpdateItemPosition"
           @delete-item="dispatchDeleteItem"
@@ -25,14 +22,14 @@
         ></TodoListItems>
       </div>
     </b-col>
-    <TodoItemDetails :item="selectedItem" v-if="selectedItem"></TodoItemDetails>
+    <TodoItemDetails v-if="selectedItem" :item="selectedItem" @item-edited="dispatchUpdateItem"></TodoItemDetails>
   </b-row>
 </template>
 
 <script>
 import axios from "axios";
 import Vue from "vue";
-import { mapState, mapGetters } from "vuex";
+import { mapState } from "vuex";
 
 import Draggable from "vuedraggable";
 import Confetti from "./Confetti";
@@ -58,7 +55,6 @@ export default {
     },
     ...mapState({
       contributors: (state) => state.contributors,
-      loadingTodoLists: (state) => state.loadingTodoLists,
     }),
   },
   components: {
@@ -199,7 +195,7 @@ export default {
         this.items.findIndex((i) => i.id === itemId)
       ].completed = completed;
 
-      this.triggerTodoListCompletedEvent();
+      this.triggerTodoListCompleted();
     },
     commitUpdateItem(item) {
       const itemIndex = this.items.findIndex((i) => i.id === item.id);
@@ -228,14 +224,14 @@ export default {
     commitSetItemsLayout(itemsLayout) {
       this.itemsLayout = itemsLayout;
     },
-    triggerTodoListCompletedEvent() {
+    triggerTodoListCompleted() {
       const listCompleted =
         this.items.length > 0 && this.items.every((item) => item.completed);
 
       if (listCompleted) {
-        this.$emit("todo-list-completed");
+        this.setTodoListCompleted();
       } else {
-        this.$emit("todo-list-uncompleted");
+        this.setTodoListUncompleted();
       }
     },
     itemsBelongToList(todoListId) {
@@ -314,7 +310,7 @@ export default {
   },
   watch: {
     items() {
-      this.triggerTodoListCompletedEvent();
+      this.triggerTodoListCompleted();
     },
   },
 };

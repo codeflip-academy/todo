@@ -25,7 +25,7 @@
             </div>
           </a>
         </div>
-        <RouterView :key="$route.fullPath"></RouterView>
+        <RouterView :key="$route.fullPath" v-if="!loadingTodoLists"></RouterView>
       </b-col>
     </b-row>
   </div>
@@ -33,6 +33,7 @@
 
 <script>
 import axios from "axios";
+import { mapState } from "vuex";
 
 import Draggable from "vuedraggable";
 import TodoLists from "../components/TodoLists";
@@ -48,6 +49,9 @@ export default {
       const fullName = this.user.fullName.split(" ");
       return fullName[0];
     },
+    ...mapState({
+      loadingTodoLists: (state) => state.loadingTodoLists,
+    }),
   },
   components: {
     TodoLists,

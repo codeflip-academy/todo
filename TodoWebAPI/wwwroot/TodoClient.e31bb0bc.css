@@ -241,6 +241,55 @@ h3[data-v-3f1240] {
   box-shadow: 0 10px 30px rgba(76, 175, 80, 0.3) !important;
   background-color: #3d8b40 !important;
 }
+.item-content {
+  padding: 40px 50px;
+}
+.item-content .item-name {
+  font-size: 24px;
+  font-weight: bold;
+  color: #455a64;
+  line-height: 1.1;
+}
+.item-content .item-meta {
+  margin-bottom: 36px;
+}
+.item-content .item-meta .item-due-date {
+  font-size: 13px;
+  color: #84909c !important;
+}
+.item-content .b-form-btn-label-control.form-control > #due-date {
+  padding-right: 6px;
+}
+.item-content .form-group .form-control#due-date__value_:hover {
+  border: none;
+}
+.item-content .item-notes {
+  color: #455a64;
+  font-size: 14px;
+  line-height: 1.5;
+  margin-bottom: 36px;
+}
+
+.form-group {
+  color: #455a64;
+  margin-bottom: 0;
+  margin-bottom: 5px;
+}
+.form-group .form-control {
+  border-radius: 0;
+  border: 1px solid transparent;
+}
+.form-group .form-control:hover {
+  border: 1px solid #ddd;
+}
+.form-group .form-control:focus {
+  border-color: #1e88e5;
+  box-shadow: none;
+}
+
+.btn {
+  border-radius: 0;
+}
 #login .title {
   font-size: 60px;
 }
@@ -375,33 +424,6 @@ body {
   margin: 0;
 }
 
-.item-content {
-  padding: 40px 50px;
-}
-.item-content .item-name {
-  font-size: 24px;
-  font-weight: bold;
-  color: #455a64;
-  line-height: 1.1;
-  margin-bottom: 16px;
-}
-.item-content .item-meta {
-  margin-bottom: 36px;
-}
-.item-content .item-meta .item-due-date {
-  font-size: 13px;
-  color: #84909c;
-}
-.item-content .item-meta .item-due-date svg {
-  margin-right: 6px;
-}
-.item-content .item-notes {
-  color: #455a64;
-  font-size: 14px;
-  line-height: 1.5;
-  margin-bottom: 36px;
-}
-
 .modal .modal-title {
   font-size: 18px;
   font-weight: bold;
@@ -412,17 +434,17 @@ body {
   border-radius: 0 !important;
   border: none !important;
 }
-.modal .modal-content .form-group {
-  color: #455a64;
-}
-.modal .modal-content .form-group .form-control {
-  border-radius: 0;
-}
-.modal .modal-content .btn {
-  border-radius: 0;
-}
 .modal .modal-footer {
   display: none !important;
+}
+.modal .form-group {
+  color: #455a64;
+}
+.modal .form-group .form-control {
+  border-radius: 0;
+}
+.modal .btn {
+  border-radius: 0;
 }
 /*!
  * Bootstrap v4.5.2 (https://getbootstrap.com/)
