@@ -47716,6 +47716,10 @@ var _default = {
     };
   },
 
+  async created() {
+    this.getSettings();
+  },
+
   methods: {
     async updateSettings() {
       await (0, _axios.default)({
@@ -47729,6 +47733,15 @@ var _default = {
           emailCompleted: this.emailCompleted
         })
       });
+    },
+
+    async getSettings() {
+      const response = await (0, _axios.default)({
+        method: "GET",
+        url: "api/accounts/emailFilter"
+      });
+      this.emailDueDate = response.data.emailDueDate;
+      this.emailCompleted = response.data.emailCompleted;
     }
 
   },
@@ -47799,47 +47812,49 @@ exports.default = _default;
                 [
                   _c("h2", [_vm._v("Notifications")]),
                   _vm._v(" "),
-                  _c(
-                    "b-form",
-                    [
-                      _c(
-                        "b-form-checkbox",
-                        {
-                          model: {
-                            value: _vm.emailDueDate,
-                            callback: function($$v) {
-                              _vm.emailDueDate = $$v
-                            },
-                            expression: "emailDueDate"
-                          }
-                        },
-                        [
-                          _vm._v(
-                            "Enable Notifications for items that are due today."
-                          )
-                        ]
-                      ),
-                      _vm._v(" "),
-                      _c(
-                        "b-form-checkbox",
-                        {
-                          model: {
-                            value: _vm.emailCompleted,
-                            callback: function($$v) {
-                              _vm.emailCompleted = $$v
-                            },
-                            expression: "emailCompleted"
-                          }
-                        },
-                        [
-                          _vm._v(
-                            "Enable Notifications for lists that have been completed."
-                          )
-                        ]
-                      )
-                    ],
-                    1
-                  )
+                  _c("h3", [_vm._v("Emails:")]),
+                  _vm._v(" "),
+                  _c("p", { staticClass: "text-muted" }, [
+                    _vm._v("Send notifications when:")
+                  ]),
+                  _vm._v(" "),
+                  _c("b-form", { staticClass: "notifications-form" }, [
+                    _c(
+                      "strong",
+                      [
+                        _c(
+                          "b-form-checkbox",
+                          {
+                            attrs: { inline: "" },
+                            model: {
+                              value: _vm.emailDueDate,
+                              callback: function($$v) {
+                                _vm.emailDueDate = $$v
+                              },
+                              expression: "emailDueDate"
+                            }
+                          },
+                          [_vm._v("Items Due Today")]
+                        ),
+                        _vm._v(" "),
+                        _c(
+                          "b-form-checkbox",
+                          {
+                            attrs: { inline: "" },
+                            model: {
+                              value: _vm.emailCompleted,
+                              callback: function($$v) {
+                                _vm.emailCompleted = $$v
+                              },
+                              expression: "emailCompleted"
+                            }
+                          },
+                          [_vm._v("List Completed")]
+                        )
+                      ],
+                      1
+                    )
+                  ])
                 ],
                 1
               )
@@ -97615,7 +97630,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "52249" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "61419" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};

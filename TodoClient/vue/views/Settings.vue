@@ -12,13 +12,13 @@
         </b-tab>
         <b-tab title="Notifications" active>
           <h2>Notifications</h2>
-          <b-form>
-            <b-form-checkbox
-              v-model="emailDueDate"
-            >Enable Notifications for items that are due today.</b-form-checkbox>
-            <b-form-checkbox
-              v-model="emailCompleted"
-            >Enable Notifications for lists that have been completed.</b-form-checkbox>
+          <h3>Emails:</h3>
+          <p class="text-muted">Send notifications when:</p>
+          <b-form class="notifications-form">
+            <strong>
+              <b-form-checkbox inline v-model="emailDueDate">Items Due Today</b-form-checkbox>
+              <b-form-checkbox inline v-model="emailCompleted">List Completed</b-form-checkbox>
+            </strong>
           </b-form>
         </b-tab>
       </b-tabs>
@@ -40,6 +40,9 @@ export default {
       emailCompleted: false,
     };
   },
+  async created() {
+    this.getSettings();
+  },
   methods: {
     async updateSettings() {
       await axios({
@@ -51,6 +54,16 @@ export default {
           emailCompleted: this.emailCompleted,
         }),
       });
+    },
+
+    async getSettings() {
+      const response = await axios({
+        method: "GET",
+        url: "api/accounts/emailFilter",
+      });
+
+      this.emailDueDate = response.data.emailDueDate;
+      this.emailCompleted = response.data.emailCompleted;
     },
   },
   watch: {
@@ -78,6 +91,12 @@ export default {
     padding-bottom: 10px;
     margin-bottom: 20px;
     border-bottom: solid 1px #ddd;
+  }
+
+  .notifications-form {
+    custom-control-label {
+      font-weight: bold !important;
+    }
   }
 
   .tab-content {

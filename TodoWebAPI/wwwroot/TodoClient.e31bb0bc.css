@@ -164,6 +164,9 @@ h3[data-v-e8e650] {
   margin-bottom: 20px;
   border-bottom: solid 1px #ddd;
 }
+#settings-page .notifications-form custom-control-label {
+  font-weight: bold !important;
+}
 #settings-page .tab-content {
   padding-left: 30px;
 }
