@@ -8,6 +8,9 @@ Invoke-Sqlcmd -InputFile TodoListItems.sql
 Invoke-Sqlcmd -InputFile TodoListLayouts.sql
 Invoke-Sqlcmd -InputFile SubItems.sql
 Invoke-Sqlcmd -InputFile SubItemLayouts.sql
+Invoke-Sqlcmd -InputFile Discounts.sql
+Invoke-Sqlcmd -InputFile DiscountsData.sql
+Invoke-Sqlcmd -InputFile AccountsDiscounts.sql
 Invoke-Sqlcmd -InputFile AccountsLists.sql
 Invoke-Sqlcmd -InputFile AccountsPlans.sql
 Invoke-Sqlcmd -InputFile PaymentMethods.sql

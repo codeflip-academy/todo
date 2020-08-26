@@ -63,6 +63,8 @@ namespace TodoWebAPI
                 options => options.UseSqlServer(Configuration.GetConnectionString("Development"))
             );
             services.AddScoped<ITodoListRepository, EFTodoListRepository>();
+            services.AddScoped<IDiscountRepository, EFDiscountRepository>();
+            services.AddScoped<IAccountDiscountRepository, EFAccountDiscountRepository>();
             services.AddScoped<IDowngradeRepository, EFDowngradeRepository>();
             services.AddScoped<IAccountsListsRepository, EFAccountsListsRepository>();
             services.AddScoped<ITodoListLayoutRepository, EFTodoListLayoutRepository>();
