@@ -102,14 +102,12 @@ namespace TodoWebAPI
             using (var connection = new SqlConnection(_connectionString))
             {
                 await connection.OpenAsync();
-
                 var result = await connection.QueryAsync<TodoListDto>(@"
-                    SELECT t.ID, t.ListTitle, a.AccountID, t.Completed, t.Contributors, a.Role
+                    SELECT t.ID, t.ListTitle, a.AccountID, t.Completed, t.Contributors, a.Role, (SELECT COUNT(*) FROM TodoListItems where Completed = 0 and TodoListItems.ListID = t.ID) as IncompleteCount
                     FROM TodoLists as t INNER JOIN AccountsLists as a
                     ON t.ID = a.ListID WHERE a.AccountID = @accountId
                     AND NOT (a.Role = @left OR a.Role = @declined)",
                     new { accountId = accountId, left = Roles.Left, declined = Roles.Declined });
-
                 return result.ToList();
             }
         }

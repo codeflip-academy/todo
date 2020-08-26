@@ -11,5 +11,6 @@ namespace Todo.Infrastructure.Dto
         public bool Completed { get; set; }
         public List<string> Contributors { get; set; }
         public byte Role { get; set; }
+        public int IncompleteCount { get; set; }
     }
 }
