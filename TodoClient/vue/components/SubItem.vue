@@ -93,7 +93,7 @@ export default {
 };
 </script>
 
-<style lang="scss">
+<style lang="scss" scoped>
 .sub-item {
   transition: background-color 0.3s ease;
 

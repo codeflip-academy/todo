@@ -127,8 +127,8 @@ Object.defineProperty(exports, "__esModule", {
 exports.default = void 0;
 
 /*!
- * Vue.js v2.6.11
- * (c) 2014-2019 Evan You
+ * Vue.js v2.6.12
+ * (c) 2014-2020 Evan You
  * Released under the MIT License.
  */
 
@@ -5568,7 +5568,7 @@ Object.defineProperty(Vue.prototype, '$ssrContext', {
 Object.defineProperty(Vue, 'FunctionalRenderContext', {
   value: FunctionalRenderContext
 });
-Vue.version = '2.6.11';
+Vue.version = '2.6.12';
 /*  */
 // these are reserved for web because they are directly compiled away
 // during template compilation
@@ -7147,7 +7147,7 @@ function updateDOMProps(oldVnode, vnode) {
     } else if ( // skip the update if old and new VDOM state is the same.
     // `value` is handled separately because the DOM value may be temporarily
     // out of sync with VDOM state due to focus, composition and modifiers.
-    // This  #4521 by skipping the unnecesarry `checked` update.
+    // This  #4521 by skipping the unnecessary `checked` update.
     cur !== oldProps[key]) {
       // some property updates can throw
       // e.g. `value` on <progress> w/ non-finite value
@@ -8549,11 +8549,12 @@ var global = arguments[3];
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
+exports.createLogger = createLogger;
 exports.install = install;
 exports.mapState = exports.mapMutations = exports.mapGetters = exports.mapActions = exports.createNamespacedHelpers = exports.Store = exports.default = void 0;
 
 /*!
- * vuex v3.4.0
+ * vuex v3.5.1
  * (c) 2020 Evan You
  * @license MIT
  */
@@ -8625,6 +8626,49 @@ function devtoolPlugin(store) {
  * @return {*}
  */
 
+
+function find(list, f) {
+  return list.filter(f)[0];
+}
+/**
+ * Deep copy the given object considering circular structure.
+ * This function caches all nested objects and its copies.
+ * If it detects circular structure, use cached copy to avoid infinite loop.
+ *
+ * @param {*} obj
+ * @param {Array<Object>} cache
+ * @return {*}
+ */
+
+
+function deepCopy(obj, cache) {
+  if (cache === void 0) cache = []; // just return if obj is immutable value
+
+  if (obj === null || typeof obj !== 'object') {
+    return obj;
+  } // if obj is hit, it is in circular structure
+
+
+  var hit = find(cache, function (c) {
+    return c.original === obj;
+  });
+
+  if (hit) {
+    return hit.copy;
+  }
+
+  var copy = Array.isArray(obj) ? [] : {}; // put the copy into cache at first
+  // because we want to refer it in recursive deepCopy
+
+  cache.push({
+    original: obj,
+    copy: copy
+  });
+  Object.keys(obj).forEach(function (key) {
+    copy[key] = deepCopy(obj[key], cache);
+  });
+  return copy;
+}
 /**
  * forEach for object
  */
@@ -8785,8 +8829,17 @@ ModuleCollection.prototype.register = function register(path, rawModule, runtime
 ModuleCollection.prototype.unregister = function unregister(path) {
   var parent = this.get(path.slice(0, -1));
   var key = path[path.length - 1];
+  var child = parent.getChild(key);
 
-  if (!parent.getChild(key).runtime) {
+  if (!child) {
+    if ("development" !== 'production') {
+      console.warn("[vuex] trying to unregister module '" + key + "', which is " + "not registered");
+    }
+
+    return;
+  }
+
+  if (!child.runtime) {
     return;
   }
 
@@ -9733,17 +9786,121 @@ function getModuleByNamespace(store, helper, namespace) {
   }
 
   return module;
+} // Credits: borrowed code from fcomb/redux-logger
+
+
+function createLogger(ref) {
+  if (ref === void 0) ref = {};
+  var collapsed = ref.collapsed;
+  if (collapsed === void 0) collapsed = true;
+  var filter = ref.filter;
+  if (filter === void 0) filter = function (mutation, stateBefore, stateAfter) {
+    return true;
+  };
+  var transformer = ref.transformer;
+  if (transformer === void 0) transformer = function (state) {
+    return state;
+  };
+  var mutationTransformer = ref.mutationTransformer;
+  if (mutationTransformer === void 0) mutationTransformer = function (mut) {
+    return mut;
+  };
+  var actionFilter = ref.actionFilter;
+  if (actionFilter === void 0) actionFilter = function (action, state) {
+    return true;
+  };
+  var actionTransformer = ref.actionTransformer;
+  if (actionTransformer === void 0) actionTransformer = function (act) {
+    return act;
+  };
+  var logMutations = ref.logMutations;
+  if (logMutations === void 0) logMutations = true;
+  var logActions = ref.logActions;
+  if (logActions === void 0) logActions = true;
+  var logger = ref.logger;
+  if (logger === void 0) logger = console;
+  return function (store) {
+    var prevState = deepCopy(store.state);
+
+    if (typeof logger === 'undefined') {
+      return;
+    }
+
+    if (logMutations) {
+      store.subscribe(function (mutation, state) {
+        var nextState = deepCopy(state);
+
+        if (filter(mutation, prevState, nextState)) {
+          var formattedTime = getFormattedTime();
+          var formattedMutation = mutationTransformer(mutation);
+          var message = "mutation " + mutation.type + formattedTime;
+          startMessage(logger, message, collapsed);
+          logger.log('%c prev state', 'color: #9E9E9E; font-weight: bold', transformer(prevState));
+          logger.log('%c mutation', 'color: #03A9F4; font-weight: bold', formattedMutation);
+          logger.log('%c next state', 'color: #4CAF50; font-weight: bold', transformer(nextState));
+          endMessage(logger);
+        }
+
+        prevState = nextState;
+      });
+    }
+
+    if (logActions) {
+      store.subscribeAction(function (action, state) {
+        if (actionFilter(action, state)) {
+          var formattedTime = getFormattedTime();
+          var formattedAction = actionTransformer(action);
+          var message = "action " + action.type + formattedTime;
+          startMessage(logger, message, collapsed);
+          logger.log('%c action', 'color: #03A9F4; font-weight: bold', formattedAction);
+          endMessage(logger);
+        }
+      });
+    }
+  };
+}
+
+function startMessage(logger, message, collapsed) {
+  var startMessage = collapsed ? logger.groupCollapsed : logger.group; // render
+
+  try {
+    startMessage.call(logger, message);
+  } catch (e) {
+    logger.log(message);
+  }
+}
+
+function endMessage(logger) {
+  try {
+    logger.groupEnd();
+  } catch (e) {
+    logger.log('—— log end ——');
+  }
+}
+
+function getFormattedTime() {
+  var time = new Date();
+  return " @ " + pad(time.getHours(), 2) + ":" + pad(time.getMinutes(), 2) + ":" + pad(time.getSeconds(), 2) + "." + pad(time.getMilliseconds(), 3);
+}
+
+function repeat(str, times) {
+  return new Array(times + 1).join(str);
+}
+
+function pad(num, maxLength) {
+  return repeat('0', maxLength - num.toString().length) + num;
 }
 
 var index = {
   Store: Store,
   install: install,
-  version: '3.4.0',
+  version: '3.5.1',
   mapState: mapState,
   mapMutations: mapMutations,
   mapGetters: mapGetters,
   mapActions: mapActions,
-  createNamespacedHelpers: createNamespacedHelpers
+  createNamespacedHelpers: createNamespacedHelpers,
+  createLogger: createLogger
 };
 var _default = index;
 exports.default = _default;
@@ -14292,7 +14449,14 @@ function (_super) {
   }
 
   NodeHttpClient.prototype.send = function (httpRequest) {
-    var _this = this;
+    var _this = this; // Check that abort was not signaled before calling send
+
+
+    if (httpRequest.abortSignal) {
+      if (httpRequest.abortSignal.aborted) {
+        return Promise.reject(new _Errors.AbortError());
+      }
+    }
 
     return new Promise(function (resolve, reject) {
       var requestBody;
@@ -17305,17 +17469,8 @@ function () {
 
   WebSocketTransport.prototype.stop = function () {
     if (this.webSocket) {
-      // Clear websocket handlers because we are considering the socket closed now
-      this.webSocket.onclose = function () {};
-
-      this.webSocket.onmessage = function () {};
-
-      this.webSocket.onerror = function () {};
-
-      this.webSocket.close();
-      this.webSocket = undefined; // Manually invoke onclose callback inline so we know the HttpConnection was closed properly before returning
+      // Manually invoke onclose callback inline so we know the HttpConnection was closed properly before returning
       // This also solves an issue where websocket.onclose could take 18+ seconds to trigger during network disconnects
-
       this.close(undefined);
     }
 
@@ -17324,6 +17479,18 @@ function () {
 
   WebSocketTransport.prototype.close = function (event) {
     // webSocket will be null if the transport did not start successfully
+    if (this.webSocket) {
+      // Clear websocket handlers because we are considering the socket closed now
+      this.webSocket.onclose = function () {};
+
+      this.webSocket.onmessage = function () {};
+
+      this.webSocket.onerror = function () {};
+
+      this.webSocket.close();
+      this.webSocket = undefined;
+    }
+
     this.logger.log(_ILogger.LogLevel.Trace, "(WebSockets transport) socket closed.");
 
     if (this.onclose) {
@@ -17705,7 +17872,7 @@ function () {
 
   HttpConnection.prototype.stopInternal = function (error) {
     return __awaiter(this, void 0, void 0, function () {
-      var e_1, e_2, e_3;
+      var e_1, e_2;
       return __generator(this, function (_a) {
         switch (_a.label) {
           case 0:
@@ -17736,7 +17903,7 @@ function () {
             , 4];
 
           case 4:
-            if (!this.sendQueue) return [3
+            if (!this.transport) return [3
             /*break*/
             , 9];
             _a.label = 5;
@@ -17746,7 +17913,7 @@ function () {
 
             return [4
             /*yield*/
-            , this.sendQueue.stop()];
+            , this.transport.stop()];
 
           case 6:
             _a.sent();
@@ -17757,55 +17924,24 @@ function () {
 
           case 7:
             e_2 = _a.sent();
-            this.logger.log(_ILogger.LogLevel.Error, "TransportSendQueue.stop() threw error '" + e_2 + "'.");
+            this.logger.log(_ILogger.LogLevel.Error, "HttpConnection.transport.stop() threw error '" + e_2 + "'.");
+            this.stopConnection();
             return [3
             /*break*/
             , 8];
 
           case 8:
-            this.sendQueue = undefined;
-            _a.label = 9;
-
-          case 9:
-            if (!this.transport) return [3
-            /*break*/
-            , 14];
-            _a.label = 10;
-
-          case 10:
-            _a.trys.push([10, 12,, 13]);
-
-            return [4
-            /*yield*/
-            , this.transport.stop()];
-
-          case 11:
-            _a.sent();
-
-            return [3
-            /*break*/
-            , 13];
-
-          case 12:
-            e_3 = _a.sent();
-            this.logger.log(_ILogger.LogLevel.Error, "HttpConnection.transport.stop() threw error '" + e_3 + "'.");
-            this.stopConnection();
-            return [3
-            /*break*/
-            , 13];
-
-          case 13:
             this.transport = undefined;
             return [3
             /*break*/
-            , 15];
+            , 10];
 
-          case 14:
+          case 9:
             this.logger.log(_ILogger.LogLevel.Debug, "HttpConnection.transport is undefined in HttpConnection.stop() because start() failed.");
             this.stopConnection();
-            _a.label = 15;
+            _a.label = 10;
 
-          case 15:
+          case 10:
             return [2
             /*return*/
             ];
@@ -17816,7 +17952,7 @@ function () {
 
   HttpConnection.prototype.startInternal = function (transferFormat) {
     return __awaiter(this, void 0, void 0, function () {
-      var url, negotiateResponse, redirects, _loop_1, this_1, e_4;
+      var url, negotiateResponse, redirects, _loop_1, this_1, e_3;
 
       return __generator(this, function (_a) {
         switch (_a.label) {
@@ -17965,15 +18101,15 @@ function () {
             , 13];
 
           case 12:
-            e_4 = _a.sent();
-            this.logger.log(_ILogger.LogLevel.Error, "Failed to start the connection: " + e_4);
+            e_3 = _a.sent();
+            this.logger.log(_ILogger.LogLevel.Error, "Failed to start the connection: " + e_3);
             this.connectionState = "Disconnected"
             /* Disconnected */
             ;
             this.transport = undefined;
             return [2
             /*return*/
-            , Promise.reject(e_4)];
+            , Promise.reject(e_3)];
 
           case 13:
             return [2
@@ -17986,7 +18122,7 @@ function () {
 
   HttpConnection.prototype.getNegotiationResponse = function (url) {
     return __awaiter(this, void 0, void 0, function () {
-      var _a, headers, token, negotiateUrl, response, negotiateResponse, e_5;
+      var _a, headers, token, negotiateUrl, response, negotiateResponse, e_4;
 
       return __generator(this, function (_b) {
         switch (_b.label) {
@@ -18044,11 +18180,11 @@ function () {
             , negotiateResponse];
 
           case 5:
-            e_5 = _b.sent();
-            this.logger.log(_ILogger.LogLevel.Error, "Failed to complete negotiation with the server: " + e_5);
+            e_4 = _b.sent();
+            this.logger.log(_ILogger.LogLevel.Error, "Failed to complete negotiation with the server: " + e_4);
             return [2
             /*return*/
-            , Promise.reject(e_5)];
+            , Promise.reject(e_4)];
 
           case 6:
             return [2
@@ -18280,6 +18416,8 @@ function () {
   };
 
   HttpConnection.prototype.stopConnection = function (error) {
+    var _this = this;
+
     this.logger.log(_ILogger.LogLevel.Debug, "HttpConnection.stopConnection(" + error + ") called while in state " + this.connectionState + ".");
     this.transport = undefined; // If we have a stopError, it takes precedence over the error from the transport
 
@@ -18314,16 +18452,25 @@ function () {
       this.logger.log(_ILogger.LogLevel.Information, "Connection disconnected.");
     }
 
+    if (this.sendQueue) {
+      this.sendQueue.stop().catch(function (e) {
+        _this.logger.log(_ILogger.LogLevel.Error, "TransportSendQueue.stop() threw error '" + e + "'.");
+      });
+      this.sendQueue = undefined;
+    }
+
     this.connectionId = undefined;
     this.connectionState = "Disconnected"
     /* Disconnected */
     ;
 
-    if (this.onclose && this.connectionStarted) {
+    if (this.connectionStarted) {
       this.connectionStarted = false;
 
       try {
-        this.onclose(error);
+        if (this.onclose) {
+          this.onclose(error);
+        }
       } catch (e) {
         this.logger.log(_ILogger.LogLevel.Error, "HttpConnection.onclose(" + error + ") threw error '" + e + "'.");
       }
@@ -18974,7 +19121,7 @@ var _Subject = require("./Subject");
 // Version token that will be replaced by the prepack command
 
 /** The version of the SignalR client. */
-var VERSION = "3.1.4";
+var VERSION = "3.1.7";
 exports.VERSION = VERSION;
 },{"./Errors":"node_modules/@microsoft/signalr/dist/esm/Errors.js","./HttpClient":"node_modules/@microsoft/signalr/dist/esm/HttpClient.js","./DefaultHttpClient":"node_modules/@microsoft/signalr/dist/esm/DefaultHttpClient.js","./HubConnection":"node_modules/@microsoft/signalr/dist/esm/HubConnection.js","./HubConnectionBuilder":"node_modules/@microsoft/signalr/dist/esm/HubConnectionBuilder.js","./IHubProtocol":"node_modules/@microsoft/signalr/dist/esm/IHubProtocol.js","./ILogger":"node_modules/@microsoft/signalr/dist/esm/ILogger.js","./ITransport":"node_modules/@microsoft/signalr/dist/esm/ITransport.js","./Loggers":"node_modules/@microsoft/signalr/dist/esm/Loggers.js","./JsonHubProtocol":"node_modules/@microsoft/signalr/dist/esm/JsonHubProtocol.js","./Subject":"node_modules/@microsoft/signalr/dist/esm/Subject.js"}],"modules/store.js":[function(require,module,exports) {
 "use strict";
@@ -19053,6 +19200,13 @@ const store = new _vuex.default.Store({
       role
     }) {
       state.todoLists[state.todoLists.findIndex(t => t.id === todoListId)].role = role;
+    },
+
+    updateTodoListUncompletedItems(state, {
+      listId,
+      uncompletedItems
+    }) {
+      state.todoLists[state.todoLists.findIndex(t => t.id === listId)].incompleteCount = uncompletedItems;
     }
 
   },
@@ -19177,7 +19331,7 @@ Object.defineProperty(exports, "__esModule", {
 exports.default = void 0;
 
 /*!
-  * vue-router v3.3.2
+  * vue-router v3.4.3
   * (c) 2020 Evan You
   * @license MIT
   */
@@ -19193,14 +19347,6 @@ function warn(condition, message) {
   if ("development" !== 'production' && !condition) {
     typeof console !== 'undefined' && console.warn("[vue-router] " + message);
   }
-}
-
-function isError(err) {
-  return Object.prototype.toString.call(err).indexOf('Error') > -1;
-}
-
-function isRouterError(err, errorType) {
-  return isError(err) && err._isRouter && (errorType == null || err.type === errorType);
 }
 
 function extend(a, b) {
@@ -19309,7 +19455,7 @@ var View = {
       }
     };
 
-    var configProps = matched.props && matched.props[name]; // save route and configProps in cachce
+    var configProps = matched.props && matched.props[name]; // save route and configProps in cache
 
     if (configProps) {
       extend(cache[name], {
@@ -19395,11 +19541,16 @@ function resolveQuery(query, extraQuery, _parseQuery) {
   }
 
   for (var key in extraQuery) {
-    parsedQuery[key] = extraQuery[key];
+    var value = extraQuery[key];
+    parsedQuery[key] = Array.isArray(value) ? value.map(castQueryParamValue) : castQueryParamValue(value);
   }
 
   return parsedQuery;
 }
+
+var castQueryParamValue = function (value) {
+  return value == null || typeof value === 'object' ? value : String(value);
+};
 
 function parseQuery(query) {
   var res = {};
@@ -19563,7 +19714,12 @@ function isObjectEqual(a, b) {
 
   return aKeys.every(function (key) {
     var aVal = a[key];
-    var bVal = b[key]; // check nested equality
+    var bVal = b[key]; // query values can be null and undefined
+
+    if (aVal == null || bVal == null) {
+      return aVal === bVal;
+    } // check nested equality
+
 
     if (typeof aVal === 'object' && typeof bVal === 'object') {
       return isObjectEqual(aVal, bVal);
@@ -21029,6 +21185,69 @@ function runQueue(queue, fn, cb) {
 
   step(0);
 }
+
+var NavigationFailureType = {
+  redirected: 2,
+  aborted: 4,
+  cancelled: 8,
+  duplicated: 16
+};
+
+function createNavigationRedirectedError(from, to) {
+  return createRouterError(from, to, NavigationFailureType.redirected, "Redirected when going from \"" + from.fullPath + "\" to \"" + stringifyRoute(to) + "\" via a navigation guard.");
+}
+
+function createNavigationDuplicatedError(from, to) {
+  var error = createRouterError(from, to, NavigationFailureType.duplicated, "Avoided redundant navigation to current location: \"" + from.fullPath + "\"."); // backwards compatible with the first introduction of Errors
+
+  error.name = 'NavigationDuplicated';
+  return error;
+}
+
+function createNavigationCancelledError(from, to) {
+  return createRouterError(from, to, NavigationFailureType.cancelled, "Navigation cancelled from \"" + from.fullPath + "\" to \"" + to.fullPath + "\" with a new navigation.");
+}
+
+function createNavigationAbortedError(from, to) {
+  return createRouterError(from, to, NavigationFailureType.aborted, "Navigation aborted from \"" + from.fullPath + "\" to \"" + to.fullPath + "\" via a navigation guard.");
+}
+
+function createRouterError(from, to, type, message) {
+  var error = new Error(message);
+  error._isRouter = true;
+  error.from = from;
+  error.to = to;
+  error.type = type;
+  return error;
+}
+
+var propertiesToLog = ['params', 'query', 'hash'];
+
+function stringifyRoute(to) {
+  if (typeof to === 'string') {
+    return to;
+  }
+
+  if ('path' in to) {
+    return to.path;
+  }
+
+  var location = {};
+  propertiesToLog.forEach(function (key) {
+    if (key in to) {
+      location[key] = to[key];
+    }
+  });
+  return JSON.stringify(location, null, 2);
+}
+
+function isError(err) {
+  return Object.prototype.toString.call(err).indexOf('Error') > -1;
+}
+
+function isNavigationFailure(err, errorType) {
+  return isError(err) && err._isRouter && (errorType == null || err.type === errorType);
+}
 /*  */
 
 
@@ -21136,58 +21355,6 @@ function once(fn) {
     return fn.apply(this, args);
   };
 }
-
-var NavigationFailureType = {
-  redirected: 1,
-  aborted: 2,
-  cancelled: 3,
-  duplicated: 4
-};
-
-function createNavigationRedirectedError(from, to) {
-  return createRouterError(from, to, NavigationFailureType.redirected, "Redirected from \"" + from.fullPath + "\" to \"" + stringifyRoute(to) + "\" via a navigation guard.");
-}
-
-function createNavigationDuplicatedError(from, to) {
-  return createRouterError(from, to, NavigationFailureType.duplicated, "Avoided redundant navigation to current location: \"" + from.fullPath + "\".");
-}
-
-function createNavigationCancelledError(from, to) {
-  return createRouterError(from, to, NavigationFailureType.cancelled, "Navigation cancelled from \"" + from.fullPath + "\" to \"" + to.fullPath + "\" with a new navigation.");
-}
-
-function createNavigationAbortedError(from, to) {
-  return createRouterError(from, to, NavigationFailureType.aborted, "Navigation aborted from \"" + from.fullPath + "\" to \"" + to.fullPath + "\" via a navigation guard.");
-}
-
-function createRouterError(from, to, type, message) {
-  var error = new Error(message);
-  error._isRouter = true;
-  error.from = from;
-  error.to = to;
-  error.type = type;
-  return error;
-}
-
-var propertiesToLog = ['params', 'query', 'hash'];
-
-function stringifyRoute(to) {
-  if (typeof to === 'string') {
-    return to;
-  }
-
-  if ('path' in to) {
-    return to.path;
-  }
-
-  var location = {};
-  propertiesToLog.forEach(function (key) {
-    if (key in to) {
-      location[key] = to[key];
-    }
-  });
-  return JSON.stringify(location, null, 2);
-}
 /*  */
 
 
@@ -21226,7 +21393,18 @@ History.prototype.onError = function onError(errorCb) {
 
 History.prototype.transitionTo = function transitionTo(location, onComplete, onAbort) {
   var this$1 = this;
-  var route = this.router.match(location, this.current);
+  var route; // catch redirect option https://github.com/vuejs/vue-router/issues/3201
+
+  try {
+    route = this.router.match(location, this.current);
+  } catch (e) {
+    this.errorCbs.forEach(function (cb) {
+      cb(e);
+    }); // Exception should still be thrown
+
+    throw e;
+  }
+
   this.confirmTransition(route, function () {
     var prev = this$1.current;
     this$1.updateRoute(route);
@@ -21248,10 +21426,18 @@ History.prototype.transitionTo = function transitionTo(location, onComplete, onA
     }
 
     if (err && !this$1.ready) {
-      this$1.ready = true;
-      this$1.readyErrorCbs.forEach(function (cb) {
-        cb(err);
-      });
+      this$1.ready = true; // Initial redirection should still trigger the onReady onSuccess
+      // https://github.com/vuejs/vue-router/issues/3225
+
+      if (!isNavigationFailure(err, NavigationFailureType.redirected)) {
+        this$1.readyErrorCbs.forEach(function (cb) {
+          cb(err);
+        });
+      } else {
+        this$1.readyCbs.forEach(function (cb) {
+          cb(route);
+        });
+      }
     }
   });
 };
@@ -21264,7 +21450,7 @@ History.prototype.confirmTransition = function confirmTransition(route, onComple
     // changed after adding errors with
     // https://github.com/vuejs/vue-router/pull/3047 before that change,
     // redirect and aborted navigation would produce an err == null
-    if (!isRouterError(err) && isError(err)) {
+    if (!isNavigationFailure(err) && isError(err)) {
       if (this$1.errorCbs.length) {
         this$1.errorCbs.forEach(function (cb) {
           cb(err);
@@ -21278,8 +21464,11 @@ History.prototype.confirmTransition = function confirmTransition(route, onComple
     onAbort && onAbort(err);
   };
 
+  var lastRouteIndex = route.matched.length - 1;
+  var lastCurrentIndex = current.matched.length - 1;
+
   if (isSameRoute(route, current) && // in the case the route map has been dynamically appended to
-  route.matched.length === current.matched.length) {
+  lastRouteIndex === lastCurrentIndex && route.matched[lastRouteIndex] === current.matched[lastCurrentIndex]) {
     this.ensureURL();
     return abort(createNavigationDuplicatedError(current, route));
   }
@@ -21806,7 +21995,7 @@ var AbstractHistory = /*@__PURE__*/function (History) {
       this$1.index = targetIndex;
       this$1.updateRoute(route);
     }, function (err) {
-      if (isRouterError(err, NavigationFailureType.duplicated)) {
+      if (isNavigationFailure(err, NavigationFailureType.duplicated)) {
         this$1.index = targetIndex;
       }
     });
@@ -21920,8 +22109,19 @@ VueRouter.prototype.init = function init(app
   var history = this.history;
 
   if (history instanceof HTML5History || history instanceof HashHistory) {
-    var setupListeners = function () {
+    var handleInitialScroll = function (routeOrError) {
+      var from = history.current;
+      var expectScroll = this$1.options.scrollBehavior;
+      var supportsScroll = supportsPushState && expectScroll;
+
+      if (supportsScroll && 'fullPath' in routeOrError) {
+        handleScroll(this$1, routeOrError, from, false);
+      }
+    };
+
+    var setupListeners = function (routeOrError) {
       history.setupListeners();
+      handleInitialScroll(routeOrError);
     };
 
     history.transitionTo(history.getCurrentLocation(), setupListeners, setupListeners);
@@ -22048,7 +22248,9 @@ function createHref(base, fullPath, mode) {
 }
 
 VueRouter.install = install;
-VueRouter.version = '3.3.2';
+VueRouter.version = '3.4.3';
+VueRouter.isNavigationFailure = isNavigationFailure;
+VueRouter.NavigationFailureType = NavigationFailureType;
 
 if (inBrowser && window.Vue) {
   window.Vue.use(VueRouter);
@@ -22056,1104 +22258,7 @@ if (inBrowser && window.Vue) {
 
 var _default = VueRouter;
 exports.default = _default;
-},{}],"node_modules/parcel-bundler/src/builtins/bundle-url.js":[function(require,module,exports) {
-var bundleURL = null;
-
-function getBundleURLCached() {
-  if (!bundleURL) {
-    bundleURL = getBundleURL();
-  }
-
-  return bundleURL;
-}
-
-function getBundleURL() {
-  // Attempt to find the URL of the current script and use that as the base URL
-  try {
-    throw new Error();
-  } catch (err) {
-    var matches = ('' + err.stack).match(/(https?|file|ftp|chrome-extension|moz-extension):\/\/[^)\n]+/g);
-
-    if (matches) {
-      return getBaseURL(matches[0]);
-    }
-  }
-
-  return '/';
-}
-
-function getBaseURL(url) {
-  return ('' + url).replace(/^((?:https?|file|ftp|chrome-extension|moz-extension):\/\/.+)\/[^/]+$/, '$1') + '/';
-}
-
-exports.getBundleURL = getBundleURLCached;
-exports.getBaseURL = getBaseURL;
-},{}],"node_modules/parcel-bundler/src/builtins/css-loader.js":[function(require,module,exports) {
-var bundle = require('./bundle-url');
-
-function updateLink(link) {
-  var newLink = link.cloneNode();
-
-  newLink.onload = function () {
-    link.remove();
-  };
-
-  newLink.href = link.href.split('?')[0] + '?' + Date.now();
-  link.parentNode.insertBefore(newLink, link.nextSibling);
-}
-
-var cssTimeout = null;
-
-function reloadCSS() {
-  if (cssTimeout) {
-    return;
-  }
-
-  cssTimeout = setTimeout(function () {
-    var links = document.querySelectorAll('link[rel="stylesheet"]');
-
-    for (var i = 0; i < links.length; i++) {
-      if (bundle.getBaseURL(links[i].href) === bundle.getBundleURL()) {
-        updateLink(links[i]);
-      }
-    }
-
-    cssTimeout = null;
-  }, 50);
-}
-
-module.exports = reloadCSS;
-},{"./bundle-url":"node_modules/parcel-bundler/src/builtins/bundle-url.js"}],"node_modules/vue-hot-reload-api/dist/index.js":[function(require,module,exports) {
-var Vue // late bind
-var version
-var map = Object.create(null)
-if (typeof window !== 'undefined') {
-  window.__VUE_HOT_MAP__ = map
-}
-var installed = false
-var isBrowserify = false
-var initHookName = 'beforeCreate'
-
-exports.install = function (vue, browserify) {
-  if (installed) { return }
-  installed = true
-
-  Vue = vue.__esModule ? vue.default : vue
-  version = Vue.version.split('.').map(Number)
-  isBrowserify = browserify
-
-  // compat with < 2.0.0-alpha.7
-  if (Vue.config._lifecycleHooks.indexOf('init') > -1) {
-    initHookName = 'init'
-  }
-
-  exports.compatible = version[0] >= 2
-  if (!exports.compatible) {
-    console.warn(
-      '[HMR] You are using a version of vue-hot-reload-api that is ' +
-        'only compatible with Vue.js core ^2.0.0.'
-    )
-    return
-  }
-}
-
-/**
- * Create a record for a hot module, which keeps track of its constructor
- * and instances
- *
- * @param {String} id
- * @param {Object} options
- */
-
-exports.createRecord = function (id, options) {
-  if(map[id]) { return }
-
-  var Ctor = null
-  if (typeof options === 'function') {
-    Ctor = options
-    options = Ctor.options
-  }
-  makeOptionsHot(id, options)
-  map[id] = {
-    Ctor: Ctor,
-    options: options,
-    instances: []
-  }
-}
-
-/**
- * Check if module is recorded
- *
- * @param {String} id
- */
-
-exports.isRecorded = function (id) {
-  return typeof map[id] !== 'undefined'
-}
-
-/**
- * Make a Component options object hot.
- *
- * @param {String} id
- * @param {Object} options
- */
-
-function makeOptionsHot(id, options) {
-  if (options.functional) {
-    var render = options.render
-    options.render = function (h, ctx) {
-      var instances = map[id].instances
-      if (ctx && instances.indexOf(ctx.parent) < 0) {
-        instances.push(ctx.parent)
-      }
-      return render(h, ctx)
-    }
-  } else {
-    injectHook(options, initHookName, function() {
-      var record = map[id]
-      if (!record.Ctor) {
-        record.Ctor = this.constructor
-      }
-      record.instances.push(this)
-    })
-    injectHook(options, 'beforeDestroy', function() {
-      var instances = map[id].instances
-      instances.splice(instances.indexOf(this), 1)
-    })
-  }
-}
-
-/**
- * Inject a hook to a hot reloadable component so that
- * we can keep track of it.
- *
- * @param {Object} options
- * @param {String} name
- * @param {Function} hook
- */
-
-function injectHook(options, name, hook) {
-  var existing = options[name]
-  options[name] = existing
-    ? Array.isArray(existing) ? existing.concat(hook) : [existing, hook]
-    : [hook]
-}
-
-function tryWrap(fn) {
-  return function (id, arg) {
-    try {
-      fn(id, arg)
-    } catch (e) {
-      console.error(e)
-      console.warn(
-        'Something went wrong during Vue component hot-reload. Full reload required.'
-      )
-    }
-  }
-}
-
-function updateOptions (oldOptions, newOptions) {
-  for (var key in oldOptions) {
-    if (!(key in newOptions)) {
-      delete oldOptions[key]
-    }
-  }
-  for (var key$1 in newOptions) {
-    oldOptions[key$1] = newOptions[key$1]
-  }
-}
-
-exports.rerender = tryWrap(function (id, options) {
-  var record = map[id]
-  if (!options) {
-    record.instances.slice().forEach(function (instance) {
-      instance.$forceUpdate()
-    })
-    return
-  }
-  if (typeof options === 'function') {
-    options = options.options
-  }
-  if (record.Ctor) {
-    record.Ctor.options.render = options.render
-    record.Ctor.options.staticRenderFns = options.staticRenderFns
-    record.instances.slice().forEach(function (instance) {
-      instance.$options.render = options.render
-      instance.$options.staticRenderFns = options.staticRenderFns
-      // reset static trees
-      // pre 2.5, all static trees are cached together on the instance
-      if (instance._staticTrees) {
-        instance._staticTrees = []
-      }
-      // 2.5.0
-      if (Array.isArray(record.Ctor.options.cached)) {
-        record.Ctor.options.cached = []
-      }
-      // 2.5.3
-      if (Array.isArray(instance.$options.cached)) {
-        instance.$options.cached = []
-      }
-
-      // post 2.5.4: v-once trees are cached on instance._staticTrees.
-      // Pure static trees are cached on the staticRenderFns array
-      // (both already reset above)
-
-      // 2.6: temporarily mark rendered scoped slots as unstable so that
-      // child components can be forced to update
-      var restore = patchScopedSlots(instance)
-      instance.$forceUpdate()
-      instance.$nextTick(restore)
-    })
-  } else {
-    // functional or no instance created yet
-    record.options.render = options.render
-    record.options.staticRenderFns = options.staticRenderFns
-
-    // handle functional component re-render
-    if (record.options.functional) {
-      // rerender with full options
-      if (Object.keys(options).length > 2) {
-        updateOptions(record.options, options)
-      } else {
-        // template-only rerender.
-        // need to inject the style injection code for CSS modules
-        // to work properly.
-        var injectStyles = record.options._injectStyles
-        if (injectStyles) {
-          var render = options.render
-          record.options.render = function (h, ctx) {
-            injectStyles.call(ctx)
-            return render(h, ctx)
-          }
-        }
-      }
-      record.options._Ctor = null
-      // 2.5.3
-      if (Array.isArray(record.options.cached)) {
-        record.options.cached = []
-      }
-      record.instances.slice().forEach(function (instance) {
-        instance.$forceUpdate()
-      })
-    }
-  }
-})
-
-exports.reload = tryWrap(function (id, options) {
-  var record = map[id]
-  if (options) {
-    if (typeof options === 'function') {
-      options = options.options
-    }
-    makeOptionsHot(id, options)
-    if (record.Ctor) {
-      if (version[1] < 2) {
-        // preserve pre 2.2 behavior for global mixin handling
-        record.Ctor.extendOptions = options
-      }
-      var newCtor = record.Ctor.super.extend(options)
-      // prevent record.options._Ctor from being overwritten accidentally
-      newCtor.options._Ctor = record.options._Ctor
-      record.Ctor.options = newCtor.options
-      record.Ctor.cid = newCtor.cid
-      record.Ctor.prototype = newCtor.prototype
-      if (newCtor.release) {
-        // temporary global mixin strategy used in < 2.0.0-alpha.6
-        newCtor.release()
-      }
-    } else {
-      updateOptions(record.options, options)
-    }
-  }
-  record.instances.slice().forEach(function (instance) {
-    if (instance.$vnode && instance.$vnode.context) {
-      instance.$vnode.context.$forceUpdate()
-    } else {
-      console.warn(
-        'Root or manually mounted instance modified. Full reload required.'
-      )
-    }
-  })
-})
-
-// 2.6 optimizes template-compiled scoped slots and skips updates if child
-// only uses scoped slots. We need to patch the scoped slots resolving helper
-// to temporarily mark all scoped slots as unstable in order to force child
-// updates.
-function patchScopedSlots (instance) {
-  if (!instance._u) { return }
-  // https://github.com/vuejs/vue/blob/dev/src/core/instance/render-helpers/resolve-scoped-slots.js
-  var original = instance._u
-  instance._u = function (slots) {
-    try {
-      // 2.6.4 ~ 2.6.6
-      return original(slots, true)
-    } catch (e) {
-      // 2.5 / >= 2.6.7
-      return original(slots, null, true)
-    }
-  }
-  return function () {
-    instance._u = original
-  }
-}
-
-},{}],"vue/components/Contributors.vue":[function(require,module,exports) {
-"use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.default = void 0;
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-var _default = {
-  name: "Contributors",
-  props: ['todoListContributors', 'accountContributors']
-};
-exports.default = _default;
-        var $370f63 = exports.default || module.exports;
-      
-      if (typeof $370f63 === 'function') {
-        $370f63 = $370f63.options;
-      }
-    
-        /* template */
-        Object.assign($370f63, (function () {
-          var render = function() {
-  var _vm = this
-  var _h = _vm.$createElement
-  var _c = _vm._self._c || _h
-  return _c(
-    "ul",
-    { staticClass: "contributors" },
-    _vm._l(_vm.todoListContributors, function(contributor) {
-      return _c("li", { key: contributor, staticClass: "contributor" }, [
-        _c("img", {
-          directives: [
-            {
-              name: "b-tooltip",
-              rawName: "v-b-tooltip.hover",
-              modifiers: { hover: true }
-            }
-          ],
-          attrs: {
-            src: _vm.accountContributors[contributor].pictureUrl,
-            alt: _vm.accountContributors[contributor].fullName,
-            title: _vm.accountContributors[contributor].fullName
-          }
-        })
-      ])
-    }),
-    0
-  )
-}
-var staticRenderFns = []
-render._withStripped = true
-
-          return {
-            render: render,
-            staticRenderFns: staticRenderFns,
-            _compiled: true,
-            _scopeId: "data-v-370f63",
-            functional: undefined
-          };
-        })());
-      
-    /* hot reload */
-    (function () {
-      if (module.hot) {
-        var api = require('vue-hot-reload-api');
-        api.install(require('vue'));
-        if (api.compatible) {
-          module.hot.accept();
-          if (!module.hot.data) {
-            api.createRecord('$370f63', $370f63);
-          } else {
-            api.reload('$370f63', $370f63);
-          }
-        }
-
-        
-        var reloadCSS = require('_css_loader');
-        module.hot.dispose(reloadCSS);
-        module.hot.accept(reloadCSS);
-      
-      }
-    })();
-},{"_css_loader":"node_modules/parcel-bundler/src/builtins/css-loader.js","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/components/TodoListPreview.vue":[function(require,module,exports) {
-"use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.default = void 0;
-
-var _axios = _interopRequireDefault(require("axios"));
-
-var _Contributors = _interopRequireDefault(require("./Contributors"));
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-var _default = {
-  props: ["todoList", "contributors"],
-  components: {
-    Contributors: _Contributors.default
-  },
-  methods: {
-    deleteTodoList() {
-      this.$emit("delete-todo-list", this.todoList.id);
-    },
-
-    async acceptInvitation() {
-      await (0, _axios.default)({
-        method: "POST",
-        url: "api/lists/".concat(this.todoList.id, "/accept")
-      });
-      this.$store.commit("changeUserRoleByListId", {
-        todoListId: this.todoList.id,
-        role: 2
-      });
-    },
-
-    async declineInvitation() {
-      await (0, _axios.default)({
-        method: "POST",
-        url: "api/lists/".concat(this.todoList.id, "/decline")
-      });
-      this.$store.commit("deleteTodoList", this.todoList.id);
-    },
-
-    async leaveTodoList() {
-      await (0, _axios.default)({
-        method: "POST",
-        url: "api/lists/".concat(this.todoList.id, "/removeself")
-      });
-      this.$store.commit("deleteTodoList", this.todoList.id);
-    }
-
-  }
-};
-exports.default = _default;
-        var $2d7314 = exports.default || module.exports;
-      
-      if (typeof $2d7314 === 'function') {
-        $2d7314 = $2d7314.options;
-      }
-    
-        /* template */
-        Object.assign($2d7314, (function () {
-          var render = function() {
-  var _vm = this
-  var _h = _vm.$createElement
-  var _c = _vm._self._c || _h
-  return _vm.todoList.role != 1 && _vm.todoList.role != 4
-    ? _c(
-        "b-card",
-        { staticClass: "todo-list-preview bg-light", attrs: { "no-body": "" } },
-        [
-          _c(
-            "b-card-body",
-            { staticClass: "todo-list-preview-content" },
-            [
-              _c("b-card-title", { staticClass: "todo-list-preview-title" }, [
-                _vm._v(_vm._s(_vm.todoList.listTitle))
-              ]),
-              _vm._v(" "),
-              _vm.todoList.role == 2 || _vm.todoList.role == 3
-                ? _c(
-                    "b-badge",
-                    {
-                      staticClass: "todo-list-preview-status",
-                      class: {
-                        "badge-success": _vm.todoList.completed,
-                        "badge-secondary": !_vm.todoList.completed
-                      },
-                      attrs: { pill: "" }
-                    },
-                    [
-                      _vm._v(
-                        _vm._s(
-                          _vm.todoList.completed ? "Completed" : "In Progress"
-                        )
-                      )
-                    ]
-                  )
-                : _vm._e(),
-              _vm._v(" "),
-              _c("Contributors", {
-                staticClass: "todo-list-preview-contributors",
-                attrs: {
-                  todoListContributors: _vm.todoList.contributors,
-                  accountContributors: _vm.contributors
-                }
-              }),
-              _vm._v(" "),
-              _c(
-                "div",
-                { staticClass: "todo-list-preview-options" },
-                [
-                  _vm.todoList.role == 0
-                    ? _c(
-                        "b-button-group",
-                        [
-                          _c(
-                            "b-button",
-                            {
-                              attrs: { variant: "success" },
-                              on: { click: _vm.acceptInvitation }
-                            },
-                            [_vm._v("Accept")]
-                          ),
-                          _vm._v(" "),
-                          _c(
-                            "b-button",
-                            {
-                              attrs: { variant: "danger" },
-                              on: { click: _vm.declineInvitation }
-                            },
-                            [_vm._v("Decline")]
-                          )
-                        ],
-                        1
-                      )
-                    : _vm._e(),
-                  _vm._v(" "),
-                  _vm.todoList.role == 2
-                    ? _c(
-                        "b-button-group",
-                        [
-                          _c(
-                            "b-button",
-                            {
-                              attrs: { variant: "info" },
-                              on: {
-                                click: function($event) {
-                                  return _vm.$router.push(
-                                    "/lists/" + _vm.todoList.id
-                                  )
-                                }
-                              }
-                            },
-                            [_vm._v("View")]
-                          ),
-                          _vm._v(" "),
-                          _c(
-                            "b-button",
-                            {
-                              attrs: { variant: "secondary" },
-                              on: { click: _vm.leaveTodoList }
-                            },
-                            [_vm._v("Leave")]
-                          )
-                        ],
-                        1
-                      )
-                    : _vm._e(),
-                  _vm._v(" "),
-                  _vm.todoList.role == 3
-                    ? _c(
-                        "b-button-group",
-                        [
-                          _c(
-                            "b-button",
-                            {
-                              attrs: { variant: "info" },
-                              on: {
-                                click: function($event) {
-                                  return _vm.$router.push(
-                                    "/lists/" + _vm.todoList.id
-                                  )
-                                }
-                              }
-                            },
-                            [_vm._v("View")]
-                          ),
-                          _vm._v(" "),
-                          _c(
-                            "b-button",
-                            {
-                              attrs: { variant: "danger" },
-                              on: { click: _vm.deleteTodoList }
-                            },
-                            [_vm._v("Delete")]
-                          )
-                        ],
-                        1
-                      )
-                    : _vm._e()
-                ],
-                1
-              )
-            ],
-            1
-          )
-        ],
-        1
-      )
-    : _vm._e()
-}
-var staticRenderFns = []
-render._withStripped = true
-
-          return {
-            render: render,
-            staticRenderFns: staticRenderFns,
-            _compiled: true,
-            _scopeId: "data-v-2d7314",
-            functional: undefined
-          };
-        })());
-      
-    /* hot reload */
-    (function () {
-      if (module.hot) {
-        var api = require('vue-hot-reload-api');
-        api.install(require('vue'));
-        if (api.compatible) {
-          module.hot.accept();
-          if (!module.hot.data) {
-            api.createRecord('$2d7314', $2d7314);
-          } else {
-            api.reload('$2d7314', $2d7314);
-          }
-        }
-
-        
-        var reloadCSS = require('_css_loader');
-        module.hot.dispose(reloadCSS);
-        module.hot.accept(reloadCSS);
-      
-      }
-    })();
-},{"axios":"node_modules/axios/index.js","./Contributors":"vue/components/Contributors.vue","_css_loader":"node_modules/parcel-bundler/src/builtins/css-loader.js","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/components/AddTodoListForm.vue":[function(require,module,exports) {
-"use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.default = void 0;
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-var _default = {
-  name: "AddTodoListForm",
-
-  data() {
-    return {
-      form: {
-        listTitle: ""
-      }
-    };
-  },
-
-  methods: {
-    focusOnForm() {
-      this.$refs.listTitle.focus();
-    },
-
-    addTodoListRequest() {
-      this.$emit("add-todo-list", this.form.listTitle);
-      this.form.listTitle = "";
-      this.$bvModal.hide("modal-add-todo-list");
-    }
-
-  }
-};
-exports.default = _default;
-        var $baacd1 = exports.default || module.exports;
-      
-      if (typeof $baacd1 === 'function') {
-        $baacd1 = $baacd1.options;
-      }
-    
-        /* template */
-        Object.assign($baacd1, (function () {
-          var render = function() {
-  var _vm = this
-  var _h = _vm.$createElement
-  var _c = _vm._self._c || _h
-  return _c(
-    "div",
-    { attrs: { id: "add-todo-list-controls" } },
-    [
-      _c(
-        "b-button",
-        {
-          on: {
-            click: function($event) {
-              return _vm.$bvModal.show("modal-add-todo-list")
-            }
-          }
-        },
-        [_vm._v("Add list")]
-      ),
-      _vm._v(" "),
-      _c(
-        "b-modal",
-        {
-          attrs: { id: "modal-add-todo-list", title: "Add list" },
-          on: { shown: _vm.focusOnForm }
-        },
-        [
-          _c(
-            "b-form",
-            {
-              on: {
-                submit: function($event) {
-                  $event.preventDefault()
-                  return _vm.addTodoListRequest($event)
-                }
-              }
-            },
-            [
-              _c(
-                "b-form-group",
-                { attrs: { label: "List Title" } },
-                [
-                  _c("b-form-input", {
-                    ref: "listTitle",
-                    model: {
-                      value: _vm.form.listTitle,
-                      callback: function($$v) {
-                        _vm.$set(_vm.form, "listTitle", $$v)
-                      },
-                      expression: "form.listTitle"
-                    }
-                  })
-                ],
-                1
-              ),
-              _vm._v(" "),
-              _c(
-                "b-button",
-                {
-                  staticClass: "ml-auto d-block",
-                  attrs: { type: "submit", variant: "success" }
-                },
-                [_vm._v("Add")]
-              )
-            ],
-            1
-          )
-        ],
-        1
-      )
-    ],
-    1
-  )
-}
-var staticRenderFns = []
-render._withStripped = true
-
-          return {
-            render: render,
-            staticRenderFns: staticRenderFns,
-            _compiled: true,
-            _scopeId: null,
-            functional: undefined
-          };
-        })());
-      
-    /* hot reload */
-    (function () {
-      if (module.hot) {
-        var api = require('vue-hot-reload-api');
-        api.install(require('vue'));
-        if (api.compatible) {
-          module.hot.accept();
-          if (!module.hot.data) {
-            api.createRecord('$baacd1', $baacd1);
-          } else {
-            api.reload('$baacd1', $baacd1);
-          }
-        }
-
-        
-      }
-    })();
-},{"vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/components/TodoLists.vue":[function(require,module,exports) {
-"use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.default = void 0;
-
-var _axios = _interopRequireDefault(require("axios"));
-
-var _vuex = require("vuex");
-
-var _TodoListPreview = _interopRequireDefault(require("./TodoListPreview"));
-
-var _AddTodoListForm = _interopRequireDefault(require("../components/AddTodoListForm"));
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-var _default = {
-  components: {
-    TodoListPreview: _TodoListPreview.default,
-    AddTodoListForm: _AddTodoListForm.default
-  },
-  computed: (0, _vuex.mapState)({
-    todoLists: state => state.todoLists,
-    contributors: state => state.contributors,
-    loadingTodoLists: state => state.loadingTodoLists
-  }),
-  methods: {
-    async addTodoList(listTitle) {
-      await this.$store.dispatch("addTodoList", {
-        listTitle
-      });
-    },
-
-    async deleteTodoList(todoListId) {
-      await this.$store.dispatch("deleteTodoList", {
-        todoListId
-      });
-    }
-
-  }
-};
-exports.default = _default;
-        var $f31e3f = exports.default || module.exports;
-      
-      if (typeof $f31e3f === 'function') {
-        $f31e3f = $f31e3f.options;
-      }
-    
-        /* template */
-        Object.assign($f31e3f, (function () {
-          var render = function() {
-  var _vm = this
-  var _h = _vm.$createElement
-  var _c = _vm._self._c || _h
-  return _c(
-    "div",
-    [
-      !_vm.loadingTodoLists
-        ? _c(
-            "div",
-            _vm._l(_vm.todoLists, function(todoList) {
-              return _c("todo-list-preview", {
-                key: todoList.id,
-                attrs: { todoList: todoList, contributors: _vm.contributors },
-                on: { "delete-todo-list": _vm.deleteTodoList }
-              })
-            }),
-            1
-          )
-        : _vm._e(),
-      _vm._v(" "),
-      _c("AddTodoListForm", { on: { "add-todo-list": _vm.addTodoList } })
-    ],
-    1
-  )
-}
-var staticRenderFns = []
-render._withStripped = true
-
-          return {
-            render: render,
-            staticRenderFns: staticRenderFns,
-            _compiled: true,
-            _scopeId: null,
-            functional: undefined
-          };
-        })());
-      
-    /* hot reload */
-    (function () {
-      if (module.hot) {
-        var api = require('vue-hot-reload-api');
-        api.install(require('vue'));
-        if (api.compatible) {
-          module.hot.accept();
-          if (!module.hot.data) {
-            api.createRecord('$f31e3f', $f31e3f);
-          } else {
-            api.reload('$f31e3f', $f31e3f);
-          }
-        }
-
-        
-      }
-    })();
-},{"axios":"node_modules/axios/index.js","vuex":"node_modules/vuex/dist/vuex.esm.js","./TodoListPreview":"vue/components/TodoListPreview.vue","../components/AddTodoListForm":"vue/components/AddTodoListForm.vue","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/views/Home.vue":[function(require,module,exports) {
-"use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.default = void 0;
-
-var _TodoLists = _interopRequireDefault(require("../components/TodoLists"));
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-//
-//
-//
-//
-//
-//
-//
-var _default = {
-  name: "Home",
-  computed: {
-    user() {
-      return this.$store.getters.user;
-    },
-
-    firstName() {
-      const fullName = this.user.fullName.split(" ");
-      return fullName[0];
-    }
-
-  },
-  components: {
-    TodoLists: _TodoLists.default
-  }
-};
-exports.default = _default;
-        var $254769 = exports.default || module.exports;
-      
-      if (typeof $254769 === 'function') {
-        $254769 = $254769.options;
-      }
-    
-        /* template */
-        Object.assign($254769, (function () {
-          var render = function() {
-  var _vm = this
-  var _h = _vm.$createElement
-  var _c = _vm._self._c || _h
-  return _vm.user.email
-    ? _c(
-        "b-container",
-        [
-          _c("h1", { staticClass: "mb-4" }, [_vm._v("My Lists")]),
-          _vm._v(" "),
-          _c("TodoLists")
-        ],
-        1
-      )
-    : _vm._e()
-}
-var staticRenderFns = []
-render._withStripped = true
-
-          return {
-            render: render,
-            staticRenderFns: staticRenderFns,
-            _compiled: true,
-            _scopeId: null,
-            functional: undefined
-          };
-        })());
-      
-    /* hot reload */
-    (function () {
-      if (module.hot) {
-        var api = require('vue-hot-reload-api');
-        api.install(require('vue'));
-        if (api.compatible) {
-          module.hot.accept();
-          if (!module.hot.data) {
-            api.createRecord('$254769', $254769);
-          } else {
-            api.reload('$254769', $254769);
-          }
-        }
-
-        
-      }
-    })();
-},{"../components/TodoLists":"vue/components/TodoLists.vue","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"node_modules/sortablejs/modular/sortable.esm.js":[function(require,module,exports) {
+},{}],"node_modules/sortablejs/modular/sortable.esm.js":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -30781,7 +29886,1082 @@ function (modules) {
   /******/
 
 })["default"];
-},{"sortablejs":"node_modules/sortablejs/modular/sortable.esm.js"}],"node_modules/moment/moment.js":[function(require,module,exports) {
+},{"sortablejs":"node_modules/sortablejs/modular/sortable.esm.js"}],"node_modules/parcel-bundler/src/builtins/bundle-url.js":[function(require,module,exports) {
+var bundleURL = null;
+
+function getBundleURLCached() {
+  if (!bundleURL) {
+    bundleURL = getBundleURL();
+  }
+
+  return bundleURL;
+}
+
+function getBundleURL() {
+  // Attempt to find the URL of the current script and use that as the base URL
+  try {
+    throw new Error();
+  } catch (err) {
+    var matches = ('' + err.stack).match(/(https?|file|ftp|chrome-extension|moz-extension):\/\/[^)\n]+/g);
+
+    if (matches) {
+      return getBaseURL(matches[0]);
+    }
+  }
+
+  return '/';
+}
+
+function getBaseURL(url) {
+  return ('' + url).replace(/^((?:https?|file|ftp|chrome-extension|moz-extension):\/\/.+)\/[^/]+$/, '$1') + '/';
+}
+
+exports.getBundleURL = getBundleURLCached;
+exports.getBaseURL = getBaseURL;
+},{}],"node_modules/parcel-bundler/src/builtins/css-loader.js":[function(require,module,exports) {
+var bundle = require('./bundle-url');
+
+function updateLink(link) {
+  var newLink = link.cloneNode();
+
+  newLink.onload = function () {
+    link.remove();
+  };
+
+  newLink.href = link.href.split('?')[0] + '?' + Date.now();
+  link.parentNode.insertBefore(newLink, link.nextSibling);
+}
+
+var cssTimeout = null;
+
+function reloadCSS() {
+  if (cssTimeout) {
+    return;
+  }
+
+  cssTimeout = setTimeout(function () {
+    var links = document.querySelectorAll('link[rel="stylesheet"]');
+
+    for (var i = 0; i < links.length; i++) {
+      if (bundle.getBaseURL(links[i].href) === bundle.getBundleURL()) {
+        updateLink(links[i]);
+      }
+    }
+
+    cssTimeout = null;
+  }, 50);
+}
+
+module.exports = reloadCSS;
+},{"./bundle-url":"node_modules/parcel-bundler/src/builtins/bundle-url.js"}],"node_modules/vue-hot-reload-api/dist/index.js":[function(require,module,exports) {
+var Vue // late bind
+var version
+var map = Object.create(null)
+if (typeof window !== 'undefined') {
+  window.__VUE_HOT_MAP__ = map
+}
+var installed = false
+var isBrowserify = false
+var initHookName = 'beforeCreate'
+
+exports.install = function (vue, browserify) {
+  if (installed) { return }
+  installed = true
+
+  Vue = vue.__esModule ? vue.default : vue
+  version = Vue.version.split('.').map(Number)
+  isBrowserify = browserify
+
+  // compat with < 2.0.0-alpha.7
+  if (Vue.config._lifecycleHooks.indexOf('init') > -1) {
+    initHookName = 'init'
+  }
+
+  exports.compatible = version[0] >= 2
+  if (!exports.compatible) {
+    console.warn(
+      '[HMR] You are using a version of vue-hot-reload-api that is ' +
+        'only compatible with Vue.js core ^2.0.0.'
+    )
+    return
+  }
+}
+
+/**
+ * Create a record for a hot module, which keeps track of its constructor
+ * and instances
+ *
+ * @param {String} id
+ * @param {Object} options
+ */
+
+exports.createRecord = function (id, options) {
+  if(map[id]) { return }
+
+  var Ctor = null
+  if (typeof options === 'function') {
+    Ctor = options
+    options = Ctor.options
+  }
+  makeOptionsHot(id, options)
+  map[id] = {
+    Ctor: Ctor,
+    options: options,
+    instances: []
+  }
+}
+
+/**
+ * Check if module is recorded
+ *
+ * @param {String} id
+ */
+
+exports.isRecorded = function (id) {
+  return typeof map[id] !== 'undefined'
+}
+
+/**
+ * Make a Component options object hot.
+ *
+ * @param {String} id
+ * @param {Object} options
+ */
+
+function makeOptionsHot(id, options) {
+  if (options.functional) {
+    var render = options.render
+    options.render = function (h, ctx) {
+      var instances = map[id].instances
+      if (ctx && instances.indexOf(ctx.parent) < 0) {
+        instances.push(ctx.parent)
+      }
+      return render(h, ctx)
+    }
+  } else {
+    injectHook(options, initHookName, function() {
+      var record = map[id]
+      if (!record.Ctor) {
+        record.Ctor = this.constructor
+      }
+      record.instances.push(this)
+    })
+    injectHook(options, 'beforeDestroy', function() {
+      var instances = map[id].instances
+      instances.splice(instances.indexOf(this), 1)
+    })
+  }
+}
+
+/**
+ * Inject a hook to a hot reloadable component so that
+ * we can keep track of it.
+ *
+ * @param {Object} options
+ * @param {String} name
+ * @param {Function} hook
+ */
+
+function injectHook(options, name, hook) {
+  var existing = options[name]
+  options[name] = existing
+    ? Array.isArray(existing) ? existing.concat(hook) : [existing, hook]
+    : [hook]
+}
+
+function tryWrap(fn) {
+  return function (id, arg) {
+    try {
+      fn(id, arg)
+    } catch (e) {
+      console.error(e)
+      console.warn(
+        'Something went wrong during Vue component hot-reload. Full reload required.'
+      )
+    }
+  }
+}
+
+function updateOptions (oldOptions, newOptions) {
+  for (var key in oldOptions) {
+    if (!(key in newOptions)) {
+      delete oldOptions[key]
+    }
+  }
+  for (var key$1 in newOptions) {
+    oldOptions[key$1] = newOptions[key$1]
+  }
+}
+
+exports.rerender = tryWrap(function (id, options) {
+  var record = map[id]
+  if (!options) {
+    record.instances.slice().forEach(function (instance) {
+      instance.$forceUpdate()
+    })
+    return
+  }
+  if (typeof options === 'function') {
+    options = options.options
+  }
+  if (record.Ctor) {
+    record.Ctor.options.render = options.render
+    record.Ctor.options.staticRenderFns = options.staticRenderFns
+    record.instances.slice().forEach(function (instance) {
+      instance.$options.render = options.render
+      instance.$options.staticRenderFns = options.staticRenderFns
+      // reset static trees
+      // pre 2.5, all static trees are cached together on the instance
+      if (instance._staticTrees) {
+        instance._staticTrees = []
+      }
+      // 2.5.0
+      if (Array.isArray(record.Ctor.options.cached)) {
+        record.Ctor.options.cached = []
+      }
+      // 2.5.3
+      if (Array.isArray(instance.$options.cached)) {
+        instance.$options.cached = []
+      }
+
+      // post 2.5.4: v-once trees are cached on instance._staticTrees.
+      // Pure static trees are cached on the staticRenderFns array
+      // (both already reset above)
+
+      // 2.6: temporarily mark rendered scoped slots as unstable so that
+      // child components can be forced to update
+      var restore = patchScopedSlots(instance)
+      instance.$forceUpdate()
+      instance.$nextTick(restore)
+    })
+  } else {
+    // functional or no instance created yet
+    record.options.render = options.render
+    record.options.staticRenderFns = options.staticRenderFns
+
+    // handle functional component re-render
+    if (record.options.functional) {
+      // rerender with full options
+      if (Object.keys(options).length > 2) {
+        updateOptions(record.options, options)
+      } else {
+        // template-only rerender.
+        // need to inject the style injection code for CSS modules
+        // to work properly.
+        var injectStyles = record.options._injectStyles
+        if (injectStyles) {
+          var render = options.render
+          record.options.render = function (h, ctx) {
+            injectStyles.call(ctx)
+            return render(h, ctx)
+          }
+        }
+      }
+      record.options._Ctor = null
+      // 2.5.3
+      if (Array.isArray(record.options.cached)) {
+        record.options.cached = []
+      }
+      record.instances.slice().forEach(function (instance) {
+        instance.$forceUpdate()
+      })
+    }
+  }
+})
+
+exports.reload = tryWrap(function (id, options) {
+  var record = map[id]
+  if (options) {
+    if (typeof options === 'function') {
+      options = options.options
+    }
+    makeOptionsHot(id, options)
+    if (record.Ctor) {
+      if (version[1] < 2) {
+        // preserve pre 2.2 behavior for global mixin handling
+        record.Ctor.extendOptions = options
+      }
+      var newCtor = record.Ctor.super.extend(options)
+      // prevent record.options._Ctor from being overwritten accidentally
+      newCtor.options._Ctor = record.options._Ctor
+      record.Ctor.options = newCtor.options
+      record.Ctor.cid = newCtor.cid
+      record.Ctor.prototype = newCtor.prototype
+      if (newCtor.release) {
+        // temporary global mixin strategy used in < 2.0.0-alpha.6
+        newCtor.release()
+      }
+    } else {
+      updateOptions(record.options, options)
+    }
+  }
+  record.instances.slice().forEach(function (instance) {
+    if (instance.$vnode && instance.$vnode.context) {
+      instance.$vnode.context.$forceUpdate()
+    } else {
+      console.warn(
+        'Root or manually mounted instance modified. Full reload required.'
+      )
+    }
+  })
+})
+
+// 2.6 optimizes template-compiled scoped slots and skips updates if child
+// only uses scoped slots. We need to patch the scoped slots resolving helper
+// to temporarily mark all scoped slots as unstable in order to force child
+// updates.
+function patchScopedSlots (instance) {
+  if (!instance._u) { return }
+  // https://github.com/vuejs/vue/blob/dev/src/core/instance/render-helpers/resolve-scoped-slots.js
+  var original = instance._u
+  instance._u = function (slots) {
+    try {
+      // 2.6.4 ~ 2.6.6
+      return original(slots, true)
+    } catch (e) {
+      // 2.5 / >= 2.6.7
+      return original(slots, null, true)
+    }
+  }
+  return function () {
+    instance._u = original
+  }
+}
+
+},{}],"vue/components/TodoListPreview.vue":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = void 0;
+
+var _axios = _interopRequireDefault(require("axios"));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+var _default = {
+  props: ["todoList"],
+  methods: {
+    deleteTodoList() {
+      this.$emit("delete-todo-list", this.todoList.id);
+    },
+
+    async acceptInvitation() {
+      await (0, _axios.default)({
+        method: "POST",
+        url: "api/lists/".concat(this.todoList.id, "/accept")
+      });
+      this.$store.commit("changeUserRoleByListId", {
+        todoListId: this.todoList.id,
+        role: 2
+      });
+    },
+
+    async declineInvitation() {
+      await (0, _axios.default)({
+        method: "POST",
+        url: "api/lists/".concat(this.todoList.id, "/decline")
+      });
+      this.$store.commit("deleteTodoList", this.todoList.id);
+    },
+
+    async leaveTodoList() {
+      await (0, _axios.default)({
+        method: "POST",
+        url: "api/lists/".concat(this.todoList.id, "/removeself")
+      });
+      this.$store.commit("deleteTodoList", this.todoList.id);
+    }
+
+  }
+};
+exports.default = _default;
+        var $2d7314 = exports.default || module.exports;
+      
+      if (typeof $2d7314 === 'function') {
+        $2d7314 = $2d7314.options;
+      }
+    
+        /* template */
+        Object.assign($2d7314, (function () {
+          var render = function() {
+  var _vm = this
+  var _h = _vm.$createElement
+  var _c = _vm._self._c || _h
+  return _c(
+    "b-button",
+    {
+      staticClass: "sidebar-list",
+      class: {
+        selected: _vm.$route.params.todoListId == _vm.todoList.id,
+        completed: _vm.todoList.completed
+      },
+      attrs: { to: { path: "/lists/" + _vm.todoList.id } }
+    },
+    [
+      _vm._v("\n  " + _vm._s(_vm.todoList.listTitle) + "\n  "),
+      _c("div", { staticClass: "sidebar-list-completed-state" }, [
+        _vm._v(_vm._s(_vm.todoList.incompleteCount))
+      ])
+    ]
+  )
+}
+var staticRenderFns = []
+render._withStripped = true
+
+          return {
+            render: render,
+            staticRenderFns: staticRenderFns,
+            _compiled: true,
+            _scopeId: "data-v-2d7314",
+            functional: undefined
+          };
+        })());
+      
+    /* hot reload */
+    (function () {
+      if (module.hot) {
+        var api = require('vue-hot-reload-api');
+        api.install(require('vue'));
+        if (api.compatible) {
+          module.hot.accept();
+          if (!module.hot.data) {
+            api.createRecord('$2d7314', $2d7314);
+          } else {
+            api.reload('$2d7314', $2d7314);
+          }
+        }
+
+        
+        var reloadCSS = require('_css_loader');
+        module.hot.dispose(reloadCSS);
+        module.hot.accept(reloadCSS);
+      
+      }
+    })();
+},{"axios":"node_modules/axios/index.js","_css_loader":"node_modules/parcel-bundler/src/builtins/css-loader.js","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/components/AddTodoListForm.vue":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = void 0;
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+var _default = {
+  name: "AddTodoListForm",
+
+  data() {
+    return {
+      form: {
+        listTitle: ""
+      }
+    };
+  },
+
+  methods: {
+    focusOnForm() {
+      this.$refs.listTitle.focus();
+    },
+
+    addTodoListRequest() {
+      this.$emit("add-todo-list", this.form.listTitle);
+      this.form.listTitle = "";
+      this.$bvModal.hide("modal-add-todo-list");
+    }
+
+  }
+};
+exports.default = _default;
+        var $baacd1 = exports.default || module.exports;
+      
+      if (typeof $baacd1 === 'function') {
+        $baacd1 = $baacd1.options;
+      }
+    
+        /* template */
+        Object.assign($baacd1, (function () {
+          var render = function() {
+  var _vm = this
+  var _h = _vm.$createElement
+  var _c = _vm._self._c || _h
+  return _c(
+    "div",
+    { attrs: { id: "add-todo-list-controls" } },
+    [
+      _c(
+        "b-button",
+        {
+          staticClass: "add-list-btn",
+          on: {
+            click: function($event) {
+              return _vm.$bvModal.show("modal-add-todo-list")
+            }
+          }
+        },
+        [_c("b-icon-plus")],
+        1
+      ),
+      _vm._v(" "),
+      _c(
+        "b-modal",
+        {
+          attrs: { id: "modal-add-todo-list", title: "Add list" },
+          on: { shown: _vm.focusOnForm }
+        },
+        [
+          _c(
+            "b-form",
+            {
+              on: {
+                submit: function($event) {
+                  $event.preventDefault()
+                  return _vm.addTodoListRequest($event)
+                }
+              }
+            },
+            [
+              _c(
+                "b-form-group",
+                { attrs: { label: "List Title" } },
+                [
+                  _c("b-form-input", {
+                    ref: "listTitle",
+                    model: {
+                      value: _vm.form.listTitle,
+                      callback: function($$v) {
+                        _vm.$set(_vm.form, "listTitle", $$v)
+                      },
+                      expression: "form.listTitle"
+                    }
+                  })
+                ],
+                1
+              ),
+              _vm._v(" "),
+              _c(
+                "b-button",
+                {
+                  staticClass: "ml-auto d-block",
+                  attrs: { type: "submit", variant: "success" }
+                },
+                [_vm._v("Add")]
+              )
+            ],
+            1
+          )
+        ],
+        1
+      )
+    ],
+    1
+  )
+}
+var staticRenderFns = []
+render._withStripped = true
+
+          return {
+            render: render,
+            staticRenderFns: staticRenderFns,
+            _compiled: true,
+            _scopeId: "data-v-baacd1",
+            functional: undefined
+          };
+        })());
+      
+    /* hot reload */
+    (function () {
+      if (module.hot) {
+        var api = require('vue-hot-reload-api');
+        api.install(require('vue'));
+        if (api.compatible) {
+          module.hot.accept();
+          if (!module.hot.data) {
+            api.createRecord('$baacd1', $baacd1);
+          } else {
+            api.reload('$baacd1', $baacd1);
+          }
+        }
+
+        
+        var reloadCSS = require('_css_loader');
+        module.hot.dispose(reloadCSS);
+        module.hot.accept(reloadCSS);
+      
+      }
+    })();
+},{"_css_loader":"node_modules/parcel-bundler/src/builtins/css-loader.js","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/components/TodoLists.vue":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = void 0;
+
+var _axios = _interopRequireDefault(require("axios"));
+
+var _vuex = require("vuex");
+
+var _TodoListPreview = _interopRequireDefault(require("./TodoListPreview"));
+
+var _AddTodoListForm = _interopRequireDefault(require("../components/AddTodoListForm"));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+var _default = {
+  components: {
+    TodoListPreview: _TodoListPreview.default,
+    AddTodoListForm: _AddTodoListForm.default
+  },
+  computed: (0, _vuex.mapState)({
+    todoLists: state => state.todoLists,
+    contributors: state => state.contributors,
+    loadingTodoLists: state => state.loadingTodoLists
+  }),
+  methods: {
+    async addTodoList(listTitle) {
+      await this.$store.dispatch("addTodoList", {
+        listTitle
+      });
+    },
+
+    async deleteTodoList(todoListId) {
+      await this.$store.dispatch("deleteTodoList", {
+        todoListId
+      });
+    }
+
+  }
+};
+exports.default = _default;
+        var $f31e3f = exports.default || module.exports;
+      
+      if (typeof $f31e3f === 'function') {
+        $f31e3f = $f31e3f.options;
+      }
+    
+        /* template */
+        Object.assign($f31e3f, (function () {
+          var render = function() {
+  var _vm = this
+  var _h = _vm.$createElement
+  var _c = _vm._self._c || _h
+  return _c(
+    "div",
+    [
+      !_vm.loadingTodoLists
+        ? _c(
+            "div",
+            _vm._l(_vm.todoLists, function(todoList) {
+              return _c("todo-list-preview", {
+                key: todoList.id,
+                attrs: { todoList: todoList },
+                on: { "delete-todo-list": _vm.deleteTodoList }
+              })
+            }),
+            1
+          )
+        : _vm._e(),
+      _vm._v(" "),
+      _c("AddTodoListForm", { on: { "add-todo-list": _vm.addTodoList } })
+    ],
+    1
+  )
+}
+var staticRenderFns = []
+render._withStripped = true
+
+          return {
+            render: render,
+            staticRenderFns: staticRenderFns,
+            _compiled: true,
+            _scopeId: null,
+            functional: undefined
+          };
+        })());
+      
+    /* hot reload */
+    (function () {
+      if (module.hot) {
+        var api = require('vue-hot-reload-api');
+        api.install(require('vue'));
+        if (api.compatible) {
+          module.hot.accept();
+          if (!module.hot.data) {
+            api.createRecord('$f31e3f', $f31e3f);
+          } else {
+            api.reload('$f31e3f', $f31e3f);
+          }
+        }
+
+        
+      }
+    })();
+},{"axios":"node_modules/axios/index.js","vuex":"node_modules/vuex/dist/vuex.esm.js","./TodoListPreview":"vue/components/TodoListPreview.vue","../components/AddTodoListForm":"vue/components/AddTodoListForm.vue","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"node_modules/vue-confetti/dist/vue-confetti.js":[function(require,module,exports) {
+var define;
+!function(t,e){"object"==typeof exports&&"object"==typeof module?module.exports=e():"function"==typeof define&&define.amd?define([],e):"object"==typeof exports?exports["vue-confetti"]=e():t["vue-confetti"]=e()}(window,(function(){return function(t){var e={};function n(i){if(e[i])return e[i].exports;var r=e[i]={i:i,l:!1,exports:{}};return t[i].call(r.exports,r,r.exports,n),r.l=!0,r.exports}return n.m=t,n.c=e,n.d=function(t,e,i){n.o(t,e)||Object.defineProperty(t,e,{enumerable:!0,get:i})},n.r=function(t){"undefined"!=typeof Symbol&&Symbol.toStringTag&&Object.defineProperty(t,Symbol.toStringTag,{value:"Module"}),Object.defineProperty(t,"__esModule",{value:!0})},n.t=function(t,e){if(1&e&&(t=n(t)),8&e)return t;if(4&e&&"object"==typeof t&&t&&t.__esModule)return t;var i=Object.create(null);if(n.r(i),Object.defineProperty(i,"default",{enumerable:!0,value:t}),2&e&&"string"!=typeof t)for(var r in t)n.d(i,r,function(e){return t[e]}.bind(null,r));return i},n.n=function(t){var e=t&&t.__esModule?function(){return t.default}:function(){return t};return n.d(e,"a",e),e},n.o=function(t,e){return Object.prototype.hasOwnProperty.call(t,e)},n.p="",n(n.s=3)}([function(t,e,n){"use strict";n.r(e);var i=function(){var t=arguments.length>0&&void 0!==arguments[0]?arguments[0]:1,e=arguments.length>1&&void 0!==arguments[1]?arguments[1]:t+1,n=arguments.length>2&&void 0!==arguments[2]&&arguments[2],i=parseFloat(t),r=parseFloat(e),o=Math.random()*(r-i)+i;return n?Math.round(o):o};function r(t,e){for(var n=0;n<e.length;n++){var i=e[n];i.enumerable=i.enumerable||!1,i.configurable=!0,"value"in i&&(i.writable=!0),Object.defineProperty(t,i.key,i)}}var o=function(){function t(){var e=arguments.length>0&&void 0!==arguments[0]?arguments[0]:{},n=e.color,i=void 0===n?"blue":n,r=e.size,o=void 0===r?10:r,a=e.dropRate,c=void 0===a?10:a;!function(t,e){if(!(t instanceof e))throw new TypeError("Cannot call a class as a function")}(this,t),this.color=i,this.size=o,this.dropRate=c}var e,n,o;return e=t,(n=[{key:"setup",value:function(t){var e=t.canvas,n=t.wind,r=t.windPosCoef,o=t.windSpeedMax,a=t.count;return this.canvas=e,this.wind=n,this.windPosCoef=r,this.windSpeedMax=o,this.x=i(-35,this.canvas.width+35),this.y=i(-30,-35),this.d=i(150)+10,this.particleSize=i(this.size,2*this.size),this.tilt=i(10),this.tiltAngleIncremental=(i(0,.08)+.04)*(i()<.5?-1:1),this.tiltAngle=0,this.angle=i(2*Math.PI),this.count=a+1,this.remove=!1,this}},{key:"update",value:function(){this.tiltAngle+=this.tiltAngleIncremental*(.2*Math.cos(this.wind+(this.d+this.x+this.y)*this.windPosCoef)+1),this.y+=(Math.cos(this.angle+this.d)+parseInt(this.dropRate,10))/2,this.x+=Math.sin(this.angle),this.x+=Math.cos(this.wind+(this.d+this.x+this.y)*this.windPosCoef)*this.windSpeedMax,this.y+=Math.sin(this.wind+(this.d+this.x+this.y)*this.windPosCoef)*this.windSpeedMax,this.tilt=15*Math.sin(this.tiltAngle-this.count/3)}},{key:"pastBottom",value:function(){return this.y>this.canvas.height}},{key:"draw",value:function(){this.canvas.ctx.fillStyle=this.color,this.canvas.ctx.beginPath(),this.canvas.ctx.setTransform(Math.cos(this.tiltAngle),Math.sin(this.tiltAngle),0,1,this.x,this.y)}},{key:"kill",value:function(){this.remove=!0}}])&&r(e.prototype,n),o&&r(e,o),t}();function a(t){return(a="function"==typeof Symbol&&"symbol"==typeof Symbol.iterator?function(t){return typeof t}:function(t){return t&&"function"==typeof Symbol&&t.constructor===Symbol&&t!==Symbol.prototype?"symbol":typeof t})(t)}function c(t,e){for(var n=0;n<e.length;n++){var i=e[n];i.enumerable=i.enumerable||!1,i.configurable=!0,"value"in i&&(i.writable=!0),Object.defineProperty(t,i.key,i)}}function s(t,e){return!e||"object"!==a(e)&&"function"!=typeof e?function(t){if(void 0===t)throw new ReferenceError("this hasn't been initialised - super() hasn't been called");return t}(t):e}function l(t,e,n){return(l="undefined"!=typeof Reflect&&Reflect.get?Reflect.get:function(t,e,n){var i=function(t,e){for(;!Object.prototype.hasOwnProperty.call(t,e)&&null!==(t=u(t)););return t}(t,e);if(i){var r=Object.getOwnPropertyDescriptor(i,e);return r.get?r.get.call(n):r.value}})(t,e,n||t)}function u(t){return(u=Object.setPrototypeOf?Object.getPrototypeOf:function(t){return t.__proto__||Object.getPrototypeOf(t)})(t)}function f(t,e){return(f=Object.setPrototypeOf||function(t,e){return t.__proto__=e,t})(t,e)}var h=function(t){function e(){return function(t,e){if(!(t instanceof e))throw new TypeError("Cannot call a class as a function")}(this,e),s(this,u(e).apply(this,arguments))}var n,i,r;return function(t,e){if("function"!=typeof e&&null!==e)throw new TypeError("Super expression must either be null or a function");t.prototype=Object.create(e&&e.prototype,{constructor:{value:t,writable:!0,configurable:!0}}),e&&f(t,e)}(e,t),n=e,(i=[{key:"draw",value:function(){l(u(e.prototype),"draw",this).call(this),this.canvas.ctx.arc(0,0,this.particleSize/2,0,2*Math.PI,!1),this.canvas.ctx.fill()}}])&&c(n.prototype,i),r&&c(n,r),e}(o);function p(t){return(p="function"==typeof Symbol&&"symbol"==typeof Symbol.iterator?function(t){return typeof t}:function(t){return t&&"function"==typeof Symbol&&t.constructor===Symbol&&t!==Symbol.prototype?"symbol":typeof t})(t)}function y(t,e){for(var n=0;n<e.length;n++){var i=e[n];i.enumerable=i.enumerable||!1,i.configurable=!0,"value"in i&&(i.writable=!0),Object.defineProperty(t,i.key,i)}}function d(t,e){return!e||"object"!==p(e)&&"function"!=typeof e?function(t){if(void 0===t)throw new ReferenceError("this hasn't been initialised - super() hasn't been called");return t}(t):e}function v(t,e,n){return(v="undefined"!=typeof Reflect&&Reflect.get?Reflect.get:function(t,e,n){var i=function(t,e){for(;!Object.prototype.hasOwnProperty.call(t,e)&&null!==(t=b(t)););return t}(t,e);if(i){var r=Object.getOwnPropertyDescriptor(i,e);return r.get?r.get.call(n):r.value}})(t,e,n||t)}function b(t){return(b=Object.setPrototypeOf?Object.getPrototypeOf:function(t){return t.__proto__||Object.getPrototypeOf(t)})(t)}function m(t,e){return(m=Object.setPrototypeOf||function(t,e){return t.__proto__=e,t})(t,e)}var w=function(t){function e(){return function(t,e){if(!(t instanceof e))throw new TypeError("Cannot call a class as a function")}(this,e),d(this,b(e).apply(this,arguments))}var n,i,r;return function(t,e){if("function"!=typeof e&&null!==e)throw new TypeError("Super expression must either be null or a function");t.prototype=Object.create(e&&e.prototype,{constructor:{value:t,writable:!0,configurable:!0}}),e&&m(t,e)}(e,t),n=e,(i=[{key:"draw",value:function(){v(b(e.prototype),"draw",this).call(this),this.canvas.ctx.fillRect(0,0,this.particleSize,this.particleSize/2)}}])&&y(n.prototype,i),r&&y(n,r),e}(o);function g(t){return(g="function"==typeof Symbol&&"symbol"==typeof Symbol.iterator?function(t){return typeof t}:function(t){return t&&"function"==typeof Symbol&&t.constructor===Symbol&&t!==Symbol.prototype?"symbol":typeof t})(t)}function O(t,e){for(var n=0;n<e.length;n++){var i=e[n];i.enumerable=i.enumerable||!1,i.configurable=!0,"value"in i&&(i.writable=!0),Object.defineProperty(t,i.key,i)}}function P(t,e){return!e||"object"!==g(e)&&"function"!=typeof e?function(t){if(void 0===t)throw new ReferenceError("this hasn't been initialised - super() hasn't been called");return t}(t):e}function S(t,e,n){return(S="undefined"!=typeof Reflect&&Reflect.get?Reflect.get:function(t,e,n){var i=function(t,e){for(;!Object.prototype.hasOwnProperty.call(t,e)&&null!==(t=j(t)););return t}(t,e);if(i){var r=Object.getOwnPropertyDescriptor(i,e);return r.get?r.get.call(n):r.value}})(t,e,n||t)}function j(t){return(j=Object.setPrototypeOf?Object.getPrototypeOf:function(t){return t.__proto__||Object.getPrototypeOf(t)})(t)}function k(t,e){return(k=Object.setPrototypeOf||function(t,e){return t.__proto__=e,t})(t,e)}var x=function(t){function e(){return function(t,e){if(!(t instanceof e))throw new TypeError("Cannot call a class as a function")}(this,e),P(this,j(e).apply(this,arguments))}var n,i,r;return function(t,e){if("function"!=typeof e&&null!==e)throw new TypeError("Super expression must either be null or a function");t.prototype=Object.create(e&&e.prototype,{constructor:{value:t,writable:!0,configurable:!0}}),e&&k(t,e)}(e,t),n=e,(i=[{key:"draw",value:function(){var t=this;S(j(e.prototype),"draw",this).call(this);var n=function(e,n,i,r,o,a){t.canvas.ctx.bezierCurveTo(e*(t.particleSize/200),n*(t.particleSize/200),i*(t.particleSize/200),r*(t.particleSize/200),o*(t.particleSize/200),a*(t.particleSize/200))};this.canvas.ctx.moveTo(37.5/this.particleSize,20/this.particleSize),n(75,37,70,25,50,25),n(20,25,20,62.5,20,62.5),n(20,80,40,102,75,120),n(110,102,130,80,130,62.5),n(130,62.5,130,25,100,25),n(85,25,75,37,75,40),this.canvas.ctx.fill()}}])&&O(n.prototype,i),r&&O(n,r),e}(o);function M(t){return(M="function"==typeof Symbol&&"symbol"==typeof Symbol.iterator?function(t){return typeof t}:function(t){return t&&"function"==typeof Symbol&&t.constructor===Symbol&&t!==Symbol.prototype?"symbol":typeof t})(t)}function _(t,e){for(var n=0;n<e.length;n++){var i=e[n];i.enumerable=i.enumerable||!1,i.configurable=!0,"value"in i&&(i.writable=!0),Object.defineProperty(t,i.key,i)}}function E(t,e){return!e||"object"!==M(e)&&"function"!=typeof e?function(t){if(void 0===t)throw new ReferenceError("this hasn't been initialised - super() hasn't been called");return t}(t):e}function I(t,e,n){return(I="undefined"!=typeof Reflect&&Reflect.get?Reflect.get:function(t,e,n){var i=function(t,e){for(;!Object.prototype.hasOwnProperty.call(t,e)&&null!==(t=C(t)););return t}(t,e);if(i){var r=Object.getOwnPropertyDescriptor(i,e);return r.get?r.get.call(n):r.value}})(t,e,n||t)}function C(t){return(C=Object.setPrototypeOf?Object.getPrototypeOf:function(t){return t.__proto__||Object.getPrototypeOf(t)})(t)}function D(t,e){return(D=Object.setPrototypeOf||function(t,e){return t.__proto__=e,t})(t,e)}var R=function(t){function e(t,n){var i;return function(t,e){if(!(t instanceof e))throw new TypeError("Cannot call a class as a function")}(this,e),(i=E(this,C(e).call(this,t))).imgEl=n,i}var n,i,r;return function(t,e){if("function"!=typeof e&&null!==e)throw new TypeError("Super expression must either be null or a function");t.prototype=Object.create(e&&e.prototype,{constructor:{value:t,writable:!0,configurable:!0}}),e&&D(t,e)}(e,t),n=e,(i=[{key:"draw",value:function(){I(C(e.prototype),"draw",this).call(this),this.canvas.ctx.drawImage(this.imgEl,0,0,this.particleSize,this.particleSize)}}])&&_(n.prototype,i),r&&_(n,r),e}(o);function T(t,e){for(var n=0;n<e.length;n++){var i=e[n];i.enumerable=i.enumerable||!1,i.configurable=!0,"value"in i&&(i.writable=!0),Object.defineProperty(t,i.key,i)}}var z=function(){function t(){!function(t,e){if(!(t instanceof e))throw new TypeError("Cannot call a class as a function")}(this,t),this.cachedImage=null}var e,n,r;return e=t,(n=[{key:"createImageElement",value:function(t){var e=document.createElement("img");return e.setAttribute("src",t),e}},{key:"getImageElement",value:function(t){return this.cachedImage&&t===this.cachedImage.getAttribute("src")||(this.cachedImage=this.createImageElement(t)),this.cachedImage}},{key:"getRandomParticle",value:function(){var t=arguments.length>0&&void 0!==arguments[0]?arguments[0]:{},e=t.particles||[];return e.length<1?{}:e[Math.floor(Math.random()*e.length)]}},{key:"getDefaults",value:function(){var t=arguments.length>0&&void 0!==arguments[0]?arguments[0]:{};return{type:t.defaultType||"circle",size:t.defaultSize||10,dropRate:t.defaultDropRate||10,colors:t.defaultColors||["DodgerBlue","OliveDrab","Gold","pink","SlateBlue","lightblue","Violet","PaleGreen","SteelBlue","SandyBrown","Chocolate","Crimson"],url:null}}},{key:"create",value:function(t){var e=this.getDefaults(t),n=this.getRandomParticle(t),r=Object.assign(e,n),o=i(0,r.colors.length-1,!0);if(r.color=r.colors[o],"circle"===r.type)return new h(r);if("rect"===r.type)return new w(r);if("heart"===r.type)return new x(r);if("image"===r.type)return new R(r,this.getImageElement(r.url));throw Error('Unknown particle type: "'.concat(r.type,'"'))}}])&&T(e.prototype,n),r&&T(e,r),t}();function F(t,e){for(var n=0;n<e.length;n++){var i=e[n];i.enumerable=i.enumerable||!1,i.configurable=!0,"value"in i&&(i.writable=!0),Object.defineProperty(t,i.key,i)}}var A=function(){function t(e){!function(t,e){if(!(t instanceof e))throw new TypeError("Cannot call a class as a function")}(this,t),this.items=[],this.pool=[],this.particleOptions=e,this.particleFactory=new z}var e,n,i;return e=t,(n=[{key:"update",value:function(){var t,e=this,n=[],i=[];this.items.forEach((function(t){t.update(),t.pastBottom()?t.remove||(t.setup(e.particleOptions),n.push(t)):i.push(t)})),(t=this.pool).push.apply(t,n),this.items=i}},{key:"draw",value:function(){this.items.forEach((function(t){return t.draw()}))}},{key:"add",value:function(){this.pool.length>0?this.items.push(this.pool.pop().setup(this.particleOptions)):this.items.push(this.particleFactory.create(this.particleOptions).setup(this.particleOptions))}},{key:"refresh",value:function(){this.items.forEach((function(t){t.kill()})),this.pool=[]}}])&&F(e.prototype,n),i&&F(e,i),t}();function B(t,e){for(var n=0;n<e.length;n++){var i=e[n];i.enumerable=i.enumerable||!1,i.configurable=!0,"value"in i&&(i.writable=!0),Object.defineProperty(t,i.key,i)}}var H=function(){function t(e){!function(t,e){if(!(t instanceof e))throw new TypeError("Cannot call a class as a function")}(this,t);var n=document.getElementById(e);if(this.isDefault=null==e,!this.isDefault&&!n)throw new Error('No element found with ID "'.concat(e,'"'));if(this.canvas=n||t.createDefaultCanvas("confetti-canvas"),!(this.canvas instanceof HTMLCanvasElement))throw new Error('Element with ID "'.concat("confetti-canvas",'" is not a valid HTMLCanvasElement'));this.ctx=this.canvas.getContext("2d")}var e,n,i;return e=t,i=[{key:"createDefaultCanvas",value:function(t){var e=document.createElement("canvas");return e.style.display="block",e.style.position="fixed",e.style.pointerEvents="none",e.style.top=0,e.style.width="100vw",e.style.height="100vh",e.id=t,document.querySelector("body").appendChild(e),e}}],(n=[{key:"clear",value:function(){this.ctx.setTransform(1,0,0,1,0,0),this.ctx.clearRect(0,0,this.width,this.height)}},{key:"updateDimensions",value:function(){this.isDefault&&(this.width===window.innerWidth&&this.height===window.innerHeight||(this.canvas.width=window.innerWidth,this.canvas.height=window.innerHeight))}},{key:"width",get:function(){return this.canvas.width}},{key:"height",get:function(){return this.canvas.height}}])&&B(e.prototype,n),i&&B(e,i),t}();function L(t,e){for(var n=0;n<e.length;n++){var i=e[n];i.enumerable=i.enumerable||!1,i.configurable=!0,"value"in i&&(i.writable=!0),Object.defineProperty(t,i.key,i)}}var W=function(){function t(){!function(t,e){if(!(t instanceof e))throw new TypeError("Cannot call a class as a function")}(this,t),this.setDefaults()}var e,n,i;return e=t,(n=[{key:"setDefaults",value:function(){this.killed=!1,this.framesSinceDrop=0,this.canvas=null,this.canvasId=null,this.W=0,this.H=0,this.particleManager=null,this.particlesPerFrame=0,this.wind=0,this.windSpeed=1,this.windSpeedMax=1,this.windChange=.01,this.windPosCoef=.002,this.animationId=null}},{key:"getParticleOptions",value:function(t){var e={canvas:this.canvas,W:this.W,H:this.H,wind:this.wind,windPosCoef:this.windPosCoef,windSpeedMax:this.windSpeedMax,count:0};return Object.assign(e,t),e}},{key:"createParticles",value:function(){var t=arguments.length>0&&void 0!==arguments[0]?arguments[0]:{},e=this.getParticleOptions(t);this.particleManager=new A(e)}},{key:"start",value:function(){var t=arguments.length>0&&void 0!==arguments[0]?arguments[0]:{};this.canvas&&t.canvasId===this.canvasId||(this.canvas=new H(t.canvasId),this.canvasId=t.canvasId),this.animationId&&cancelAnimationFrame(this.animationId),this.createParticles(t),this.canvas.updateDimensions(),this.setParticlesPerFrame(t),this.animationId=requestAnimationFrame(this.mainLoop.bind(this))}},{key:"setParticlesPerFrame",value:function(t){this.particlesPerFrame=t.particlesPerFrame||2}},{key:"stop",value:function(){this.killed=!0,this.particlesPerFrame=0}},{key:"update",value:function(t){this.canvas&&t.canvasId!==this.canvasId&&(this.stop(),this.canvas.clear(),this.start(t)),this.setParticlesPerFrame(t),this.particleManager&&(this.particleManager.particleOptions=this.getParticleOptions(t),this.particleManager.refresh())}},{key:"remove",value:function(){this.stop(),this.animationId&&cancelAnimationFrame(this.animationId),this.canvas.clear(),this.setDefaults()}},{key:"mainLoop",value:function(t){this.canvas.updateDimensions(),this.canvas.clear(),this.windSpeed=Math.sin(t/8e3)*this.windSpeedMax,this.wind=this.particleManager.particleOptions.wind+=this.windChange;for(var e=this.framesSinceDrop*this.particlesPerFrame;e>=1;)this.particleManager.add(),e-=1,this.framesSinceDrop=0;this.particleManager.update(),this.particleManager.draw(),this.killed&&!this.particleManager.items.length||(this.animationId=requestAnimationFrame(this.mainLoop.bind(this))),this.framesSinceDrop+=1}}])&&L(e.prototype,n),i&&L(e,i),t}();n.d(e,"Confetti",(function(){return W}));e.default={install:function(t,e){this.installed||(this.installed=!0,t.prototype.$confetti=new W(e))}}},,,function(t,e,n){t.exports=n(0)}])}));
+},{}],"vue/components/Confetti.vue":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = void 0;
+
+var _vue = _interopRequireDefault(require("vue"));
+
+var _vueConfetti = _interopRequireDefault(require("vue-confetti"));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+//
+//
+_vue.default.use(_vueConfetti.default);
+
+var _default = {
+  name: "Confetti",
+
+  mounted() {
+    this.$nextTick(() => {
+      this.$confetti.start({
+        particles: [{
+          type: "rect"
+        }],
+        particlesPerFrame: 0.4,
+        dropRate: 8
+      });
+    });
+  },
+
+  beforeDestroy() {
+    this.$confetti.stop();
+  }
+
+};
+exports.default = _default;
+        var $1a387c = exports.default || module.exports;
+      
+      if (typeof $1a387c === 'function') {
+        $1a387c = $1a387c.options;
+      }
+    
+        /* template */
+        Object.assign($1a387c, (function () {
+          var render = function() {
+  var _vm = this
+  var _h = _vm.$createElement
+  var _c = _vm._self._c || _h
+  return _c("div")
+}
+var staticRenderFns = []
+render._withStripped = true
+
+          return {
+            render: render,
+            staticRenderFns: staticRenderFns,
+            _compiled: true,
+            _scopeId: null,
+            functional: undefined
+          };
+        })());
+      
+    /* hot reload */
+    (function () {
+      if (module.hot) {
+        var api = require('vue-hot-reload-api');
+        api.install(require('vue'));
+        if (api.compatible) {
+          module.hot.accept();
+          if (!module.hot.data) {
+            api.createRecord('$1a387c', $1a387c);
+          } else {
+            api.reload('$1a387c', $1a387c);
+          }
+        }
+
+        
+      }
+    })();
+},{"vue":"node_modules/vue/dist/vue.runtime.esm.js","vue-confetti":"node_modules/vue-confetti/dist/vue-confetti.js","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js"}],"vue/components/Contributors.vue":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = void 0;
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+var _default = {
+  name: "Contributors",
+  props: ["todoListContributors", "accountContributors"]
+};
+exports.default = _default;
+        var $370f63 = exports.default || module.exports;
+      
+      if (typeof $370f63 === 'function') {
+        $370f63 = $370f63.options;
+      }
+    
+        /* template */
+        Object.assign($370f63, (function () {
+          var render = function() {
+  var _vm = this
+  var _h = _vm.$createElement
+  var _c = _vm._self._c || _h
+  return _c(
+    "ul",
+    { staticClass: "contributors" },
+    _vm._l(_vm.todoListContributors, function(contributor) {
+      return _c("li", { key: contributor, staticClass: "contributor" }, [
+        _c("img", {
+          directives: [
+            {
+              name: "b-tooltip",
+              rawName: "v-b-tooltip.hover",
+              modifiers: { hover: true }
+            }
+          ],
+          attrs: {
+            src: _vm.accountContributors[contributor].pictureUrl,
+            alt: _vm.accountContributors[contributor].fullName,
+            title: _vm.accountContributors[contributor].fullName
+          }
+        })
+      ])
+    }),
+    0
+  )
+}
+var staticRenderFns = []
+render._withStripped = true
+
+          return {
+            render: render,
+            staticRenderFns: staticRenderFns,
+            _compiled: true,
+            _scopeId: "data-v-370f63",
+            functional: undefined
+          };
+        })());
+      
+    /* hot reload */
+    (function () {
+      if (module.hot) {
+        var api = require('vue-hot-reload-api');
+        api.install(require('vue'));
+        if (api.compatible) {
+          module.hot.accept();
+          if (!module.hot.data) {
+            api.createRecord('$370f63', $370f63);
+          } else {
+            api.reload('$370f63', $370f63);
+          }
+        }
+
+        
+        var reloadCSS = require('_css_loader');
+        module.hot.dispose(reloadCSS);
+        module.hot.accept(reloadCSS);
+      
+      }
+    })();
+},{"_css_loader":"node_modules/parcel-bundler/src/builtins/css-loader.js","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/components/InviteContributorsForm.vue":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = void 0;
+
+var _axios = _interopRequireDefault(require("axios"));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+var _default = {
+  props: ["listId"],
+
+  data() {
+    return {
+      form: {
+        email: ""
+      },
+      invitationSent: false,
+      dismissSecs: 5,
+      dismissCountDown: 0
+    };
+  },
+
+  methods: {
+    async invite() {
+      await (0, _axios.default)({
+        method: "POST",
+        url: "api/lists/".concat(this.listId, "/email"),
+        data: JSON.stringify({
+          email: this.form.email
+        }),
+        headers: {
+          "content-type": "application/json"
+        }
+      });
+      this.form.email = "";
+      this.showAlert();
+    },
+
+    countDownChanged(dismissCountDown) {
+      this.dismissCountDown = dismissCountDown;
+    },
+
+    showAlert() {
+      this.dismissCountDown = this.dismissSecs;
+    }
+
+  }
+};
+exports.default = _default;
+        var $3f1240 = exports.default || module.exports;
+      
+      if (typeof $3f1240 === 'function') {
+        $3f1240 = $3f1240.options;
+      }
+    
+        /* template */
+        Object.assign($3f1240, (function () {
+          var render = function() {
+  var _vm = this
+  var _h = _vm.$createElement
+  var _c = _vm._self._c || _h
+  return _c(
+    "div",
+    [
+      _c(
+        "b-button",
+        { staticClass: "invitation-btn", attrs: { size: "sm" } },
+        [
+          _c("span", { staticClass: "sr-only" }, [_vm._v("Invite")]),
+          _vm._v(" "),
+          _c("b-icon-plus")
+        ],
+        1
+      )
+    ],
+    1
+  )
+}
+var staticRenderFns = []
+render._withStripped = true
+
+          return {
+            render: render,
+            staticRenderFns: staticRenderFns,
+            _compiled: true,
+            _scopeId: "data-v-3f1240",
+            functional: undefined
+          };
+        })());
+      
+    /* hot reload */
+    (function () {
+      if (module.hot) {
+        var api = require('vue-hot-reload-api');
+        api.install(require('vue'));
+        if (api.compatible) {
+          module.hot.accept();
+          if (!module.hot.data) {
+            api.createRecord('$3f1240', $3f1240);
+          } else {
+            api.reload('$3f1240', $3f1240);
+          }
+        }
+
+        
+        var reloadCSS = require('_css_loader');
+        module.hot.dispose(reloadCSS);
+        module.hot.accept(reloadCSS);
+      
+      }
+    })();
+},{"axios":"node_modules/axios/index.js","_css_loader":"node_modules/parcel-bundler/src/builtins/css-loader.js","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"node_modules/moment/moment.js":[function(require,module,exports) {
 var define;
 var global = arguments[3];
 //! moment.js
@@ -36705,7 +36885,7 @@ render._withStripped = true
             render: render,
             staticRenderFns: staticRenderFns,
             _compiled: true,
-            _scopeId: null,
+            _scopeId: "data-v-7b87e9",
             functional: undefined
           };
         })());
@@ -36738,6 +36918,9 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.default = void 0;
+//
+//
+//
 //
 //
 //
@@ -36826,11 +37009,15 @@ exports.default = _default;
             "b-button",
             {
               ref: "addItemBtn",
-              staticClass: "mt-3",
-              attrs: { size: "sm" },
+              staticClass: "mb-3 p-0 add-sub-item-btn",
+              attrs: { size: "sm", variant: "link" },
               on: { click: _vm.focusForm }
             },
-            [_vm._v("Add an item")]
+            [
+              _c("b-icon-plus", { staticClass: "add-item-btn-icon" }),
+              _vm._v("Add item\n  ")
+            ],
+            1
           )
         : _vm._e(),
       _vm._v(" "),
@@ -36884,7 +37071,7 @@ render._withStripped = true
             render: render,
             staticRenderFns: staticRenderFns,
             _compiled: true,
-            _scopeId: null,
+            _scopeId: "data-v-efb0d1",
             functional: undefined
           };
         })());
@@ -36904,9 +37091,13 @@ render._withStripped = true
         }
 
         
+        var reloadCSS = require('_css_loader');
+        module.hot.dispose(reloadCSS);
+        module.hot.accept(reloadCSS);
+      
       }
     })();
-},{"vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/components/SubItems.vue":[function(require,module,exports) {
+},{"_css_loader":"node_modules/parcel-bundler/src/builtins/css-loader.js","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/components/SubItems.vue":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -36924,6 +37115,7 @@ var _AddSubItemForm = _interopRequireDefault(require("./AddSubItemForm"));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
+//
 //
 //
 //
@@ -37153,11 +37345,11 @@ var _default = {
     triggerSubItemCountChangedEvent() {
       if (this.subItems.length > 0) {
         this.$emit("sub-item-count-changed", {
-          disabled: true
+          hasSubItems: true
         });
       } else {
         this.$emit("sub-item-count-changed", {
-          disabled: false
+          hasSubItems: false
         });
       }
     },
@@ -37191,6 +37383,11 @@ exports.default = _default;
     "div",
     { staticClass: "sub-items-wrapper" },
     [
+      _c("AddSubItemForm", {
+        attrs: { todoListItem: _vm.todoListItem },
+        on: { "add-sub-item": _vm.dispatchAddSubItem }
+      }),
+      _vm._v(" "),
       !_vm.loadingSubItems
         ? _c(
             "b-list-group",
@@ -37238,12 +37435,7 @@ exports.default = _default;
             ],
             1
           )
-        : _vm._e(),
-      _vm._v(" "),
-      _c("AddSubItemForm", {
-        attrs: { todoListItem: _vm.todoListItem },
-        on: { "add-sub-item": _vm.dispatchAddSubItem }
-      })
+        : _vm._e()
     ],
     1
   )
@@ -37728,9 +37920,6 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 //
 //
 //
-//
-//
-//
 var _default = {
   name: "TodoListItem",
   props: ["item"],
@@ -37753,7 +37942,7 @@ var _default = {
   },
   filters: {
     formatDate: function (value) {
-      return (0, _moment.default)(value).format("MM/D/YYYY");
+      return (0, _moment.default)(value).format("dddd, MMMM Do, YYYY");
     },
     truncate: function (text, length, suffix) {
       return text.substring(0, length) + suffix;
@@ -37796,121 +37985,138 @@ exports.default = _default;
   var _h = _vm.$createElement
   var _c = _vm._self._c || _h
   return _c(
-    "b-list-group-item",
-    {
-      staticClass: "todo-item bg-light",
-      class: { "align-items-center": !_vm.item.dueDate && !_vm.item.notes },
-      attrs: { "data-id": _vm.item.id }
-    },
+    "div",
+    { attrs: { "data-id": _vm.item.id } },
     [
-      _c("div", { staticClass: "item-handle mr-2" }, [_c("b-icon-list")], 1),
-      _vm._v(" "),
-      _c("b-form-checkbox", {
-        staticClass: "todo-item-checkbox",
-        attrs: { disabled: _vm.item.hasSubItems },
-        model: {
-          value: _vm.itemCompletedState,
-          callback: function($$v) {
-            _vm.itemCompletedState = $$v
-          },
-          expression: "itemCompletedState"
+      _c("EditTodoItemForm", {
+        attrs: { todoListItem: _vm.item },
+        on: {
+          "item-edited": _vm.sendItemEditedEvent,
+          "sub-item-count-changed": _vm.sendSubItemCountChangedEvent
         }
       }),
       _vm._v(" "),
-      _c("div", { staticClass: "todo-item-details" }, [
-        _c(
-          "div",
-          {
-            staticClass: "todo-item-name",
-            class: { "mb-0": !_vm.item.dueDate && !_vm.item.notes }
-          },
-          [_vm._v(_vm._s(_vm.item.name))]
-        ),
-        _vm._v(" "),
-        _vm.item.dueDate
-          ? _c(
-              "div",
-              { staticClass: "todo-item-due-date" },
-              [
-                _c("b-icon-calendar"),
-                _vm._v(
-                  "\n      " +
-                    _vm._s(_vm._f("formatDate")(_vm.item.dueDate)) +
-                    "\n    "
-                )
-              ],
-              1
-            )
-          : _vm._e(),
-        _vm._v(" "),
-        _vm.item.notes
-          ? _c(
-              "div",
-              { staticClass: "todo-item-notes" },
-              [
-                _c("b-icon-text-left"),
-                _vm._v(
-                  "\n      " +
-                    _vm._s(_vm._f("truncate")(_vm.item.notes, 30, "...")) +
-                    "\n    "
-                )
-              ],
-              1
-            )
-          : _vm._e()
-      ]),
-      _vm._v(" "),
       _c(
         "div",
-        { staticClass: "todo-item-options" },
+        {
+          staticClass: "item",
+          on: {
+            click: function($event) {
+              return _vm.$emit("item-selected", _vm.item)
+            }
+          }
+        },
         [
+          _c("div", { staticClass: "item-checkbox" }, [
+            _c(
+              "label",
+              {
+                staticClass: "custom-checkbox",
+                class: { checked: _vm.itemCompletedState },
+                attrs: { for: _vm.item.id, disabled: _vm.item.hasSubItems }
+              },
+              [
+                _c("b-icon-check"),
+                _vm._v(" "),
+                _c("input", {
+                  directives: [
+                    {
+                      name: "model",
+                      rawName: "v-model",
+                      value: _vm.itemCompletedState,
+                      expression: "itemCompletedState"
+                    }
+                  ],
+                  staticClass: "sr-only",
+                  attrs: { id: _vm.item.id, type: "checkbox" },
+                  domProps: {
+                    checked: Array.isArray(_vm.itemCompletedState)
+                      ? _vm._i(_vm.itemCompletedState, null) > -1
+                      : _vm.itemCompletedState
+                  },
+                  on: {
+                    change: function($event) {
+                      var $$a = _vm.itemCompletedState,
+                        $$el = $event.target,
+                        $$c = $$el.checked ? true : false
+                      if (Array.isArray($$a)) {
+                        var $$v = null,
+                          $$i = _vm._i($$a, $$v)
+                        if ($$el.checked) {
+                          $$i < 0 &&
+                            (_vm.itemCompletedState = $$a.concat([$$v]))
+                        } else {
+                          $$i > -1 &&
+                            (_vm.itemCompletedState = $$a
+                              .slice(0, $$i)
+                              .concat($$a.slice($$i + 1)))
+                        }
+                      } else {
+                        _vm.itemCompletedState = $$c
+                      }
+                    }
+                  }
+                })
+              ],
+              1
+            )
+          ]),
+          _vm._v(" "),
+          _c("div", { staticClass: "item-details" }, [
+            _c("div", { staticClass: "item-name" }, [
+              _vm._v(_vm._s(_vm.item.name))
+            ]),
+            _vm._v(" "),
+            _c("div", { staticClass: "item-content-preview" }, [
+              _vm.item.dueDate
+                ? _c(
+                    "div",
+                    { staticClass: "item-due-date" },
+                    [
+                      _c("b-icon-calendar"),
+                      _vm._v(
+                        "\n          " +
+                          _vm._s(_vm._f("formatDate")(_vm.item.dueDate)) +
+                          "\n        "
+                      )
+                    ],
+                    1
+                  )
+                : _vm._e(),
+              _vm._v(" "),
+              _vm.item.notes
+                ? _c(
+                    "div",
+                    { staticClass: "item-notes" },
+                    [_c("b-icon-file-earmark-text")],
+                    1
+                  )
+                : _vm._e()
+            ])
+          ]),
+          _vm._v(" "),
           _c(
-            "b-button-group",
+            "div",
+            { staticClass: "item-controls" },
             [
               _c(
                 "b-button",
                 {
-                  attrs: { variant: "info" },
-                  on: {
-                    click: function($event) {
-                      return _vm.$bvModal.show("modal-" + _vm.item.id)
-                    }
-                  }
-                },
-                [_vm._v("View")]
-              ),
-              _vm._v(" "),
-              _c(
-                "b-button",
-                {
-                  attrs: { variant: "danger" },
+                  staticClass: "btn-trash",
+                  attrs: { variant: "link" },
                   on: {
                     click: function($event) {
                       return _vm.$emit("delete-item", _vm.item.id)
                     }
                   }
                 },
-                [_vm._v("Delete")]
+                [_c("b-icon-trash")],
+                1
               )
             ],
             1
-          ),
-          _vm._v(" "),
-          _c("EditTodoItemForm", {
-            attrs: { todoListItem: _vm.item },
-            on: {
-              "item-edited": _vm.sendItemEditedEvent,
-              "sub-items-completed": function($event) {
-                return _vm.sendCheckboxClickedEvent(true)
-              },
-              "sub-items-uncompleted": function($event) {
-                return _vm.sendCheckboxClickedEvent(false)
-              },
-              "sub-item-count-changed": _vm.sendSubItemCountChangedEvent
-            }
-          })
-        ],
-        1
+          )
+        ]
       )
     ],
     1
@@ -37923,7 +38129,7 @@ render._withStripped = true
             render: render,
             staticRenderFns: staticRenderFns,
             _compiled: true,
-            _scopeId: "data-v-71ea3c",
+            _scopeId: null,
             functional: undefined
           };
         })());
@@ -37956,6 +38162,10 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.default = void 0;
+//
+//
+//
+//
 //
 //
 //
@@ -38039,15 +38249,20 @@ exports.default = _default;
     { attrs: { id: "add-todo-list-item" } },
     [
       _c(
-        "b-button",
+        "div",
         {
+          staticClass: "item item-add",
           on: {
             click: function($event) {
               return _vm.$bvModal.show("modal-add-todo-list-item")
             }
           }
         },
-        [_vm._v("Add item")]
+        [
+          _c("b-button", { staticClass: "btn-add" }, [_c("b-icon-plus")], 1),
+          _vm._v("Add item\n  ")
+        ],
+        1
       ),
       _vm._v(" "),
       _c(
@@ -38149,7 +38364,7 @@ render._withStripped = true
             render: render,
             staticRenderFns: staticRenderFns,
             _compiled: true,
-            _scopeId: null,
+            _scopeId: "data-v-aa59c0",
             functional: undefined
           };
         })());
@@ -38169,9 +38384,13 @@ render._withStripped = true
         }
 
         
+        var reloadCSS = require('_css_loader');
+        module.hot.dispose(reloadCSS);
+        module.hot.accept(reloadCSS);
+      
       }
     })();
-},{"vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/components/TodoListItems.vue":[function(require,module,exports) {
+},{"_css_loader":"node_modules/parcel-bundler/src/builtins/css-loader.js","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/components/TodoListItems.vue":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -38210,6 +38429,198 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 //
 //
 //
+var _default = {
+  name: "TodoListItems",
+  props: ["todoListId", "items", "itemsLayout"],
+  components: {
+    Draggable: _vuedraggable.default,
+    TodoListItem: _TodoListItem.default,
+    AddTodoListItemForm: _AddTodoListItemForm.default
+  },
+  methods: {
+    sendItemSelectedEventToList(item) {
+      this.$emit("item-selected", item);
+    },
+
+    sendAddItemEvent(item) {
+      this.$emit("add-item", item);
+    },
+
+    sendUpdateItemPositionEvent(event) {
+      this.$emit("update-item-position", event);
+    },
+
+    sendCheckboxClickedEvent({
+      itemId,
+      completed
+    }) {
+      this.$emit("checkbox-clicked", {
+        itemId,
+        completed
+      });
+    },
+
+    sendItemEditedEvent(item) {
+      this.$emit("item-edited", item);
+    },
+
+    sendDeleteItemEvent(itemId) {
+      this.$emit("delete-item", itemId);
+    },
+
+    sendSubItemCountChangedEvent({
+      itemId,
+      hasSubItems
+    }) {
+      this.$emit("sub-item-count-changed", {
+        itemId,
+        hasSubItems
+      });
+    }
+
+  }
+};
+exports.default = _default;
+        var $642124 = exports.default || module.exports;
+      
+      if (typeof $642124 === 'function') {
+        $642124 = $642124.options;
+      }
+    
+        /* template */
+        Object.assign($642124, (function () {
+          var render = function() {
+  var _vm = this
+  var _h = _vm.$createElement
+  var _c = _vm._self._c || _h
+  return _c(
+    "div",
+    [
+      _c("AddTodoListItemForm", {
+        attrs: { todoListId: _vm.todoListId },
+        on: { "add-item": _vm.sendAddItemEvent }
+      }),
+      _vm._v(" "),
+      _c(
+        "Draggable",
+        {
+          attrs: { delay: "100" },
+          on: { end: _vm.sendUpdateItemPositionEvent },
+          model: {
+            value: _vm.itemsLayout,
+            callback: function($$v) {
+              _vm.itemsLayout = $$v
+            },
+            expression: "itemsLayout"
+          }
+        },
+        _vm._l(_vm.itemsLayout, function(itemId) {
+          return _c("TodoListItem", {
+            key: itemId,
+            attrs: {
+              item: _vm.items.find(function(i) {
+                return i.id === itemId
+              })
+            },
+            on: {
+              "item-selected": _vm.sendItemSelectedEventToList,
+              "checkbox-clicked": _vm.sendCheckboxClickedEvent,
+              "item-edited": _vm.sendItemEditedEvent,
+              "delete-item": _vm.sendDeleteItemEvent,
+              "sub-item-count-changed": _vm.sendSubItemCountChangedEvent
+            }
+          })
+        }),
+        1
+      )
+    ],
+    1
+  )
+}
+var staticRenderFns = []
+render._withStripped = true
+
+          return {
+            render: render,
+            staticRenderFns: staticRenderFns,
+            _compiled: true,
+            _scopeId: null,
+            functional: undefined
+          };
+        })());
+      
+    /* hot reload */
+    (function () {
+      if (module.hot) {
+        var api = require('vue-hot-reload-api');
+        api.install(require('vue'));
+        if (api.compatible) {
+          module.hot.accept();
+          if (!module.hot.data) {
+            api.createRecord('$642124', $642124);
+          } else {
+            api.reload('$642124', $642124);
+          }
+        }
+
+        
+      }
+    })();
+},{"vue":"node_modules/vue/dist/vue.runtime.esm.js","axios":"node_modules/axios/index.js","vuedraggable":"node_modules/vuedraggable/dist/vuedraggable.common.js","./TodoListItem":"vue/components/TodoListItem.vue","./AddTodoListItemForm.vue":"vue/components/AddTodoListItemForm.vue","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js"}],"vue/components/TodoItemDetails.vue":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = void 0;
+
+var _moment = _interopRequireDefault(require("moment"));
+
+var _vuex = require("vuex");
+
+var _SubItems = _interopRequireDefault(require("./SubItems"));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 //
 //
 //
@@ -38217,23 +38628,334 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 //
 //
 var _default = {
-  name: "TodoListItems",
-  props: ["todoListId"],
+  name: "TodoItemDetails",
+  props: ["item"],
   components: {
-    Draggable: _vuedraggable.default,
-    TodoListItem: _TodoListItem.default,
-    AddTodoListItemForm: _AddTodoListItemForm.default
+    SubItems: _SubItems.default
   },
+
+  data() {
+    return {
+      form: { ...this.item
+      }
+    };
+  },
+
+  methods: {
+    sendSubItemCountChangedEvent({
+      hasSubItems
+    }) {
+      this.$emit("sub-item-count-changed", {
+        itemId: this.item.id,
+        hasSubItems
+      });
+    },
+
+    sendItemEditedEvent() {
+      this.$emit("item-edited", this.form);
+    },
+
+    sendSubItemsCompletedEvent() {
+      this.$emit("sub-items-completed", {
+        itemId: this.item.id,
+        completed: true
+      });
+    },
+
+    sendSubItemsUncompletedEvent() {
+      this.$emit("sub-items-uncompleted", {
+        itemId: this.item.id,
+        completed: false
+      });
+    }
+
+  },
+  computed: (0, _vuex.mapState)({
+    plan: state => state.plan
+  })
+};
+exports.default = _default;
+        var $a03f24 = exports.default || module.exports;
+      
+      if (typeof $a03f24 === 'function') {
+        $a03f24 = $a03f24.options;
+      }
+    
+        /* template */
+        Object.assign($a03f24, (function () {
+          var render = function() {
+  var _vm = this
+  var _h = _vm.$createElement
+  var _c = _vm._self._c || _h
+  return _c("b-col", [
+    _c(
+      "div",
+      { staticClass: "item-content" },
+      [
+        _c(
+          "b-form-group",
+          { staticClass: "mb-0" },
+          [
+            _c("b-input", {
+              staticClass: "item-name item-name-input",
+              attrs: { type: "text" },
+              on: {
+                keyup: function($event) {
+                  if (
+                    !$event.type.indexOf("key") &&
+                    _vm._k($event.keyCode, "enter", 13, $event.key, "Enter")
+                  ) {
+                    return null
+                  }
+                  return $event.target.blur()
+                },
+                change: _vm.sendItemEditedEvent
+              },
+              model: {
+                value: _vm.form.name,
+                callback: function($$v) {
+                  _vm.$set(_vm.form, "name", $$v)
+                },
+                expression: "form.name"
+              }
+            })
+          ],
+          1
+        ),
+        _vm._v(" "),
+        _c(
+          "div",
+          { staticClass: "item-meta mb-3" },
+          [
+            _vm.plan.canAddDueDates
+              ? _c(
+                  "b-form-group",
+                  [
+                    _c("b-form-datepicker", {
+                      staticClass: "item-due-date",
+                      attrs: { id: "due-date" },
+                      on: { input: _vm.sendItemEditedEvent },
+                      model: {
+                        value: _vm.form.dueDate,
+                        callback: function($$v) {
+                          _vm.$set(_vm.form, "dueDate", $$v)
+                        },
+                        expression: "form.dueDate"
+                      }
+                    })
+                  ],
+                  1
+                )
+              : _vm._e()
+          ],
+          1
+        ),
+        _vm._v(" "),
+        _c(
+          "b-form-group",
+          { staticClass: "item-notes" },
+          [
+            _c("b-form-textarea", {
+              attrs: {
+                id: "item-notes",
+                placeholder: "Add notes here...",
+                rows: "1",
+                "max-rows": "12"
+              },
+              on: { input: _vm.sendItemEditedEvent },
+              model: {
+                value: _vm.form.notes,
+                callback: function($$v) {
+                  _vm.$set(_vm.form, "notes", $$v)
+                },
+                expression: "form.notes"
+              }
+            })
+          ],
+          1
+        ),
+        _vm._v(" "),
+        _c("SubItems", {
+          key: _vm.item.id,
+          attrs: { todoListItem: _vm.item },
+          on: {
+            "sub-items-completed": _vm.sendSubItemsCompletedEvent,
+            "sub-items-uncompleted": _vm.sendSubItemsUncompletedEvent,
+            "sub-item-count-changed": _vm.sendSubItemCountChangedEvent
+          }
+        })
+      ],
+      1
+    )
+  ])
+}
+var staticRenderFns = []
+render._withStripped = true
+
+          return {
+            render: render,
+            staticRenderFns: staticRenderFns,
+            _compiled: true,
+            _scopeId: null,
+            functional: undefined
+          };
+        })());
+      
+    /* hot reload */
+    (function () {
+      if (module.hot) {
+        var api = require('vue-hot-reload-api');
+        api.install(require('vue'));
+        if (api.compatible) {
+          module.hot.accept();
+          if (!module.hot.data) {
+            api.createRecord('$a03f24', $a03f24);
+          } else {
+            api.reload('$a03f24', $a03f24);
+          }
+        }
+
+        
+        var reloadCSS = require('_css_loader');
+        module.hot.dispose(reloadCSS);
+        module.hot.accept(reloadCSS);
+      
+      }
+    })();
+},{"moment":"node_modules/moment/moment.js","vuex":"node_modules/vuex/dist/vuex.esm.js","./SubItems":"vue/components/SubItems.vue","_css_loader":"node_modules/parcel-bundler/src/builtins/css-loader.js","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/components/TodoList.vue":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = void 0;
+
+var _axios = _interopRequireDefault(require("axios"));
+
+var _vue = _interopRequireDefault(require("vue"));
+
+var _vuex = require("vuex");
+
+var _vuedraggable = _interopRequireDefault(require("vuedraggable"));
+
+var _Confetti = _interopRequireDefault(require("./Confetti"));
+
+var _Contributors = _interopRequireDefault(require("./Contributors"));
+
+var _InviteContributorsForm = _interopRequireDefault(require("./InviteContributorsForm"));
+
+var _TodoListItems = _interopRequireDefault(require("./TodoListItems"));
+
+var _TodoItemDetails = _interopRequireDefault(require("./TodoItemDetails.vue"));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+var _default = {
+  name: "TodoList",
+  props: ["todoListId"],
 
   data() {
     return {
       items: [],
       itemsLayout: [],
-      loadingItems: true
+      loadingItems: true,
+      selectedItem: null
     };
   },
 
+  computed: { ...(0, _vuex.mapState)({
+      contributors: state => state.contributors
+    }),
+
+    todoList() {
+      return this.$store.getters.getTodoListById(this.todoListId);
+    },
+
+    uncompletedItems() {
+      return this.items.filter(item => item.completed === false).length;
+    }
+
+  },
+  components: {
+    TodoListItems: _TodoListItems.default,
+    Contributors: _Contributors.default,
+    InviteContributorsForm: _InviteContributorsForm.default,
+    Confetti: _Confetti.default,
+    Draggable: _vuedraggable.default,
+    TodoItemDetails: _TodoItemDetails.default
+  },
+
+  async created() {
+    await this.dispatchGetItemsAndLayout();
+  },
+
   methods: {
+    setTodoListCompleted() {
+      this.$store.commit("setTodoListCompletedState", {
+        todoListId: this.todoListId,
+        completed: true
+      });
+    },
+
+    setTodoListUncompleted() {
+      this.$store.commit("setTodoListCompletedState", {
+        todoListId: this.todoListId,
+        completed: false
+      });
+    },
+
+    selectItem(item) {
+      this.selectedItem = item;
+    },
+
     async dispatchGetItemsAndLayout() {
       await this.dispatchGetItemsLayout();
       await this.dispatchGetItems();
@@ -38353,7 +39075,7 @@ var _default = {
 
     commitSetItemCompletedState(itemId, completed) {
       this.items[this.items.findIndex(i => i.id === itemId)].completed = completed;
-      this.triggerTodoListCompletedEvent();
+      this.triggerTodoListCompleted();
     },
 
     commitUpdateItem(item) {
@@ -38382,13 +39104,13 @@ var _default = {
       this.itemsLayout = itemsLayout;
     },
 
-    triggerTodoListCompletedEvent() {
+    triggerTodoListCompleted() {
       const listCompleted = this.items.length > 0 && this.items.every(item => item.completed);
 
       if (listCompleted) {
-        this.$emit("todo-list-completed");
+        this.setTodoListCompleted();
       } else {
-        this.$emit("todo-list-uncompleted");
+        this.setTodoListUncompleted();
       }
     },
 
@@ -38398,11 +39120,7 @@ var _default = {
 
   },
 
-  async created() {
-    await this.dispatchGetItemsAndLayout();
-  },
-
-  mounted() {
+  async mounted() {
     // Item created
     this.$store.state.connection.on("ItemCreated", (todoListId, item) => {
       if (this.itemsBelongToList(todoListId)) {
@@ -38464,499 +39182,13 @@ var _default = {
 
   watch: {
     items() {
-      this.triggerTodoListCompletedEvent();
-    }
-
-  }
-};
-exports.default = _default;
-        var $642124 = exports.default || module.exports;
-      
-      if (typeof $642124 === 'function') {
-        $642124 = $642124.options;
-      }
-    
-        /* template */
-        Object.assign($642124, (function () {
-          var render = function() {
-  var _vm = this
-  var _h = _vm.$createElement
-  var _c = _vm._self._c || _h
-  return _c(
-    "b-list-group",
-    { staticClass: "todo-list-items" },
-    [
-      !_vm.loadingItems
-        ? _c(
-            "Draggable",
-            {
-              attrs: { handle: ".item-handle" },
-              on: { end: _vm.dispatchUpdateItemPosition },
-              model: {
-                value: _vm.itemsLayout,
-                callback: function($$v) {
-                  _vm.itemsLayout = $$v
-                },
-                expression: "itemsLayout"
-              }
-            },
-            _vm._l(_vm.itemsLayout, function(itemId) {
-              return _c("TodoListItem", {
-                key: itemId,
-                attrs: {
-                  item: _vm.items.find(function(i) {
-                    return i.id === itemId
-                  })
-                },
-                on: {
-                  "checkbox-clicked": _vm.dispatchSetItemCompletedState,
-                  "item-edited": _vm.dispatchUpdateItem,
-                  "delete-item": _vm.dispatchDeleteItem,
-                  "sub-item-count-changed": _vm.commitUpdateHasSubItems
-                }
-              })
-            }),
-            1
-          )
-        : _vm._e(),
-      _vm._v(" "),
-      _vm.items.length === 0
-        ? _c("b-list-group-item", [_vm._v("Add an item to get started.")])
-        : _vm._e(),
-      _vm._v(" "),
-      _c("AddTodoListItemForm", {
-        staticClass: "mt-3",
-        attrs: { todoListId: _vm.todoListId },
-        on: { "add-item": _vm.dispatchAddItem }
-      })
-    ],
-    1
-  )
-}
-var staticRenderFns = []
-render._withStripped = true
-
-          return {
-            render: render,
-            staticRenderFns: staticRenderFns,
-            _compiled: true,
-            _scopeId: null,
-            functional: undefined
-          };
-        })());
-      
-    /* hot reload */
-    (function () {
-      if (module.hot) {
-        var api = require('vue-hot-reload-api');
-        api.install(require('vue'));
-        if (api.compatible) {
-          module.hot.accept();
-          if (!module.hot.data) {
-            api.createRecord('$642124', $642124);
-          } else {
-            api.reload('$642124', $642124);
-          }
-        }
-
-        
-      }
-    })();
-},{"vue":"node_modules/vue/dist/vue.runtime.esm.js","axios":"node_modules/axios/index.js","vuedraggable":"node_modules/vuedraggable/dist/vuedraggable.common.js","./TodoListItem":"vue/components/TodoListItem.vue","./AddTodoListItemForm.vue":"vue/components/AddTodoListItemForm.vue","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js"}],"vue/components/InviteContributorsForm.vue":[function(require,module,exports) {
-"use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.default = void 0;
-
-var _axios = _interopRequireDefault(require("axios"));
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-var _default = {
-  props: ["listId"],
-
-  data() {
-    return {
-      form: {
-        email: ""
-      },
-      invitationSent: false,
-      dismissSecs: 5,
-      dismissCountDown: 0
-    };
-  },
-
-  methods: {
-    async invite() {
-      await (0, _axios.default)({
-        method: "POST",
-        url: "api/lists/".concat(this.listId, "/email"),
-        data: JSON.stringify({
-          email: this.form.email
-        }),
-        headers: {
-          "content-type": "application/json"
-        }
-      });
-      this.form.email = "";
-      this.showAlert();
+      this.triggerTodoListCompleted();
     },
 
-    countDownChanged(dismissCountDown) {
-      this.dismissCountDown = dismissCountDown;
-    },
-
-    showAlert() {
-      this.dismissCountDown = this.dismissSecs;
-    }
-
-  }
-};
-exports.default = _default;
-        var $3f1240 = exports.default || module.exports;
-      
-      if (typeof $3f1240 === 'function') {
-        $3f1240 = $3f1240.options;
-      }
-    
-        /* template */
-        Object.assign($3f1240, (function () {
-          var render = function() {
-  var _vm = this
-  var _h = _vm.$createElement
-  var _c = _vm._self._c || _h
-  return _c(
-    "b-card",
-    { attrs: { title: "Invite" } },
-    [
-      _c(
-        "b-form",
-        {
-          staticClass: "invitation-form",
-          on: {
-            submit: function($event) {
-              $event.preventDefault()
-              return _vm.invite($event)
-            }
-          }
-        },
-        [
-          _c(
-            "b-form-group",
-            {
-              staticClass: "email-group text-secondary",
-              attrs: { label: "Email" }
-            },
-            [
-              _c("b-form-input", {
-                attrs: { type: "email", required: "" },
-                model: {
-                  value: _vm.form.email,
-                  callback: function($$v) {
-                    _vm.$set(_vm.form, "email", $$v)
-                  },
-                  expression: "form.email"
-                }
-              })
-            ],
-            1
-          ),
-          _vm._v(" "),
-          _c("b-button", { attrs: { type: "submit" } }, [_vm._v("Send")]),
-          _vm._v(" "),
-          _c(
-            "b-alert",
-            {
-              staticClass: "mb-0 mt-3",
-              attrs: {
-                variant: "success",
-                show: _vm.dismissCountDown,
-                dismissable: "",
-                fade: ""
-              },
-              on: {
-                dismissed: function($event) {
-                  _vm.dismissCountDown = 0
-                },
-                "dismiss-count-down": _vm.countDownChanged
-              }
-            },
-            [_vm._v("Invitation sent!")]
-          )
-        ],
-        1
-      )
-    ],
-    1
-  )
-}
-var staticRenderFns = []
-render._withStripped = true
-
-          return {
-            render: render,
-            staticRenderFns: staticRenderFns,
-            _compiled: true,
-            _scopeId: "data-v-3f1240",
-            functional: undefined
-          };
-        })());
-      
-    /* hot reload */
-    (function () {
-      if (module.hot) {
-        var api = require('vue-hot-reload-api');
-        api.install(require('vue'));
-        if (api.compatible) {
-          module.hot.accept();
-          if (!module.hot.data) {
-            api.createRecord('$3f1240', $3f1240);
-          } else {
-            api.reload('$3f1240', $3f1240);
-          }
-        }
-
-        
-        var reloadCSS = require('_css_loader');
-        module.hot.dispose(reloadCSS);
-        module.hot.accept(reloadCSS);
-      
-      }
-    })();
-},{"axios":"node_modules/axios/index.js","_css_loader":"node_modules/parcel-bundler/src/builtins/css-loader.js","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"node_modules/vue-confetti/dist/vue-confetti.js":[function(require,module,exports) {
-var define;
-!function(t,e){"object"==typeof exports&&"object"==typeof module?module.exports=e():"function"==typeof define&&define.amd?define([],e):"object"==typeof exports?exports["vue-confetti"]=e():t["vue-confetti"]=e()}(window,(function(){return function(t){var e={};function n(i){if(e[i])return e[i].exports;var r=e[i]={i:i,l:!1,exports:{}};return t[i].call(r.exports,r,r.exports,n),r.l=!0,r.exports}return n.m=t,n.c=e,n.d=function(t,e,i){n.o(t,e)||Object.defineProperty(t,e,{enumerable:!0,get:i})},n.r=function(t){"undefined"!=typeof Symbol&&Symbol.toStringTag&&Object.defineProperty(t,Symbol.toStringTag,{value:"Module"}),Object.defineProperty(t,"__esModule",{value:!0})},n.t=function(t,e){if(1&e&&(t=n(t)),8&e)return t;if(4&e&&"object"==typeof t&&t&&t.__esModule)return t;var i=Object.create(null);if(n.r(i),Object.defineProperty(i,"default",{enumerable:!0,value:t}),2&e&&"string"!=typeof t)for(var r in t)n.d(i,r,function(e){return t[e]}.bind(null,r));return i},n.n=function(t){var e=t&&t.__esModule?function(){return t.default}:function(){return t};return n.d(e,"a",e),e},n.o=function(t,e){return Object.prototype.hasOwnProperty.call(t,e)},n.p="",n(n.s=3)}([function(t,e,n){"use strict";n.r(e);var i=function(){var t=arguments.length>0&&void 0!==arguments[0]?arguments[0]:1,e=arguments.length>1&&void 0!==arguments[1]?arguments[1]:t+1,n=arguments.length>2&&void 0!==arguments[2]&&arguments[2],i=parseFloat(t),r=parseFloat(e),o=Math.random()*(r-i)+i;return n?Math.round(o):o};function r(t,e){for(var n=0;n<e.length;n++){var i=e[n];i.enumerable=i.enumerable||!1,i.configurable=!0,"value"in i&&(i.writable=!0),Object.defineProperty(t,i.key,i)}}var o=function(){function t(){var e=arguments.length>0&&void 0!==arguments[0]?arguments[0]:{},n=e.color,i=void 0===n?"blue":n,r=e.size,o=void 0===r?10:r,a=e.dropRate,c=void 0===a?10:a;!function(t,e){if(!(t instanceof e))throw new TypeError("Cannot call a class as a function")}(this,t),this.color=i,this.size=o,this.dropRate=c}var e,n,o;return e=t,(n=[{key:"setup",value:function(t){var e=t.canvas,n=t.wind,r=t.windPosCoef,o=t.windSpeedMax,a=t.count;return this.canvas=e,this.wind=n,this.windPosCoef=r,this.windSpeedMax=o,this.x=i(-35,this.canvas.width+35),this.y=i(-30,-35),this.d=i(150)+10,this.particleSize=i(this.size,2*this.size),this.tilt=i(10),this.tiltAngleIncremental=(i(0,.08)+.04)*(i()<.5?-1:1),this.tiltAngle=0,this.angle=i(2*Math.PI),this.count=a+1,this.remove=!1,this}},{key:"update",value:function(){this.tiltAngle+=this.tiltAngleIncremental*(.2*Math.cos(this.wind+(this.d+this.x+this.y)*this.windPosCoef)+1),this.y+=(Math.cos(this.angle+this.d)+parseInt(this.dropRate,10))/2,this.x+=Math.sin(this.angle),this.x+=Math.cos(this.wind+(this.d+this.x+this.y)*this.windPosCoef)*this.windSpeedMax,this.y+=Math.sin(this.wind+(this.d+this.x+this.y)*this.windPosCoef)*this.windSpeedMax,this.tilt=15*Math.sin(this.tiltAngle-this.count/3)}},{key:"pastBottom",value:function(){return this.y>this.canvas.height}},{key:"draw",value:function(){this.canvas.ctx.fillStyle=this.color,this.canvas.ctx.beginPath(),this.canvas.ctx.setTransform(Math.cos(this.tiltAngle),Math.sin(this.tiltAngle),0,1,this.x,this.y)}},{key:"kill",value:function(){this.remove=!0}}])&&r(e.prototype,n),o&&r(e,o),t}();function a(t){return(a="function"==typeof Symbol&&"symbol"==typeof Symbol.iterator?function(t){return typeof t}:function(t){return t&&"function"==typeof Symbol&&t.constructor===Symbol&&t!==Symbol.prototype?"symbol":typeof t})(t)}function c(t,e){for(var n=0;n<e.length;n++){var i=e[n];i.enumerable=i.enumerable||!1,i.configurable=!0,"value"in i&&(i.writable=!0),Object.defineProperty(t,i.key,i)}}function s(t,e){return!e||"object"!==a(e)&&"function"!=typeof e?function(t){if(void 0===t)throw new ReferenceError("this hasn't been initialised - super() hasn't been called");return t}(t):e}function l(t,e,n){return(l="undefined"!=typeof Reflect&&Reflect.get?Reflect.get:function(t,e,n){var i=function(t,e){for(;!Object.prototype.hasOwnProperty.call(t,e)&&null!==(t=u(t)););return t}(t,e);if(i){var r=Object.getOwnPropertyDescriptor(i,e);return r.get?r.get.call(n):r.value}})(t,e,n||t)}function u(t){return(u=Object.setPrototypeOf?Object.getPrototypeOf:function(t){return t.__proto__||Object.getPrototypeOf(t)})(t)}function f(t,e){return(f=Object.setPrototypeOf||function(t,e){return t.__proto__=e,t})(t,e)}var h=function(t){function e(){return function(t,e){if(!(t instanceof e))throw new TypeError("Cannot call a class as a function")}(this,e),s(this,u(e).apply(this,arguments))}var n,i,r;return function(t,e){if("function"!=typeof e&&null!==e)throw new TypeError("Super expression must either be null or a function");t.prototype=Object.create(e&&e.prototype,{constructor:{value:t,writable:!0,configurable:!0}}),e&&f(t,e)}(e,t),n=e,(i=[{key:"draw",value:function(){l(u(e.prototype),"draw",this).call(this),this.canvas.ctx.arc(0,0,this.particleSize/2,0,2*Math.PI,!1),this.canvas.ctx.fill()}}])&&c(n.prototype,i),r&&c(n,r),e}(o);function p(t){return(p="function"==typeof Symbol&&"symbol"==typeof Symbol.iterator?function(t){return typeof t}:function(t){return t&&"function"==typeof Symbol&&t.constructor===Symbol&&t!==Symbol.prototype?"symbol":typeof t})(t)}function y(t,e){for(var n=0;n<e.length;n++){var i=e[n];i.enumerable=i.enumerable||!1,i.configurable=!0,"value"in i&&(i.writable=!0),Object.defineProperty(t,i.key,i)}}function d(t,e){return!e||"object"!==p(e)&&"function"!=typeof e?function(t){if(void 0===t)throw new ReferenceError("this hasn't been initialised - super() hasn't been called");return t}(t):e}function v(t,e,n){return(v="undefined"!=typeof Reflect&&Reflect.get?Reflect.get:function(t,e,n){var i=function(t,e){for(;!Object.prototype.hasOwnProperty.call(t,e)&&null!==(t=b(t)););return t}(t,e);if(i){var r=Object.getOwnPropertyDescriptor(i,e);return r.get?r.get.call(n):r.value}})(t,e,n||t)}function b(t){return(b=Object.setPrototypeOf?Object.getPrototypeOf:function(t){return t.__proto__||Object.getPrototypeOf(t)})(t)}function m(t,e){return(m=Object.setPrototypeOf||function(t,e){return t.__proto__=e,t})(t,e)}var w=function(t){function e(){return function(t,e){if(!(t instanceof e))throw new TypeError("Cannot call a class as a function")}(this,e),d(this,b(e).apply(this,arguments))}var n,i,r;return function(t,e){if("function"!=typeof e&&null!==e)throw new TypeError("Super expression must either be null or a function");t.prototype=Object.create(e&&e.prototype,{constructor:{value:t,writable:!0,configurable:!0}}),e&&m(t,e)}(e,t),n=e,(i=[{key:"draw",value:function(){v(b(e.prototype),"draw",this).call(this),this.canvas.ctx.fillRect(0,0,this.particleSize,this.particleSize/2)}}])&&y(n.prototype,i),r&&y(n,r),e}(o);function g(t){return(g="function"==typeof Symbol&&"symbol"==typeof Symbol.iterator?function(t){return typeof t}:function(t){return t&&"function"==typeof Symbol&&t.constructor===Symbol&&t!==Symbol.prototype?"symbol":typeof t})(t)}function O(t,e){for(var n=0;n<e.length;n++){var i=e[n];i.enumerable=i.enumerable||!1,i.configurable=!0,"value"in i&&(i.writable=!0),Object.defineProperty(t,i.key,i)}}function P(t,e){return!e||"object"!==g(e)&&"function"!=typeof e?function(t){if(void 0===t)throw new ReferenceError("this hasn't been initialised - super() hasn't been called");return t}(t):e}function S(t,e,n){return(S="undefined"!=typeof Reflect&&Reflect.get?Reflect.get:function(t,e,n){var i=function(t,e){for(;!Object.prototype.hasOwnProperty.call(t,e)&&null!==(t=j(t)););return t}(t,e);if(i){var r=Object.getOwnPropertyDescriptor(i,e);return r.get?r.get.call(n):r.value}})(t,e,n||t)}function j(t){return(j=Object.setPrototypeOf?Object.getPrototypeOf:function(t){return t.__proto__||Object.getPrototypeOf(t)})(t)}function k(t,e){return(k=Object.setPrototypeOf||function(t,e){return t.__proto__=e,t})(t,e)}var x=function(t){function e(){return function(t,e){if(!(t instanceof e))throw new TypeError("Cannot call a class as a function")}(this,e),P(this,j(e).apply(this,arguments))}var n,i,r;return function(t,e){if("function"!=typeof e&&null!==e)throw new TypeError("Super expression must either be null or a function");t.prototype=Object.create(e&&e.prototype,{constructor:{value:t,writable:!0,configurable:!0}}),e&&k(t,e)}(e,t),n=e,(i=[{key:"draw",value:function(){var t=this;S(j(e.prototype),"draw",this).call(this);var n=function(e,n,i,r,o,a){t.canvas.ctx.bezierCurveTo(e*(t.particleSize/200),n*(t.particleSize/200),i*(t.particleSize/200),r*(t.particleSize/200),o*(t.particleSize/200),a*(t.particleSize/200))};this.canvas.ctx.moveTo(37.5/this.particleSize,20/this.particleSize),n(75,37,70,25,50,25),n(20,25,20,62.5,20,62.5),n(20,80,40,102,75,120),n(110,102,130,80,130,62.5),n(130,62.5,130,25,100,25),n(85,25,75,37,75,40),this.canvas.ctx.fill()}}])&&O(n.prototype,i),r&&O(n,r),e}(o);function M(t){return(M="function"==typeof Symbol&&"symbol"==typeof Symbol.iterator?function(t){return typeof t}:function(t){return t&&"function"==typeof Symbol&&t.constructor===Symbol&&t!==Symbol.prototype?"symbol":typeof t})(t)}function _(t,e){for(var n=0;n<e.length;n++){var i=e[n];i.enumerable=i.enumerable||!1,i.configurable=!0,"value"in i&&(i.writable=!0),Object.defineProperty(t,i.key,i)}}function E(t,e){return!e||"object"!==M(e)&&"function"!=typeof e?function(t){if(void 0===t)throw new ReferenceError("this hasn't been initialised - super() hasn't been called");return t}(t):e}function I(t,e,n){return(I="undefined"!=typeof Reflect&&Reflect.get?Reflect.get:function(t,e,n){var i=function(t,e){for(;!Object.prototype.hasOwnProperty.call(t,e)&&null!==(t=C(t)););return t}(t,e);if(i){var r=Object.getOwnPropertyDescriptor(i,e);return r.get?r.get.call(n):r.value}})(t,e,n||t)}function C(t){return(C=Object.setPrototypeOf?Object.getPrototypeOf:function(t){return t.__proto__||Object.getPrototypeOf(t)})(t)}function D(t,e){return(D=Object.setPrototypeOf||function(t,e){return t.__proto__=e,t})(t,e)}var R=function(t){function e(t,n){var i;return function(t,e){if(!(t instanceof e))throw new TypeError("Cannot call a class as a function")}(this,e),(i=E(this,C(e).call(this,t))).imgEl=n,i}var n,i,r;return function(t,e){if("function"!=typeof e&&null!==e)throw new TypeError("Super expression must either be null or a function");t.prototype=Object.create(e&&e.prototype,{constructor:{value:t,writable:!0,configurable:!0}}),e&&D(t,e)}(e,t),n=e,(i=[{key:"draw",value:function(){I(C(e.prototype),"draw",this).call(this),this.canvas.ctx.drawImage(this.imgEl,0,0,this.particleSize,this.particleSize)}}])&&_(n.prototype,i),r&&_(n,r),e}(o);function T(t,e){for(var n=0;n<e.length;n++){var i=e[n];i.enumerable=i.enumerable||!1,i.configurable=!0,"value"in i&&(i.writable=!0),Object.defineProperty(t,i.key,i)}}var z=function(){function t(){!function(t,e){if(!(t instanceof e))throw new TypeError("Cannot call a class as a function")}(this,t),this.cachedImage=null}var e,n,r;return e=t,(n=[{key:"createImageElement",value:function(t){var e=document.createElement("img");return e.setAttribute("src",t),e}},{key:"getImageElement",value:function(t){return this.cachedImage&&t===this.cachedImage.getAttribute("src")||(this.cachedImage=this.createImageElement(t)),this.cachedImage}},{key:"getRandomParticle",value:function(){var t=arguments.length>0&&void 0!==arguments[0]?arguments[0]:{},e=t.particles||[];return e.length<1?{}:e[Math.floor(Math.random()*e.length)]}},{key:"getDefaults",value:function(){var t=arguments.length>0&&void 0!==arguments[0]?arguments[0]:{};return{type:t.defaultType||"circle",size:t.defaultSize||10,dropRate:t.defaultDropRate||10,colors:t.defaultColors||["DodgerBlue","OliveDrab","Gold","pink","SlateBlue","lightblue","Violet","PaleGreen","SteelBlue","SandyBrown","Chocolate","Crimson"],url:null}}},{key:"create",value:function(t){var e=this.getDefaults(t),n=this.getRandomParticle(t),r=Object.assign(e,n),o=i(0,r.colors.length-1,!0);if(r.color=r.colors[o],"circle"===r.type)return new h(r);if("rect"===r.type)return new w(r);if("heart"===r.type)return new x(r);if("image"===r.type)return new R(r,this.getImageElement(r.url));throw Error('Unknown particle type: "'.concat(r.type,'"'))}}])&&T(e.prototype,n),r&&T(e,r),t}();function F(t,e){for(var n=0;n<e.length;n++){var i=e[n];i.enumerable=i.enumerable||!1,i.configurable=!0,"value"in i&&(i.writable=!0),Object.defineProperty(t,i.key,i)}}var A=function(){function t(e){!function(t,e){if(!(t instanceof e))throw new TypeError("Cannot call a class as a function")}(this,t),this.items=[],this.pool=[],this.particleOptions=e,this.particleFactory=new z}var e,n,i;return e=t,(n=[{key:"update",value:function(){var t,e=this,n=[],i=[];this.items.forEach((function(t){t.update(),t.pastBottom()?t.remove||(t.setup(e.particleOptions),n.push(t)):i.push(t)})),(t=this.pool).push.apply(t,n),this.items=i}},{key:"draw",value:function(){this.items.forEach((function(t){return t.draw()}))}},{key:"add",value:function(){this.pool.length>0?this.items.push(this.pool.pop().setup(this.particleOptions)):this.items.push(this.particleFactory.create(this.particleOptions).setup(this.particleOptions))}},{key:"refresh",value:function(){this.items.forEach((function(t){t.kill()})),this.pool=[]}}])&&F(e.prototype,n),i&&F(e,i),t}();function B(t,e){for(var n=0;n<e.length;n++){var i=e[n];i.enumerable=i.enumerable||!1,i.configurable=!0,"value"in i&&(i.writable=!0),Object.defineProperty(t,i.key,i)}}var H=function(){function t(e){!function(t,e){if(!(t instanceof e))throw new TypeError("Cannot call a class as a function")}(this,t);var n=document.getElementById(e);if(this.isDefault=null==e,!this.isDefault&&!n)throw new Error('No element found with ID "'.concat(e,'"'));if(this.canvas=n||t.createDefaultCanvas("confetti-canvas"),!(this.canvas instanceof HTMLCanvasElement))throw new Error('Element with ID "'.concat("confetti-canvas",'" is not a valid HTMLCanvasElement'));this.ctx=this.canvas.getContext("2d")}var e,n,i;return e=t,i=[{key:"createDefaultCanvas",value:function(t){var e=document.createElement("canvas");return e.style.display="block",e.style.position="fixed",e.style.pointerEvents="none",e.style.top=0,e.style.width="100vw",e.style.height="100vh",e.id=t,document.querySelector("body").appendChild(e),e}}],(n=[{key:"clear",value:function(){this.ctx.setTransform(1,0,0,1,0,0),this.ctx.clearRect(0,0,this.width,this.height)}},{key:"updateDimensions",value:function(){this.isDefault&&(this.width===window.innerWidth&&this.height===window.innerHeight||(this.canvas.width=window.innerWidth,this.canvas.height=window.innerHeight))}},{key:"width",get:function(){return this.canvas.width}},{key:"height",get:function(){return this.canvas.height}}])&&B(e.prototype,n),i&&B(e,i),t}();function L(t,e){for(var n=0;n<e.length;n++){var i=e[n];i.enumerable=i.enumerable||!1,i.configurable=!0,"value"in i&&(i.writable=!0),Object.defineProperty(t,i.key,i)}}var W=function(){function t(){!function(t,e){if(!(t instanceof e))throw new TypeError("Cannot call a class as a function")}(this,t),this.setDefaults()}var e,n,i;return e=t,(n=[{key:"setDefaults",value:function(){this.killed=!1,this.framesSinceDrop=0,this.canvas=null,this.canvasId=null,this.W=0,this.H=0,this.particleManager=null,this.particlesPerFrame=0,this.wind=0,this.windSpeed=1,this.windSpeedMax=1,this.windChange=.01,this.windPosCoef=.002,this.animationId=null}},{key:"getParticleOptions",value:function(t){var e={canvas:this.canvas,W:this.W,H:this.H,wind:this.wind,windPosCoef:this.windPosCoef,windSpeedMax:this.windSpeedMax,count:0};return Object.assign(e,t),e}},{key:"createParticles",value:function(){var t=arguments.length>0&&void 0!==arguments[0]?arguments[0]:{},e=this.getParticleOptions(t);this.particleManager=new A(e)}},{key:"start",value:function(){var t=arguments.length>0&&void 0!==arguments[0]?arguments[0]:{};this.canvas&&t.canvasId===this.canvasId||(this.canvas=new H(t.canvasId),this.canvasId=t.canvasId),this.animationId&&cancelAnimationFrame(this.animationId),this.createParticles(t),this.canvas.updateDimensions(),this.setParticlesPerFrame(t),this.animationId=requestAnimationFrame(this.mainLoop.bind(this))}},{key:"setParticlesPerFrame",value:function(t){this.particlesPerFrame=t.particlesPerFrame||2}},{key:"stop",value:function(){this.killed=!0,this.particlesPerFrame=0}},{key:"update",value:function(t){this.canvas&&t.canvasId!==this.canvasId&&(this.stop(),this.canvas.clear(),this.start(t)),this.setParticlesPerFrame(t),this.particleManager&&(this.particleManager.particleOptions=this.getParticleOptions(t),this.particleManager.refresh())}},{key:"remove",value:function(){this.stop(),this.animationId&&cancelAnimationFrame(this.animationId),this.canvas.clear(),this.setDefaults()}},{key:"mainLoop",value:function(t){this.canvas.updateDimensions(),this.canvas.clear(),this.windSpeed=Math.sin(t/8e3)*this.windSpeedMax,this.wind=this.particleManager.particleOptions.wind+=this.windChange;for(var e=this.framesSinceDrop*this.particlesPerFrame;e>=1;)this.particleManager.add(),e-=1,this.framesSinceDrop=0;this.particleManager.update(),this.particleManager.draw(),this.killed&&!this.particleManager.items.length||(this.animationId=requestAnimationFrame(this.mainLoop.bind(this))),this.framesSinceDrop+=1}}])&&L(e.prototype,n),i&&L(e,i),t}();n.d(e,"Confetti",(function(){return W}));e.default={install:function(t,e){this.installed||(this.installed=!0,t.prototype.$confetti=new W(e))}}},,,function(t,e,n){t.exports=n(0)}])}));
-},{}],"vue/components/Confetti.vue":[function(require,module,exports) {
-"use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.default = void 0;
-
-var _vue = _interopRequireDefault(require("vue"));
-
-var _vueConfetti = _interopRequireDefault(require("vue-confetti"));
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-//
-//
-_vue.default.use(_vueConfetti.default);
-
-var _default = {
-  name: "Confetti",
-
-  mounted() {
-    this.$nextTick(() => {
-      this.$confetti.start({
-        particles: [{
-          type: "rect"
-        }],
-        particlesPerFrame: 0.4,
-        dropRate: 8
-      });
-    });
-  },
-
-  beforeDestroy() {
-    this.$confetti.stop();
-  }
-
-};
-exports.default = _default;
-        var $1a387c = exports.default || module.exports;
-      
-      if (typeof $1a387c === 'function') {
-        $1a387c = $1a387c.options;
-      }
-    
-        /* template */
-        Object.assign($1a387c, (function () {
-          var render = function() {
-  var _vm = this
-  var _h = _vm.$createElement
-  var _c = _vm._self._c || _h
-  return _c("div")
-}
-var staticRenderFns = []
-render._withStripped = true
-
-          return {
-            render: render,
-            staticRenderFns: staticRenderFns,
-            _compiled: true,
-            _scopeId: null,
-            functional: undefined
-          };
-        })());
-      
-    /* hot reload */
-    (function () {
-      if (module.hot) {
-        var api = require('vue-hot-reload-api');
-        api.install(require('vue'));
-        if (api.compatible) {
-          module.hot.accept();
-          if (!module.hot.data) {
-            api.createRecord('$1a387c', $1a387c);
-          } else {
-            api.reload('$1a387c', $1a387c);
-          }
-        }
-
-        
-      }
-    })();
-},{"vue":"node_modules/vue/dist/vue.runtime.esm.js","vue-confetti":"node_modules/vue-confetti/dist/vue-confetti.js","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js"}],"vue/components/TodoList.vue":[function(require,module,exports) {
-"use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.default = void 0;
-
-var _vuex = require("vuex");
-
-var _TodoListItems = _interopRequireDefault(require("./TodoListItems"));
-
-var _Contributors = _interopRequireDefault(require("./Contributors"));
-
-var _InviteContributorsForm = _interopRequireDefault(require("./InviteContributorsForm"));
-
-var _Confetti = _interopRequireDefault(require("./Confetti"));
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-var _default = {
-  name: "TodoList",
-  props: ["todoListId"],
-
-  data() {
-    return {
-      editingTitle: false,
-      todoListForm: {
-        listTitle: ""
-      }
-    };
-  },
-
-  computed: {
-    todoList() {
-      return this.$store.getters.getTodoListById(this.todoListId);
-    },
-
-    ...(0, _vuex.mapState)({
-      contributors: state => state.contributors
-    })
-  },
-  components: {
-    TodoListItems: _TodoListItems.default,
-    Contributors: _Contributors.default,
-    InviteContributorsForm: _InviteContributorsForm.default,
-    Confetti: _Confetti.default
-  },
-  methods: {
-    async updateListTitle() {
-      this.editingTitle = false;
-      await this.$store.dispatch("updateTodoListTitle", {
-        todoListId: this.todoListId,
-        listTitle: this.todoListForm.listTitle
-      });
-      this.todoListForm.listTitle = "";
-    },
-
-    showTitleEditor() {
-      this.editingTitle = true;
-      this.$nextTick(() => {
-        this.$refs.listTitleInput.focus();
-      });
-      this.todoListForm.listTitle = this.todoList.listTitle;
-    },
-
-    setTodoListCompleted() {
-      this.$store.commit("setTodoListCompletedState", {
-        todoListId: this.todoListId,
-        completed: true
-      });
-    },
-
-    setTodoListUncompleted() {
-      this.$store.commit("setTodoListCompletedState", {
-        todoListId: this.todoListId,
-        completed: false
+    uncompletedItems() {
+      this.$store.commit("updateTodoListUncompletedItems", {
+        listId: this.todoList.id,
+        uncompletedItems: this.uncompletedItems
       });
     }
 
@@ -38976,110 +39208,273 @@ exports.default = _default;
   var _h = _vm.$createElement
   var _c = _vm._self._c || _h
   return _c(
-    "div",
-    { staticClass: "todo-list-wrapper" },
+    "b-row",
+    { attrs: { "no-gutters": "" } },
     [
-      _vm.todoList.completed ? _c("Confetti") : _vm._e(),
-      _vm._v(" "),
-      _c(
-        "div",
-        { staticClass: "todo-list" },
-        [
-          !_vm.editingTitle
-            ? _c(
-                "h1",
-                {
-                  staticClass: "todo-list-title mb-2",
-                  on: { click: _vm.showTitleEditor }
-                },
-                [_vm._v(_vm._s(_vm.todoList.listTitle))]
-              )
-            : _vm._e(),
-          _vm._v(" "),
-          _vm.editingTitle
-            ? _c(
-                "b-form",
-                {
-                  staticClass: "list-title-editor",
+      _c("b-col", [
+        _c(
+          "div",
+          { staticClass: "list-wrapper" },
+          [
+            _vm.todoList.completed ? _c("Confetti") : _vm._e(),
+            _vm._v(" "),
+            _c(
+              "header",
+              { staticClass: "list-header" },
+              [
+                _c(
+                  "b-row",
+                  { staticClass: "align-items-center" },
+                  [
+                    _c("b-col", [
+                      _c("h2", { staticClass: "list-title" }, [
+                        _vm._v(_vm._s(_vm.todoList.listTitle))
+                      ])
+                    ]),
+                    _vm._v(" "),
+                    _c("b-col", [
+                      _c(
+                        "div",
+                        { staticClass: "contributors-wrapper" },
+                        [
+                          _c("Contributors", {
+                            attrs: {
+                              todoListContributors: _vm.todoList.contributors,
+                              accountContributors: _vm.contributors
+                            }
+                          }),
+                          _vm._v(" "),
+                          _c(
+                            "div",
+                            { staticClass: "list-settings" },
+                            [
+                              _c("InviteContributorsForm", {
+                                attrs: { listId: _vm.todoList.id }
+                              })
+                            ],
+                            1
+                          )
+                        ],
+                        1
+                      )
+                    ])
+                  ],
+                  1
+                )
+              ],
+              1
+            ),
+            _vm._v(" "),
+            !_vm.loadingItems
+              ? _c("TodoListItems", {
+                  attrs: {
+                    todoListId: _vm.todoList.id,
+                    items: _vm.items,
+                    itemsLayout: _vm.itemsLayout
+                  },
                   on: {
-                    submit: function($event) {
-                      $event.preventDefault()
-                      return _vm.updateListTitle($event)
-                    }
+                    "item-selected": _vm.selectItem,
+                    "checkbox-clicked": _vm.dispatchSetItemCompletedState,
+                    "add-item": _vm.dispatchAddItem,
+                    "update-item-position": _vm.dispatchUpdateItemPosition,
+                    "delete-item": _vm.dispatchDeleteItem
                   }
-                },
-                [
-                  _c(
-                    "b-form-group",
-                    [
-                      _c("b-form-input", {
-                        ref: "listTitleInput",
-                        attrs: { id: "title", maxlength: "50", required: "" },
-                        model: {
-                          value: _vm.todoListForm.listTitle,
-                          callback: function($$v) {
-                            _vm.$set(_vm.todoListForm, "listTitle", $$v)
-                          },
-                          expression: "todoListForm.listTitle"
-                        }
-                      })
-                    ],
-                    1
-                  ),
-                  _vm._v(" "),
-                  _c(
-                    "b-button",
-                    {
-                      staticClass: "mb-3",
-                      attrs: { variant: "success", type: "submit" }
-                    },
-                    [_vm._v("Save")]
-                  )
-                ],
-                1
-              )
-            : _vm._e(),
-          _vm._v(" "),
-          _c("Contributors", {
-            staticClass: "mb-4",
-            attrs: {
-              todoListContributors: _vm.todoList.contributors,
-              accountContributors: _vm.contributors
+                })
+              : _vm._e()
+          ],
+          1
+        )
+      ]),
+      _vm._v(" "),
+      _vm.selectedItem
+        ? _c("TodoItemDetails", {
+            attrs: { item: _vm.selectedItem },
+            on: {
+              "item-edited": _vm.dispatchUpdateItem,
+              "sub-items-completed": _vm.dispatchSetItemCompletedState,
+              "sub-items-uncompleted": _vm.dispatchSetItemCompletedState,
+              "sub-item-count-changed": _vm.commitUpdateHasSubItems
             }
-          }),
+          })
+        : _vm._e()
+    ],
+    1
+  )
+}
+var staticRenderFns = []
+render._withStripped = true
+
+          return {
+            render: render,
+            staticRenderFns: staticRenderFns,
+            _compiled: true,
+            _scopeId: "data-v-98e7b1",
+            functional: undefined
+          };
+        })());
+      
+    /* hot reload */
+    (function () {
+      if (module.hot) {
+        var api = require('vue-hot-reload-api');
+        api.install(require('vue'));
+        if (api.compatible) {
+          module.hot.accept();
+          if (!module.hot.data) {
+            api.createRecord('$98e7b1', $98e7b1);
+          } else {
+            api.reload('$98e7b1', $98e7b1);
+          }
+        }
+
+        
+        var reloadCSS = require('_css_loader');
+        module.hot.dispose(reloadCSS);
+        module.hot.accept(reloadCSS);
+      
+      }
+    })();
+},{"axios":"node_modules/axios/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js","vuex":"node_modules/vuex/dist/vuex.esm.js","vuedraggable":"node_modules/vuedraggable/dist/vuedraggable.common.js","./Confetti":"vue/components/Confetti.vue","./Contributors":"vue/components/Contributors.vue","./InviteContributorsForm":"vue/components/InviteContributorsForm.vue","./TodoListItems":"vue/components/TodoListItems.vue","./TodoItemDetails.vue":"vue/components/TodoItemDetails.vue","_css_loader":"node_modules/parcel-bundler/src/builtins/css-loader.js","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js"}],"vue/views/Home.vue":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = void 0;
+
+var _axios = _interopRequireDefault(require("axios"));
+
+var _vuex = require("vuex");
+
+var _vuedraggable = _interopRequireDefault(require("vuedraggable"));
+
+var _TodoLists = _interopRequireDefault(require("../components/TodoLists"));
+
+var _TodoList = _interopRequireDefault(require("../components/TodoList"));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+var _default = {
+  name: "Home",
+  computed: {
+    user() {
+      return this.$store.getters.user;
+    },
+
+    firstName() {
+      const fullName = this.user.fullName.split(" ");
+      return fullName[0];
+    },
+
+    ...(0, _vuex.mapState)({
+      loadingTodoLists: state => state.loadingTodoLists
+    })
+  },
+  components: {
+    TodoLists: _TodoLists.default,
+    TodoList: _TodoList.default,
+    Draggable: _vuedraggable.default
+  }
+};
+exports.default = _default;
+        var $254769 = exports.default || module.exports;
+      
+      if (typeof $254769 === 'function') {
+        $254769 = $254769.options;
+      }
+    
+        /* template */
+        Object.assign($254769, (function () {
+          var render = function() {
+  var _vm = this
+  var _h = _vm.$createElement
+  var _c = _vm._self._c || _h
+  return _c(
+    "div",
+    { attrs: { id: "content" } },
+    [
+      _c(
+        "b-row",
+        { attrs: { "no-gutters": "" } },
+        [
+          _c("b-col", { attrs: { md: "4", lg: "4", xl: "2" } }, [
+            _c("div", { staticClass: "sidebar" }, [
+              _c("div", { staticClass: "sidebar-header mb-3" }, [
+                _c(
+                  "a",
+                  { staticClass: "sidebar-brand", attrs: { href: "#" } },
+                  [_c("b-icon-check-all"), _vm._v("Todo\n          ")],
+                  1
+                )
+              ]),
+              _vm._v(" "),
+              _c("div", { staticClass: "sidebar-lists" }, [_c("TodoLists")], 1)
+            ])
+          ]),
           _vm._v(" "),
           _c(
-            "b-row",
+            "b-col",
             [
-              _c(
-                "b-col",
-                {
-                  staticClass: "mb-3",
-                  class: { "col-md-8": _vm.todoList.role == 3 }
-                },
-                [
-                  _c("TodoListItems", {
-                    attrs: { todoListId: _vm.todoListId },
-                    on: {
-                      "todo-list-completed": _vm.setTodoListCompleted,
-                      "todo-list-uncompleted": _vm.setTodoListUncompleted
-                    }
-                  })
-                ],
-                1
-              ),
-              _vm._v(" "),
-              _vm.todoList.role == 3
-                ? _c(
-                    "b-col",
-                    { attrs: { md: "4" } },
-                    [
-                      _c("InviteContributorsForm", {
-                        attrs: { listId: this.todoListId }
+              _c("div", { staticClass: "account-options" }, [
+                _c(
+                  "a",
+                  { staticClass: "account-dropdown", attrs: { href: "#" } },
+                  [
+                    _c("div", { staticClass: "profile-picture" }, [
+                      _c("img", {
+                        attrs: { src: _vm.user.pictureUrl, alt: "" }
                       })
-                    ],
-                    1
-                  )
+                    ]),
+                    _vm._v(" "),
+                    _c("div", { staticClass: "profile-name" }, [
+                      _vm._v(_vm._s(_vm.user.fullName))
+                    ]),
+                    _vm._v(" "),
+                    _c(
+                      "div",
+                      { staticClass: "dropdown-toggler" },
+                      [_c("b-icon-chevron-down")],
+                      1
+                    )
+                  ]
+                )
+              ]),
+              _vm._v(" "),
+              !_vm.loadingTodoLists
+                ? _c("RouterView", { key: _vm.$route.fullPath })
                 : _vm._e()
             ],
             1
@@ -39111,119 +39506,16 @@ render._withStripped = true
         if (api.compatible) {
           module.hot.accept();
           if (!module.hot.data) {
-            api.createRecord('$98e7b1', $98e7b1);
+            api.createRecord('$254769', $254769);
           } else {
-            api.reload('$98e7b1', $98e7b1);
+            api.reload('$254769', $254769);
           }
         }
 
         
       }
     })();
-},{"vuex":"node_modules/vuex/dist/vuex.esm.js","./TodoListItems":"vue/components/TodoListItems.vue","./Contributors":"vue/components/Contributors.vue","./InviteContributorsForm":"vue/components/InviteContributorsForm.vue","./Confetti":"vue/components/Confetti.vue","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/views/TodoListView.vue":[function(require,module,exports) {
-"use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.default = void 0;
-
-var _vuex = require("vuex");
-
-var _TodoList = _interopRequireDefault(require("../components/TodoList"));
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-var _default = {
-  name: "TodoListView",
-  props: ["todoListId"],
-  components: {
-    TodoList: _TodoList.default
-  },
-  computed: (0, _vuex.mapState)({
-    loadingTodoLists: state => state.loadingTodoLists
-  })
-};
-exports.default = _default;
-        var $2f27a4 = exports.default || module.exports;
-      
-      if (typeof $2f27a4 === 'function') {
-        $2f27a4 = $2f27a4.options;
-      }
-    
-        /* template */
-        Object.assign($2f27a4, (function () {
-          var render = function() {
-  var _vm = this
-  var _h = _vm.$createElement
-  var _c = _vm._self._c || _h
-  return _c(
-    "b-container",
-    [
-      _c(
-        "b-button",
-        {
-          staticClass: "back-button mb-2",
-          attrs: { variant: "link", to: "/" }
-        },
-        [
-          _c("b-icon", { attrs: { icon: "chevron-left" } }),
-          _vm._v("My Lists\n  ")
-        ],
-        1
-      ),
-      _vm._v(" "),
-      !_vm.loadingTodoLists
-        ? _c("TodoList", { attrs: { todoListId: _vm.todoListId } })
-        : _vm._e()
-    ],
-    1
-  )
-}
-var staticRenderFns = []
-render._withStripped = true
-
-          return {
-            render: render,
-            staticRenderFns: staticRenderFns,
-            _compiled: true,
-            _scopeId: "data-v-2f27a4",
-            functional: undefined
-          };
-        })());
-      
-    /* hot reload */
-    (function () {
-      if (module.hot) {
-        var api = require('vue-hot-reload-api');
-        api.install(require('vue'));
-        if (api.compatible) {
-          module.hot.accept();
-          if (!module.hot.data) {
-            api.createRecord('$2f27a4', $2f27a4);
-          } else {
-            api.reload('$2f27a4', $2f27a4);
-          }
-        }
-
-        
-        var reloadCSS = require('_css_loader');
-        module.hot.dispose(reloadCSS);
-        module.hot.accept(reloadCSS);
-      
-      }
-    })();
-},{"vuex":"node_modules/vuex/dist/vuex.esm.js","../components/TodoList":"vue/components/TodoList.vue","_css_loader":"node_modules/parcel-bundler/src/builtins/css-loader.js","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/views/Login.vue":[function(require,module,exports) {
+},{"axios":"node_modules/axios/index.js","vuex":"node_modules/vuex/dist/vuex.esm.js","vuedraggable":"node_modules/vuedraggable/dist/vuedraggable.common.js","../components/TodoLists":"vue/components/TodoLists.vue","../components/TodoList":"vue/components/TodoList.vue","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/views/Login.vue":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -47804,7 +48096,9 @@ var _store = _interopRequireDefault(require("./store"));
 
 var _Home = _interopRequireDefault(require(".././vue/views/Home"));
 
-var _TodoListView = _interopRequireDefault(require(".././vue/views/TodoListView"));
+var _TodoList = _interopRequireDefault(require(".././vue/components/TodoList"));
+
+var _TodoItemDetails = _interopRequireDefault(require(".././vue/components/TodoItemDetails"));
 
 var _Login = _interopRequireDefault(require(".././vue/views/Login"));
 
@@ -47823,15 +48117,16 @@ const router = new _vueRouter.default({
   }, {
     path: '/',
     component: _Home.default,
-    name: 'Home'
-  }, {
-    path: '/lists',
-    component: _Home.default,
-    name: 'My Lists'
-  }, {
-    path: '/lists/:todoListId',
-    component: _TodoListView.default,
-    props: true
+    name: 'Home',
+    children: [{
+      path: '/lists/:todoListId',
+      component: _TodoList.default,
+      props: true,
+      children: [{
+        path: 'items/:itemId',
+        component: _TodoItemDetails.default
+      }]
+    }]
   }, {
     path: '/settings',
     component: _Settings.default
@@ -47865,7 +48160,7 @@ router.beforeEach(async (to, from, next) => {
 });
 var _default = router;
 exports.default = _default;
-},{"vue":"node_modules/vue/dist/vue.runtime.esm.js","vue-router":"node_modules/vue-router/dist/vue-router.esm.js","axios":"node_modules/axios/index.js","./store":"modules/store.js",".././vue/views/Home":"vue/views/Home.vue",".././vue/views/TodoListView":"vue/views/TodoListView.vue",".././vue/views/Login":"vue/views/Login.vue","../vue/views/Settings":"vue/views/Settings.vue"}],"vue/components/Header.vue":[function(require,module,exports) {
+},{"vue":"node_modules/vue/dist/vue.runtime.esm.js","vue-router":"node_modules/vue-router/dist/vue-router.esm.js","axios":"node_modules/axios/index.js","./store":"modules/store.js",".././vue/views/Home":"vue/views/Home.vue",".././vue/components/TodoList":"vue/components/TodoList.vue",".././vue/components/TodoItemDetails":"vue/components/TodoItemDetails.vue",".././vue/views/Login":"vue/views/Login.vue","../vue/views/Settings":"vue/views/Settings.vue"}],"vue/App.vue":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -47881,43 +48176,40 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 //
 //
 //
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
 var _default = {
-  name: "Header",
+  name: "App",
 
   data() {
     return {
-      user: {}
+      test: false
     };
   },
 
   async created() {
-    try {
-      await this.checkAuthState();
-      await this.getPlan();
-      this.user = this.$store.getters.user;
-    } catch (error) {
-      console.error(error);
-    }
+    await this.checkAuthState();
+    await this.getPlan();
+    await this.$store.dispatch("getTodoLists");
+  },
+
+  mounted() {
+    // Establish connection with SignalR
+    this.$store.state.connection.start().catch(err => console.error(err.toString())); // Todo list completed state changed
+
+    this.$store.state.connection.on("ListCompletedStateChanged", (todoListId, completed) => this.$store.commit("setTodoListCompletedState", {
+      todoListId,
+      completed
+    })); // Todo list name changed
+
+    this.$store.state.connection.on("ListNameUpdated", (todoListId, listTitle) => this.$store.commit("updateTodoListTitle", {
+      todoListId,
+      listTitle
+    })); // Invitation sent
+
+    this.$store.state.connection.on("InvitationSent", async () => await this.$store.dispatch("getTodoLists")); // Invitation accepted
+
+    this.$store.state.connection.on("InvitationAccepted", async () => await this.$store.dispatch("getTodoLists")); // Contributor left
+
+    this.$store.state.connection.on("ContributorLeft", async () => await this.$store.dispatch("getTodoLists"));
   },
 
   methods: {
@@ -47950,189 +48242,6 @@ var _default = {
   }
 };
 exports.default = _default;
-        var $f4778d = exports.default || module.exports;
-      
-      if (typeof $f4778d === 'function') {
-        $f4778d = $f4778d.options;
-      }
-    
-        /* template */
-        Object.assign($f4778d, (function () {
-          var render = function() {
-  var _vm = this
-  var _h = _vm.$createElement
-  var _c = _vm._self._c || _h
-  return _vm.user.email
-    ? _c(
-        "b-navbar",
-        {
-          staticClass: "fixed-top",
-          attrs: { toggleable: "sm", type: "light", id: "navbar" }
-        },
-        [
-          _c(
-            "b-container",
-            [
-              _c("b-navbar-brand", [
-                _c(
-                  "div",
-                  { staticClass: "brand-text" },
-                  [
-                    _c("b-icon-check-circle-fill", {
-                      staticStyle: { "margin-right": "7px" }
-                    }),
-                    _vm._v("Todo\n      ")
-                  ],
-                  1
-                )
-              ]),
-              _vm._v(" "),
-              _vm.user.id
-                ? _c(
-                    "div",
-                    { staticClass: "user-info ml-auto" },
-                    [
-                      _c(
-                        "b-dropdown",
-                        {
-                          staticClass: "account-dropdown",
-                          attrs: { right: "" },
-                          scopedSlots: _vm._u(
-                            [
-                              {
-                                key: "button-content",
-                                fn: function() {
-                                  return [
-                                    _c("b-avatar", {
-                                      attrs: { src: _vm.user.pictureUrl }
-                                    })
-                                  ]
-                                },
-                                proxy: true
-                              }
-                            ],
-                            null,
-                            false,
-                            2889888370
-                          )
-                        },
-                        [
-                          _vm._v(" "),
-                          _c("b-dropdown-item", { attrs: { to: "/lists" } }, [
-                            _vm._v("My Lists")
-                          ]),
-                          _vm._v(" "),
-                          _c("b-dropdown-divider"),
-                          _vm._v(" "),
-                          _c(
-                            "b-dropdown-item",
-                            { attrs: { to: "/settings" } },
-                            [_vm._v("Settings")]
-                          ),
-                          _vm._v(" "),
-                          _c("b-dropdown-item", { on: { click: _vm.logout } }, [
-                            _vm._v("Sign Out")
-                          ])
-                        ],
-                        1
-                      )
-                    ],
-                    1
-                  )
-                : _vm._e()
-            ],
-            1
-          )
-        ],
-        1
-      )
-    : _vm._e()
-}
-var staticRenderFns = []
-render._withStripped = true
-
-          return {
-            render: render,
-            staticRenderFns: staticRenderFns,
-            _compiled: true,
-            _scopeId: null,
-            functional: undefined
-          };
-        })());
-      
-    /* hot reload */
-    (function () {
-      if (module.hot) {
-        var api = require('vue-hot-reload-api');
-        api.install(require('vue'));
-        if (api.compatible) {
-          module.hot.accept();
-          if (!module.hot.data) {
-            api.createRecord('$f4778d', $f4778d);
-          } else {
-            api.reload('$f4778d', $f4778d);
-          }
-        }
-
-        
-        var reloadCSS = require('_css_loader');
-        module.hot.dispose(reloadCSS);
-        module.hot.accept(reloadCSS);
-      
-      }
-    })();
-},{"axios":"node_modules/axios/index.js","_css_loader":"node_modules/parcel-bundler/src/builtins/css-loader.js","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/App.vue":[function(require,module,exports) {
-"use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.default = void 0;
-
-var _Header = _interopRequireDefault(require("./components/Header"));
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-//
-//
-//
-//
-//
-//
-//
-var _default = {
-  name: "App",
-  components: {
-    Header: _Header.default
-  },
-
-  async created() {
-    await this.$store.dispatch("getTodoLists");
-  },
-
-  mounted() {
-    // Establish connection with SignalR
-    this.$store.state.connection.start().catch(err => console.error(err.toString())); // Todo list completed state changed
-
-    this.$store.state.connection.on("ListCompletedStateChanged", (todoListId, completed) => this.$store.commit("setTodoListCompletedState", {
-      todoListId,
-      completed
-    })); // Todo list name changed
-
-    this.$store.state.connection.on("ListNameUpdated", (todoListId, listTitle) => this.$store.commit("updateTodoListTitle", {
-      todoListId,
-      listTitle
-    })); // Invitation sent
-
-    this.$store.state.connection.on("InvitationSent", async () => await this.$store.dispatch("getTodoLists")); // Invitation accepted
-
-    this.$store.state.connection.on("InvitationAccepted", async () => await this.$store.dispatch("getTodoLists")); // Contributor left
-
-    this.$store.state.connection.on("ContributorLeft", async () => await this.$store.dispatch("getTodoLists"));
-  }
-
-};
-exports.default = _default;
         var $fcc03e = exports.default || module.exports;
       
       if (typeof $fcc03e === 'function') {
@@ -48145,12 +48254,7 @@ exports.default = _default;
   var _vm = this
   var _h = _vm.$createElement
   var _c = _vm._self._c || _h
-  return _c(
-    "div",
-    { staticClass: "mt-4", attrs: { id: "content" } },
-    [_c("Header"), _vm._v(" "), _c("RouterView")],
-    1
-  )
+  return _c("RouterView")
 }
 var staticRenderFns = []
 render._withStripped = true
@@ -48185,7 +48289,7 @@ render._withStripped = true
       
       }
     })();
-},{"./components/Header":"vue/components/Header.vue","_css_loader":"node_modules/parcel-bundler/src/builtins/css-loader.js","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"node_modules/bootstrap-vue/esm/utils/vue.js":[function(require,module,exports) {
+},{"axios":"node_modules/axios/index.js","_css_loader":"node_modules/parcel-bundler/src/builtins/css-loader.js","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"node_modules/bootstrap-vue/esm/utils/vue.js":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -48650,7 +48754,7 @@ function _inherits(subClass, superClass) {
 function _createSuper(Derived) {
   var hasNativeReflectConstruct = _isNativeReflectConstruct();
 
-  return function () {
+  return function _createSuperInternal() {
     var Super = _getPrototypeOf(Derived),
         result;
 
@@ -52780,7 +52884,7 @@ var baseAttrs = {
   height: '1em',
   focusable: 'false',
   role: 'img',
-  alt: 'icon'
+  'aria-label': 'icon'
 }; // Attributes that are nulled out when stacked
 
 var stackedAttrs = {
@@ -52788,7 +52892,7 @@ var stackedAttrs = {
   height: null,
   focusable: null,
   role: null,
-  alt: null
+  'aria-label': null
 }; // Shared private base component to reduce bundle/runtime size
 // @vue/component
 
@@ -52953,8 +53057,9 @@ function _defineProperty(obj, key, value) {
 var makeIcon = function makeIcon(name, content) {
   // For performance reason we pre-compute some values, so that
   // they are not computed on each render of the icon component
+  var kebabName = (0, _string.kebabCase)(name);
   var iconName = "BIcon".concat((0, _string.pascalCase)(name));
-  var iconNameClass = "bi-".concat((0, _string.kebabCase)(name));
+  var iconNameClass = "bi-".concat(kebabName);
   var svgContent = (0, _string.trim)(content || ''); // Return the icon component definition
 
   return /*#__PURE__*/_vue.default.extend({
@@ -52973,7 +53078,10 @@ var makeIcon = function makeIcon(name, content) {
         staticClass: iconNameClass,
         props: _objectSpread(_objectSpread({}, props), {}, {
           content: svgContent
-        })
+        }),
+        attrs: {
+          'aria-label': kebabName.replace(/-/g, ' ')
+        }
       }));
     }
   });
@@ -52986,25 +53094,29 @@ exports.makeIcon = makeIcon;
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.BIconBatteryHalf = exports.BIconBatteryFull = exports.BIconBatteryCharging = exports.BIconBattery = exports.BIconBasketFill = exports.BIconBasket3Fill = exports.BIconBasket3 = exports.BIconBasket2Fill = exports.BIconBasket2 = exports.BIconBasket = exports.BIconBarChartFill = exports.BIconBarChart = exports.BIconBagPlus = exports.BIconBagFill = exports.BIconBagDash = exports.BIconBagCheck = exports.BIconBag = exports.BIconBackspaceReverseFill = exports.BIconBackspaceReverse = exports.BIconBackspaceFill = exports.BIconBackspace = exports.BIconAwardFill = exports.BIconAward = exports.BIconAt = exports.BIconAsterisk = exports.BIconAspectRatioFill = exports.BIconAspectRatio = exports.BIconArrowsMove = exports.BIconArrowsFullscreen = exports.BIconArrowsExpand = exports.BIconArrowsCollapse = exports.BIconArrowsAngleExpand = exports.BIconArrowsAngleContract = exports.BIconArrowUpSquareFill = exports.BIconArrowUpSquare = exports.BIconArrowUpShort = exports.BIconArrowUpRightSquareFill = exports.BIconArrowUpRightSquare = exports.BIconArrowUpRightCircleFill = exports.BIconArrowUpRightCircle = exports.BIconArrowUpRight = exports.BIconArrowUpLeftSquareFill = exports.BIconArrowUpLeftSquare = exports.BIconArrowUpLeftCircleFill = exports.BIconArrowUpLeftCircle = exports.BIconArrowUpLeft = exports.BIconArrowUpCircleFill = exports.BIconArrowUpCircle = exports.BIconArrowUp = exports.BIconArrowRightSquareFill = exports.BIconArrowRightSquare = exports.BIconArrowRightShort = exports.BIconArrowRightCircleFill = exports.BIconArrowRightCircle = exports.BIconArrowRight = exports.BIconArrowReturnRight = exports.BIconArrowReturnLeft = exports.BIconArrowRepeat = exports.BIconArrowLeftSquareFill = exports.BIconArrowLeftSquare = exports.BIconArrowLeftShort = exports.BIconArrowLeftRight = exports.BIconArrowLeftCircleFill = exports.BIconArrowLeftCircle = exports.BIconArrowLeft = exports.BIconArrowDownUp = exports.BIconArrowDownSquareFill = exports.BIconArrowDownSquare = exports.BIconArrowDownShort = exports.BIconArrowDownRightSquareFill = exports.BIconArrowDownRightSquare = exports.BIconArrowDownRightCircleFill = exports.BIconArrowDownRightCircle = exports.BIconArrowDownRight = exports.BIconArrowDownLeftSquareFill = exports.BIconArrowDownLeftSquare = exports.BIconArrowDownLeftCircleFill = exports.BIconArrowDownLeftCircle = exports.BIconArrowDownLeft = exports.BIconArrowDownCircleFill = exports.BIconArrowDownCircle = exports.BIconArrowDown = exports.BIconArrowCounterclockwise = exports.BIconArrowClockwise = exports.BIconArrowBarUp = exports.BIconArrowBarRight = exports.BIconArrowBarLeft = exports.BIconArrowBarDown = exports.BIconArrow90degUp = exports.BIconArrow90degRight = exports.BIconArrow90degLeft = exports.BIconArrow90degDown = exports.BIconArchiveFill = exports.BIconArchive = exports.BIconAppIndicator = exports.BIconApp = exports.BIconAlt = exports.BIconAlarmFill = exports.BIconAlarm = exports.BIconBlank = void 0;
-exports.BIconCaretLeft = exports.BIconCaretDownSquareFill = exports.BIconCaretDownSquare = exports.BIconCaretDownFill = exports.BIconCaretDown = exports.BIconCardText = exports.BIconCardList = exports.BIconCardImage = exports.BIconCardHeading = exports.BIconCardChecklist = exports.BIconCapslockFill = exports.BIconCapslock = exports.BIconCameraVideoOffFill = exports.BIconCameraVideoOff = exports.BIconCameraVideoFill = exports.BIconCameraVideo = exports.BIconCamera = exports.BIconCalendarPlusFill = exports.BIconCalendarPlus = exports.BIconCalendarMonthFill = exports.BIconCalendarMonth = exports.BIconCalendarMinusFill = exports.BIconCalendarMinus = exports.BIconCalendarFill = exports.BIconCalendarDayFill = exports.BIconCalendarDay = exports.BIconCalendarDateFill = exports.BIconCalendarDate = exports.BIconCalendarCheckFill = exports.BIconCalendarCheck = exports.BIconCalendar4 = exports.BIconCalendar3Fill = exports.BIconCalendar3 = exports.BIconCalendar2PlusFill = exports.BIconCalendar2Plus = exports.BIconCalendar2MonthFill = exports.BIconCalendar2Month = exports.BIconCalendar2MinusFill = exports.BIconCalendar2Minus = exports.BIconCalendar2Fill = exports.BIconCalendar2DayFill = exports.BIconCalendar2Day = exports.BIconCalendar2DateFill = exports.BIconCalendar2Date = exports.BIconCalendar2CheckFill = exports.BIconCalendar2Check = exports.BIconCalendar2 = exports.BIconCalendar = exports.BIconBullseye = exports.BIconBuilding = exports.BIconBucketFill = exports.BIconBucket = exports.BIconBrush = exports.BIconBrightnessLowFill = exports.BIconBrightnessLow = exports.BIconBrightnessHighFill = exports.BIconBrightnessHigh = exports.BIconBrightnessAltLowFill = exports.BIconBrightnessAltLow = exports.BIconBrightnessAltHighFill = exports.BIconBrightnessAltHigh = exports.BIconBriefcaseFill = exports.BIconBriefcase = exports.BIconBraces = exports.BIconBoxSeam = exports.BIconBoxArrowUpRight = exports.BIconBoxArrowUpLeft = exports.BIconBoxArrowUp = exports.BIconBoxArrowRight = exports.BIconBoxArrowLeft = exports.BIconBoxArrowInUpRight = exports.BIconBoxArrowInUpLeft = exports.BIconBoxArrowInUp = exports.BIconBoxArrowInRight = exports.BIconBoxArrowInLeft = exports.BIconBoxArrowInDownRight = exports.BIconBoxArrowInDownLeft = exports.BIconBoxArrowInDown = exports.BIconBoxArrowDownRight = exports.BIconBoxArrowDownLeft = exports.BIconBoxArrowDown = exports.BIconBox = exports.BIconBoundingBoxCircles = exports.BIconBoundingBox = exports.BIconBootstrapReboot = exports.BIconBootstrapFill = exports.BIconBootstrap = exports.BIconBookmarksFill = exports.BIconBookmarks = exports.BIconBookmarkPlus = exports.BIconBookmarkFill = exports.BIconBookmarkDash = exports.BIconBookmarkCheck = exports.BIconBookmark = exports.BIconBookHalf = exports.BIconBook = exports.BIconBlockquoteRight = exports.BIconBlockquoteLeft = exports.BIconBellFill = exports.BIconBell = void 0;
-exports.BIconDashSquareFill = exports.BIconDashSquare = exports.BIconDashCircleFill = exports.BIconDashCircle = exports.BIconDash = exports.BIconCursorText = exports.BIconCursorFill = exports.BIconCursor = exports.BIconCup = exports.BIconCrop = exports.BIconCreditCard = exports.BIconController = exports.BIconConeStriped = exports.BIconCone = exports.BIconCompass = exports.BIconCommand = exports.BIconColumnsGap = exports.BIconColumns = exports.BIconCollectionPlayFill = exports.BIconCollectionPlay = exports.BIconCollectionFill = exports.BIconCollection = exports.BIconCodeSlash = exports.BIconCode = exports.BIconCloudUpload = exports.BIconCloudSlashFill = exports.BIconCloudSlash = exports.BIconCloudFill = exports.BIconCloudDownload = exports.BIconCloud = exports.BIconClockHistory = exports.BIconClockFill = exports.BIconClock = exports.BIconClipboardData = exports.BIconClipboard = exports.BIconCircleSquare = exports.BIconCircleHalf = exports.BIconCircleFill = exports.BIconCircle = exports.BIconChevronUp = exports.BIconChevronRight = exports.BIconChevronLeft = exports.BIconChevronExpand = exports.BIconChevronDown = exports.BIconChevronDoubleUp = exports.BIconChevronDoubleRight = exports.BIconChevronDoubleLeft = exports.BIconChevronDoubleDown = exports.BIconChevronContract = exports.BIconChevronCompactUp = exports.BIconChevronCompactRight = exports.BIconChevronCompactLeft = exports.BIconChevronCompactDown = exports.BIconChevronBarUp = exports.BIconChevronBarRight = exports.BIconChevronBarLeft = exports.BIconChevronBarExpand = exports.BIconChevronBarDown = exports.BIconChevronBarContract = exports.BIconCheckSquareFill = exports.BIconCheckSquare = exports.BIconCheckCircleFill = exports.BIconCheckCircle = exports.BIconCheckAll = exports.BIconCheck2Square = exports.BIconCheck2Circle = exports.BIconCheck2All = exports.BIconCheck2 = exports.BIconCheck = exports.BIconChatSquareQuoteFill = exports.BIconChatSquareQuote = exports.BIconChatSquareFill = exports.BIconChatSquareDotsFill = exports.BIconChatSquareDots = exports.BIconChatSquare = exports.BIconChatQuoteFill = exports.BIconChatQuote = exports.BIconChatFill = exports.BIconChatDotsFill = exports.BIconChatDots = exports.BIconChat = exports.BIconCartPlus = exports.BIconCartFill = exports.BIconCartDash = exports.BIconCartCheck = exports.BIconCart4 = exports.BIconCart3 = exports.BIconCart2 = exports.BIconCart = exports.BIconCaretUpSquareFill = exports.BIconCaretUpSquare = exports.BIconCaretUpFill = exports.BIconCaretUp = exports.BIconCaretRightSquareFill = exports.BIconCaretRightSquare = exports.BIconCaretRightFill = exports.BIconCaretRight = exports.BIconCaretLeftSquareFill = exports.BIconCaretLeftSquare = exports.BIconCaretLeftFill = void 0;
-exports.BIconGem = exports.BIconGearWideConnected = exports.BIconGearWide = exports.BIconGearFill = exports.BIconGear = exports.BIconFunnelFill = exports.BIconFunnel = exports.BIconFullscreenExit = exports.BIconFullscreen = exports.BIconForwardFill = exports.BIconForward = exports.BIconFonts = exports.BIconFolderSymlinkFill = exports.BIconFolderSymlink = exports.BIconFolderPlus = exports.BIconFolderMinus = exports.BIconFolderFill = exports.BIconFolderCheck = exports.BIconFolder = exports.BIconFlagFill = exports.BIconFlag = exports.BIconFilterRight = exports.BIconFilterLeft = exports.BIconFilter = exports.BIconFilm = exports.BIconFilesAlt = exports.BIconFiles = exports.BIconFileZip = exports.BIconFileText = exports.BIconFileSpreadsheet = exports.BIconFileRuled = exports.BIconFileRichtext = exports.BIconFilePost = exports.BIconFilePlus = exports.BIconFileMinus = exports.BIconFileEarmarkZip = exports.BIconFileEarmarkText = exports.BIconFileEarmarkSpreadsheet = exports.BIconFileEarmarkRuled = exports.BIconFileEarmarkPlus = exports.BIconFileEarmarkMinus = exports.BIconFileEarmarkDiff = exports.BIconFileEarmarkCode = exports.BIconFileEarmarkCheck = exports.BIconFileEarmarkBreak = exports.BIconFileEarmarkArrowUp = exports.BIconFileEarmarkArrowDown = exports.BIconFileEarmark = exports.BIconFileDiff = exports.BIconFileCode = exports.BIconFileCheck = exports.BIconFileBreak = exports.BIconFileArrowUp = exports.BIconFileArrowDown = exports.BIconFile = exports.BIconEyeSlashFill = exports.BIconEyeSlash = exports.BIconEyeFill = exports.BIconEye = exports.BIconExclude = exports.BIconExclamationTriangleFill = exports.BIconExclamationTriangle = exports.BIconExclamationSquareFill = exports.BIconExclamationSquare = exports.BIconExclamationOctagonFill = exports.BIconExclamationOctagon = exports.BIconExclamationDiamondFill = exports.BIconExclamationDiamond = exports.BIconExclamationCircleFill = exports.BIconExclamationCircle = exports.BIconExclamation = exports.BIconEnvelopeOpenFill = exports.BIconEnvelopeOpen = exports.BIconEnvelopeFill = exports.BIconEnvelope = exports.BIconEmojiSunglasses = exports.BIconEmojiSmileUpsideDown = exports.BIconEmojiSmile = exports.BIconEmojiNeutral = exports.BIconEmojiLaughing = exports.BIconEmojiFrown = exports.BIconEmojiDizzy = exports.BIconEmojiAngry = exports.BIconEjectFill = exports.BIconEject = exports.BIconEggFried = exports.BIconEggFill = exports.BIconEgg = exports.BIconDropletHalf = exports.BIconDropletFill = exports.BIconDroplet = exports.BIconDownload = exports.BIconDot = exports.BIconDoorClosedFill = exports.BIconDoorClosed = exports.BIconDisplayFill = exports.BIconDisplay = exports.BIconDiamondHalf = exports.BIconDiamondFill = exports.BIconDiamond = void 0;
-exports.BIconOctagon = exports.BIconNewspaper = exports.BIconMusicPlayerFill = exports.BIconMusicPlayer = exports.BIconMusicNoteList = exports.BIconMusicNoteBeamed = exports.BIconMusicNote = exports.BIconMoon = exports.BIconMinecartLoaded = exports.BIconMinecart = exports.BIconMicMuteFill = exports.BIconMicMute = exports.BIconMicFill = exports.BIconMic = exports.BIconMap = exports.BIconLockFill = exports.BIconLock = exports.BIconListUl = exports.BIconListTask = exports.BIconListOl = exports.BIconListNested = exports.BIconListCheck = exports.BIconList = exports.BIconLink45deg = exports.BIconLink = exports.BIconLightningFill = exports.BIconLightning = exports.BIconLifePreserver = exports.BIconLayoutWtf = exports.BIconLayoutThreeColumns = exports.BIconLayoutTextWindowReverse = exports.BIconLayoutTextWindow = exports.BIconLayoutTextSidebarReverse = exports.BIconLayoutTextSidebar = exports.BIconLayoutSplit = exports.BIconLayoutSidebarReverse = exports.BIconLayoutSidebarInsetReverse = exports.BIconLayoutSidebarInset = exports.BIconLayoutSidebar = exports.BIconLayersHalf = exports.BIconLayersFill = exports.BIconLayers = exports.BIconLaptop = exports.BIconKanbanFill = exports.BIconKanban = exports.BIconJustifyRight = exports.BIconJustifyLeft = exports.BIconJustify = exports.BIconIntersect = exports.BIconInfoSquareFill = exports.BIconInfoSquare = exports.BIconInfoCircleFill = exports.BIconInfoCircle = exports.BIconInfo = exports.BIconInboxesFill = exports.BIconInboxes = exports.BIconInboxFill = exports.BIconInbox = exports.BIconImages = exports.BIconImageFill = exports.BIconImageAlt = exports.BIconImage = exports.BIconHr = exports.BIconHouseFill = exports.BIconHouseDoorFill = exports.BIconHouseDoor = exports.BIconHouse = exports.BIconHexagonHalf = exports.BIconHexagonFill = exports.BIconHexagon = exports.BIconHeartHalf = exports.BIconHeartFill = exports.BIconHeart = exports.BIconHeadphones = exports.BIconHash = exports.BIconHandbagFill = exports.BIconHandbag = exports.BIconHandThumbsUp = exports.BIconHandThumbsDown = exports.BIconHandIndexThumb = exports.BIconHandIndex = exports.BIconHammer = exports.BIconGripVertical = exports.BIconGripHorizontal = exports.BIconGridFill = exports.BIconGrid3x3GapFill = exports.BIconGrid3x3Gap = exports.BIconGrid3x3 = exports.BIconGrid3x2GapFill = exports.BIconGrid3x2Gap = exports.BIconGrid3x2 = exports.BIconGrid1x2Fill = exports.BIconGrid1x2 = exports.BIconGrid = exports.BIconGraphUp = exports.BIconGraphDown = exports.BIconGiftFill = exports.BIconGift = exports.BIconGeoAlt = exports.BIconGeo = void 0;
-exports.BIconStopwatchFill = exports.BIconStopwatch = exports.BIconStopFill = exports.BIconStop = exports.BIconStarHalf = exports.BIconStarFill = exports.BIconStar = exports.BIconSquareHalf = exports.BIconSquareFill = exports.BIconSquare = exports.BIconSpeaker = exports.BIconSoundwave = exports.BIconSliders = exports.BIconSlashSquareFill = exports.BIconSlashSquare = exports.BIconSlashCircleFill = exports.BIconSlashCircle = exports.BIconSlash = exports.BIconSkipStartFill = exports.BIconSkipStart = exports.BIconSkipForwardFill = exports.BIconSkipForward = exports.BIconSkipEndFill = exports.BIconSkipEnd = exports.BIconSkipBackwardFill = exports.BIconSkipBackward = exports.BIconShuffle = exports.BIconShopWindow = exports.BIconShop = exports.BIconShiftFill = exports.BIconShift = exports.BIconShieldSlashFill = exports.BIconShieldSlash = exports.BIconShieldShaded = exports.BIconShieldLockFill = exports.BIconShieldLock = exports.BIconShieldFill = exports.BIconShield = exports.BIconServer = exports.BIconSearch = exports.BIconScrewdriver = exports.BIconReplyFill = exports.BIconReplyAllFill = exports.BIconReplyAll = exports.BIconReply = exports.BIconReceiptCutoff = exports.BIconReceipt = exports.BIconQuestionSquareFill = exports.BIconQuestionSquare = exports.BIconQuestionOctagonFill = exports.BIconQuestionOctagon = exports.BIconQuestionDiamondFill = exports.BIconQuestionDiamond = exports.BIconQuestionCircleFill = exports.BIconQuestionCircle = exports.BIconQuestion = exports.BIconPuzzleFill = exports.BIconPuzzle = exports.BIconPower = exports.BIconPlusSquareFill = exports.BIconPlusSquare = exports.BIconPlusCircleFill = exports.BIconPlusCircle = exports.BIconPlus = exports.BIconPlug = exports.BIconPlayFill = exports.BIconPlay = exports.BIconPipFill = exports.BIconPip = exports.BIconPieChartFill = exports.BIconPieChart = exports.BIconPhoneLandscape = exports.BIconPhone = exports.BIconPersonSquare = exports.BIconPersonPlusFill = exports.BIconPersonPlus = exports.BIconPersonLinesFill = exports.BIconPersonFill = exports.BIconPersonDashFill = exports.BIconPersonDash = exports.BIconPersonCircle = exports.BIconPersonCheckFill = exports.BIconPersonCheck = exports.BIconPersonBoundingBox = exports.BIconPerson = exports.BIconPeopleFill = exports.BIconPeople = exports.BIconPentagonHalf = exports.BIconPentagonFill = exports.BIconPentagon = exports.BIconPencilSquare = exports.BIconPencil = exports.BIconPen = exports.BIconPauseFill = exports.BIconPause = exports.BIconPaperclip = exports.BIconOutlet = exports.BIconOption = exports.BIconOctagonHalf = exports.BIconOctagonFill = void 0;
-exports.BIconXSquareFill = exports.BIconXSquare = exports.BIconXOctagonFill = exports.BIconXOctagon = exports.BIconXDiamondFill = exports.BIconXDiamond = exports.BIconXCircleFill = exports.BIconXCircle = exports.BIconX = exports.BIconWrench = exports.BIconWindow = exports.BIconWifi = exports.BIconWatch = exports.BIconWallet2 = exports.BIconWallet = exports.BIconVr = exports.BIconVolumeUpFill = exports.BIconVolumeUp = exports.BIconVolumeOffFill = exports.BIconVolumeOff = exports.BIconVolumeMuteFill = exports.BIconVolumeMute = exports.BIconVolumeDownFill = exports.BIconVolumeDown = exports.BIconViewStacked = exports.BIconViewList = exports.BIconUpload = exports.BIconUpcScan = exports.BIconUpc = exports.BIconUnlockFill = exports.BIconUnlock = exports.BIconUnion = exports.BIconTypeUnderline = exports.BIconTypeStrikethrough = exports.BIconTypeItalic = exports.BIconTypeH3 = exports.BIconTypeH2 = exports.BIconTypeH1 = exports.BIconTypeBold = exports.BIconType = exports.BIconTvFill = exports.BIconTv = exports.BIconTruckFlatbed = exports.BIconTruck = exports.BIconTrophy = exports.BIconTriangleHalf = exports.BIconTriangleFill = exports.BIconTriangle = exports.BIconTrashFill = exports.BIconTrash2Fill = exports.BIconTrash2 = exports.BIconTrash = exports.BIconTools = exports.BIconToggles = exports.BIconToggleOn = exports.BIconToggleOff = exports.BIconThreeDotsVertical = exports.BIconThreeDots = exports.BIconTextareaT = exports.BIconTextarea = exports.BIconTextRight = exports.BIconTextLeft = exports.BIconTextIndentRight = exports.BIconTextIndentLeft = exports.BIconTextCenter = exports.BIconTerminalFill = exports.BIconTerminal = exports.BIconTagFill = exports.BIconTag = exports.BIconTabletLandscape = exports.BIconTablet = exports.BIconTable = exports.BIconSun = exports.BIconSubtract = void 0;
+exports.BIconBadgeTmFill = exports.BIconBadgeTm = exports.BIconBadgeHdFill = exports.BIconBadgeHd = exports.BIconBadgeCcFill = exports.BIconBadgeCc = exports.BIconBadge8kFill = exports.BIconBadge8k = exports.BIconBadge4kFill = exports.BIconBadge4k = exports.BIconBackspaceReverseFill = exports.BIconBackspaceReverse = exports.BIconBackspaceFill = exports.BIconBackspace = exports.BIconBack = exports.BIconAwardFill = exports.BIconAward = exports.BIconAt = exports.BIconAsterisk = exports.BIconAspectRatioFill = exports.BIconAspectRatio = exports.BIconArrowsMove = exports.BIconArrowsFullscreen = exports.BIconArrowsExpand = exports.BIconArrowsCollapse = exports.BIconArrowsAngleExpand = exports.BIconArrowsAngleContract = exports.BIconArrowUpSquareFill = exports.BIconArrowUpSquare = exports.BIconArrowUpShort = exports.BIconArrowUpRightSquareFill = exports.BIconArrowUpRightSquare = exports.BIconArrowUpRightCircleFill = exports.BIconArrowUpRightCircle = exports.BIconArrowUpRight = exports.BIconArrowUpLeftSquareFill = exports.BIconArrowUpLeftSquare = exports.BIconArrowUpLeftCircleFill = exports.BIconArrowUpLeftCircle = exports.BIconArrowUpLeft = exports.BIconArrowUpCircleFill = exports.BIconArrowUpCircle = exports.BIconArrowUp = exports.BIconArrowRightSquareFill = exports.BIconArrowRightSquare = exports.BIconArrowRightShort = exports.BIconArrowRightCircleFill = exports.BIconArrowRightCircle = exports.BIconArrowRight = exports.BIconArrowReturnRight = exports.BIconArrowReturnLeft = exports.BIconArrowRepeat = exports.BIconArrowLeftSquareFill = exports.BIconArrowLeftSquare = exports.BIconArrowLeftShort = exports.BIconArrowLeftRight = exports.BIconArrowLeftCircleFill = exports.BIconArrowLeftCircle = exports.BIconArrowLeft = exports.BIconArrowDownUp = exports.BIconArrowDownSquareFill = exports.BIconArrowDownSquare = exports.BIconArrowDownShort = exports.BIconArrowDownRightSquareFill = exports.BIconArrowDownRightSquare = exports.BIconArrowDownRightCircleFill = exports.BIconArrowDownRightCircle = exports.BIconArrowDownRight = exports.BIconArrowDownLeftSquareFill = exports.BIconArrowDownLeftSquare = exports.BIconArrowDownLeftCircleFill = exports.BIconArrowDownLeftCircle = exports.BIconArrowDownLeft = exports.BIconArrowDownCircleFill = exports.BIconArrowDownCircle = exports.BIconArrowDown = exports.BIconArrowCounterclockwise = exports.BIconArrowClockwise = exports.BIconArrowBarUp = exports.BIconArrowBarRight = exports.BIconArrowBarLeft = exports.BIconArrowBarDown = exports.BIconArrow90degUp = exports.BIconArrow90degRight = exports.BIconArrow90degLeft = exports.BIconArrow90degDown = exports.BIconArchiveFill = exports.BIconArchive = exports.BIconAppIndicator = exports.BIconApp = exports.BIconAlt = exports.BIconAlignTop = exports.BIconAlignStart = exports.BIconAlignMiddle = exports.BIconAlignEnd = exports.BIconAlignCenter = exports.BIconAlignBottom = exports.BIconAlarmFill = exports.BIconAlarm = exports.BIconBlank = void 0;
+exports.BIconCalendar2EventFill = exports.BIconCalendar2Event = exports.BIconCalendar2DayFill = exports.BIconCalendar2Day = exports.BIconCalendar2DateFill = exports.BIconCalendar2Date = exports.BIconCalendar2CheckFill = exports.BIconCalendar2Check = exports.BIconCalendar2 = exports.BIconCalendar = exports.BIconCalculatorFill = exports.BIconCalculator = exports.BIconBullseye = exports.BIconBuilding = exports.BIconBugFill = exports.BIconBug = exports.BIconBucketFill = exports.BIconBucket = exports.BIconBrush = exports.BIconBroadcastPin = exports.BIconBroadcast = exports.BIconBrightnessLowFill = exports.BIconBrightnessLow = exports.BIconBrightnessHighFill = exports.BIconBrightnessHigh = exports.BIconBrightnessAltLowFill = exports.BIconBrightnessAltLow = exports.BIconBrightnessAltHighFill = exports.BIconBrightnessAltHigh = exports.BIconBriefcaseFill = exports.BIconBriefcase = exports.BIconBricks = exports.BIconBraces = exports.BIconBoxSeam = exports.BIconBoxArrowUpRight = exports.BIconBoxArrowUpLeft = exports.BIconBoxArrowUp = exports.BIconBoxArrowRight = exports.BIconBoxArrowLeft = exports.BIconBoxArrowInUpRight = exports.BIconBoxArrowInUpLeft = exports.BIconBoxArrowInUp = exports.BIconBoxArrowInRight = exports.BIconBoxArrowInLeft = exports.BIconBoxArrowInDownRight = exports.BIconBoxArrowInDownLeft = exports.BIconBoxArrowInDown = exports.BIconBoxArrowDownRight = exports.BIconBoxArrowDownLeft = exports.BIconBoxArrowDown = exports.BIconBox = exports.BIconBoundingBoxCircles = exports.BIconBoundingBox = exports.BIconBorderWidth = exports.BIconBorderStyle = exports.BIconBootstrapReboot = exports.BIconBootstrapFill = exports.BIconBootstrap = exports.BIconBookshelf = exports.BIconBookmarksFill = exports.BIconBookmarks = exports.BIconBookmarkPlus = exports.BIconBookmarkFill = exports.BIconBookmarkDash = exports.BIconBookmarkCheck = exports.BIconBookmark = exports.BIconBookHalf = exports.BIconBookFill = exports.BIconBook = exports.BIconBlockquoteRight = exports.BIconBlockquoteLeft = exports.BIconBinocularsFill = exports.BIconBinoculars = exports.BIconBicycle = exports.BIconBezier2 = exports.BIconBezier = exports.BIconBellFill = exports.BIconBell = exports.BIconBatteryHalf = exports.BIconBatteryFull = exports.BIconBatteryCharging = exports.BIconBattery = exports.BIconBasketFill = exports.BIconBasket3Fill = exports.BIconBasket3 = exports.BIconBasket2Fill = exports.BIconBasket2 = exports.BIconBasket = exports.BIconBarChartSteps = exports.BIconBarChartLineFill = exports.BIconBarChartLine = exports.BIconBarChartFill = exports.BIconBarChart = exports.BIconBagPlus = exports.BIconBagFill = exports.BIconBagDash = exports.BIconBagCheck = exports.BIconBag = exports.BIconBadgeVoFill = exports.BIconBadgeVo = void 0;
+exports.BIconChatRight = exports.BIconChatQuoteFill = exports.BIconChatQuote = exports.BIconChatLeftTextFill = exports.BIconChatLeftText = exports.BIconChatLeftQuoteFill = exports.BIconChatLeftQuote = exports.BIconChatLeftFill = exports.BIconChatLeftDotsFill = exports.BIconChatLeftDots = exports.BIconChatLeft = exports.BIconChatFill = exports.BIconChatDotsFill = exports.BIconChatDots = exports.BIconChat = exports.BIconCast = exports.BIconCashStack = exports.BIconCash = exports.BIconCartPlus = exports.BIconCartFill = exports.BIconCartDash = exports.BIconCartCheck = exports.BIconCart4 = exports.BIconCart3 = exports.BIconCart2 = exports.BIconCart = exports.BIconCaretUpSquareFill = exports.BIconCaretUpSquare = exports.BIconCaretUpFill = exports.BIconCaretUp = exports.BIconCaretRightSquareFill = exports.BIconCaretRightSquare = exports.BIconCaretRightFill = exports.BIconCaretRight = exports.BIconCaretLeftSquareFill = exports.BIconCaretLeftSquare = exports.BIconCaretLeftFill = exports.BIconCaretLeft = exports.BIconCaretDownSquareFill = exports.BIconCaretDownSquare = exports.BIconCaretDownFill = exports.BIconCaretDown = exports.BIconCardText = exports.BIconCardList = exports.BIconCardImage = exports.BIconCardHeading = exports.BIconCardChecklist = exports.BIconCapslockFill = exports.BIconCapslock = exports.BIconCameraVideoOffFill = exports.BIconCameraVideoOff = exports.BIconCameraVideoFill = exports.BIconCameraVideo = exports.BIconCameraReelsFill = exports.BIconCameraReels = exports.BIconCameraFill = exports.BIconCamera2 = exports.BIconCamera = exports.BIconCalendarWeekFill = exports.BIconCalendarWeek = exports.BIconCalendarRangeFill = exports.BIconCalendarRange = exports.BIconCalendarPlusFill = exports.BIconCalendarPlus = exports.BIconCalendarMonthFill = exports.BIconCalendarMonth = exports.BIconCalendarMinusFill = exports.BIconCalendarMinus = exports.BIconCalendarFill = exports.BIconCalendarEventFill = exports.BIconCalendarEvent = exports.BIconCalendarDayFill = exports.BIconCalendarDay = exports.BIconCalendarDateFill = exports.BIconCalendarDate = exports.BIconCalendarCheckFill = exports.BIconCalendarCheck = exports.BIconCalendar4Week = exports.BIconCalendar4Range = exports.BIconCalendar4Event = exports.BIconCalendar4 = exports.BIconCalendar3WeekFill = exports.BIconCalendar3Week = exports.BIconCalendar3RangeFill = exports.BIconCalendar3Range = exports.BIconCalendar3Fill = exports.BIconCalendar3EventFill = exports.BIconCalendar3Event = exports.BIconCalendar3 = exports.BIconCalendar2WeekFill = exports.BIconCalendar2Week = exports.BIconCalendar2RangeFill = exports.BIconCalendar2Range = exports.BIconCalendar2PlusFill = exports.BIconCalendar2Plus = exports.BIconCalendar2MonthFill = exports.BIconCalendar2Month = exports.BIconCalendar2MinusFill = exports.BIconCalendar2Minus = exports.BIconCalendar2Fill = void 0;
+exports.BIconCrop = exports.BIconCreditCardFill = exports.BIconCreditCard2FrontFill = exports.BIconCreditCard2Front = exports.BIconCreditCard2BackFill = exports.BIconCreditCard2Back = exports.BIconCreditCard = exports.BIconCpuFill = exports.BIconCpu = exports.BIconController = exports.BIconConeStriped = exports.BIconCone = exports.BIconCompass = exports.BIconCommand = exports.BIconColumnsGap = exports.BIconColumns = exports.BIconCollectionPlayFill = exports.BIconCollectionPlay = exports.BIconCollectionFill = exports.BIconCollection = exports.BIconCodeSquare = exports.BIconCodeSlash = exports.BIconCode = exports.BIconCloudUploadFill = exports.BIconCloudUpload = exports.BIconCloudSlashFill = exports.BIconCloudSlash = exports.BIconCloudPlusFill = exports.BIconCloudPlus = exports.BIconCloudMinusFill = exports.BIconCloudMinus = exports.BIconCloudFill = exports.BIconCloudDownloadFill = exports.BIconCloudDownload = exports.BIconCloudCheckFill = exports.BIconCloudCheck = exports.BIconCloudArrowUpFill = exports.BIconCloudArrowUp = exports.BIconCloudArrowDownFill = exports.BIconCloudArrowDown = exports.BIconCloud = exports.BIconClockHistory = exports.BIconClockFill = exports.BIconClock = exports.BIconClipboardPlus = exports.BIconClipboardMinus = exports.BIconClipboardData = exports.BIconClipboardCheck = exports.BIconClipboard = exports.BIconCircleSquare = exports.BIconCircleHalf = exports.BIconCircleFill = exports.BIconCircle = exports.BIconChevronUp = exports.BIconChevronRight = exports.BIconChevronLeft = exports.BIconChevronExpand = exports.BIconChevronDown = exports.BIconChevronDoubleUp = exports.BIconChevronDoubleRight = exports.BIconChevronDoubleLeft = exports.BIconChevronDoubleDown = exports.BIconChevronContract = exports.BIconChevronCompactUp = exports.BIconChevronCompactRight = exports.BIconChevronCompactLeft = exports.BIconChevronCompactDown = exports.BIconChevronBarUp = exports.BIconChevronBarRight = exports.BIconChevronBarLeft = exports.BIconChevronBarExpand = exports.BIconChevronBarDown = exports.BIconChevronBarContract = exports.BIconCheckSquareFill = exports.BIconCheckSquare = exports.BIconCheckCircleFill = exports.BIconCheckCircle = exports.BIconCheckAll = exports.BIconCheck2Square = exports.BIconCheck2Circle = exports.BIconCheck2All = exports.BIconCheck2 = exports.BIconCheck = exports.BIconChatTextFill = exports.BIconChatText = exports.BIconChatSquareTextFill = exports.BIconChatSquareText = exports.BIconChatSquareQuoteFill = exports.BIconChatSquareQuote = exports.BIconChatSquareFill = exports.BIconChatSquareDotsFill = exports.BIconChatSquareDots = exports.BIconChatSquare = exports.BIconChatRightTextFill = exports.BIconChatRightText = exports.BIconChatRightQuoteFill = exports.BIconChatRightQuote = exports.BIconChatRightFill = exports.BIconChatRightDotsFill = exports.BIconChatRightDots = void 0;
+exports.BIconFileEarmarkBinary = exports.BIconFileEarmarkArrowUpFill = exports.BIconFileEarmarkArrowUp = exports.BIconFileEarmarkArrowDown = exports.BIconFileEarmark = exports.BIconFileDiffFill = exports.BIconFileDiff = exports.BIconFileCodeFill = exports.BIconFileCode = exports.BIconFileCheckFill = exports.BIconFileCheck = exports.BIconFileBreakFill = exports.BIconFileBreak = exports.BIconFileBinaryFill = exports.BIconFileBinary = exports.BIconFileArrowUpFill = exports.BIconFileArrowUp = exports.BIconFileArrowDownFill = exports.BIconFileArrowDown = exports.BIconFile = exports.BIconEyeglasses = exports.BIconEyeSlashFill = exports.BIconEyeSlash = exports.BIconEyeFill = exports.BIconEye = exports.BIconExclude = exports.BIconExclamationTriangleFill = exports.BIconExclamationTriangle = exports.BIconExclamationSquareFill = exports.BIconExclamationSquare = exports.BIconExclamationOctagonFill = exports.BIconExclamationOctagon = exports.BIconExclamationDiamondFill = exports.BIconExclamationDiamond = exports.BIconExclamationCircleFill = exports.BIconExclamationCircle = exports.BIconExclamation = exports.BIconEnvelopeOpenFill = exports.BIconEnvelopeOpen = exports.BIconEnvelopeFill = exports.BIconEnvelope = exports.BIconEmojiSunglasses = exports.BIconEmojiSmileUpsideDown = exports.BIconEmojiSmile = exports.BIconEmojiNeutral = exports.BIconEmojiLaughing = exports.BIconEmojiFrown = exports.BIconEmojiExpressionless = exports.BIconEmojiDizzy = exports.BIconEmojiAngry = exports.BIconEjectFill = exports.BIconEject = exports.BIconEggFried = exports.BIconEggFill = exports.BIconEgg = exports.BIconEaselFill = exports.BIconEasel = exports.BIconEarbuds = exports.BIconDropletHalf = exports.BIconDropletFill = exports.BIconDroplet = exports.BIconDownload = exports.BIconDot = exports.BIconDoorOpenFill = exports.BIconDoorOpen = exports.BIconDoorClosedFill = exports.BIconDoorClosed = exports.BIconDistributeVertical = exports.BIconDistributeHorizontal = exports.BIconDisplayFill = exports.BIconDisplay = exports.BIconDice6Fill = exports.BIconDice6 = exports.BIconDice5Fill = exports.BIconDice5 = exports.BIconDice4Fill = exports.BIconDice4 = exports.BIconDice3Fill = exports.BIconDice3 = exports.BIconDice2Fill = exports.BIconDice2 = exports.BIconDice1Fill = exports.BIconDice1 = exports.BIconDiamondHalf = exports.BIconDiamondFill = exports.BIconDiamond = exports.BIconDiagram3Fill = exports.BIconDiagram3 = exports.BIconDiagram2Fill = exports.BIconDiagram2 = exports.BIconDashSquareFill = exports.BIconDashSquare = exports.BIconDashCircleFill = exports.BIconDashCircle = exports.BIconDash = exports.BIconCursorText = exports.BIconCursorFill = exports.BIconCursor = exports.BIconCupStraw = exports.BIconCup = void 0;
+exports.BIconGrid3x3Gap = exports.BIconGrid3x3 = exports.BIconGrid3x2GapFill = exports.BIconGrid3x2Gap = exports.BIconGrid3x2 = exports.BIconGrid1x2Fill = exports.BIconGrid1x2 = exports.BIconGrid = exports.BIconGraphUp = exports.BIconGraphDown = exports.BIconGlobe2 = exports.BIconGlobe = exports.BIconGiftFill = exports.BIconGift = exports.BIconGeoAlt = exports.BIconGeo = exports.BIconGem = exports.BIconGearWideConnected = exports.BIconGearWide = exports.BIconGearFill = exports.BIconGear = exports.BIconFunnelFill = exports.BIconFunnel = exports.BIconFullscreenExit = exports.BIconFullscreen = exports.BIconFront = exports.BIconForwardFill = exports.BIconForward = exports.BIconFonts = exports.BIconFolderSymlinkFill = exports.BIconFolderSymlink = exports.BIconFolderPlus = exports.BIconFolderMinus = exports.BIconFolderFill = exports.BIconFolderCheck = exports.BIconFolder2Open = exports.BIconFolder2 = exports.BIconFolder = exports.BIconFlower3 = exports.BIconFlower2 = exports.BIconFlower1 = exports.BIconFlagFill = exports.BIconFlag = exports.BIconFilterSquareFill = exports.BIconFilterSquare = exports.BIconFilterRight = exports.BIconFilterLeft = exports.BIconFilterCircleFill = exports.BIconFilterCircle = exports.BIconFilter = exports.BIconFilm = exports.BIconFilesAlt = exports.BIconFiles = exports.BIconFileZipFill = exports.BIconFileZip = exports.BIconFileTextFill = exports.BIconFileText = exports.BIconFileSpreadsheetFill = exports.BIconFileSpreadsheet = exports.BIconFileRuledFill = exports.BIconFileRuled = exports.BIconFileRichtextFill = exports.BIconFileRichtext = exports.BIconFilePostFill = exports.BIconFilePost = exports.BIconFilePlusFill = exports.BIconFilePlus = exports.BIconFilePersonFill = exports.BIconFilePerson = exports.BIconFileMusicFill = exports.BIconFileMusic = exports.BIconFileMinusFill = exports.BIconFileMinus = exports.BIconFileMedicalFill = exports.BIconFileMedical = exports.BIconFileFill = exports.BIconFileEarmarkZipFill = exports.BIconFileEarmarkZip = exports.BIconFileEarmarkTextFill = exports.BIconFileEarmarkText = exports.BIconFileEarmarkSpreadsheetFill = exports.BIconFileEarmarkSpreadsheet = exports.BIconFileEarmarkRuledFill = exports.BIconFileEarmarkRuled = exports.BIconFileEarmarkPlusFill = exports.BIconFileEarmarkPlus = exports.BIconFileEarmarkMinusFill = exports.BIconFileEarmarkMinus = exports.BIconFileEarmarkMedicalFill = exports.BIconFileEarmarkMedical = exports.BIconFileEarmarkFill = exports.BIconFileEarmarkDiffFill = exports.BIconFileEarmarkDiff = exports.BIconFileEarmarkCodeFill = exports.BIconFileEarmarkCode = exports.BIconFileEarmarkCheckFill = exports.BIconFileEarmarkCheck = exports.BIconFileEarmarkBreakFill = exports.BIconFileEarmarkBreak = exports.BIconFileEarmarkBinaryFill = void 0;
+exports.BIconLightningFill = exports.BIconLightning = exports.BIconLifePreserver = exports.BIconLayoutWtf = exports.BIconLayoutThreeColumns = exports.BIconLayoutTextWindowReverse = exports.BIconLayoutTextWindow = exports.BIconLayoutTextSidebarReverse = exports.BIconLayoutTextSidebar = exports.BIconLayoutSplit = exports.BIconLayoutSidebarReverse = exports.BIconLayoutSidebarInsetReverse = exports.BIconLayoutSidebarInset = exports.BIconLayoutSidebar = exports.BIconLayersHalf = exports.BIconLayersFill = exports.BIconLayers = exports.BIconLaptopFill = exports.BIconLaptop = exports.BIconLampFill = exports.BIconLamp = exports.BIconLadder = exports.BIconKeyboardFill = exports.BIconKeyboard = exports.BIconKeyFill = exports.BIconKey = exports.BIconKanbanFill = exports.BIconKanban = exports.BIconJustifyRight = exports.BIconJustifyLeft = exports.BIconJustify = exports.BIconJoystick = exports.BIconJournals = exports.BIconJournalText = exports.BIconJournalRichtext = exports.BIconJournalPlus = exports.BIconJournalMinus = exports.BIconJournalMedical = exports.BIconJournalCode = exports.BIconJournalCheck = exports.BIconJournalArrowUp = exports.BIconJournalArrowDown = exports.BIconJournalAlbum = exports.BIconJournal = exports.BIconIntersect = exports.BIconInputCursorText = exports.BIconInputCursor = exports.BIconInfoSquareFill = exports.BIconInfoSquare = exports.BIconInfoCircleFill = exports.BIconInfoCircle = exports.BIconInfo = exports.BIconInboxesFill = exports.BIconInboxes = exports.BIconInboxFill = exports.BIconInbox = exports.BIconImages = exports.BIconImageFill = exports.BIconImageAlt = exports.BIconImage = exports.BIconHr = exports.BIconHouseFill = exports.BIconHouseDoorFill = exports.BIconHouseDoor = exports.BIconHouse = exports.BIconHourglassTop = exports.BIconHourglassSplit = exports.BIconHourglassBottom = exports.BIconHourglass = exports.BIconHexagonHalf = exports.BIconHexagonFill = exports.BIconHexagon = exports.BIconHeptagonHalf = exports.BIconHeptagonFill = exports.BIconHeptagon = exports.BIconHeartHalf = exports.BIconHeartFill = exports.BIconHeart = exports.BIconHeadset = exports.BIconHeadphones = exports.BIconHddStackFill = exports.BIconHddStack = exports.BIconHddRackFill = exports.BIconHddRack = exports.BIconHddNetworkFill = exports.BIconHddNetwork = exports.BIconHddFill = exports.BIconHdd = exports.BIconHash = exports.BIconHandbagFill = exports.BIconHandbag = exports.BIconHandThumbsUp = exports.BIconHandThumbsDown = exports.BIconHandIndexThumb = exports.BIconHandIndex = exports.BIconHammer = exports.BIconGripVertical = exports.BIconGripHorizontal = exports.BIconGridFill = exports.BIconGrid3x3GapFill = void 0;
+exports.BIconPlayFill = exports.BIconPlay = exports.BIconPipFill = exports.BIconPip = exports.BIconPieChartFill = exports.BIconPieChart = exports.BIconPhoneLandscapeFill = exports.BIconPhoneLandscape = exports.BIconPhoneFill = exports.BIconPhone = exports.BIconPersonSquare = exports.BIconPersonPlusFill = exports.BIconPersonPlus = exports.BIconPersonLinesFill = exports.BIconPersonFill = exports.BIconPersonDashFill = exports.BIconPersonDash = exports.BIconPersonCircle = exports.BIconPersonCheckFill = exports.BIconPersonCheck = exports.BIconPersonBoundingBox = exports.BIconPersonBadgeFill = exports.BIconPersonBadge = exports.BIconPerson = exports.BIconPercent = exports.BIconPeopleFill = exports.BIconPeople = exports.BIconPentagonHalf = exports.BIconPentagonFill = exports.BIconPentagon = exports.BIconPencilSquare = exports.BIconPencil = exports.BIconPen = exports.BIconPeaceFill = exports.BIconPeace = exports.BIconPauseFill = exports.BIconPause = exports.BIconPatchQuestionFll = exports.BIconPatchQuestion = exports.BIconPatchPlusFll = exports.BIconPatchPlus = exports.BIconPatchMinusFll = exports.BIconPatchMinus = exports.BIconPatchExclamationFll = exports.BIconPatchExclamation = exports.BIconPatchCheckFll = exports.BIconPatchCheck = exports.BIconParagraph = exports.BIconPaperclip = exports.BIconOutlet = exports.BIconOption = exports.BIconOctagonHalf = exports.BIconOctagonFill = exports.BIconOctagon = exports.BIconNutFill = exports.BIconNut = exports.BIconNodePlusFill = exports.BIconNodePlus = exports.BIconNodeMinusFill = exports.BIconNodeMinus = exports.BIconNewspaper = exports.BIconMusicPlayerFill = exports.BIconMusicPlayer = exports.BIconMusicNoteList = exports.BIconMusicNoteBeamed = exports.BIconMusicNote = exports.BIconMouse3 = exports.BIconMouse2 = exports.BIconMouse = exports.BIconMoon = exports.BIconMinecartLoaded = exports.BIconMinecart = exports.BIconMicMuteFill = exports.BIconMicMute = exports.BIconMicFill = exports.BIconMic = exports.BIconMenuUp = exports.BIconMenuDown = exports.BIconMenuButtonWideFill = exports.BIconMenuButtonWide = exports.BIconMenuButtonFill = exports.BIconMenuButton = exports.BIconMenuAppFill = exports.BIconMenuApp = exports.BIconMarkdownFill = exports.BIconMarkdown = exports.BIconMap = exports.BIconMailbox2 = exports.BIconMailbox = exports.BIconLockFill = exports.BIconLock = exports.BIconListUl = exports.BIconListTask = exports.BIconListStars = exports.BIconListOl = exports.BIconListNested = exports.BIconListCheck = exports.BIconList = exports.BIconLink45deg = exports.BIconLink = void 0;
+exports.BIconSquareHalf = exports.BIconSquareFill = exports.BIconSquare = exports.BIconSpellcheck = exports.BIconSpeaker = exports.BIconSoundwave = exports.BIconSortUpAlt = exports.BIconSortUp = exports.BIconSortNumericUpAlt = exports.BIconSortNumericUp = exports.BIconSortNumericDownAlt = exports.BIconSortNumericDown = exports.BIconSortDownAlt = exports.BIconSortDown = exports.BIconSortAlphaUpAlt = exports.BIconSortAlphaUp = exports.BIconSortAlphaDownAlt = exports.BIconSortAlphaDown = exports.BIconSmartwatch = exports.BIconSliders = exports.BIconSlashSquareFill = exports.BIconSlashSquare = exports.BIconSlashCircleFill = exports.BIconSlashCircle = exports.BIconSlash = exports.BIconSkipStartFill = exports.BIconSkipStart = exports.BIconSkipForwardFill = exports.BIconSkipForward = exports.BIconSkipEndFill = exports.BIconSkipEnd = exports.BIconSkipBackwardFill = exports.BIconSkipBackward = exports.BIconSimFill = exports.BIconSim = exports.BIconSignpostSplitFill = exports.BIconSignpostSplit = exports.BIconSignpostFill = exports.BIconSignpost2Fill = exports.BIconSignpost2 = exports.BIconSignpost = exports.BIconShuffle = exports.BIconShopWindow = exports.BIconShop = exports.BIconShiftFill = exports.BIconShift = exports.BIconShieldSlashFill = exports.BIconShieldSlash = exports.BIconShieldShaded = exports.BIconShieldPlus = exports.BIconShieldMinus = exports.BIconShieldLockFill = exports.BIconShieldLock = exports.BIconShieldFillPlus = exports.BIconShieldFillMinus = exports.BIconShieldFillExclamation = exports.BIconShieldFillCheck = exports.BIconShieldFill = exports.BIconShieldExclamation = exports.BIconShieldCheck = exports.BIconShield = exports.BIconShareFill = exports.BIconShare = exports.BIconServer = exports.BIconSegmentedNav = exports.BIconSearch = exports.BIconScrewdriver = exports.BIconRssFill = exports.BIconRss = exports.BIconReplyFill = exports.BIconReplyAllFill = exports.BIconReplyAll = exports.BIconReply = exports.BIconReception4 = exports.BIconReception3 = exports.BIconReception2 = exports.BIconReception1 = exports.BIconReception0 = exports.BIconReceiptCutoff = exports.BIconReceipt = exports.BIconQuestionSquareFill = exports.BIconQuestionSquare = exports.BIconQuestionOctagonFill = exports.BIconQuestionOctagon = exports.BIconQuestionDiamondFill = exports.BIconQuestionDiamond = exports.BIconQuestionCircleFill = exports.BIconQuestionCircle = exports.BIconQuestion = exports.BIconPuzzleFill = exports.BIconPuzzle = exports.BIconPrinterFill = exports.BIconPrinter = exports.BIconPower = exports.BIconPlusSquareFill = exports.BIconPlusSquare = exports.BIconPlusCircleFill = exports.BIconPlusCircle = exports.BIconPlus = exports.BIconPlug = void 0;
+exports.BIconViewStacked = exports.BIconViewList = exports.BIconUpload = exports.BIconUpcScan = exports.BIconUpc = exports.BIconUnlockFill = exports.BIconUnlock = exports.BIconUnion = exports.BIconUiRadios = exports.BIconUiChecks = exports.BIconTypeUnderline = exports.BIconTypeStrikethrough = exports.BIconTypeItalic = exports.BIconTypeH3 = exports.BIconTypeH2 = exports.BIconTypeH1 = exports.BIconTypeBold = exports.BIconType = exports.BIconTvFill = exports.BIconTv = exports.BIconTruckFlatbed = exports.BIconTruck = exports.BIconTrophy = exports.BIconTriangleHalf = exports.BIconTriangleFill = exports.BIconTriangle = exports.BIconTreeFill = exports.BIconTree = exports.BIconTrashFill = exports.BIconTrash2Fill = exports.BIconTrash2 = exports.BIconTrash = exports.BIconTools = exports.BIconToggles2 = exports.BIconToggles = exports.BIconToggleOn = exports.BIconToggleOff = exports.BIconToggle2On = exports.BIconToggle2Off = exports.BIconThreeDotsVertical = exports.BIconThreeDots = exports.BIconThermometerHalf = exports.BIconThermometer = exports.BIconTextareaT = exports.BIconTextareaResize = exports.BIconTextarea = exports.BIconTextRight = exports.BIconTextLeft = exports.BIconTextIndentRight = exports.BIconTextIndentLeft = exports.BIconTextCenter = exports.BIconTerminalFill = exports.BIconTerminal = exports.BIconTelephoneXFill = exports.BIconTelephoneX = exports.BIconTelephonePlusFill = exports.BIconTelephonePlus = exports.BIconTelephoneOutboundFill = exports.BIconTelephoneOutbound = exports.BIconTelephoneMinusFill = exports.BIconTelephoneMinus = exports.BIconTelephoneInboundFill = exports.BIconTelephoneInbound = exports.BIconTelephoneForwardFill = exports.BIconTelephoneForward = exports.BIconTelephoneFill = exports.BIconTelephone = exports.BIconTagsFill = exports.BIconTags = exports.BIconTagFill = exports.BIconTag = exports.BIconTabletLandscapeFill = exports.BIconTabletLandscape = exports.BIconTabletFill = exports.BIconTablet = exports.BIconTable = exports.BIconSunglasses = exports.BIconSun = exports.BIconSuitSpadeFill = exports.BIconSuitSpade = exports.BIconSuitHeartFill = exports.BIconSuitHeart = exports.BIconSuitDiamondFill = exports.BIconSuitDiamond = exports.BIconSuitClubFill = exports.BIconSuitClub = exports.BIconSubtract = exports.BIconStopwatchFill = exports.BIconStopwatch = exports.BIconStoplightsFill = exports.BIconStoplights = exports.BIconStopFill = exports.BIconStop = exports.BIconStickyFill = exports.BIconSticky = exports.BIconStickiesFill = exports.BIconStickies = exports.BIconStarHalf = exports.BIconStarFill = exports.BIconStar = void 0;
+exports.BIconZoomOut = exports.BIconZoomIn = exports.BIconXSquareFill = exports.BIconXSquare = exports.BIconXOctagonFill = exports.BIconXOctagon = exports.BIconXDiamondFill = exports.BIconXDiamond = exports.BIconXCircleFill = exports.BIconXCircle = exports.BIconX = exports.BIconWrench = exports.BIconWindow = exports.BIconWifiOff = exports.BIconWifi2 = exports.BIconWifi1 = exports.BIconWifi = exports.BIconWatch = exports.BIconWalletFill = exports.BIconWallet2 = exports.BIconWallet = exports.BIconVr = exports.BIconVolumeUpFill = exports.BIconVolumeUp = exports.BIconVolumeOffFill = exports.BIconVolumeOff = exports.BIconVolumeMuteFill = exports.BIconVolumeMute = exports.BIconVolumeDownFill = exports.BIconVolumeDown = exports.BIconVoicemail = void 0;
 
 var _makeIcon = require("./helpers/make-icon");
 
 // --- BEGIN AUTO-GENERATED FILE ---
 //
-// @IconsVersion: 1.0.0-alpha4
-// @Generated: 2020-05-22T20:50:38.778Z
+// @IconsVersion: 1.0.0-alpha5
+// @Generated: 2020-07-28T21:51:51.502Z
 //
 // This file is generated on each build. Do not edit this file!
 
 /*!
- * BootstrapVue Icons, generated from Bootstrap Icons 1.0.0-alpha4
+ * BootstrapVue Icons, generated from Bootstrap Icons 1.0.0-alpha5
  *
  * @link https://icons.getbootstrap.com/
  * @license MIT
@@ -53021,6 +53133,24 @@ exports.BIconAlarm = BIconAlarm;
 var BIconAlarmFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('AlarmFill', '<path fill-rule="evenodd" d="M5.5.5A.5.5 0 0 1 6 0h4a.5.5 0 0 1 0 1H9v1.07a7.002 7.002 0 0 1 3.537 12.26l.817.816a.5.5 0 0 1-.708.708l-.924-.925A6.967 6.967 0 0 1 8 16a6.967 6.967 0 0 1-3.722-1.07l-.924.924a.5.5 0 0 1-.708-.708l.817-.816A7.002 7.002 0 0 1 7 2.07V1H5.999a.5.5 0 0 1-.5-.5zM.86 5.387A2.5 2.5 0 1 1 4.387 1.86 8.035 8.035 0 0 0 .86 5.387zM13.5 1c-.753 0-1.429.333-1.887.86a8.035 8.035 0 0 1 3.527 3.527A2.5 2.5 0 0 0 13.5 1zm-5 4a.5.5 0 0 0-1 0v3.882l-1.447 2.894a.5.5 0 1 0 .894.448l1.5-3A.5.5 0 0 0 8.5 9V5z"/>'); // eslint-disable-next-line
 
 exports.BIconAlarmFill = BIconAlarmFill;
+var BIconAlignBottom = /*#__PURE__*/(0, _makeIcon.makeIcon)('AlignBottom', '<path d="M6 2a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V2z"/><path fill-rule="evenodd" d="M1 14.5a.5.5 0 0 1 .5-.5h13a.5.5 0 0 1 0 1h-13a.5.5 0 0 1-.5-.5z"/>'); // eslint-disable-next-line
+
+exports.BIconAlignBottom = BIconAlignBottom;
+var BIconAlignCenter = /*#__PURE__*/(0, _makeIcon.makeIcon)('AlignCenter', '<path d="M8 1a.5.5 0 0 1 .5.5V6h-1V1.5A.5.5 0 0 1 8 1zm0 14a.5.5 0 0 1-.5-.5V10h1v4.5a.5.5 0 0 1-.5.5zM2 7a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V7z"/>'); // eslint-disable-next-line
+
+exports.BIconAlignCenter = BIconAlignCenter;
+var BIconAlignEnd = /*#__PURE__*/(0, _makeIcon.makeIcon)('AlignEnd', '<path fill-rule="evenodd" d="M14.5 1a.5.5 0 0 0-.5.5v13a.5.5 0 0 0 1 0v-13a.5.5 0 0 0-.5-.5z"/><path d="M13 7a1 1 0 0 0-1-1H2a1 1 0 0 0-1 1v2a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V7z"/>'); // eslint-disable-next-line
+
+exports.BIconAlignEnd = BIconAlignEnd;
+var BIconAlignMiddle = /*#__PURE__*/(0, _makeIcon.makeIcon)('AlignMiddle', '<path d="M6 13a1 1 0 0 0 1 1h2a1 1 0 0 0 1-1V3a1 1 0 0 0-1-1H7a1 1 0 0 0-1 1v10zM1 8a.5.5 0 0 0 .5.5H6v-1H1.5A.5.5 0 0 0 1 8zm14 0a.5.5 0 0 1-.5.5H10v-1h4.5a.5.5 0 0 1 .5.5z"/>'); // eslint-disable-next-line
+
+exports.BIconAlignMiddle = BIconAlignMiddle;
+var BIconAlignStart = /*#__PURE__*/(0, _makeIcon.makeIcon)('AlignStart', '<path fill-rule="evenodd" d="M1.5 1a.5.5 0 0 1 .5.5v13a.5.5 0 0 1-1 0v-13a.5.5 0 0 1 .5-.5z"/><path d="M3 7a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V7z"/>'); // eslint-disable-next-line
+
+exports.BIconAlignStart = BIconAlignStart;
+var BIconAlignTop = /*#__PURE__*/(0, _makeIcon.makeIcon)('AlignTop', '<path d="M6 14a1 1 0 0 0 1 1h2a1 1 0 0 0 1-1V4a1 1 0 0 0-1-1H7a1 1 0 0 0-1 1v10z"/><path fill-rule="evenodd" d="M1 1.5a.5.5 0 0 0 .5.5h13a.5.5 0 0 0 0-1h-13a.5.5 0 0 0-.5.5z"/>'); // eslint-disable-next-line
+
+exports.BIconAlignTop = BIconAlignTop;
 var BIconAlt = /*#__PURE__*/(0, _makeIcon.makeIcon)('Alt', '<path fill-rule="evenodd" d="M1 13.5a.5.5 0 0 0 .5.5h3.797a.5.5 0 0 0 .439-.26L11 3h3.5a.5.5 0 0 0 0-1h-3.797a.5.5 0 0 0-.439.26L5 13H1.5a.5.5 0 0 0-.5.5zm10 0a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 0-1h-3a.5.5 0 0 0-.5.5z"/>'); // eslint-disable-next-line
 
 exports.BIconAlt = BIconAlt;
@@ -53249,6 +53379,9 @@ exports.BIconAward = BIconAward;
 var BIconAwardFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('AwardFill', '<path d="M8 0l1.669.864 1.858.282.842 1.68 1.337 1.32L13.4 6l.306 1.854-1.337 1.32-.842 1.68-1.858.282L8 12l-1.669-.864-1.858-.282-.842-1.68-1.337-1.32L2.6 6l-.306-1.854 1.337-1.32.842-1.68L6.331.864 8 0z"/><path d="M4 11.794V16l4-1 4 1v-4.206l-2.018.306L8 13.126 6.018 12.1 4 11.794z"/>'); // eslint-disable-next-line
 
 exports.BIconAwardFill = BIconAwardFill;
+var BIconBack = /*#__PURE__*/(0, _makeIcon.makeIcon)('Back', '<path fill-rule="evenodd" d="M0 2a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v2h2a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-2H2a2 2 0 0 1-2-2V2zm2-1a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H2z"/>'); // eslint-disable-next-line
+
+exports.BIconBack = BIconBack;
 var BIconBackspace = /*#__PURE__*/(0, _makeIcon.makeIcon)('Backspace', '<path fill-rule="evenodd" d="M6.603 2h7.08a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1h-7.08a1 1 0 0 1-.76-.35L1 8l4.844-5.65A1 1 0 0 1 6.603 2zm7.08-1a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2h-7.08a2 2 0 0 1-1.519-.698L.241 8.65a1 1 0 0 1 0-1.302L5.084 1.7A2 2 0 0 1 6.603 1h7.08z"/><path fill-rule="evenodd" d="M5.83 5.146a.5.5 0 0 0 0 .708l5 5a.5.5 0 0 0 .707-.708l-5-5a.5.5 0 0 0-.708 0z"/><path fill-rule="evenodd" d="M11.537 5.146a.5.5 0 0 1 0 .708l-5 5a.5.5 0 0 1-.708-.708l5-5a.5.5 0 0 1 .707 0z"/>'); // eslint-disable-next-line
 
 exports.BIconBackspace = BIconBackspace;
@@ -53261,6 +53394,42 @@ exports.BIconBackspaceReverse = BIconBackspaceReverse;
 var BIconBackspaceReverseFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('BackspaceReverseFill', '<path fill-rule="evenodd" d="M0 3a2 2 0 0 1 2-2h7.08a2 2 0 0 1 1.519.698l4.843 5.651a1 1 0 0 1 0 1.302L10.6 14.3a2 2 0 0 1-1.52.7H2a2 2 0 0 1-2-2V3zm9.854 2.854a.5.5 0 0 0-.708-.708L7 7.293 4.854 5.146a.5.5 0 1 0-.708.708L6.293 8l-2.147 2.146a.5.5 0 0 0 .708.708L7 8.707l2.146 2.147a.5.5 0 0 0 .708-.708L7.707 8l2.147-2.146z"/>'); // eslint-disable-next-line
 
 exports.BIconBackspaceReverseFill = BIconBackspaceReverseFill;
+var BIconBadge4k = /*#__PURE__*/(0, _makeIcon.makeIcon)('Badge4k', '<path d="M4.807 5.001C4.021 6.298 3.203 7.6 2.5 8.917v.971h2.905V11h1.112V9.888h.733V8.93h-.733V5.001h-1.71zm-1.23 3.93v-.032a46.781 46.781 0 0 1 1.766-3.001h.062V8.93H3.577zm9.831-3.93h-1.306L9.835 7.687h-.057V5H8.59v6h1.187V9.075l.615-.699L12.072 11H13.5l-2.232-3.415 2.14-2.584z"/><path fill-rule="evenodd" d="M14 3H2a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4a1 1 0 0 0-1-1zM2 2a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H2z"/>'); // eslint-disable-next-line
+
+exports.BIconBadge4k = BIconBadge4k;
+var BIconBadge4kFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('Badge4kFill', '<path d="M3.577 8.9v.03h1.828V5.898h-.062a46.781 46.781 0 0 0-1.766 3.001z"/><path fill-rule="evenodd" d="M2 2a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H2zm2.372 3.715l.435-.714h1.71v3.93h.733v.957h-.733V11H5.405V9.888H2.5v-.971c.574-1.077 1.225-2.142 1.872-3.202zm7.73-.714h1.306l-2.14 2.584L13.5 11h-1.428l-1.679-2.624-.615.7V11H8.59V5.001h1.187v2.686h.057L12.102 5z"/>'); // eslint-disable-next-line
+
+exports.BIconBadge4kFill = BIconBadge4kFill;
+var BIconBadge8k = /*#__PURE__*/(0, _makeIcon.makeIcon)('Badge8k', '<path d="M4.837 11.114c1.406 0 2.333-.725 2.333-1.766 0-.945-.712-1.38-1.256-1.49v-.053c.496-.15 1.02-.55 1.02-1.331 0-.914-.831-1.587-2.084-1.587-1.257 0-2.087.673-2.087 1.587 0 .773.51 1.177 1.02 1.331v.053c-.546.11-1.258.54-1.258 1.494 0 1.042.906 1.762 2.312 1.762zm.013-3.643c-.545 0-.95-.356-.95-.866s.405-.852.95-.852c.545 0 .945.343.945.852 0 .51-.4.866-.945.866zm0 2.786c-.65 0-1.142-.395-1.142-.984S4.2 8.28 4.85 8.28c.646 0 1.143.404 1.143.993s-.497.984-1.143.984zM13.408 5h-1.306L9.835 7.685h-.057V5H8.59v5.998h1.187V9.075l.615-.699 1.679 2.623H13.5l-2.232-3.414L13.408 5z"/><path fill-rule="evenodd" d="M14 3H2a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4a1 1 0 0 0-1-1zM2 2a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H2z"/>'); // eslint-disable-next-line
+
+exports.BIconBadge8k = BIconBadge8k;
+var BIconBadge8kFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('Badge8kFill', '<path d="M3.9 6.605c0 .51.405.866.95.866.545 0 .945-.356.945-.866s-.4-.852-.945-.852c-.545 0-.95.343-.95.852zm-.192 2.668c0 .589.492.984 1.142.984.646 0 1.143-.395 1.143-.984S5.496 8.28 4.85 8.28c-.65 0-1.142.404-1.142.993z"/><path fill-rule="evenodd" d="M2 2a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H2zm5.17 7.348c0 1.041-.927 1.766-2.333 1.766-1.406 0-2.312-.72-2.312-1.762 0-.954.712-1.384 1.257-1.494v-.053c-.51-.154-1.02-.558-1.02-1.331 0-.914.831-1.587 2.088-1.587 1.253 0 2.083.673 2.083 1.587 0 .782-.523 1.182-1.02 1.331v.053c.545.11 1.257.545 1.257 1.49zM12.102 5h1.306l-2.14 2.584 2.232 3.415h-1.428l-1.679-2.624-.615.699v1.925H8.59V5h1.187v2.685h.057L12.102 5z"/>'); // eslint-disable-next-line
+
+exports.BIconBadge8kFill = BIconBadge8kFill;
+var BIconBadgeCc = /*#__PURE__*/(0, _makeIcon.makeIcon)('BadgeCc', '<path d="M3.708 7.755c0-1.111.488-1.753 1.319-1.753.681 0 1.138.47 1.186 1.107H7.36V7c-.052-1.186-1.024-2-2.342-2C3.414 5 2.5 6.05 2.5 7.751v.747c0 1.7.905 2.73 2.518 2.73 1.314 0 2.285-.792 2.342-1.939v-.114H6.213c-.048.615-.496 1.05-1.186 1.05-.84 0-1.319-.62-1.319-1.727v-.743zm6.14 0c0-1.111.488-1.753 1.318-1.753.682 0 1.139.47 1.187 1.107H13.5V7c-.053-1.186-1.024-2-2.342-2C9.554 5 8.64 6.05 8.64 7.751v.747c0 1.7.905 2.73 2.518 2.73 1.314 0 2.285-.792 2.342-1.939v-.114h-1.147c-.048.615-.497 1.05-1.187 1.05-.839 0-1.318-.62-1.318-1.727v-.743z"/><path fill-rule="evenodd" d="M14 3H2a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4a1 1 0 0 0-1-1zM2 2a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H2z"/>'); // eslint-disable-next-line
+
+exports.BIconBadgeCc = BIconBadgeCc;
+var BIconBadgeCcFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('BadgeCcFill', '<path fill-rule="evenodd" d="M2 2a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H2zm3.027 4.002c-.83 0-1.319.642-1.319 1.753v.743c0 1.107.48 1.727 1.319 1.727.69 0 1.138-.435 1.186-1.05H7.36v.114c-.057 1.147-1.028 1.938-2.342 1.938-1.613 0-2.518-1.028-2.518-2.729v-.747C2.5 6.051 3.414 5 5.018 5c1.318 0 2.29.813 2.342 2v.11H6.213c-.048-.638-.505-1.108-1.186-1.108zm6.14 0c-.831 0-1.319.642-1.319 1.753v.743c0 1.107.48 1.727 1.318 1.727.69 0 1.139-.435 1.187-1.05H13.5v.114c-.057 1.147-1.028 1.938-2.342 1.938-1.613 0-2.518-1.028-2.518-2.729v-.747c0-1.7.914-2.751 2.518-2.751 1.318 0 2.29.813 2.342 2v.11h-1.147c-.048-.638-.505-1.108-1.187-1.108z"/>'); // eslint-disable-next-line
+
+exports.BIconBadgeCcFill = BIconBadgeCcFill;
+var BIconBadgeHd = /*#__PURE__*/(0, _makeIcon.makeIcon)('BadgeHd', '<path fill-rule="evenodd" d="M14 3H2a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4a1 1 0 0 0-1-1zM2 2a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H2z"/><path d="M7.396 11V5.001H6.209v2.44H3.687V5H2.5v6h1.187V8.43h2.522V11h1.187zM8.5 5.001V11h2.188c1.811 0 2.685-1.107 2.685-3.015 0-1.894-.86-2.984-2.684-2.984H8.5zm1.187.967h.843c1.112 0 1.622.686 1.622 2.04 0 1.353-.505 2.02-1.622 2.02h-.843v-4.06z"/>'); // eslint-disable-next-line
+
+exports.BIconBadgeHd = BIconBadgeHd;
+var BIconBadgeHdFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('BadgeHdFill', '<path d="M10.53 5.968h-.843v4.06h.843c1.117 0 1.622-.667 1.622-2.02 0-1.354-.51-2.04-1.622-2.04z"/><path fill-rule="evenodd" d="M2 2a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H2zm5.396 3.001V11H6.209V8.43H3.687V11H2.5V5.001h1.187v2.44h2.522V5h1.187zM8.5 11V5.001h2.188c1.824 0 2.685 1.09 2.685 2.984C13.373 9.893 12.5 11 10.69 11H8.5z"/>'); // eslint-disable-next-line
+
+exports.BIconBadgeHdFill = BIconBadgeHdFill;
+var BIconBadgeTm = /*#__PURE__*/(0, _makeIcon.makeIcon)('BadgeTm', '<path d="M5.295 11V5.995H7V5H2.403v.994h1.701V11h1.19zm3.397 0V7.01h.058l1.428 3.239h.773l1.42-3.24h.057V11H13.5V5.001h-1.2l-1.71 3.894h-.039l-1.71-3.894H7.634V11h1.06z"/><path fill-rule="evenodd" d="M14 3H2a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4a1 1 0 0 0-1-1zM2 2a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H2z"/>'); // eslint-disable-next-line
+
+exports.BIconBadgeTm = BIconBadgeTm;
+var BIconBadgeTmFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('BadgeTmFill', '<path fill-rule="evenodd" d="M2 2a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H2zm3.295 3.995V11H4.104V5.995h-1.7V5H7v.994H5.295zM8.692 7.01V11H7.633V5.001h1.209l1.71 3.894h.039l1.71-3.894H13.5V11h-1.072V7.01h-.057l-1.42 3.239h-.773L8.75 7.008h-.058z"/>'); // eslint-disable-next-line
+
+exports.BIconBadgeTmFill = BIconBadgeTmFill;
+var BIconBadgeVo = /*#__PURE__*/(0, _makeIcon.makeIcon)('BadgeVo', '<path d="M4.508 11h1.429l1.99-5.999H6.61L5.277 9.708H5.22L3.875 5.001H2.5L4.508 11zM13.5 8.39v-.77c0-1.696-.962-2.733-2.566-2.733-1.604 0-2.571 1.029-2.571 2.734v.769c0 1.691.967 2.724 2.57 2.724 1.605 0 2.567-1.033 2.567-2.724zm-1.204-.778v.782c0 1.156-.571 1.732-1.362 1.732-.796 0-1.363-.576-1.363-1.732v-.782c0-1.156.567-1.736 1.363-1.736.79 0 1.362.58 1.362 1.736z"/><path fill-rule="evenodd" d="M14 3H2a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4a1 1 0 0 0-1-1zM2 2a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H2z"/>'); // eslint-disable-next-line
+
+exports.BIconBadgeVo = BIconBadgeVo;
+var BIconBadgeVoFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('BadgeVoFill', '<path d="M12.296 8.394v-.782c0-1.156-.571-1.736-1.362-1.736-.796 0-1.363.58-1.363 1.736v.782c0 1.156.567 1.732 1.363 1.732.79 0 1.362-.576 1.362-1.732z"/><path fill-rule="evenodd" d="M2 2a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H2zm11.5 5.62v.77c0 1.691-.962 2.724-2.566 2.724-1.604 0-2.571-1.033-2.571-2.724v-.77c0-1.704.967-2.733 2.57-2.733 1.605 0 2.567 1.037 2.567 2.734zM5.937 11H4.508L2.5 5.001h1.375L5.22 9.708h.057L6.61 5.001h1.318L5.937 11z"/>'); // eslint-disable-next-line
+
+exports.BIconBadgeVoFill = BIconBadgeVoFill;
 var BIconBag = /*#__PURE__*/(0, _makeIcon.makeIcon)('Bag', '<path fill-rule="evenodd" d="M14 5H2v9a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V5zM1 4v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V4H1z"/><path d="M8 1.5A2.5 2.5 0 0 0 5.5 4h-1a3.5 3.5 0 1 1 7 0h-1A2.5 2.5 0 0 0 8 1.5z"/>'); // eslint-disable-next-line
 
 exports.BIconBag = BIconBag;
@@ -53282,6 +53451,15 @@ exports.BIconBarChart = BIconBarChart;
 var BIconBarChartFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('BarChartFill', '<rect width="4" height="5" x="1" y="10" rx="1"/><rect width="4" height="9" x="6" y="6" rx="1"/><rect width="4" height="14" x="11" y="1" rx="1"/>'); // eslint-disable-next-line
 
 exports.BIconBarChartFill = BIconBarChartFill;
+var BIconBarChartLine = /*#__PURE__*/(0, _makeIcon.makeIcon)('BarChartLine', '<path fill-rule="evenodd" d="M4 11H2v3h2v-3zm5-4H7v7h2V7zm5-5h-2v12h2V2zm-2-1a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h2a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1h-2zM6 7a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V7zm-5 4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1v-3z"/><path fill-rule="evenodd" d="M0 14.5a.5.5 0 0 1 .5-.5h15a.5.5 0 0 1 0 1H.5a.5.5 0 0 1-.5-.5z"/>'); // eslint-disable-next-line
+
+exports.BIconBarChartLine = BIconBarChartLine;
+var BIconBarChartLineFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('BarChartLineFill', '<rect width="4" height="5" x="1" y="10" rx="1"/><rect width="4" height="9" x="6" y="6" rx="1"/><rect width="4" height="14" x="11" y="1" rx="1"/><path fill-rule="evenodd" d="M0 14.5a.5.5 0 0 1 .5-.5h15a.5.5 0 0 1 0 1H.5a.5.5 0 0 1-.5-.5z"/>'); // eslint-disable-next-line
+
+exports.BIconBarChartLineFill = BIconBarChartLineFill;
+var BIconBarChartSteps = /*#__PURE__*/(0, _makeIcon.makeIcon)('BarChartSteps', '<path fill-rule="evenodd" d="M.5 0a.5.5 0 0 1 .5.5v15a.5.5 0 0 1-1 0V.5A.5.5 0 0 1 .5 0z"/><rect width="5" height="2" x="2" y="1" rx=".5"/><rect width="8" height="2" x="4" y="5" rx=".5"/><path d="M6 9.5a.5.5 0 0 1 .5-.5h6a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-6a.5.5 0 0 1-.5-.5v-1zm2 4a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-7a.5.5 0 0 1-.5-.5v-1z"/>'); // eslint-disable-next-line
+
+exports.BIconBarChartSteps = BIconBarChartSteps;
 var BIconBasket = /*#__PURE__*/(0, _makeIcon.makeIcon)('Basket', '<path fill-rule="evenodd" d="M10.243 1.071a.5.5 0 0 1 .686.172l3 5a.5.5 0 1 1-.858.514l-3-5a.5.5 0 0 1 .172-.686zm-4.486 0a.5.5 0 0 0-.686.172l-3 5a.5.5 0 1 0 .858.514l3-5a.5.5 0 0 0-.172-.686z"/><path fill-rule="evenodd" d="M1 7v1h14V7H1zM.5 6a.5.5 0 0 0-.5.5v2a.5.5 0 0 0 .5.5h15a.5.5 0 0 0 .5-.5v-2a.5.5 0 0 0-.5-.5H.5z"/><path fill-rule="evenodd" d="M14 9H2v5a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V9zM2 8a1 1 0 0 0-1 1v5a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V9a1 1 0 0 0-1-1H2z"/><path fill-rule="evenodd" d="M4 10a.5.5 0 0 1 .5.5v3a.5.5 0 1 1-1 0v-3A.5.5 0 0 1 4 10zm2 0a.5.5 0 0 1 .5.5v3a.5.5 0 1 1-1 0v-3A.5.5 0 0 1 6 10zm2 0a.5.5 0 0 1 .5.5v3a.5.5 0 1 1-1 0v-3A.5.5 0 0 1 8 10zm2 0a.5.5 0 0 1 .5.5v3a.5.5 0 1 1-1 0v-3a.5.5 0 0 1 .5-.5zm2 0a.5.5 0 0 1 .5.5v3a.5.5 0 1 1-1 0v-3a.5.5 0 0 1 .5-.5z"/>'); // eslint-disable-next-line
 
 exports.BIconBasket = BIconBasket;
@@ -53318,6 +53496,21 @@ exports.BIconBell = BIconBell;
 var BIconBellFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('BellFill', '<path d="M8 16a2 2 0 0 0 2-2H6a2 2 0 0 0 2 2zm.995-14.901a1 1 0 1 0-1.99 0A5.002 5.002 0 0 0 3 6c0 1.098-.5 6-2 7h14c-1.5-1-2-5.902-2-7 0-2.42-1.72-4.44-4.005-4.901z"/>'); // eslint-disable-next-line
 
 exports.BIconBellFill = BIconBellFill;
+var BIconBezier = /*#__PURE__*/(0, _makeIcon.makeIcon)('Bezier', '<path fill-rule="evenodd" d="M0 10.5A1.5 1.5 0 0 1 1.5 9h1A1.5 1.5 0 0 1 4 10.5v1A1.5 1.5 0 0 1 2.5 13h-1A1.5 1.5 0 0 1 0 11.5v-1zm1.5-.5a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5h-1zm10.5.5A1.5 1.5 0 0 1 13.5 9h1a1.5 1.5 0 0 1 1.5 1.5v1a1.5 1.5 0 0 1-1.5 1.5h-1a1.5 1.5 0 0 1-1.5-1.5v-1zm1.5-.5a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5h-1zM6 4.5A1.5 1.5 0 0 1 7.5 3h1A1.5 1.5 0 0 1 10 4.5v1A1.5 1.5 0 0 1 8.5 7h-1A1.5 1.5 0 0 1 6 5.5v-1zM7.5 4a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5h-1z"/><path d="M6 4.5H1.866a1 1 0 1 0 0 1h2.668A6.517 6.517 0 0 0 1.814 9H2.5c.123 0 .244.015.358.043a5.517 5.517 0 0 1 3.185-3.185A1.503 1.503 0 0 1 6 5.5v-1zm3.957 1.358A1.5 1.5 0 0 0 10 5.5v-1h4.134a1 1 0 1 1 0 1h-2.668a6.517 6.517 0 0 1 2.72 3.5H13.5c-.123 0-.243.015-.358.043a5.517 5.517 0 0 0-3.185-3.185z"/>'); // eslint-disable-next-line
+
+exports.BIconBezier = BIconBezier;
+var BIconBezier2 = /*#__PURE__*/(0, _makeIcon.makeIcon)('Bezier2', '<path fill-rule="evenodd" d="M1 2.5A1.5 1.5 0 0 1 2.5 1h1A1.5 1.5 0 0 1 5 2.5v1A1.5 1.5 0 0 1 3.5 5h-1A1.5 1.5 0 0 1 1 3.5v-1zM2.5 2a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5h-1zM11 12.5a1.5 1.5 0 0 1 1.5-1.5h1a1.5 1.5 0 0 1 1.5 1.5v1a1.5 1.5 0 0 1-1.5 1.5h-1a1.5 1.5 0 0 1-1.5-1.5v-1zm1.5-.5a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5h-1z"/><path fill-rule="evenodd" d="M6.767 4.645C6.303 3.923 5.592 3.5 4.5 3.5v-1H10v1H7.124c.18.18.34.381.484.605.638.992.892 2.354.892 3.895 0 1.993.257 3.092.713 3.7.418.559 1.089.8 2.287.8v1H6v-1h2.577a2.839 2.839 0 0 1-.165-.2C7.743 11.407 7.5 10.007 7.5 8c0-1.46-.246-2.597-.733-3.355z"/><path d="M11 3a1 1 0 1 1-2 0 1 1 0 0 1 2 0zM7 13a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/>'); // eslint-disable-next-line
+
+exports.BIconBezier2 = BIconBezier2;
+var BIconBicycle = /*#__PURE__*/(0, _makeIcon.makeIcon)('Bicycle', '<path fill-rule="evenodd" d="M3 12a2 2 0 1 0 0-4 2 2 0 0 0 0 4zm0 1a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm10-1a2 2 0 1 0 0-4 2 2 0 0 0 0 4zm0 1a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/><path fill-rule="evenodd" d="M4 4.5a.5.5 0 0 1 .5-.5H6a.5.5 0 0 1 0 1v.5h4.14l.386-1.158A.5.5 0 0 1 11 4h1a.5.5 0 0 1 0 1h-.64l-.311.935 2.375 3.8a.5.5 0 1 1-.848.53L10.5 6.943l-2.076 3.322A.5.5 0 0 1 8 10.5H3a.5.5 0 0 1-.424-.765L5 5.857V5h-.5a.5.5 0 0 1-.5-.5zm1.5 2.443L3.902 9.5h3.196L5.5 6.943zM8 9.057L9.598 6.5H6.402L8 9.057z"/>'); // eslint-disable-next-line
+
+exports.BIconBicycle = BIconBicycle;
+var BIconBinoculars = /*#__PURE__*/(0, _makeIcon.makeIcon)('Binoculars', '<path fill-rule="evenodd" d="M3 2.5A1.5 1.5 0 0 1 4.5 1h1A1.5 1.5 0 0 1 7 2.5V5h2V2.5A1.5 1.5 0 0 1 10.5 1h1A1.5 1.5 0 0 1 13 2.5v2.382a.5.5 0 0 0 .276.447l.895.447A1.5 1.5 0 0 1 15 7.118V14.5a1.5 1.5 0 0 1-1.5 1.5h-3A1.5 1.5 0 0 1 9 14.5v-3a.5.5 0 0 1 .146-.354l.854-.853V9.5a.5.5 0 0 0-.5-.5h-3a.5.5 0 0 0-.5.5v.793l.854.853A.5.5 0 0 1 7 11.5v3A1.5 1.5 0 0 1 5.5 16h-3A1.5 1.5 0 0 1 1 14.5V7.118a1.5 1.5 0 0 1 .83-1.342l.894-.447A.5.5 0 0 0 3 4.882V2.5zM4.5 2a.5.5 0 0 0-.5.5V3h2v-.5a.5.5 0 0 0-.5-.5h-1zM6 4H4v.882a1.5 1.5 0 0 1-.83 1.342l-.894.447A.5.5 0 0 0 2 7.118V13h4v-1.293l-.854-.853A.5.5 0 0 1 5 10.5v-1A1.5 1.5 0 0 1 6.5 8h3A1.5 1.5 0 0 1 11 9.5v1a.5.5 0 0 1-.146.354l-.854.853V13h4V7.118a.5.5 0 0 0-.276-.447l-.895-.447A1.5 1.5 0 0 1 12 4.882V4h-2v1.5a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5V4zm4-1h2v-.5a.5.5 0 0 0-.5-.5h-1a.5.5 0 0 0-.5.5V3zm4 11h-4v.5a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5V14zm-8 0H2v.5a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5V14z"/>'); // eslint-disable-next-line
+
+exports.BIconBinoculars = BIconBinoculars;
+var BIconBinocularsFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('BinocularsFill', '<path d="M4.5 1A1.5 1.5 0 0 0 3 2.5V3h4v-.5A1.5 1.5 0 0 0 5.5 1h-1zM7 4v1h2V4h4v.882a.5.5 0 0 0 .276.447l.895.447A1.5 1.5 0 0 1 15 7.118V13H9v-1.5a.5.5 0 0 1 .146-.354l.854-.853V9.5a.5.5 0 0 0-.5-.5h-3a.5.5 0 0 0-.5.5v.793l.854.853A.5.5 0 0 1 7 11.5V13H1V7.118a1.5 1.5 0 0 1 .83-1.342l.894-.447A.5.5 0 0 0 3 4.882V4h4zM1 14v.5A1.5 1.5 0 0 0 2.5 16h3A1.5 1.5 0 0 0 7 14.5V14H1zm8 0v.5a1.5 1.5 0 0 0 1.5 1.5h3a1.5 1.5 0 0 0 1.5-1.5V14H9zm4-11H9v-.5A1.5 1.5 0 0 1 10.5 1h1A1.5 1.5 0 0 1 13 2.5V3z"/>'); // eslint-disable-next-line
+
+exports.BIconBinocularsFill = BIconBinocularsFill;
 var BIconBlockquoteLeft = /*#__PURE__*/(0, _makeIcon.makeIcon)('BlockquoteLeft', '<path fill-rule="evenodd" d="M2 3.5a.5.5 0 0 1 .5-.5h11a.5.5 0 0 1 0 1h-11a.5.5 0 0 1-.5-.5zm5 3a.5.5 0 0 1 .5-.5h6a.5.5 0 0 1 0 1h-6a.5.5 0 0 1-.5-.5zm0 3a.5.5 0 0 1 .5-.5h6a.5.5 0 0 1 0 1h-6a.5.5 0 0 1-.5-.5zm-5 3a.5.5 0 0 1 .5-.5h11a.5.5 0 0 1 0 1h-11a.5.5 0 0 1-.5-.5z"/><path d="M3.734 6.352a6.586 6.586 0 0 0-.445.275 1.94 1.94 0 0 0-.346.299 1.38 1.38 0 0 0-.252.369c-.058.129-.1.295-.123.498h.282c.242 0 .431.06.568.182.14.117.21.29.21.521a.697.697 0 0 1-.187.463c-.12.14-.289.21-.503.21-.336 0-.577-.108-.721-.327C2.072 8.619 2 8.328 2 7.969c0-.254.055-.485.164-.692.11-.21.242-.398.398-.562.16-.168.33-.31.51-.428.18-.117.33-.213.451-.287l.211.352zm2.168 0a6.588 6.588 0 0 0-.445.275 1.94 1.94 0 0 0-.346.299c-.113.12-.199.246-.257.375a1.75 1.75 0 0 0-.118.492h.282c.242 0 .431.06.568.182.14.117.21.29.21.521a.697.697 0 0 1-.187.463c-.12.14-.289.21-.504.21-.335 0-.576-.108-.72-.327-.145-.223-.217-.514-.217-.873 0-.254.055-.485.164-.692.11-.21.242-.398.398-.562.16-.168.33-.31.51-.428.18-.117.33-.213.451-.287l.211.352z"/>'); // eslint-disable-next-line
 
 exports.BIconBlockquoteLeft = BIconBlockquoteLeft;
@@ -53327,6 +53520,9 @@ exports.BIconBlockquoteRight = BIconBlockquoteRight;
 var BIconBook = /*#__PURE__*/(0, _makeIcon.makeIcon)('Book', '<path fill-rule="evenodd" d="M3.214 1.072C4.813.752 6.916.71 8.354 2.146A.5.5 0 0 1 8.5 2.5v11a.5.5 0 0 1-.854.354c-.843-.844-2.115-1.059-3.47-.92-1.344.14-2.66.617-3.452 1.013A.5.5 0 0 1 0 13.5v-11a.5.5 0 0 1 .276-.447L.5 2.5l-.224-.447.002-.001.004-.002.013-.006a5.017 5.017 0 0 1 .22-.103 12.958 12.958 0 0 1 2.7-.869zM1 2.82v9.908c.846-.343 1.944-.672 3.074-.788 1.143-.118 2.387-.023 3.426.56V2.718c-1.063-.929-2.631-.956-4.09-.664A11.958 11.958 0 0 0 1 2.82z"/><path fill-rule="evenodd" d="M12.786 1.072C11.188.752 9.084.71 7.646 2.146A.5.5 0 0 0 7.5 2.5v11a.5.5 0 0 0 .854.354c.843-.844 2.115-1.059 3.47-.92 1.344.14 2.66.617 3.452 1.013A.5.5 0 0 0 16 13.5v-11a.5.5 0 0 0-.276-.447L15.5 2.5l.224-.447-.002-.001-.004-.002-.013-.006-.047-.023a12.582 12.582 0 0 0-.799-.34 12.96 12.96 0 0 0-2.073-.609zM15 2.82v9.908c-.846-.343-1.944-.672-3.074-.788-1.143-.118-2.387-.023-3.426.56V2.718c1.063-.929 2.631-.956 4.09-.664A11.956 11.956 0 0 1 15 2.82z"/>'); // eslint-disable-next-line
 
 exports.BIconBook = BIconBook;
+var BIconBookFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('BookFill', '<path d="M15.261 13.666c.345.14.739-.105.739-.477V2.5a.472.472 0 0 0-.277-.437c-1.126-.503-5.42-2.19-7.723.129C5.696-.125 1.403 1.56.277 2.063A.472.472 0 0 0 0 2.502V13.19c0 .372.394.618.739.477C2.738 12.852 6.125 12.113 8 14c1.875-1.887 5.262-1.148 7.261-.334z"/>'); // eslint-disable-next-line
+
+exports.BIconBookFill = BIconBookFill;
 var BIconBookHalf = /*#__PURE__*/(0, _makeIcon.makeIcon)('BookHalf', '<path fill-rule="evenodd" d="M12.786 1.072C11.188.752 9.084.71 7.646 2.146A.5.5 0 0 0 7.5 2.5v11a.5.5 0 0 0 .854.354c.843-.844 2.115-1.059 3.47-.92 1.344.14 2.66.617 3.452 1.013A.5.5 0 0 0 16 13.5v-11a.5.5 0 0 0-.276-.447L15.5 2.5l.224-.447-.002-.001-.004-.002-.013-.006-.047-.023a12.582 12.582 0 0 0-.799-.34 12.96 12.96 0 0 0-2.073-.609zM15 2.82v9.908c-.846-.343-1.944-.672-3.074-.788-1.143-.118-2.387-.023-3.426.56V2.718c1.063-.929 2.631-.956 4.09-.664A11.956 11.956 0 0 1 15 2.82z"/><path fill-rule="evenodd" d="M3.214 1.072C4.813.752 6.916.71 8.354 2.146A.5.5 0 0 1 8.5 2.5v11a.5.5 0 0 1-.854.354c-.843-.844-2.115-1.059-3.47-.92-1.344.14-2.66.617-3.452 1.013A.5.5 0 0 1 0 13.5v-11a.5.5 0 0 1 .276-.447L.5 2.5l-.224-.447.002-.001.004-.002.013-.006a5.017 5.017 0 0 1 .22-.103 12.958 12.958 0 0 1 2.7-.869z"/>'); // eslint-disable-next-line
 
 exports.BIconBookHalf = BIconBookHalf;
@@ -53351,6 +53547,9 @@ exports.BIconBookmarks = BIconBookmarks;
 var BIconBookmarksFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('BookmarksFill', '<path fill-rule="evenodd" d="M2 4a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v12l-5-3-5 3V4z"/><path d="M14 14l-1-.6V2a1 1 0 0 0-1-1H4.268A2 2 0 0 1 6 0h6a2 2 0 0 1 2 2v12z"/>'); // eslint-disable-next-line
 
 exports.BIconBookmarksFill = BIconBookmarksFill;
+var BIconBookshelf = /*#__PURE__*/(0, _makeIcon.makeIcon)('Bookshelf', '<path fill-rule="evenodd" d="M2.5 0a.5.5 0 0 1 .5.5V2h10V.5a.5.5 0 0 1 1 0v15a.5.5 0 0 1-1 0V15H3v.5a.5.5 0 0 1-1 0V.5a.5.5 0 0 1 .5-.5zM3 14h10v-3H3v3zm0-4h10V7H3v3zm0-4h10V3H3v3z"/>'); // eslint-disable-next-line
+
+exports.BIconBookshelf = BIconBookshelf;
 var BIconBootstrap = /*#__PURE__*/(0, _makeIcon.makeIcon)('Bootstrap', '<path fill-rule="evenodd" d="M12 1H4a3 3 0 0 0-3 3v8a3 3 0 0 0 3 3h8a3 3 0 0 0 3-3V4a3 3 0 0 0-3-3zM4 0a4 4 0 0 0-4 4v8a4 4 0 0 0 4 4h8a4 4 0 0 0 4-4V4a4 4 0 0 0-4-4H4z"/><path fill-rule="evenodd" d="M8.537 12H5.062V3.545h3.399c1.587 0 2.543.809 2.543 2.11 0 .884-.65 1.675-1.483 1.816v.1c1.143.117 1.904.931 1.904 2.033 0 1.488-1.084 2.396-2.888 2.396zM6.375 4.658v2.467h1.558c1.16 0 1.764-.428 1.764-1.23 0-.78-.569-1.237-1.541-1.237H6.375zm1.898 6.229H6.375V8.162h1.822c1.236 0 1.887.463 1.887 1.348 0 .896-.627 1.377-1.811 1.377z"/>'); // eslint-disable-next-line
 
 exports.BIconBootstrap = BIconBootstrap;
@@ -53360,6 +53559,12 @@ exports.BIconBootstrapFill = BIconBootstrapFill;
 var BIconBootstrapReboot = /*#__PURE__*/(0, _makeIcon.makeIcon)('BootstrapReboot', '<path fill-rule="evenodd" d="M1.161 8a6.84 6.84 0 1 0 6.842-6.84.58.58 0 0 1 0-1.16 8 8 0 1 1-6.556 3.412l-.663-.577a.58.58 0 0 1 .227-.997l2.52-.69a.58.58 0 0 1 .728.633l-.332 2.592a.58.58 0 0 1-.956.364l-.643-.56A6.812 6.812 0 0 0 1.16 8zm5.48-.079V5.277h1.57c.881 0 1.416.499 1.416 1.32 0 .84-.504 1.324-1.386 1.324h-1.6zm0 3.75V8.843h1.57l1.498 2.828h1.314L9.377 8.665c.897-.3 1.427-1.106 1.427-2.1 0-1.37-.943-2.246-2.456-2.246H5.5v7.352h1.141z"/>'); // eslint-disable-next-line
 
 exports.BIconBootstrapReboot = BIconBootstrapReboot;
+var BIconBorderStyle = /*#__PURE__*/(0, _makeIcon.makeIcon)('BorderStyle', '<path d="M1 3.5a.5.5 0 0 1 .5-.5h13a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-13a.5.5 0 0 1-.5-.5v-1zm0 4a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-5a.5.5 0 0 1-.5-.5v-1zm0 4a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1zm8 0a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1zm-4 0a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1zm8 0a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1zm-4-4a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-5a.5.5 0 0 1-.5-.5v-1z"/>'); // eslint-disable-next-line
+
+exports.BIconBorderStyle = BIconBorderStyle;
+var BIconBorderWidth = /*#__PURE__*/(0, _makeIcon.makeIcon)('BorderWidth', '<path d="M0 3.5A.5.5 0 0 1 .5 3h15a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-.5.5H.5a.5.5 0 0 1-.5-.5v-2zm0 5A.5.5 0 0 1 .5 8h15a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5H.5a.5.5 0 0 1-.5-.5v-1zm0 4a.5.5 0 0 1 .5-.5h15a.5.5 0 0 1 0 1H.5a.5.5 0 0 1-.5-.5z"/>'); // eslint-disable-next-line
+
+exports.BIconBorderWidth = BIconBorderWidth;
 var BIconBoundingBox = /*#__PURE__*/(0, _makeIcon.makeIcon)('BoundingBox', '<path fill-rule="evenodd" d="M5 2V0H0v5h2v6H0v5h5v-2h6v2h5v-5h-2V5h2V0h-5v2H5zm6 1H5v2H3v6h2v2h6v-2h2V5h-2V3zm1-2v3h3V1h-3zm3 11h-3v3h3v-3zM4 15v-3H1v3h3zM1 4h3V1H1v3z"/>'); // eslint-disable-next-line
 
 exports.BIconBoundingBox = BIconBoundingBox;
@@ -53423,6 +53628,9 @@ exports.BIconBoxSeam = BIconBoxSeam;
 var BIconBraces = /*#__PURE__*/(0, _makeIcon.makeIcon)('Braces', '<path d="M2.114 8.063V7.9c1.005-.102 1.497-.615 1.497-1.6V4.503c0-1.094.39-1.538 1.354-1.538h.273V2h-.376C3.25 2 2.49 2.759 2.49 4.352v1.524c0 1.094-.376 1.456-1.49 1.456v1.299c1.114 0 1.49.362 1.49 1.456v1.524c0 1.593.759 2.352 2.372 2.352h.376v-.964h-.273c-.964 0-1.354-.444-1.354-1.538V9.663c0-.984-.492-1.497-1.497-1.6zM13.886 7.9v.163c-1.005.103-1.497.616-1.497 1.6v1.798c0 1.094-.39 1.538-1.354 1.538h-.273v.964h.376c1.613 0 2.372-.759 2.372-2.352v-1.524c0-1.094.376-1.456 1.49-1.456V7.332c-1.114 0-1.49-.362-1.49-1.456V4.352C13.51 2.759 12.75 2 11.138 2h-.376v.964h.273c.964 0 1.354.444 1.354 1.538V6.3c0 .984.492 1.497 1.497 1.6z"/>'); // eslint-disable-next-line
 
 exports.BIconBraces = BIconBraces;
+var BIconBricks = /*#__PURE__*/(0, _makeIcon.makeIcon)('Bricks', '<path fill-rule="evenodd" d="M15 13H1v2h14v-2zM1 12a1 1 0 0 0-1 1v2a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1H1zm14-5H1v2h14V7zM1 6a1 1 0 0 0-1 1v2a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1V7a1 1 0 0 0-1-1H1z"/><path fill-rule="evenodd" d="M13 10H3v2h10v-2zM3 9a1 1 0 0 0-1 1v2a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1H3zm10-5H3v2h10V4zM3 3a1 1 0 0 0-1 1v2a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V4a1 1 0 0 0-1-1H3z"/><path fill-rule="evenodd" d="M15 1H1v2h14V1zM1 0a1 1 0 0 0-1 1v2a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1V1a1 1 0 0 0-1-1H1z"/><path fill-rule="evenodd" d="M5.5 1v2h-1V1h1zm6 0v2h-1V1h1zm-4 5V4h1v2h-1zm-2 1v2h-1V7h1zm6 0v2h-1V7h1zm-4 5v-2h1v2h-1zm-3 3v-2h1v2h-1zm6 0v-2h1v2h-1z"/>'); // eslint-disable-next-line
+
+exports.BIconBricks = BIconBricks;
 var BIconBriefcase = /*#__PURE__*/(0, _makeIcon.makeIcon)('Briefcase', '<path fill-rule="evenodd" d="M0 12.5A1.5 1.5 0 0 0 1.5 14h13a1.5 1.5 0 0 0 1.5-1.5v-6h-1v6a.5.5 0 0 1-.5.5h-13a.5.5 0 0 1-.5-.5v-6H0v6z"/><path fill-rule="evenodd" d="M0 4.5A1.5 1.5 0 0 1 1.5 3h13A1.5 1.5 0 0 1 16 4.5v2.384l-7.614 2.03a1.5 1.5 0 0 1-.772 0L0 6.884V4.5zM1.5 4a.5.5 0 0 0-.5.5v1.616l6.871 1.832a.5.5 0 0 0 .258 0L15 6.116V4.5a.5.5 0 0 0-.5-.5h-13zM5 2.5A1.5 1.5 0 0 1 6.5 1h3A1.5 1.5 0 0 1 11 2.5V3h-1v-.5a.5.5 0 0 0-.5-.5h-3a.5.5 0 0 0-.5.5V3H5v-.5z"/>'); // eslint-disable-next-line
 
 exports.BIconBriefcase = BIconBriefcase;
@@ -53444,15 +53652,21 @@ exports.BIconBrightnessAltLowFill = BIconBrightnessAltLowFill;
 var BIconBrightnessHigh = /*#__PURE__*/(0, _makeIcon.makeIcon)('BrightnessHigh', '<path fill-rule="evenodd" d="M8 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0 1a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM8 0a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 0zm0 13a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 13zm8-5a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2a.5.5 0 0 1 .5.5zM3 8a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2A.5.5 0 0 1 3 8zm10.657-5.657a.5.5 0 0 1 0 .707l-1.414 1.415a.5.5 0 1 1-.707-.708l1.414-1.414a.5.5 0 0 1 .707 0zm-9.193 9.193a.5.5 0 0 1 0 .707L3.05 13.657a.5.5 0 0 1-.707-.707l1.414-1.414a.5.5 0 0 1 .707 0zm9.193 2.121a.5.5 0 0 1-.707 0l-1.414-1.414a.5.5 0 0 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .707zM4.464 4.465a.5.5 0 0 1-.707 0L2.343 3.05a.5.5 0 1 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .708z"/>'); // eslint-disable-next-line
 
 exports.BIconBrightnessHigh = BIconBrightnessHigh;
-var BIconBrightnessHighFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('BrightnessHighFill', '<circle cx="8" cy="8" r="4"/><path fill-rule="evenodd" d="M8 0a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 0zm0 13a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 13zm8-5a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2a.5.5 0 0 1 .5.5zM3 8a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2A.5.5 0 0 1 3 8zm10.657-5.657a.5.5 0 0 1 0 .707l-1.414 1.415a.5.5 0 1 1-.707-.708l1.414-1.414a.5.5 0 0 1 .707 0zm-9.193 9.193a.5.5 0 0 1 0 .707L3.05 13.657a.5.5 0 0 1-.707-.707l1.414-1.414a.5.5 0 0 1 .707 0zm9.193 2.121a.5.5 0 0 1-.707 0l-1.414-1.414a.5.5 0 0 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .707zM4.464 4.465a.5.5 0 0 1-.707 0L2.343 3.05a.5.5 0 0 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .708z"/>'); // eslint-disable-next-line
+var BIconBrightnessHighFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('BrightnessHighFill', '<path d="M12 8a4 4 0 1 1-8 0 4 4 0 0 1 8 0z"/><path fill-rule="evenodd" d="M8 0a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 0zm0 13a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 13zm8-5a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2a.5.5 0 0 1 .5.5zM3 8a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2A.5.5 0 0 1 3 8zm10.657-5.657a.5.5 0 0 1 0 .707l-1.414 1.415a.5.5 0 1 1-.707-.708l1.414-1.414a.5.5 0 0 1 .707 0zm-9.193 9.193a.5.5 0 0 1 0 .707L3.05 13.657a.5.5 0 0 1-.707-.707l1.414-1.414a.5.5 0 0 1 .707 0zm9.193 2.121a.5.5 0 0 1-.707 0l-1.414-1.414a.5.5 0 0 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .707zM4.464 4.465a.5.5 0 0 1-.707 0L2.343 3.05a.5.5 0 1 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .708z"/>'); // eslint-disable-next-line
 
 exports.BIconBrightnessHighFill = BIconBrightnessHighFill;
-var BIconBrightnessLow = /*#__PURE__*/(0, _makeIcon.makeIcon)('BrightnessLow', '<path fill-rule="evenodd" d="M8 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0 1a4 4 0 1 0 0-8 4 4 0 0 0 0 8z"/><circle cx="8" cy="2.5" r=".5"/><circle cx="8" cy="13.5" r=".5"/><circle cx="13.5" cy="8" r=".5" transform="rotate(90 13.5 8)"/><circle cx="2.5" cy="8" r=".5" transform="rotate(90 2.5 8)"/><circle cx="11.889" cy="4.111" r=".5" transform="rotate(45 11.89 4.11)"/><circle cx="4.111" cy="11.889" r=".5" transform="rotate(45 4.11 11.89)"/><circle cx="11.889" cy="11.889" r=".5" transform="rotate(135 11.89 11.889)"/><circle cx="4.111" cy="4.111" r=".5" transform="rotate(135 4.11 4.11)"/>'); // eslint-disable-next-line
+var BIconBrightnessLow = /*#__PURE__*/(0, _makeIcon.makeIcon)('BrightnessLow', '<path fill-rule="evenodd" d="M8 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0 1a4 4 0 1 0 0-8 4 4 0 0 0 0 8z"/><path d="M8.5 2.5a.5.5 0 1 1-1 0 .5.5 0 0 1 1 0zm0 11a.5.5 0 1 1-1 0 .5.5 0 0 1 1 0zm5-5a.5.5 0 1 1 0-1 .5.5 0 0 1 0 1zm-11 0a.5.5 0 1 1 0-1 .5.5 0 0 1 0 1zm9.743-4.036a.5.5 0 1 1-.707-.707.5.5 0 0 1 .707.707zm-7.779 7.779a.5.5 0 1 1-.707-.707.5.5 0 0 1 .707.707zm7.072 0a.5.5 0 1 1 .707-.707.5.5 0 0 1-.707.707zM3.757 4.464a.5.5 0 1 1 .707-.707.5.5 0 0 1-.707.707z"/>'); // eslint-disable-next-line
 
 exports.BIconBrightnessLow = BIconBrightnessLow;
-var BIconBrightnessLowFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('BrightnessLowFill', '<circle cx="8" cy="8" r="4"/><circle cx="8" cy="2.5" r=".5"/><circle cx="8" cy="13.5" r=".5"/><circle cx="13.5" cy="8" r=".5" transform="rotate(90 13.5 8)"/><circle cx="2.5" cy="8" r=".5" transform="rotate(90 2.5 8)"/><circle cx="11.889" cy="4.111" r=".5" transform="rotate(45 11.89 4.11)"/><circle cx="4.111" cy="11.889" r=".5" transform="rotate(45 4.11 11.89)"/><circle cx="11.889" cy="11.889" r=".5" transform="rotate(135 11.89 11.889)"/><circle cx="4.111" cy="4.111" r=".5" transform="rotate(135 4.11 4.11)"/>'); // eslint-disable-next-line
+var BIconBrightnessLowFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('BrightnessLowFill', '<path d="M12 8a4 4 0 1 1-8 0 4 4 0 0 1 8 0zM8.5 2.5a.5.5 0 1 1-1 0 .5.5 0 0 1 1 0zm0 11a.5.5 0 1 1-1 0 .5.5 0 0 1 1 0zm5-5a.5.5 0 1 1 0-1 .5.5 0 0 1 0 1zm-11 0a.5.5 0 1 1 0-1 .5.5 0 0 1 0 1zm9.743-4.036a.5.5 0 1 1-.707-.707.5.5 0 0 1 .707.707zm-7.779 7.779a.5.5 0 1 1-.707-.707.5.5 0 0 1 .707.707zm7.072 0a.5.5 0 1 1 .707-.707.5.5 0 0 1-.707.707zM3.757 4.464a.5.5 0 1 1 .707-.707.5.5 0 0 1-.707.707z"/>'); // eslint-disable-next-line
 
 exports.BIconBrightnessLowFill = BIconBrightnessLowFill;
+var BIconBroadcast = /*#__PURE__*/(0, _makeIcon.makeIcon)('Broadcast', '<path fill-rule="evenodd" d="M3.05 3.05a7 7 0 0 0 0 9.9.5.5 0 0 1-.707.707 8 8 0 0 1 0-11.314.5.5 0 0 1 .707.707zm2.122 2.122a4 4 0 0 0 0 5.656.5.5 0 0 1-.708.708 5 5 0 0 1 0-7.072.5.5 0 0 1 .708.708zm5.656-.708a.5.5 0 0 1 .708 0 5 5 0 0 1 0 7.072.5.5 0 1 1-.708-.708 4 4 0 0 0 0-5.656.5.5 0 0 1 0-.708zm2.122-2.12a.5.5 0 0 1 .707 0 8 8 0 0 1 0 11.313.5.5 0 0 1-.707-.707 7 7 0 0 0 0-9.9.5.5 0 0 1 0-.707z"/><path d="M10 8a2 2 0 1 1-4 0 2 2 0 0 1 4 0z"/>'); // eslint-disable-next-line
+
+exports.BIconBroadcast = BIconBroadcast;
+var BIconBroadcastPin = /*#__PURE__*/(0, _makeIcon.makeIcon)('BroadcastPin', '<path fill-rule="evenodd" d="M3.05 3.05a7 7 0 0 0 0 9.9.5.5 0 0 1-.707.707 8 8 0 0 1 0-11.314.5.5 0 0 1 .707.707zm2.122 2.122a4 4 0 0 0 0 5.656.5.5 0 0 1-.708.708 5 5 0 0 1 0-7.072.5.5 0 0 1 .708.708zm5.656-.708a.5.5 0 0 1 .708 0 5 5 0 0 1 0 7.072.5.5 0 1 1-.708-.708 4 4 0 0 0 0-5.656.5.5 0 0 1 0-.708zm2.122-2.12a.5.5 0 0 1 .707 0 8 8 0 0 1 0 11.313.5.5 0 0 1-.707-.707 7 7 0 0 0 0-9.9.5.5 0 0 1 0-.707z"/><path d="M10 8a2 2 0 1 1-4 0 2 2 0 0 1 4 0z"/><path fill-rule="evenodd" d="M8 8.5a.5.5 0 0 1 .5.5v6.5a.5.5 0 0 1-1 0V9a.5.5 0 0 1 .5-.5z"/>'); // eslint-disable-next-line
+
+exports.BIconBroadcastPin = BIconBroadcastPin;
 var BIconBrush = /*#__PURE__*/(0, _makeIcon.makeIcon)('Brush', '<path d="M15.213 1.018a.572.572 0 0 1 .756.05.57.57 0 0 1 .057.746C15.085 3.082 12.044 7.107 9.6 9.55c-.71.71-1.42 1.243-1.952 1.596-.508.339-1.167.234-1.599-.197-.416-.416-.53-1.047-.212-1.543.346-.542.887-1.273 1.642-1.977 2.521-2.35 6.476-5.44 7.734-6.411z"/><path d="M7 12a2 2 0 0 1-2 2c-1 0-2 0-3.5-.5s.5-1 1-1.5 1.395-2 2.5-2a2 2 0 0 1 2 2z"/>'); // eslint-disable-next-line
 
 exports.BIconBrush = BIconBrush;
@@ -53462,12 +53676,24 @@ exports.BIconBucket = BIconBucket;
 var BIconBucketFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('BucketFill', '<path fill-rule="evenodd" d="M8 1.5A4.5 4.5 0 0 0 3.5 6h-1a5.5 5.5 0 1 1 11 0h-1A4.5 4.5 0 0 0 8 1.5z"/><path fill-rule="evenodd" d="M1.61 5.687A.5.5 0 0 1 2 5.5h12a.5.5 0 0 1 .488.608l-1.826 8.217a1.5 1.5 0 0 1-1.464 1.175H4.802a1.5 1.5 0 0 1-1.464-1.175L1.512 6.108a.5.5 0 0 1 .098-.42z"/>'); // eslint-disable-next-line
 
 exports.BIconBucketFill = BIconBucketFill;
-var BIconBuilding = /*#__PURE__*/(0, _makeIcon.makeIcon)('Building', '<path fill-rule="evenodd" d="M15.285.089A.5.5 0 0 1 15.5.5v15a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5V14h-1v1.5a.5.5 0 0 1-.5.5H1a.5.5 0 0 1-.5-.5v-6a.5.5 0 0 1 .418-.493l5.582-.93V3.5a.5.5 0 0 1 .324-.468l8-3a.5.5 0 0 1 .46.057zM7.5 3.846V8.5a.5.5 0 0 1-.418.493l-5.582.93V15h8v-1.5a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 .5.5V15h2V1.222l-7 2.624z"/><path fill-rule="evenodd" d="M6.5 15.5v-7h1v7h-1z"/><path d="M2.5 11h1v1h-1v-1zm2 0h1v1h-1v-1zm-2 2h1v1h-1v-1zm2 0h1v1h-1v-1zm6-10h1v1h-1V3zm2 0h1v1h-1V3zm-4 2h1v1h-1V5zm2 0h1v1h-1V5zm2 0h1v1h-1V5zm-2 2h1v1h-1V7zm2 0h1v1h-1V7zm-4 0h1v1h-1V7zm0 2h1v1h-1V9zm2 0h1v1h-1V9zm2 0h1v1h-1V9zm-4 2h1v1h-1v-1zm2 0h1v1h-1v-1zm2 0h1v1h-1v-1z"/>'); // eslint-disable-next-line
+var BIconBug = /*#__PURE__*/(0, _makeIcon.makeIcon)('Bug', '<path fill-rule="evenodd" d="M4.355.522a.5.5 0 0 1 .623.333l.291.956A4.979 4.979 0 0 1 8 1c1.007 0 1.946.298 2.731.811l.29-.956a.5.5 0 1 1 .957.29l-.41 1.352A4.985 4.985 0 0 1 13 6h.5a.5.5 0 0 0 .5-.5V5a.5.5 0 0 1 1 0v.5A1.5 1.5 0 0 1 13.5 7H13v1h1.5a.5.5 0 0 1 0 1H13v1h.5a1.5 1.5 0 0 1 1.5 1.5v.5a.5.5 0 1 1-1 0v-.5a.5.5 0 0 0-.5-.5H13a5 5 0 0 1-10 0h-.5a.5.5 0 0 0-.5.5v.5a.5.5 0 1 1-1 0v-.5A1.5 1.5 0 0 1 2.5 10H3V9H1.5a.5.5 0 0 1 0-1H3V7h-.5A1.5 1.5 0 0 1 1 5.5V5a.5.5 0 0 1 1 0v.5a.5.5 0 0 0 .5.5H3c0-1.364.547-2.601 1.432-3.503l-.41-1.352a.5.5 0 0 1 .333-.623zM4 7v4a4 4 0 0 0 3.5 3.97V7H4zm4.5 0v7.97A4 4 0 0 0 12 11V7H8.5zM12 6H4a3.99 3.99 0 0 1 1.333-2.982A3.983 3.983 0 0 1 8 2c1.025 0 1.959.385 2.666 1.018A3.989 3.989 0 0 1 12 6z"/>'); // eslint-disable-next-line
+
+exports.BIconBug = BIconBug;
+var BIconBugFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('BugFill', '<path fill-rule="evenodd" d="M4.978.855a.5.5 0 1 0-.956.29l.41 1.352A4.985 4.985 0 0 0 3 6h10a4.985 4.985 0 0 0-1.432-3.503l.41-1.352a.5.5 0 1 0-.956-.29l-.291.956A4.978 4.978 0 0 0 8 1a4.979 4.979 0 0 0-2.731.811l-.29-.956zM13 6v1H8.5v8.975A5 5 0 0 0 13 11h.5a.5.5 0 0 1 .5.5v.5a.5.5 0 1 0 1 0v-.5a1.5 1.5 0 0 0-1.5-1.5H13V9h1.5a.5.5 0 0 0 0-1H13V7h.5A1.5 1.5 0 0 0 15 5.5V5a.5.5 0 0 0-1 0v.5a.5.5 0 0 1-.5.5H13zm-5.5 9.975V7H3V6h-.5a.5.5 0 0 1-.5-.5V5a.5.5 0 0 0-1 0v.5A1.5 1.5 0 0 0 2.5 7H3v1H1.5a.5.5 0 0 0 0 1H3v1h-.5A1.5 1.5 0 0 0 1 11.5v.5a.5.5 0 1 0 1 0v-.5a.5.5 0 0 1 .5-.5H3a5 5 0 0 0 4.5 4.975z"/>'); // eslint-disable-next-line
+
+exports.BIconBugFill = BIconBugFill;
+var BIconBuilding = /*#__PURE__*/(0, _makeIcon.makeIcon)('Building', '<path fill-rule="evenodd" d="M14.763.075A.5.5 0 0 1 15 .5v15a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5V14h-1v1.5a.5.5 0 0 1-.5.5h-9a.5.5 0 0 1-.5-.5V10a.5.5 0 0 1 .342-.474L6 7.64V4.5a.5.5 0 0 1 .276-.447l8-4a.5.5 0 0 1 .487.022zM6 8.694L1 10.36V15h5V8.694zM7 15h2v-1.5a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 .5.5V15h2V1.309l-7 3.5V15z"/><path d="M2 11h1v1H2v-1zm2 0h1v1H4v-1zm-2 2h1v1H2v-1zm2 0h1v1H4v-1zm4-4h1v1H8V9zm2 0h1v1h-1V9zm-2 2h1v1H8v-1zm2 0h1v1h-1v-1zm2-2h1v1h-1V9zm0 2h1v1h-1v-1zM8 7h1v1H8V7zm2 0h1v1h-1V7zm2 0h1v1h-1V7zM8 5h1v1H8V5zm2 0h1v1h-1V5zm2 0h1v1h-1V5zm0-2h1v1h-1V3z"/>'); // eslint-disable-next-line
 
 exports.BIconBuilding = BIconBuilding;
 var BIconBullseye = /*#__PURE__*/(0, _makeIcon.makeIcon)('Bullseye', '<path fill-rule="evenodd" d="M8 15A7 7 0 1 0 8 1a7 7 0 0 0 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/><path fill-rule="evenodd" d="M8 13A5 5 0 1 0 8 3a5 5 0 0 0 0 10zm0 1A6 6 0 1 0 8 2a6 6 0 0 0 0 12z"/><path fill-rule="evenodd" d="M8 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0 1a4 4 0 1 0 0-8 4 4 0 0 0 0 8z"/><path d="M9.5 8a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/>'); // eslint-disable-next-line
 
 exports.BIconBullseye = BIconBullseye;
+var BIconCalculator = /*#__PURE__*/(0, _makeIcon.makeIcon)('Calculator', '<path fill-rule="evenodd" d="M2 2a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V2zm2 .5a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-.5.5h-7a.5.5 0 0 1-.5-.5v-2zm0 4a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1zM4.5 9a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5h-1zM4 12.5a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1zM7.5 6a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5h-1zM7 9.5a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1zm.5 2.5a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5h-1zM10 6.5a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1zm.5 2.5a.5.5 0 0 0-.5.5v4a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5v-4a.5.5 0 0 0-.5-.5h-1z"/>'); // eslint-disable-next-line
+
+exports.BIconCalculator = BIconCalculator;
+var BIconCalculatorFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('CalculatorFill', '<path fill-rule="evenodd" d="M12 1H4a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1zM4 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2H4z"/><path d="M4 2.5a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-.5.5h-7a.5.5 0 0 1-.5-.5v-2zm0 4a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1zm0 3a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1zm0 3a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1zm3-6a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1zm0 3a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1zm0 3a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1zm3-6a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1zm0 3a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v4a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-4z"/>'); // eslint-disable-next-line
+
+exports.BIconCalculatorFill = BIconCalculatorFill;
 var BIconCalendar = /*#__PURE__*/(0, _makeIcon.makeIcon)('Calendar', '<path fill-rule="evenodd" d="M1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4H1zm1-3a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V3a2 2 0 0 0-2-2H2z"/><path fill-rule="evenodd" d="M3.5 0a.5.5 0 0 1 .5.5V1a.5.5 0 0 1-1 0V.5a.5.5 0 0 1 .5-.5zm9 0a.5.5 0 0 1 .5.5V1a.5.5 0 0 1-1 0V.5a.5.5 0 0 1 .5-.5z"/>'); // eslint-disable-next-line
 
 exports.BIconCalendar = BIconCalendar;
@@ -53492,6 +53718,12 @@ exports.BIconCalendar2Day = BIconCalendar2Day;
 var BIconCalendar2DayFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('Calendar2DayFill', '<path fill-rule="evenodd" d="M4 .5a.5.5 0 0 0-1 0V1H2a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V3a2 2 0 0 0-2-2h-1V.5a.5.5 0 0 0-1 0V1H4V.5zm-2 3a.5.5 0 0 1 .5-.5h11a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-1zm9.215 4.355a.425.425 0 0 1-.43-.425c0-.242.192-.43.43-.43a.428.428 0 1 1 0 .855zm.336.563v4.105h-.672V8.418h.672zm-6.867 4.105v-2.3h2.261v-.61H4.684V7.801h2.464v-.61H4v5.332h.684zm3.296 0h.676V9.98c0-.554.227-1.007.953-1.007.125 0 .258.004.329.015v-.613a1.806 1.806 0 0 0-.254-.02c-.582 0-.891.32-1.012.567h-.02v-.504H7.98v4.105z"/>'); // eslint-disable-next-line
 
 exports.BIconCalendar2DayFill = BIconCalendar2DayFill;
+var BIconCalendar2Event = /*#__PURE__*/(0, _makeIcon.makeIcon)('Calendar2Event', '<path fill-rule="evenodd" d="M4 .5a.5.5 0 0 0-1 0V1H2a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V3a2 2 0 0 0-2-2h-1V.5a.5.5 0 0 0-1 0V1H4V.5zm-2 3a.5.5 0 0 1 .5-.5h11a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-1zM11.5 7a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5h-1z"/>'); // eslint-disable-next-line
+
+exports.BIconCalendar2Event = BIconCalendar2Event;
+var BIconCalendar2EventFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('Calendar2EventFill', '<path fill-rule="evenodd" d="M14 2H2a1 1 0 0 0-1 1v11a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V3a1 1 0 0 0-1-1zM2 1a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V3a2 2 0 0 0-2-2H2z"/><path fill-rule="evenodd" d="M3.5 0a.5.5 0 0 1 .5.5V1a.5.5 0 0 1-1 0V.5a.5.5 0 0 1 .5-.5zm9 0a.5.5 0 0 1 .5.5V1a.5.5 0 0 1-1 0V.5a.5.5 0 0 1 .5-.5z"/><path d="M2.5 4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5H3a.5.5 0 0 1-.5-.5V4z"/><rect width="2" height="2" x="11" y="7" rx=".5"/>'); // eslint-disable-next-line
+
+exports.BIconCalendar2EventFill = BIconCalendar2EventFill;
 var BIconCalendar2Fill = /*#__PURE__*/(0, _makeIcon.makeIcon)('Calendar2Fill', '<path fill-rule="evenodd" d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5zm-1 3a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h11a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5h-11z"/>'); // eslint-disable-next-line
 
 exports.BIconCalendar2Fill = BIconCalendar2Fill;
@@ -53513,15 +53745,54 @@ exports.BIconCalendar2Plus = BIconCalendar2Plus;
 var BIconCalendar2PlusFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('Calendar2PlusFill', '<path fill-rule="evenodd" d="M4 .5a.5.5 0 0 0-1 0V1H2a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V3a2 2 0 0 0-2-2h-1V.5a.5.5 0 0 0-1 0V1H4V.5zm-2 3a.5.5 0 0 1 .5-.5h11a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-1zm6.5 5a.5.5 0 0 0-1 0V10H6a.5.5 0 0 0 0 1h1.5v1.5a.5.5 0 0 0 1 0V11H10a.5.5 0 0 0 0-1H8.5V8.5z"/>'); // eslint-disable-next-line
 
 exports.BIconCalendar2PlusFill = BIconCalendar2PlusFill;
+var BIconCalendar2Range = /*#__PURE__*/(0, _makeIcon.makeIcon)('Calendar2Range', '<path fill-rule="evenodd" d="M4 .5a.5.5 0 0 0-1 0V1H2a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V3a2 2 0 0 0-2-2h-1V.5a.5.5 0 0 0-1 0V1H4V.5zm-2 3a.5.5 0 0 1 .5-.5h11a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-1zM10 7a1 1 0 0 0 0 2h5V7h-5zm-4 4a1 1 0 0 0-1-1H1v2h4a1 1 0 0 0 1-1z"/>'); // eslint-disable-next-line
+
+exports.BIconCalendar2Range = BIconCalendar2Range;
+var BIconCalendar2RangeFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('Calendar2RangeFill', '<path fill-rule="evenodd" d="M14 2H2a1 1 0 0 0-1 1v11a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V3a1 1 0 0 0-1-1zM2 1a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V3a2 2 0 0 0-2-2H2z"/><path fill-rule="evenodd" d="M3.5 0a.5.5 0 0 1 .5.5V1a.5.5 0 0 1-1 0V.5a.5.5 0 0 1 .5-.5zm9 0a.5.5 0 0 1 .5.5V1a.5.5 0 0 1-1 0V.5a.5.5 0 0 1 .5-.5z"/><path d="M2.5 4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5H3a.5.5 0 0 1-.5-.5V4zM9 8a1 1 0 0 1 1-1h5v2h-5a1 1 0 0 1-1-1zm-8 2h4a1 1 0 1 1 0 2H1v-2z"/>'); // eslint-disable-next-line
+
+exports.BIconCalendar2RangeFill = BIconCalendar2RangeFill;
+var BIconCalendar2Week = /*#__PURE__*/(0, _makeIcon.makeIcon)('Calendar2Week', '<path fill-rule="evenodd" d="M4 .5a.5.5 0 0 0-1 0V1H2a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V3a2 2 0 0 0-2-2h-1V.5a.5.5 0 0 0-1 0V1H4V.5zm-2 3a.5.5 0 0 1 .5-.5h11a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-1zM8.5 7a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5h-1zm3 0a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5h-1zM3 10.5a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1zm3.5-.5a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5h-1z"/>'); // eslint-disable-next-line
+
+exports.BIconCalendar2Week = BIconCalendar2Week;
+var BIconCalendar2WeekFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('Calendar2WeekFill', '<path fill-rule="evenodd" d="M14 2H2a1 1 0 0 0-1 1v11a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V3a1 1 0 0 0-1-1zM2 1a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V3a2 2 0 0 0-2-2H2z"/><path fill-rule="evenodd" d="M3.5 0a.5.5 0 0 1 .5.5V1a.5.5 0 0 1-1 0V.5a.5.5 0 0 1 .5-.5zm9 0a.5.5 0 0 1 .5.5V1a.5.5 0 0 1-1 0V.5a.5.5 0 0 1 .5-.5z"/><path d="M2.5 4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5H3a.5.5 0 0 1-.5-.5V4zM11 7.5a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1zm-3 0a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1zm-5 3a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1zm3 0a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1z"/>'); // eslint-disable-next-line
+
+exports.BIconCalendar2WeekFill = BIconCalendar2WeekFill;
 var BIconCalendar3 = /*#__PURE__*/(0, _makeIcon.makeIcon)('Calendar3', '<path fill-rule="evenodd" d="M14 0H2a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2zM1 3.857C1 3.384 1.448 3 2 3h12c.552 0 1 .384 1 .857v10.286c0 .473-.448.857-1 .857H2c-.552 0-1-.384-1-.857V3.857z"/><path fill-rule="evenodd" d="M6.5 7a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm3 0a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm3 0a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm-9 3a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm3 0a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm3 0a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm3 0a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm-9 3a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm3 0a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm3 0a1 1 0 1 0 0-2 1 1 0 0 0 0 2z"/>'); // eslint-disable-next-line
 
 exports.BIconCalendar3 = BIconCalendar3;
+var BIconCalendar3Event = /*#__PURE__*/(0, _makeIcon.makeIcon)('Calendar3Event', '<path fill-rule="evenodd" d="M14 0H2a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2zM1 3.857C1 3.384 1.448 3 2 3h12c.552 0 1 .384 1 .857v10.286c0 .473-.448.857-1 .857H2c-.552 0-1-.384-1-.857V3.857z"/><path fill-rule="evenodd" d="M12 7a1 1 0 1 0 0-2 1 1 0 0 0 0 2z"/>'); // eslint-disable-next-line
+
+exports.BIconCalendar3Event = BIconCalendar3Event;
+var BIconCalendar3EventFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('Calendar3EventFill', '<path fill-rule="evenodd" d="M2 0a2 2 0 0 0-2 2h16a2 2 0 0 0-2-2H2zm14 3H0v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V3zm-2 3a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/>'); // eslint-disable-next-line
+
+exports.BIconCalendar3EventFill = BIconCalendar3EventFill;
 var BIconCalendar3Fill = /*#__PURE__*/(0, _makeIcon.makeIcon)('Calendar3Fill', '<path d="M0 2a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2H0z"/><path fill-rule="evenodd" d="M0 3h16v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3zm6.5 4a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm4-1a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm2 1a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm-8 2a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm2 1a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm4-1a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm2 1a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm-8 2a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm2 1a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm4-1a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/>'); // eslint-disable-next-line
 
 exports.BIconCalendar3Fill = BIconCalendar3Fill;
+var BIconCalendar3Range = /*#__PURE__*/(0, _makeIcon.makeIcon)('Calendar3Range', '<path fill-rule="evenodd" d="M14 0H2a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2zM1 3.857C1 3.384 1.448 3 2 3h12c.552 0 1 .384 1 .857v10.286c0 .473-.448.857-1 .857H2c-.552 0-1-.384-1-.857V3.857z"/><path fill-rule="evenodd" d="M7 10a1 1 0 0 0 0-2H1v2h6zm2-3a1 1 0 0 1 0-2h6v2H9z"/>'); // eslint-disable-next-line
+
+exports.BIconCalendar3Range = BIconCalendar3Range;
+var BIconCalendar3RangeFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('Calendar3RangeFill', '<path fill-rule="evenodd" d="M2 0a2 2 0 0 0-2 2h16a2 2 0 0 0-2-2H2zm14 3H0v5h6a1 1 0 1 1 0 2H0v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7h-6a1 1 0 1 1 0-2h6V3z"/>'); // eslint-disable-next-line
+
+exports.BIconCalendar3RangeFill = BIconCalendar3RangeFill;
+var BIconCalendar3Week = /*#__PURE__*/(0, _makeIcon.makeIcon)('Calendar3Week', '<path fill-rule="evenodd" d="M14 0H2a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2zM1 3.857C1 3.384 1.448 3 2 3h12c.552 0 1 .384 1 .857v10.286c0 .473-.448.857-1 .857H2c-.552 0-1-.384-1-.857V3.857z"/><path fill-rule="evenodd" d="M12 7a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm-5 3a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm2-3a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm-5 3a1 1 0 1 0 0-2 1 1 0 0 0 0 2z"/>'); // eslint-disable-next-line
+
+exports.BIconCalendar3Week = BIconCalendar3Week;
+var BIconCalendar3WeekFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('Calendar3WeekFill', '<path fill-rule="evenodd" d="M2 0a2 2 0 0 0-2 2h16a2 2 0 0 0-2-2H2zm14 3H0v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V3zm-2 3a1 1 0 1 1-2 0 1 1 0 0 1 2 0zM7 9a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm3-2a1 1 0 1 0 0-2 1 1 0 0 0 0 2zM4 9a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/>'); // eslint-disable-next-line
+
+exports.BIconCalendar3WeekFill = BIconCalendar3WeekFill;
 var BIconCalendar4 = /*#__PURE__*/(0, _makeIcon.makeIcon)('Calendar4', '<path fill-rule="evenodd" d="M14 2H2a1 1 0 0 0-1 1v11a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V3a1 1 0 0 0-1-1zM2 1a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V3a2 2 0 0 0-2-2H2z"/><path fill-rule="evenodd" d="M14 2H2a1 1 0 0 0-1 1v1h14V3a1 1 0 0 0-1-1zM2 1a2 2 0 0 0-2 2v2h16V3a2 2 0 0 0-2-2H2z"/><path fill-rule="evenodd" d="M3.5 0a.5.5 0 0 1 .5.5V1a.5.5 0 0 1-1 0V.5a.5.5 0 0 1 .5-.5zm9 0a.5.5 0 0 1 .5.5V1a.5.5 0 0 1-1 0V.5a.5.5 0 0 1 .5-.5z"/>'); // eslint-disable-next-line
 
 exports.BIconCalendar4 = BIconCalendar4;
+var BIconCalendar4Event = /*#__PURE__*/(0, _makeIcon.makeIcon)('Calendar4Event', '<path fill-rule="evenodd" d="M14 2H2a1 1 0 0 0-1 1v11a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V3a1 1 0 0 0-1-1zM2 1a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V3a2 2 0 0 0-2-2H2z"/><path fill-rule="evenodd" d="M14 2H2a1 1 0 0 0-1 1v1h14V3a1 1 0 0 0-1-1zM2 1a2 2 0 0 0-2 2v2h16V3a2 2 0 0 0-2-2H2z"/><path fill-rule="evenodd" d="M3.5 0a.5.5 0 0 1 .5.5V1a.5.5 0 0 1-1 0V.5a.5.5 0 0 1 .5-.5zm9 0a.5.5 0 0 1 .5.5V1a.5.5 0 0 1-1 0V.5a.5.5 0 0 1 .5-.5z"/><rect width="2" height="2" x="11" y="7" rx=".5"/>'); // eslint-disable-next-line
+
+exports.BIconCalendar4Event = BIconCalendar4Event;
+var BIconCalendar4Range = /*#__PURE__*/(0, _makeIcon.makeIcon)('Calendar4Range', '<path fill-rule="evenodd" d="M14 2H2a1 1 0 0 0-1 1v11a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V3a1 1 0 0 0-1-1zM2 1a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V3a2 2 0 0 0-2-2H2z"/><path fill-rule="evenodd" d="M14 2H2a1 1 0 0 0-1 1v1h14V3a1 1 0 0 0-1-1zM2 1a2 2 0 0 0-2 2v2h16V3a2 2 0 0 0-2-2H2z"/><path fill-rule="evenodd" d="M3.5 0a.5.5 0 0 1 .5.5V1a.5.5 0 0 1-1 0V.5a.5.5 0 0 1 .5-.5zm9 0a.5.5 0 0 1 .5.5V1a.5.5 0 0 1-1 0V.5a.5.5 0 0 1 .5-.5z"/><path d="M9 7.5a.5.5 0 0 1 .5-.5H15v2H9.5a.5.5 0 0 1-.5-.5v-1zm-2 3a.5.5 0 0 0-.5-.5H1v2h5.5a.5.5 0 0 0 .5-.5v-1z"/>'); // eslint-disable-next-line
+
+exports.BIconCalendar4Range = BIconCalendar4Range;
+var BIconCalendar4Week = /*#__PURE__*/(0, _makeIcon.makeIcon)('Calendar4Week', '<path fill-rule="evenodd" d="M14 2H2a1 1 0 0 0-1 1v11a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V3a1 1 0 0 0-1-1zM2 1a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V3a2 2 0 0 0-2-2H2z"/><path fill-rule="evenodd" d="M14 2H2a1 1 0 0 0-1 1v1h14V3a1 1 0 0 0-1-1zM2 1a2 2 0 0 0-2 2v2h16V3a2 2 0 0 0-2-2H2z"/><path fill-rule="evenodd" d="M3.5 0a.5.5 0 0 1 .5.5V1a.5.5 0 0 1-1 0V.5a.5.5 0 0 1 .5-.5zm9 0a.5.5 0 0 1 .5.5V1a.5.5 0 0 1-1 0V.5a.5.5 0 0 1 .5-.5z"/><path d="M11 7.5a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1zm-3 0a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1zm-2 3a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1zm-3 0a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1z"/>'); // eslint-disable-next-line
+
+exports.BIconCalendar4Week = BIconCalendar4Week;
 var BIconCalendarCheck = /*#__PURE__*/(0, _makeIcon.makeIcon)('CalendarCheck', '<path fill-rule="evenodd" d="M10.854 7.146a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708 0l-1.5-1.5a.5.5 0 1 1 .708-.708L7.5 9.793l2.646-2.647a.5.5 0 0 1 .708 0z"/><path fill-rule="evenodd" d="M1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4H1zm1-3a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V3a2 2 0 0 0-2-2H2z"/><path fill-rule="evenodd" d="M3.5 0a.5.5 0 0 1 .5.5V1a.5.5 0 0 1-1 0V.5a.5.5 0 0 1 .5-.5zm9 0a.5.5 0 0 1 .5.5V1a.5.5 0 0 1-1 0V.5a.5.5 0 0 1 .5-.5z"/>'); // eslint-disable-next-line
 
 exports.BIconCalendarCheck = BIconCalendarCheck;
@@ -53540,6 +53811,12 @@ exports.BIconCalendarDay = BIconCalendarDay;
 var BIconCalendarDayFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('CalendarDayFill', '<path fill-rule="evenodd" d="M4 .5a.5.5 0 0 0-1 0V1H2a2 2 0 0 0-2 2v1h16V3a2 2 0 0 0-2-2h-1V.5a.5.5 0 0 0-1 0V1H4V.5zM0 5h16v9a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V5zm11.215 2.855a.425.425 0 0 1-.43-.425c0-.242.192-.43.43-.43a.428.428 0 1 1 0 .855zm.336.563v4.105h-.672V8.418h.672zm-6.867 4.105v-2.3h2.261v-.61H4.684V7.801h2.464v-.61H4v5.332h.684zm3.296 0h.676V9.98c0-.554.227-1.007.953-1.007.125 0 .258.004.329.015v-.613a1.806 1.806 0 0 0-.254-.02c-.582 0-.891.32-1.012.567h-.02v-.504H7.98v4.105z"/>'); // eslint-disable-next-line
 
 exports.BIconCalendarDayFill = BIconCalendarDayFill;
+var BIconCalendarEvent = /*#__PURE__*/(0, _makeIcon.makeIcon)('CalendarEvent', '<path fill-rule="evenodd" d="M1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4H1zm1-3a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V3a2 2 0 0 0-2-2H2z"/><path fill-rule="evenodd" d="M3.5 0a.5.5 0 0 1 .5.5V1a.5.5 0 0 1-1 0V.5a.5.5 0 0 1 .5-.5zm9 0a.5.5 0 0 1 .5.5V1a.5.5 0 0 1-1 0V.5a.5.5 0 0 1 .5-.5z"/><rect width="2" height="2" x="11" y="6" rx=".5"/>'); // eslint-disable-next-line
+
+exports.BIconCalendarEvent = BIconCalendarEvent;
+var BIconCalendarEventFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('CalendarEventFill', '<path fill-rule="evenodd" d="M4 .5a.5.5 0 0 0-1 0V1H2a2 2 0 0 0-2 2v1h16V3a2 2 0 0 0-2-2h-1V.5a.5.5 0 0 0-1 0V1H4V.5zM0 5h16v9a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V5zm12.5 2a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5h-1z"/>'); // eslint-disable-next-line
+
+exports.BIconCalendarEventFill = BIconCalendarEventFill;
 var BIconCalendarFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('CalendarFill', '<path fill-rule="evenodd" d="M3.5 0a.5.5 0 0 1 .5.5V1a.5.5 0 0 1-1 0V.5a.5.5 0 0 1 .5-.5zm9 0a.5.5 0 0 1 .5.5V1a.5.5 0 0 1-1 0V.5a.5.5 0 0 1 .5-.5z"/><path d="M2 1a2 2 0 0 0-2 2v1h16V3a2 2 0 0 0-2-2H2zm14 4H0v9a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V5z"/>'); // eslint-disable-next-line
 
 exports.BIconCalendarFill = BIconCalendarFill;
@@ -53561,9 +53838,33 @@ exports.BIconCalendarPlus = BIconCalendarPlus;
 var BIconCalendarPlusFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('CalendarPlusFill', '<path fill-rule="evenodd" d="M4 .5a.5.5 0 0 0-1 0V1H2a2 2 0 0 0-2 2v1h16V3a2 2 0 0 0-2-2h-1V.5a.5.5 0 0 0-1 0V1H4V.5zM0 5h16v9a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V5zm8.5 3.5a.5.5 0 0 0-1 0V10H6a.5.5 0 0 0 0 1h1.5v1.5a.5.5 0 0 0 1 0V11H10a.5.5 0 0 0 0-1H8.5V8.5z"/>'); // eslint-disable-next-line
 
 exports.BIconCalendarPlusFill = BIconCalendarPlusFill;
-var BIconCamera = /*#__PURE__*/(0, _makeIcon.makeIcon)('Camera', '<path d="M9 5C7.343 5 5 6.343 5 8a4 4 0 0 1 4-4v1z"/><path fill-rule="evenodd" d="M14.333 3h-2.015A5.97 5.97 0 0 0 9 2a5.972 5.972 0 0 0-3.318 1H1.667C.747 3 0 3.746 0 4.667v6.666C0 12.253.746 13 1.667 13h4.015c.95.632 2.091 1 3.318 1a5.973 5.973 0 0 0 3.318-1h2.015c.92 0 1.667-.746 1.667-1.667V4.667C16 3.747 15.254 3 14.333 3zM1.5 5a.5.5 0 1 0 0-1 .5.5 0 0 0 0 1zM9 13A5 5 0 1 0 9 3a5 5 0 0 0 0 10z"/><path d="M2 3a1 1 0 0 1 1-1h1a1 1 0 0 1 0 2H3a1 1 0 0 1-1-1z"/>'); // eslint-disable-next-line
+var BIconCalendarRange = /*#__PURE__*/(0, _makeIcon.makeIcon)('CalendarRange', '<path fill-rule="evenodd" d="M1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4H1zm1-3a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V3a2 2 0 0 0-2-2H2z"/><path fill-rule="evenodd" d="M3.5 0a.5.5 0 0 1 .5.5V1a.5.5 0 0 1-1 0V.5a.5.5 0 0 1 .5-.5zm9 0a.5.5 0 0 1 .5.5V1a.5.5 0 0 1-1 0V.5a.5.5 0 0 1 .5-.5z"/><path d="M9 7a1 1 0 0 1 1-1h5v2h-5a1 1 0 0 1-1-1zM1 9h4a1 1 0 0 1 0 2H1V9z"/>'); // eslint-disable-next-line
+
+exports.BIconCalendarRange = BIconCalendarRange;
+var BIconCalendarRangeFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('CalendarRangeFill', '<path fill-rule="evenodd" d="M4 .5a.5.5 0 0 0-1 0V1H2a2 2 0 0 0-2 2v1h16V3a2 2 0 0 0-2-2h-1V.5a.5.5 0 0 0-1 0V1H4V.5zM0 5h16v2h-6a1 1 0 0 0 0 2h6v5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2h5a1 1 0 1 0 0-2H0V5z"/>'); // eslint-disable-next-line
+
+exports.BIconCalendarRangeFill = BIconCalendarRangeFill;
+var BIconCalendarWeek = /*#__PURE__*/(0, _makeIcon.makeIcon)('CalendarWeek', '<path fill-rule="evenodd" d="M1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4H1zm1-3a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V3a2 2 0 0 0-2-2H2z"/><path fill-rule="evenodd" d="M3.5 0a.5.5 0 0 1 .5.5V1a.5.5 0 0 1-1 0V.5a.5.5 0 0 1 .5-.5zm9 0a.5.5 0 0 1 .5.5V1a.5.5 0 0 1-1 0V.5a.5.5 0 0 1 .5-.5z"/><path d="M11 6.5a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1zm-3 0a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1zm-5 3a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1zm3 0a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1z"/>'); // eslint-disable-next-line
+
+exports.BIconCalendarWeek = BIconCalendarWeek;
+var BIconCalendarWeekFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('CalendarWeekFill', '<path fill-rule="evenodd" d="M4 .5a.5.5 0 0 0-1 0V1H2a2 2 0 0 0-2 2v1h16V3a2 2 0 0 0-2-2h-1V.5a.5.5 0 0 0-1 0V1H4V.5zM0 5h16v9a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V5zm9.5 2a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5h-1zm3 0a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5h-1zM2 10.5a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1zm3.5-.5a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5h-1z"/>'); // eslint-disable-next-line
+
+exports.BIconCalendarWeekFill = BIconCalendarWeekFill;
+var BIconCamera = /*#__PURE__*/(0, _makeIcon.makeIcon)('Camera', '<path fill-rule="evenodd" d="M15 12V6a1 1 0 0 0-1-1h-1.172a3 3 0 0 1-2.12-.879l-.83-.828A1 1 0 0 0 9.173 3H6.828a1 1 0 0 0-.707.293l-.828.828A3 3 0 0 1 3.172 5H2a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1zM2 4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-1.172a2 2 0 0 1-1.414-.586l-.828-.828A2 2 0 0 0 9.172 2H6.828a2 2 0 0 0-1.414.586l-.828.828A2 2 0 0 1 3.172 4H2z"/><path fill-rule="evenodd" d="M8 11a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5zm0 1a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7z"/><path d="M3 6.5a.5.5 0 1 1-1 0 .5.5 0 0 1 1 0z"/>'); // eslint-disable-next-line
 
 exports.BIconCamera = BIconCamera;
+var BIconCamera2 = /*#__PURE__*/(0, _makeIcon.makeIcon)('Camera2', '<path d="M9 5C7.343 5 5 6.343 5 8a4 4 0 0 1 4-4v1z"/><path fill-rule="evenodd" d="M14.333 3h-2.015A5.97 5.97 0 0 0 9 2a5.972 5.972 0 0 0-3.318 1H1.667C.747 3 0 3.746 0 4.667v6.666C0 12.253.746 13 1.667 13h4.015c.95.632 2.091 1 3.318 1a5.973 5.973 0 0 0 3.318-1h2.015c.92 0 1.667-.746 1.667-1.667V4.667C16 3.747 15.254 3 14.333 3zM1.5 5a.5.5 0 1 0 0-1 .5.5 0 0 0 0 1zM9 13A5 5 0 1 0 9 3a5 5 0 0 0 0 10z"/><path d="M2 3a1 1 0 0 1 1-1h1a1 1 0 0 1 0 2H3a1 1 0 0 1-1-1z"/>'); // eslint-disable-next-line
+
+exports.BIconCamera2 = BIconCamera2;
+var BIconCameraFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('CameraFill', '<path d="M10.5 8.5a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0z"/><path fill-rule="evenodd" d="M2 4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-1.172a2 2 0 0 1-1.414-.586l-.828-.828A2 2 0 0 0 9.172 2H6.828a2 2 0 0 0-1.414.586l-.828.828A2 2 0 0 1 3.172 4H2zm.5 2a.5.5 0 1 0 0-1 .5.5 0 0 0 0 1zm9 2.5a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0z"/>'); // eslint-disable-next-line
+
+exports.BIconCameraFill = BIconCameraFill;
+var BIconCameraReels = /*#__PURE__*/(0, _makeIcon.makeIcon)('CameraReels', '<path fill-rule="evenodd" d="M2.667 7C2.022 7 1.5 7.522 1.5 8.167v5.666c0 .645.522 1.167 1.167 1.167h6.666c.645 0 1.167-.522 1.167-1.167V8.167C10.5 7.522 9.978 7 9.333 7H2.667zM.5 8.167C.5 6.97 1.47 6 2.667 6h6.666c1.197 0 2.167.97 2.167 2.167v5.666C11.5 15.03 10.53 16 9.333 16H2.667A2.167 2.167 0 0 1 .5 13.833V8.167z"/><path fill-rule="evenodd" d="M11.25 9.15l2.768-1.605a.318.318 0 0 1 .482.263v6.384c0 .228-.26.393-.482.264l-2.767-1.605-.502.865 2.767 1.605c.859.498 1.984-.095 1.984-1.129V7.808c0-1.033-1.125-1.626-1.984-1.128L10.75 8.285l.502.865zM3 5a2 2 0 1 0 0-4 2 2 0 0 0 0 4zm0 1a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/><path fill-rule="evenodd" d="M9 5a2 2 0 1 0 0-4 2 2 0 0 0 0 4zm0 1a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/>'); // eslint-disable-next-line
+
+exports.BIconCameraReels = BIconCameraReels;
+var BIconCameraReelsFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('CameraReelsFill', '<path d="M2.667 6h6.666C10.253 6 11 6.746 11 7.667v6.666c0 .92-.746 1.667-1.667 1.667H2.667C1.747 16 1 15.254 1 14.333V7.667C1 6.747 1.746 6 2.667 6z"/><path d="M7.404 11.697l6.363 3.692c.54.313 1.233-.066 1.233-.697V7.308c0-.63-.693-1.01-1.233-.696l-6.363 3.692a.802.802 0 0 0 0 1.393z"/><circle cx="3" cy="3" r="3"/><circle cx="9" cy="3" r="3"/>'); // eslint-disable-next-line
+
+exports.BIconCameraReelsFill = BIconCameraReelsFill;
 var BIconCameraVideo = /*#__PURE__*/(0, _makeIcon.makeIcon)('CameraVideo', '<path fill-rule="evenodd" d="M2.667 3.5c-.645 0-1.167.522-1.167 1.167v6.666c0 .645.522 1.167 1.167 1.167h6.666c.645 0 1.167-.522 1.167-1.167V4.667c0-.645-.522-1.167-1.167-1.167H2.667zM.5 4.667C.5 3.47 1.47 2.5 2.667 2.5h6.666c1.197 0 2.167.97 2.167 2.167v6.666c0 1.197-.97 2.167-2.167 2.167H2.667A2.167 2.167 0 0 1 .5 11.333V4.667z"/><path fill-rule="evenodd" d="M11.25 5.65l2.768-1.605a.318.318 0 0 1 .482.263v7.384c0 .228-.26.393-.482.264l-2.767-1.605-.502.865 2.767 1.605c.859.498 1.984-.095 1.984-1.129V4.308c0-1.033-1.125-1.626-1.984-1.128L10.75 4.785l.502.865z"/>'); // eslint-disable-next-line
 
 exports.BIconCameraVideo = BIconCameraVideo;
@@ -53669,6 +53970,15 @@ exports.BIconCartFill = BIconCartFill;
 var BIconCartPlus = /*#__PURE__*/(0, _makeIcon.makeIcon)('CartPlus', '<path fill-rule="evenodd" d="M8.5 5a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1H8V5.5a.5.5 0 0 1 .5-.5z"/><path fill-rule="evenodd" d="M8 7.5a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 0 1H9v1.5a.5.5 0 0 1-1 0v-2z"/><path fill-rule="evenodd" d="M0 1.5A.5.5 0 0 1 .5 1H2a.5.5 0 0 1 .485.379L2.89 3H14.5a.5.5 0 0 1 .491.592l-1.5 8A.5.5 0 0 1 13 12H4a.5.5 0 0 1-.491-.408L2.01 3.607 1.61 2H.5a.5.5 0 0 1-.5-.5zM3.102 4l1.313 7h8.17l1.313-7H3.102zM5 12a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm7 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm-7 1a1 1 0 1 0 0 2 1 1 0 0 0 0-2zm7 0a1 1 0 1 0 0 2 1 1 0 0 0 0-2z"/>'); // eslint-disable-next-line
 
 exports.BIconCartPlus = BIconCartPlus;
+var BIconCash = /*#__PURE__*/(0, _makeIcon.makeIcon)('Cash', '<path fill-rule="evenodd" d="M15 4H1v8h14V4zM1 3a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1V4a1 1 0 0 0-1-1H1z"/><path d="M13 4a2 2 0 0 0 2 2V4h-2zM3 4a2 2 0 0 1-2 2V4h2zm10 8a2 2 0 0 1 2-2v2h-2zM3 12a2 2 0 0 0-2-2v2h2zm7-4a2 2 0 1 1-4 0 2 2 0 0 1 4 0z"/>'); // eslint-disable-next-line
+
+exports.BIconCash = BIconCash;
+var BIconCashStack = /*#__PURE__*/(0, _makeIcon.makeIcon)('CashStack', '<path d="M14 3H1a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1h-1z"/><path fill-rule="evenodd" d="M15 5H1v8h14V5zM1 4a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1V5a1 1 0 0 0-1-1H1z"/><path d="M13 5a2 2 0 0 0 2 2V5h-2zM3 5a2 2 0 0 1-2 2V5h2zm10 8a2 2 0 0 1 2-2v2h-2zM3 13a2 2 0 0 0-2-2v2h2zm7-4a2 2 0 1 1-4 0 2 2 0 0 1 4 0z"/>'); // eslint-disable-next-line
+
+exports.BIconCashStack = BIconCashStack;
+var BIconCast = /*#__PURE__*/(0, _makeIcon.makeIcon)('Cast', '<path d="M7.646 9.354l-3.792 3.792a.5.5 0 0 0 .353.854h7.586a.5.5 0 0 0 .354-.854L8.354 9.354a.5.5 0 0 0-.708 0z"/><path d="M11.414 11H14.5a.5.5 0 0 0 .5-.5v-7a.5.5 0 0 0-.5-.5h-13a.5.5 0 0 0-.5.5v7a.5.5 0 0 0 .5.5h3.086l-1 1H1.5A1.5 1.5 0 0 1 0 10.5v-7A1.5 1.5 0 0 1 1.5 2h13A1.5 1.5 0 0 1 16 3.5v7a1.5 1.5 0 0 1-1.5 1.5h-2.086l-1-1z"/>'); // eslint-disable-next-line
+
+exports.BIconCast = BIconCast;
 var BIconChat = /*#__PURE__*/(0, _makeIcon.makeIcon)('Chat', '<path fill-rule="evenodd" d="M2.678 11.894a1 1 0 0 1 .287.801 10.97 10.97 0 0 1-.398 2c1.395-.323 2.247-.697 2.634-.893a1 1 0 0 1 .71-.074A8.06 8.06 0 0 0 8 14c3.996 0 7-2.807 7-6 0-3.192-3.004-6-7-6S1 4.808 1 8c0 1.468.617 2.83 1.678 3.894zm-.493 3.905a21.682 21.682 0 0 1-.713.129c-.2.032-.352-.176-.273-.362a9.68 9.68 0 0 0 .244-.637l.003-.01c.248-.72.45-1.548.524-2.319C.743 11.37 0 9.76 0 8c0-3.866 3.582-7 8-7s8 3.134 8 7-3.582 7-8 7a9.06 9.06 0 0 1-2.347-.306c-.52.263-1.639.742-3.468 1.105z"/>'); // eslint-disable-next-line
 
 exports.BIconChat = BIconChat;
@@ -53681,12 +53991,60 @@ exports.BIconChatDotsFill = BIconChatDotsFill;
 var BIconChatFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('ChatFill', '<path d="M8 15c4.418 0 8-3.134 8-7s-3.582-7-8-7-8 3.134-8 7c0 1.76.743 3.37 1.97 4.6-.097 1.016-.417 2.13-.771 2.966-.079.186.074.394.273.362 2.256-.37 3.597-.938 4.18-1.234A9.06 9.06 0 0 0 8 15z"/>'); // eslint-disable-next-line
 
 exports.BIconChatFill = BIconChatFill;
+var BIconChatLeft = /*#__PURE__*/(0, _makeIcon.makeIcon)('ChatLeft', '<path fill-rule="evenodd" d="M14 1H2a1 1 0 0 0-1 1v11.586l2-2A2 2 0 0 1 4.414 11H14a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1zM2 0a2 2 0 0 0-2 2v12.793a.5.5 0 0 0 .854.353l2.853-2.853A1 1 0 0 1 4.414 12H14a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2H2z"/>'); // eslint-disable-next-line
+
+exports.BIconChatLeft = BIconChatLeft;
+var BIconChatLeftDots = /*#__PURE__*/(0, _makeIcon.makeIcon)('ChatLeftDots', '<path fill-rule="evenodd" d="M14 1H2a1 1 0 0 0-1 1v11.586l2-2A2 2 0 0 1 4.414 11H14a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1zM2 0a2 2 0 0 0-2 2v12.793a.5.5 0 0 0 .854.353l2.853-2.853A1 1 0 0 1 4.414 12H14a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2H2z"/><path d="M5 6a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm4 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm4 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/>'); // eslint-disable-next-line
+
+exports.BIconChatLeftDots = BIconChatLeftDots;
+var BIconChatLeftDotsFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('ChatLeftDotsFill', '<path fill-rule="evenodd" d="M0 2a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H4.414a1 1 0 0 0-.707.293L.854 15.146A.5.5 0 0 1 0 14.793V2zm5 4a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm4 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm3 1a1 1 0 1 0 0-2 1 1 0 0 0 0 2z"/>'); // eslint-disable-next-line
+
+exports.BIconChatLeftDotsFill = BIconChatLeftDotsFill;
+var BIconChatLeftFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('ChatLeftFill', '<path fill-rule="evenodd" d="M2 0a2 2 0 0 0-2 2v12.793a.5.5 0 0 0 .854.353l2.853-2.853A1 1 0 0 1 4.414 12H14a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2H2z"/>'); // eslint-disable-next-line
+
+exports.BIconChatLeftFill = BIconChatLeftFill;
+var BIconChatLeftQuote = /*#__PURE__*/(0, _makeIcon.makeIcon)('ChatLeftQuote', '<path fill-rule="evenodd" d="M14 1H2a1 1 0 0 0-1 1v11.586l2-2A2 2 0 0 1 4.414 11H14a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1zM2 0a2 2 0 0 0-2 2v12.793a.5.5 0 0 0 .854.353l2.853-2.853A1 1 0 0 1 4.414 12H14a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2H2z"/><path fill-rule="evenodd" d="M7.066 4.76A1.665 1.665 0 0 0 4 5.668a1.667 1.667 0 0 0 2.561 1.406c-.131.389-.375.804-.777 1.22a.417.417 0 1 0 .6.58c1.486-1.54 1.293-3.214.682-4.112zm4 0A1.665 1.665 0 0 0 8 5.668a1.667 1.667 0 0 0 2.561 1.406c-.131.389-.375.804-.777 1.22a.417.417 0 1 0 .6.58c1.486-1.54 1.293-3.214.682-4.112z"/>'); // eslint-disable-next-line
+
+exports.BIconChatLeftQuote = BIconChatLeftQuote;
+var BIconChatLeftQuoteFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('ChatLeftQuoteFill', '<path fill-rule="evenodd" d="M0 2a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H4.414a1 1 0 0 0-.707.293L.854 15.146A.5.5 0 0 1 0 14.793V2zm7.194 2.766c.087.124.163.26.227.401.428.948.393 2.377-.942 3.706a.446.446 0 0 1-.612.01.405.405 0 0 1-.011-.59c.419-.416.672-.831.809-1.22-.269.165-.588.26-.93.26C4.775 7.333 4 6.587 4 5.667 4 4.747 4.776 4 5.734 4c.271 0 .528.06.756.166l.008.004c.169.07.327.182.469.324.085.083.161.174.227.272zM11 7.073c-.269.165-.588.26-.93.26-.958 0-1.735-.746-1.735-1.666 0-.92.777-1.667 1.734-1.667.271 0 .528.06.756.166l.008.004c.17.07.327.182.469.324.085.083.161.174.227.272.087.124.164.26.228.401.428.948.392 2.377-.942 3.706a.446.446 0 0 1-.613.01.405.405 0 0 1-.011-.59c.42-.416.672-.831.81-1.22z"/>'); // eslint-disable-next-line
+
+exports.BIconChatLeftQuoteFill = BIconChatLeftQuoteFill;
+var BIconChatLeftText = /*#__PURE__*/(0, _makeIcon.makeIcon)('ChatLeftText', '<path fill-rule="evenodd" d="M14 1H2a1 1 0 0 0-1 1v11.586l2-2A2 2 0 0 1 4.414 11H14a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1zM2 0a2 2 0 0 0-2 2v12.793a.5.5 0 0 0 .854.353l2.853-2.853A1 1 0 0 1 4.414 12H14a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2H2z"/><path fill-rule="evenodd" d="M3 3.5a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5zM3 6a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9A.5.5 0 0 1 3 6zm0 2.5a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5z"/>'); // eslint-disable-next-line
+
+exports.BIconChatLeftText = BIconChatLeftText;
+var BIconChatLeftTextFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('ChatLeftTextFill', '<path fill-rule="evenodd" d="M0 2a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H4.414a1 1 0 0 0-.707.293L.854 15.146A.5.5 0 0 1 0 14.793V2zm3.5 1a.5.5 0 0 0 0 1h9a.5.5 0 0 0 0-1h-9zm0 2.5a.5.5 0 0 0 0 1h9a.5.5 0 0 0 0-1h-9zm0 2.5a.5.5 0 0 0 0 1h5a.5.5 0 0 0 0-1h-5z"/>'); // eslint-disable-next-line
+
+exports.BIconChatLeftTextFill = BIconChatLeftTextFill;
 var BIconChatQuote = /*#__PURE__*/(0, _makeIcon.makeIcon)('ChatQuote', '<path fill-rule="evenodd" d="M2.678 11.894a1 1 0 0 1 .287.801 10.97 10.97 0 0 1-.398 2c1.395-.323 2.247-.697 2.634-.893a1 1 0 0 1 .71-.074A8.06 8.06 0 0 0 8 14c3.996 0 7-2.807 7-6 0-3.192-3.004-6-7-6S1 4.808 1 8c0 1.468.617 2.83 1.678 3.894zm-.493 3.905a21.682 21.682 0 0 1-.713.129c-.2.032-.352-.176-.273-.362a9.68 9.68 0 0 0 .244-.637l.003-.01c.248-.72.45-1.548.524-2.319C.743 11.37 0 9.76 0 8c0-3.866 3.582-7 8-7s8 3.134 8 7-3.582 7-8 7a9.06 9.06 0 0 1-2.347-.306c-.52.263-1.639.742-3.468 1.105z"/><path d="M7.468 7.667c0 .92-.776 1.666-1.734 1.666S4 8.587 4 7.667C4 6.747 4.776 6 5.734 6s1.734.746 1.734 1.667z"/><path fill-rule="evenodd" d="M6.157 6.936a.438.438 0 0 1-.56.293.413.413 0 0 1-.274-.527c.08-.23.23-.44.477-.546a.891.891 0 0 1 .698.014c.387.16.72.545.923.997.428.948.393 2.377-.942 3.706a.446.446 0 0 1-.612.01.405.405 0 0 1-.011-.59c1.093-1.087 1.058-2.158.77-2.794-.152-.336-.354-.514-.47-.563zm-.035-.012h-.001.001z"/><path d="M11.803 7.667c0 .92-.776 1.666-1.734 1.666-.957 0-1.734-.746-1.734-1.666 0-.92.777-1.667 1.734-1.667.958 0 1.734.746 1.734 1.667z"/><path fill-rule="evenodd" d="M10.492 6.936a.438.438 0 0 1-.56.293.413.413 0 0 1-.274-.527c.08-.23.23-.44.477-.546a.891.891 0 0 1 .698.014c.387.16.72.545.924.997.428.948.392 2.377-.942 3.706a.446.446 0 0 1-.613.01.405.405 0 0 1-.011-.59c1.093-1.087 1.058-2.158.77-2.794-.152-.336-.354-.514-.469-.563zm-.034-.012h-.002.002z"/>'); // eslint-disable-next-line
 
 exports.BIconChatQuote = BIconChatQuote;
 var BIconChatQuoteFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('ChatQuoteFill', '<path fill-rule="evenodd" d="M16 8c0 3.866-3.582 7-8 7a9.06 9.06 0 0 1-2.347-.306c-.584.296-1.925.864-4.181 1.234-.2.032-.352-.176-.273-.362.354-.836.674-1.95.77-2.966C.744 11.37 0 9.76 0 8c0-3.866 3.582-7 8-7s8 3.134 8 7zM7.194 6.766c.087.124.163.26.227.401.428.948.393 2.377-.942 3.706a.446.446 0 0 1-.612.01.405.405 0 0 1-.011-.59c.419-.416.672-.831.809-1.22-.269.165-.588.26-.93.26C4.775 9.333 4 8.587 4 7.667 4 6.747 4.776 6 5.734 6c.271 0 .528.06.756.166l.008.004c.169.07.327.182.469.324.085.083.161.174.227.272zM11 9.073c-.269.165-.588.26-.93.26-.958 0-1.735-.746-1.735-1.666 0-.92.777-1.667 1.734-1.667.271 0 .528.06.756.166l.008.004c.17.07.327.182.469.324.085.083.161.174.227.272.087.124.164.26.228.401.428.948.392 2.377-.942 3.706a.446.446 0 0 1-.613.01.405.405 0 0 1-.011-.59c.42-.416.672-.831.81-1.22z"/>'); // eslint-disable-next-line
 
 exports.BIconChatQuoteFill = BIconChatQuoteFill;
+var BIconChatRight = /*#__PURE__*/(0, _makeIcon.makeIcon)('ChatRight', '<path fill-rule="evenodd" d="M2 1h12a1 1 0 0 1 1 1v11.586l-2-2A2 2 0 0 0 11.586 11H2a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1zm12-1a2 2 0 0 1 2 2v12.793a.5.5 0 0 1-.854.353l-2.853-2.853a1 1 0 0 0-.707-.293H2a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2h12z"/>'); // eslint-disable-next-line
+
+exports.BIconChatRight = BIconChatRight;
+var BIconChatRightDots = /*#__PURE__*/(0, _makeIcon.makeIcon)('ChatRightDots', '<path fill-rule="evenodd" d="M2 1h12a1 1 0 0 1 1 1v11.586l-2-2A2 2 0 0 0 11.586 11H2a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1zm12-1a2 2 0 0 1 2 2v12.793a.5.5 0 0 1-.854.353l-2.853-2.853a1 1 0 0 0-.707-.293H2a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2h12z"/><path d="M5 6a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm4 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm4 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/>'); // eslint-disable-next-line
+
+exports.BIconChatRightDots = BIconChatRightDots;
+var BIconChatRightDotsFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('ChatRightDotsFill', '<path fill-rule="evenodd" d="M16 2a2 2 0 0 0-2-2H2a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h9.586a1 1 0 0 1 .707.293l2.853 2.853a.5.5 0 0 0 .854-.353V2zM5 6a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm4 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm3 1a1 1 0 1 0 0-2 1 1 0 0 0 0 2z"/>'); // eslint-disable-next-line
+
+exports.BIconChatRightDotsFill = BIconChatRightDotsFill;
+var BIconChatRightFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('ChatRightFill', '<path fill-rule="evenodd" d="M14 0a2 2 0 0 1 2 2v12.793a.5.5 0 0 1-.854.353l-2.853-2.853a1 1 0 0 0-.707-.293H2a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2h12z"/>'); // eslint-disable-next-line
+
+exports.BIconChatRightFill = BIconChatRightFill;
+var BIconChatRightQuote = /*#__PURE__*/(0, _makeIcon.makeIcon)('ChatRightQuote', '<path fill-rule="evenodd" d="M2 1h12a1 1 0 0 1 1 1v11.586l-2-2A2 2 0 0 0 11.586 11H2a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1zm12-1a2 2 0 0 1 2 2v12.793a.5.5 0 0 1-.854.353l-2.853-2.853a1 1 0 0 0-.707-.293H2a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2h12z"/><path fill-rule="evenodd" d="M7.066 4.76A1.665 1.665 0 0 0 4 5.668a1.667 1.667 0 0 0 2.561 1.406c-.131.389-.375.804-.777 1.22a.417.417 0 1 0 .6.58c1.486-1.54 1.293-3.214.682-4.112zm4 0A1.665 1.665 0 0 0 8 5.668a1.667 1.667 0 0 0 2.561 1.406c-.131.389-.375.804-.777 1.22a.417.417 0 1 0 .6.58c1.486-1.54 1.293-3.214.682-4.112z"/>'); // eslint-disable-next-line
+
+exports.BIconChatRightQuote = BIconChatRightQuote;
+var BIconChatRightQuoteFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('ChatRightQuoteFill', '<path fill-rule="evenodd" d="M16 2a2 2 0 0 0-2-2H2a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h9.586a1 1 0 0 1 .707.293l2.853 2.853a.5.5 0 0 0 .854-.353V2zM7.194 4.766c.087.124.163.26.227.401.428.948.393 2.377-.942 3.706a.446.446 0 0 1-.612.01.405.405 0 0 1-.011-.59c.419-.416.672-.831.809-1.22-.269.165-.588.26-.93.26C4.775 7.333 4 6.587 4 5.667 4 4.747 4.776 4 5.734 4c.271 0 .528.06.756.166l.008.004c.169.07.327.182.469.324.085.083.161.174.227.272zM11 7.073c-.269.165-.588.26-.93.26-.958 0-1.735-.746-1.735-1.666 0-.92.777-1.667 1.734-1.667.271 0 .528.06.756.166l.008.004c.17.07.327.182.469.324.085.083.161.174.227.272.087.124.164.26.228.401.428.948.392 2.377-.942 3.706a.446.446 0 0 1-.613.01.405.405 0 0 1-.011-.59c.42-.416.672-.831.81-1.22z"/>'); // eslint-disable-next-line
+
+exports.BIconChatRightQuoteFill = BIconChatRightQuoteFill;
+var BIconChatRightText = /*#__PURE__*/(0, _makeIcon.makeIcon)('ChatRightText', '<path fill-rule="evenodd" d="M2 1h12a1 1 0 0 1 1 1v11.586l-2-2A2 2 0 0 0 11.586 11H2a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1zm12-1a2 2 0 0 1 2 2v12.793a.5.5 0 0 1-.854.353l-2.853-2.853a1 1 0 0 0-.707-.293H2a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2h12z"/><path fill-rule="evenodd" d="M3 3.5a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5zM3 6a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9A.5.5 0 0 1 3 6zm0 2.5a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5z"/>'); // eslint-disable-next-line
+
+exports.BIconChatRightText = BIconChatRightText;
+var BIconChatRightTextFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('ChatRightTextFill', '<path fill-rule="evenodd" d="M16 2a2 2 0 0 0-2-2H2a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h9.586a1 1 0 0 1 .707.293l2.853 2.853a.5.5 0 0 0 .854-.353V2zM3.5 3a.5.5 0 0 0 0 1h9a.5.5 0 0 0 0-1h-9zm0 2.5a.5.5 0 0 0 0 1h9a.5.5 0 0 0 0-1h-9zm0 2.5a.5.5 0 0 0 0 1h5a.5.5 0 0 0 0-1h-5z"/>'); // eslint-disable-next-line
+
+exports.BIconChatRightTextFill = BIconChatRightTextFill;
 var BIconChatSquare = /*#__PURE__*/(0, _makeIcon.makeIcon)('ChatSquare', '<path fill-rule="evenodd" d="M14 1H2a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h2.5a2 2 0 0 1 1.6.8L8 14.333 9.9 11.8a2 2 0 0 1 1.6-.8H14a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1zM2 0a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2.5a1 1 0 0 1 .8.4l1.9 2.533a1 1 0 0 0 1.6 0l1.9-2.533a1 1 0 0 1 .8-.4H14a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2H2z"/>'); // eslint-disable-next-line
 
 exports.BIconChatSquare = BIconChatSquare;
@@ -53699,12 +54057,24 @@ exports.BIconChatSquareDotsFill = BIconChatSquareDotsFill;
 var BIconChatSquareFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('ChatSquareFill', '<path fill-rule="evenodd" d="M2 0a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2.5a1 1 0 0 1 .8.4l1.9 2.533a1 1 0 0 0 1.6 0l1.9-2.533a1 1 0 0 1 .8-.4H14a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2H2z"/>'); // eslint-disable-next-line
 
 exports.BIconChatSquareFill = BIconChatSquareFill;
-var BIconChatSquareQuote = /*#__PURE__*/(0, _makeIcon.makeIcon)('ChatSquareQuote', '<path fill-rule="evenodd" d="M14 1H2a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h2.5a2 2 0 0 1 1.6.8L8 14.333 9.9 11.8a2 2 0 0 1 1.6-.8H14a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1zM2 0a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2.5a1 1 0 0 1 .8.4l1.9 2.533a1 1 0 0 0 1.6 0l1.9-2.533a1 1 0 0 1 .8-.4H14a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2H2z"/><path d="M7.468 5.667c0 .92-.776 1.666-1.734 1.666S4 6.587 4 5.667C4 4.747 4.776 4 5.734 4s1.734.746 1.734 1.667z"/><path fill-rule="evenodd" d="M6.157 4.936a.438.438 0 0 1-.56.293.413.413 0 0 1-.274-.527c.08-.23.23-.44.477-.546a.891.891 0 0 1 .698.014c.387.16.72.545.923.997.428.948.393 2.377-.942 3.706a.446.446 0 0 1-.612.01.405.405 0 0 1-.011-.59c1.093-1.087 1.058-2.158.77-2.794-.152-.336-.354-.514-.47-.563z"/><path d="M11.803 5.667c0 .92-.776 1.666-1.734 1.666-.957 0-1.734-.746-1.734-1.666 0-.92.777-1.667 1.734-1.667.958 0 1.734.746 1.734 1.667z"/><path fill-rule="evenodd" d="M10.492 4.936a.438.438 0 0 1-.56.293.413.413 0 0 1-.274-.527c.08-.23.23-.44.477-.546a.891.891 0 0 1 .698.014c.387.16.72.545.924.997.428.948.392 2.377-.942 3.706a.446.446 0 0 1-.613.01.405.405 0 0 1-.011-.59c1.093-1.087 1.058-2.158.77-2.794-.152-.336-.354-.514-.469-.563z"/>'); // eslint-disable-next-line
+var BIconChatSquareQuote = /*#__PURE__*/(0, _makeIcon.makeIcon)('ChatSquareQuote', '<path fill-rule="evenodd" d="M14 1H2a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h2.5a2 2 0 0 1 1.6.8L8 14.333 9.9 11.8a2 2 0 0 1 1.6-.8H14a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1zM2 0a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2.5a1 1 0 0 1 .8.4l1.9 2.533a1 1 0 0 0 1.6 0l1.9-2.533a1 1 0 0 1 .8-.4H14a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2H2z"/><path fill-rule="evenodd" d="M7.066 4.76A1.665 1.665 0 0 0 4 5.668a1.667 1.667 0 0 0 2.561 1.406c-.131.389-.375.804-.777 1.22a.417.417 0 1 0 .6.58c1.486-1.54 1.293-3.214.682-4.112zm4 0A1.665 1.665 0 0 0 8 5.668a1.667 1.667 0 0 0 2.561 1.406c-.131.389-.375.804-.777 1.22a.417.417 0 1 0 .6.58c1.486-1.54 1.293-3.214.682-4.112z"/>'); // eslint-disable-next-line
 
 exports.BIconChatSquareQuote = BIconChatSquareQuote;
 var BIconChatSquareQuoteFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('ChatSquareQuoteFill', '<path fill-rule="evenodd" d="M0 2a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-2.5a1 1 0 0 0-.8.4l-1.9 2.533a1 1 0 0 1-1.6 0L5.3 12.4a1 1 0 0 0-.8-.4H2a2 2 0 0 1-2-2V2zm7.194 2.766c.087.124.163.26.227.401.428.948.393 2.377-.942 3.706a.446.446 0 0 1-.612.01.405.405 0 0 1-.011-.59c.419-.416.672-.831.809-1.22-.269.165-.588.26-.93.26C4.775 7.333 4 6.587 4 5.667 4 4.747 4.776 4 5.734 4c.271 0 .528.06.756.166l.008.004c.169.07.327.182.469.324.085.083.161.174.227.272zM11 7.073c-.269.165-.588.26-.93.26-.958 0-1.735-.746-1.735-1.666 0-.92.777-1.667 1.734-1.667.271 0 .528.06.756.166l.008.004c.17.07.327.182.469.324.085.083.161.174.227.272.087.124.164.26.228.401.428.948.392 2.377-.942 3.706a.446.446 0 0 1-.613.01.405.405 0 0 1-.011-.59c.42-.416.672-.831.81-1.22z"/>'); // eslint-disable-next-line
 
 exports.BIconChatSquareQuoteFill = BIconChatSquareQuoteFill;
+var BIconChatSquareText = /*#__PURE__*/(0, _makeIcon.makeIcon)('ChatSquareText', '<path fill-rule="evenodd" d="M14 1H2a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h2.5a2 2 0 0 1 1.6.8L8 14.333 9.9 11.8a2 2 0 0 1 1.6-.8H14a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1zM2 0a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2.5a1 1 0 0 1 .8.4l1.9 2.533a1 1 0 0 0 1.6 0l1.9-2.533a1 1 0 0 1 .8-.4H14a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2H2z"/><path fill-rule="evenodd" d="M3 3.5a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5zM3 6a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9A.5.5 0 0 1 3 6zm0 2.5a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5z"/>'); // eslint-disable-next-line
+
+exports.BIconChatSquareText = BIconChatSquareText;
+var BIconChatSquareTextFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('ChatSquareTextFill', '<path fill-rule="evenodd" d="M0 2a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-2.5a1 1 0 0 0-.8.4l-1.9 2.533a1 1 0 0 1-1.6 0L5.3 12.4a1 1 0 0 0-.8-.4H2a2 2 0 0 1-2-2V2zm3.5 1a.5.5 0 0 0 0 1h9a.5.5 0 0 0 0-1h-9zm0 2.5a.5.5 0 0 0 0 1h9a.5.5 0 0 0 0-1h-9zm0 2.5a.5.5 0 0 0 0 1h5a.5.5 0 0 0 0-1h-5z"/>'); // eslint-disable-next-line
+
+exports.BIconChatSquareTextFill = BIconChatSquareTextFill;
+var BIconChatText = /*#__PURE__*/(0, _makeIcon.makeIcon)('ChatText', '<path fill-rule="evenodd" d="M2.678 11.894a1 1 0 0 1 .287.801 10.97 10.97 0 0 1-.398 2c1.395-.323 2.247-.697 2.634-.893a1 1 0 0 1 .71-.074A8.06 8.06 0 0 0 8 14c3.996 0 7-2.807 7-6 0-3.192-3.004-6-7-6S1 4.808 1 8c0 1.468.617 2.83 1.678 3.894zm-.493 3.905a21.682 21.682 0 0 1-.713.129c-.2.032-.352-.176-.273-.362a9.68 9.68 0 0 0 .244-.637l.003-.01c.248-.72.45-1.548.524-2.319C.743 11.37 0 9.76 0 8c0-3.866 3.582-7 8-7s8 3.134 8 7-3.582 7-8 7a9.06 9.06 0 0 1-2.347-.306c-.52.263-1.639.742-3.468 1.105z"/><path fill-rule="evenodd" d="M4 5.5a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7a.5.5 0 0 1-.5-.5zM4 8a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7A.5.5 0 0 1 4 8zm0 2.5a.5.5 0 0 1 .5-.5h4a.5.5 0 0 1 0 1h-4a.5.5 0 0 1-.5-.5z"/>'); // eslint-disable-next-line
+
+exports.BIconChatText = BIconChatText;
+var BIconChatTextFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('ChatTextFill', '<path fill-rule="evenodd" d="M16 8c0 3.866-3.582 7-8 7a9.06 9.06 0 0 1-2.347-.306c-.584.296-1.925.864-4.181 1.234-.2.032-.352-.176-.273-.362.354-.836.674-1.95.77-2.966C.744 11.37 0 9.76 0 8c0-3.866 3.582-7 8-7s8 3.134 8 7zM4.5 5a.5.5 0 0 0 0 1h7a.5.5 0 0 0 0-1h-7zm0 2.5a.5.5 0 0 0 0 1h7a.5.5 0 0 0 0-1h-7zm0 2.5a.5.5 0 0 0 0 1h4a.5.5 0 0 0 0-1h-4z"/>'); // eslint-disable-next-line
+
+exports.BIconChatTextFill = BIconChatTextFill;
 var BIconCheck = /*#__PURE__*/(0, _makeIcon.makeIcon)('Check', '<path fill-rule="evenodd" d="M10.97 4.97a.75.75 0 0 1 1.071 1.05l-3.992 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.236.236 0 0 1 .02-.022z"/>'); // eslint-disable-next-line
 
 exports.BIconCheck = BIconCheck;
@@ -53810,9 +54180,18 @@ exports.BIconCircleSquare = BIconCircleSquare;
 var BIconClipboard = /*#__PURE__*/(0, _makeIcon.makeIcon)('Clipboard', '<path fill-rule="evenodd" d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1v-1z"/><path fill-rule="evenodd" d="M9.5 1h-3a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5zm-3-1A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3z"/>'); // eslint-disable-next-line
 
 exports.BIconClipboard = BIconClipboard;
+var BIconClipboardCheck = /*#__PURE__*/(0, _makeIcon.makeIcon)('ClipboardCheck', '<path fill-rule="evenodd" d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1v-1z"/><path fill-rule="evenodd" d="M9.5 1h-3a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5zm-3-1A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3zm4.354 7.146a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708 0l-1.5-1.5a.5.5 0 1 1 .708-.708L7.5 9.793l2.646-2.647a.5.5 0 0 1 .708 0z"/>'); // eslint-disable-next-line
+
+exports.BIconClipboardCheck = BIconClipboardCheck;
 var BIconClipboardData = /*#__PURE__*/(0, _makeIcon.makeIcon)('ClipboardData', '<path fill-rule="evenodd" d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1v-1z"/><path fill-rule="evenodd" d="M9.5 1h-3a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5zm-3-1A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3z"/><path d="M4 11a1 1 0 1 1 2 0v1a1 1 0 1 1-2 0v-1zm6-4a1 1 0 1 1 2 0v5a1 1 0 1 1-2 0V7zM7 9a1 1 0 0 1 2 0v3a1 1 0 1 1-2 0V9z"/>'); // eslint-disable-next-line
 
 exports.BIconClipboardData = BIconClipboardData;
+var BIconClipboardMinus = /*#__PURE__*/(0, _makeIcon.makeIcon)('ClipboardMinus', '<path fill-rule="evenodd" d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1v-1z"/><path fill-rule="evenodd" d="M9.5 1h-3a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5zm-3-1A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3zm-1 9.5A.5.5 0 0 1 6 9h4a.5.5 0 0 1 0 1H6a.5.5 0 0 1-.5-.5z"/>'); // eslint-disable-next-line
+
+exports.BIconClipboardMinus = BIconClipboardMinus;
+var BIconClipboardPlus = /*#__PURE__*/(0, _makeIcon.makeIcon)('ClipboardPlus', '<path fill-rule="evenodd" d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1v-1z"/><path fill-rule="evenodd" d="M9.5 1h-3a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5zm-3-1A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3zM8 7a.5.5 0 0 1 .5.5V9H10a.5.5 0 0 1 0 1H8.5v1.5a.5.5 0 0 1-1 0V10H6a.5.5 0 0 1 0-1h1.5V7.5A.5.5 0 0 1 8 7z"/>'); // eslint-disable-next-line
+
+exports.BIconClipboardPlus = BIconClipboardPlus;
 var BIconClock = /*#__PURE__*/(0, _makeIcon.makeIcon)('Clock', '<path fill-rule="evenodd" d="M8 15A7 7 0 1 0 8 1a7 7 0 0 0 0 14zm8-7A8 8 0 1 1 0 8a8 8 0 0 1 16 0z"/><path fill-rule="evenodd" d="M7.5 3a.5.5 0 0 1 .5.5v5.21l3.248 1.856a.5.5 0 0 1-.496.868l-3.5-2A.5.5 0 0 1 7 9V3.5a.5.5 0 0 1 .5-.5z"/>'); // eslint-disable-next-line
 
 exports.BIconClock = BIconClock;
@@ -53822,34 +54201,73 @@ exports.BIconClockFill = BIconClockFill;
 var BIconClockHistory = /*#__PURE__*/(0, _makeIcon.makeIcon)('ClockHistory', '<path fill-rule="evenodd" d="M8.515 1.019A7 7 0 0 0 8 1V0a8 8 0 0 1 .589.022l-.074.997zm2.004.45a7.003 7.003 0 0 0-.985-.299l.219-.976c.383.086.76.2 1.126.342l-.36.933zm1.37.71a7.01 7.01 0 0 0-.439-.27l.493-.87a8.025 8.025 0 0 1 .979.654l-.615.789a6.996 6.996 0 0 0-.418-.302zm1.834 1.79a6.99 6.99 0 0 0-.653-.796l.724-.69c.27.285.52.59.747.91l-.818.576zm.744 1.352a7.08 7.08 0 0 0-.214-.468l.893-.45a7.976 7.976 0 0 1 .45 1.088l-.95.313a7.023 7.023 0 0 0-.179-.483zm.53 2.507a6.991 6.991 0 0 0-.1-1.025l.985-.17c.067.386.106.778.116 1.17l-1 .025zm-.131 1.538c.033-.17.06-.339.081-.51l.993.123a7.957 7.957 0 0 1-.23 1.155l-.964-.267c.046-.165.086-.332.12-.501zm-.952 2.379c.184-.29.346-.594.486-.908l.914.405c-.16.36-.345.706-.555 1.038l-.845-.535zm-.964 1.205c.122-.122.239-.248.35-.378l.758.653a8.073 8.073 0 0 1-.401.432l-.707-.707z"/><path fill-rule="evenodd" d="M8 1a7 7 0 1 0 4.95 11.95l.707.707A8.001 8.001 0 1 1 8 0v1z"/><path fill-rule="evenodd" d="M7.5 3a.5.5 0 0 1 .5.5v5.21l3.248 1.856a.5.5 0 0 1-.496.868l-3.5-2A.5.5 0 0 1 7 9V3.5a.5.5 0 0 1 .5-.5z"/>'); // eslint-disable-next-line
 
 exports.BIconClockHistory = BIconClockHistory;
-var BIconCloud = /*#__PURE__*/(0, _makeIcon.makeIcon)('Cloud', '<path fill-rule="evenodd" d="M4.887 7.2l-.964-.165A2.5 2.5 0 1 0 3.5 12h10a1.5 1.5 0 0 0 .237-2.981L12.7 8.854l.216-1.028a4 4 0 1 0-7.843-1.587l-.185.96zm9.084.341a5 5 0 0 0-9.88-1.492A3.5 3.5 0 1 0 3.5 13h9.999a2.5 2.5 0 0 0 .394-4.968c.033-.16.06-.324.077-.49z"/>'); // eslint-disable-next-line
+var BIconCloud = /*#__PURE__*/(0, _makeIcon.makeIcon)('Cloud', '<path fill-rule="evenodd" d="M4.406 3.342A5.53 5.53 0 0 1 8 2c2.69 0 4.923 2 5.166 4.579C14.758 6.804 16 8.137 16 9.773 16 11.569 14.502 13 12.687 13H3.781C1.708 13 0 11.366 0 9.318c0-1.763 1.266-3.223 2.942-3.593.143-.863.698-1.723 1.464-2.383zm.653.757c-.757.653-1.153 1.44-1.153 2.056v.448l-.445.049C2.064 6.805 1 7.952 1 9.318 1 10.785 2.23 12 3.781 12h8.906C13.98 12 15 10.988 15 9.773c0-1.216-1.02-2.228-2.313-2.228h-.5v-.5C12.188 4.825 10.328 3 8 3a4.53 4.53 0 0 0-2.941 1.1z"/>'); // eslint-disable-next-line
 
 exports.BIconCloud = BIconCloud;
-var BIconCloudDownload = /*#__PURE__*/(0, _makeIcon.makeIcon)('CloudDownload', '<path d="M4.887 5.2l-.964-.165A2.5 2.5 0 1 0 3.5 10H6v1H3.5a3.5 3.5 0 1 1 .59-6.95 5.002 5.002 0 1 1 9.804 1.98A2.501 2.501 0 0 1 13.5 11H10v-1h3.5a1.5 1.5 0 0 0 .237-2.981L12.7 6.854l.216-1.028a4 4 0 1 0-7.843-1.587l-.185.96z"/><path fill-rule="evenodd" d="M5 12.5a.5.5 0 0 1 .707 0L8 14.793l2.293-2.293a.5.5 0 1 1 .707.707l-2.646 2.646a.5.5 0 0 1-.708 0L5 13.207a.5.5 0 0 1 0-.707z"/><path fill-rule="evenodd" d="M8 6a.5.5 0 0 1 .5.5v8a.5.5 0 0 1-1 0v-8A.5.5 0 0 1 8 6z"/>'); // eslint-disable-next-line
+var BIconCloudArrowDown = /*#__PURE__*/(0, _makeIcon.makeIcon)('CloudArrowDown', '<path fill-rule="evenodd" d="M4.406 3.342A5.53 5.53 0 0 1 8 2c2.69 0 4.923 2 5.166 4.579C14.758 6.804 16 8.137 16 9.773 16 11.569 14.502 13 12.687 13H3.781C1.708 13 0 11.366 0 9.318c0-1.763 1.266-3.223 2.942-3.593.143-.863.698-1.723 1.464-2.383zm.653.757c-.757.653-1.153 1.44-1.153 2.056v.448l-.445.049C2.064 6.805 1 7.952 1 9.318 1 10.785 2.23 12 3.781 12h8.906C13.98 12 15 10.988 15 9.773c0-1.216-1.02-2.228-2.313-2.228h-.5v-.5C12.188 4.825 10.328 3 8 3a4.53 4.53 0 0 0-2.941 1.1z"/><path fill-rule="evenodd" d="M7.646 10.854a.5.5 0 0 0 .708 0l2-2a.5.5 0 0 0-.708-.708L8.5 9.293V5.5a.5.5 0 0 0-1 0v3.793L6.354 8.146a.5.5 0 1 0-.708.708l2 2z"/>'); // eslint-disable-next-line
+
+exports.BIconCloudArrowDown = BIconCloudArrowDown;
+var BIconCloudArrowDownFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('CloudArrowDownFill', '<path fill-rule="evenodd" d="M8 2a5.53 5.53 0 0 0-3.594 1.342c-.766.66-1.321 1.52-1.464 2.383C1.266 6.095 0 7.555 0 9.318 0 11.366 1.708 13 3.781 13h8.906C14.502 13 16 11.57 16 9.773c0-1.636-1.242-2.969-2.834-3.194C12.923 3.999 10.69 2 8 2zm2.354 6.854l-2 2a.5.5 0 0 1-.708 0l-2-2a.5.5 0 1 1 .708-.708L7.5 9.293V5.5a.5.5 0 0 1 1 0v3.793l1.146-1.147a.5.5 0 0 1 .708.708z"/>'); // eslint-disable-next-line
+
+exports.BIconCloudArrowDownFill = BIconCloudArrowDownFill;
+var BIconCloudArrowUp = /*#__PURE__*/(0, _makeIcon.makeIcon)('CloudArrowUp', '<path fill-rule="evenodd" d="M4.406 3.342A5.53 5.53 0 0 1 8 2c2.69 0 4.923 2 5.166 4.579C14.758 6.804 16 8.137 16 9.773 16 11.569 14.502 13 12.687 13H3.781C1.708 13 0 11.366 0 9.318c0-1.763 1.266-3.223 2.942-3.593.143-.863.698-1.723 1.464-2.383zm.653.757c-.757.653-1.153 1.44-1.153 2.056v.448l-.445.049C2.064 6.805 1 7.952 1 9.318 1 10.785 2.23 12 3.781 12h8.906C13.98 12 15 10.988 15 9.773c0-1.216-1.02-2.228-2.313-2.228h-.5v-.5C12.188 4.825 10.328 3 8 3a4.53 4.53 0 0 0-2.941 1.1z"/><path fill-rule="evenodd" d="M7.646 5.146a.5.5 0 0 1 .708 0l2 2a.5.5 0 0 1-.708.708L8.5 6.707V10.5a.5.5 0 0 1-1 0V6.707L6.354 7.854a.5.5 0 1 1-.708-.708l2-2z"/>'); // eslint-disable-next-line
+
+exports.BIconCloudArrowUp = BIconCloudArrowUp;
+var BIconCloudArrowUpFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('CloudArrowUpFill', '<path fill-rule="evenodd" d="M8 2a5.53 5.53 0 0 0-3.594 1.342c-.766.66-1.321 1.52-1.464 2.383C1.266 6.095 0 7.555 0 9.318 0 11.366 1.708 13 3.781 13h8.906C14.502 13 16 11.57 16 9.773c0-1.636-1.242-2.969-2.834-3.194C12.923 3.999 10.69 2 8 2zm2.354 5.146l-2-2a.5.5 0 0 0-.708 0l-2 2a.5.5 0 1 0 .708.708L7.5 6.707V10.5a.5.5 0 0 0 1 0V6.707l1.146 1.147a.5.5 0 0 0 .708-.708z"/>'); // eslint-disable-next-line
+
+exports.BIconCloudArrowUpFill = BIconCloudArrowUpFill;
+var BIconCloudCheck = /*#__PURE__*/(0, _makeIcon.makeIcon)('CloudCheck', '<path fill-rule="evenodd" d="M4.406 3.342A5.53 5.53 0 0 1 8 2c2.69 0 4.923 2 5.166 4.579C14.758 6.804 16 8.137 16 9.773 16 11.569 14.502 13 12.687 13H3.781C1.708 13 0 11.366 0 9.318c0-1.763 1.266-3.223 2.942-3.593.143-.863.698-1.723 1.464-2.383zm.653.757c-.757.653-1.153 1.44-1.153 2.056v.448l-.445.049C2.064 6.805 1 7.952 1 9.318 1 10.785 2.23 12 3.781 12h8.906C13.98 12 15 10.988 15 9.773c0-1.216-1.02-2.228-2.313-2.228h-.5v-.5C12.188 4.825 10.328 3 8 3a4.53 4.53 0 0 0-2.941 1.1z"/><path fill-rule="evenodd" d="M10.354 6.146a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708 0l-1.5-1.5a.5.5 0 1 1 .708-.708L7 8.793l2.646-2.647a.5.5 0 0 1 .708 0z"/>'); // eslint-disable-next-line
+
+exports.BIconCloudCheck = BIconCloudCheck;
+var BIconCloudCheckFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('CloudCheckFill', '<path fill-rule="evenodd" d="M8 2a5.53 5.53 0 0 0-3.594 1.342c-.766.66-1.321 1.52-1.464 2.383C1.266 6.095 0 7.555 0 9.318 0 11.366 1.708 13 3.781 13h8.906C14.502 13 16 11.57 16 9.773c0-1.636-1.242-2.969-2.834-3.194C12.923 3.999 10.69 2 8 2zm2.354 4.854a.5.5 0 0 0-.708-.708L7 8.793 5.854 7.646a.5.5 0 1 0-.708.708l1.5 1.5a.5.5 0 0 0 .708 0l3-3z"/>'); // eslint-disable-next-line
+
+exports.BIconCloudCheckFill = BIconCloudCheckFill;
+var BIconCloudDownload = /*#__PURE__*/(0, _makeIcon.makeIcon)('CloudDownload', '<path fill-rule="evenodd" d="M4.406 1.342A5.53 5.53 0 0 1 8 0c2.69 0 4.923 2 5.166 4.579C14.758 4.804 16 6.137 16 7.773 16 9.569 14.502 11 12.687 11H10a.5.5 0 0 1 0-1h2.688C13.979 10 15 8.988 15 7.773c0-1.216-1.02-2.228-2.313-2.228h-.5v-.5C12.188 2.825 10.328 1 8 1a4.53 4.53 0 0 0-2.941 1.1c-.757.652-1.153 1.438-1.153 2.055v.448l-.445.049C2.064 4.805 1 5.952 1 7.318 1 8.785 2.23 10 3.781 10H6a.5.5 0 0 1 0 1H3.781C1.708 11 0 9.366 0 7.318c0-1.763 1.266-3.223 2.942-3.593.143-.863.698-1.723 1.464-2.383z"/><path fill-rule="evenodd" d="M7.646 15.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 14.293V5.5a.5.5 0 0 0-1 0v8.793l-2.146-2.147a.5.5 0 0 0-.708.708l3 3z"/>'); // eslint-disable-next-line
 
 exports.BIconCloudDownload = BIconCloudDownload;
-var BIconCloudFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('CloudFill', '<path fill-rule="evenodd" d="M3.5 13a3.5 3.5 0 1 1 .59-6.95 5.002 5.002 0 1 1 9.804 1.98A2.5 2.5 0 0 1 13.5 13h-10z"/>'); // eslint-disable-next-line
+var BIconCloudDownloadFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('CloudDownloadFill', '<path fill-rule="evenodd" d="M8 0a5.53 5.53 0 0 0-3.594 1.342c-.766.66-1.321 1.52-1.464 2.383C1.266 4.095 0 5.555 0 7.318 0 9.366 1.708 11 3.781 11H7.5V5.5a.5.5 0 0 1 1 0V11h4.188C14.502 11 16 9.57 16 7.773c0-1.636-1.242-2.969-2.834-3.194C12.923 1.999 10.69 0 8 0zm-.354 15.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 14.293V11h-1v3.293l-2.146-2.147a.5.5 0 0 0-.708.708l3 3z"/>'); // eslint-disable-next-line
+
+exports.BIconCloudDownloadFill = BIconCloudDownloadFill;
+var BIconCloudFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('CloudFill', '<path fill-rule="evenodd" d="M4.406 3.342A5.53 5.53 0 0 1 8 2c2.69 0 4.923 2 5.166 4.579C14.758 6.804 16 8.137 16 9.773 16 11.569 14.502 13 12.687 13H3.781C1.708 13 0 11.366 0 9.318c0-1.763 1.266-3.223 2.942-3.593.143-.863.698-1.723 1.464-2.383z"/>'); // eslint-disable-next-line
 
 exports.BIconCloudFill = BIconCloudFill;
-var BIconCloudSlash = /*#__PURE__*/(0, _makeIcon.makeIcon)('CloudSlash', '<path d="M3.901 6.023A3.5 3.5 0 1 0 3.5 13h7.379l-1-1H3.5a2.5 2.5 0 1 1 .423-4.965l.964.164.031-.16-1.017-1.016zm10.125 5.882a1.5 1.5 0 0 0-.289-2.886L12.7 8.854l.216-1.028a4 4 0 0 0-6.682-3.714l-.707-.708a5 5 0 0 1 8.368 4.626 2.501 2.501 0 0 1 .88 4.621l-.748-.746z"/><path fill-rule="evenodd" d="M13.646 14.354l-12-12 .708-.708 12 12-.707.707z"/>'); // eslint-disable-next-line
+var BIconCloudMinus = /*#__PURE__*/(0, _makeIcon.makeIcon)('CloudMinus', '<path fill-rule="evenodd" d="M4.406 3.342A5.53 5.53 0 0 1 8 2c2.69 0 4.923 2 5.166 4.579C14.758 6.804 16 8.137 16 9.773 16 11.569 14.502 13 12.687 13H3.781C1.708 13 0 11.366 0 9.318c0-1.763 1.266-3.223 2.942-3.593.143-.863.698-1.723 1.464-2.383zm.653.757c-.757.653-1.153 1.44-1.153 2.056v.448l-.445.049C2.064 6.805 1 7.952 1 9.318 1 10.785 2.23 12 3.781 12h8.906C13.98 12 15 10.988 15 9.773c0-1.216-1.02-2.228-2.313-2.228h-.5v-.5C12.188 4.825 10.328 3 8 3a4.53 4.53 0 0 0-2.941 1.1z"/><path fill-rule="evenodd" d="M5.5 8a.5.5 0 0 1 .5-.5h4a.5.5 0 0 1 0 1H6a.5.5 0 0 1-.5-.5z"/>'); // eslint-disable-next-line
+
+exports.BIconCloudMinus = BIconCloudMinus;
+var BIconCloudMinusFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('CloudMinusFill', '<path fill-rule="evenodd" d="M8 2a5.53 5.53 0 0 0-3.594 1.342c-.766.66-1.321 1.52-1.464 2.383C1.266 6.095 0 7.555 0 9.318 0 11.366 1.708 13 3.781 13h8.906C14.502 13 16 11.57 16 9.773c0-1.636-1.242-2.969-2.834-3.194C12.923 3.999 10.69 2 8 2zM6 7.5a.5.5 0 0 0 0 1h4a.5.5 0 0 0 0-1H6z"/>'); // eslint-disable-next-line
+
+exports.BIconCloudMinusFill = BIconCloudMinusFill;
+var BIconCloudPlus = /*#__PURE__*/(0, _makeIcon.makeIcon)('CloudPlus', '<path fill-rule="evenodd" d="M4.406 3.342A5.53 5.53 0 0 1 8 2c2.69 0 4.923 2 5.166 4.579C14.758 6.804 16 8.137 16 9.773 16 11.569 14.502 13 12.687 13H3.781C1.708 13 0 11.366 0 9.318c0-1.763 1.266-3.223 2.942-3.593.143-.863.698-1.723 1.464-2.383zm.653.757c-.757.653-1.153 1.44-1.153 2.056v.448l-.445.049C2.064 6.805 1 7.952 1 9.318 1 10.785 2.23 12 3.781 12h8.906C13.98 12 15 10.988 15 9.773c0-1.216-1.02-2.228-2.313-2.228h-.5v-.5C12.188 4.825 10.328 3 8 3a4.53 4.53 0 0 0-2.941 1.1z"/><path fill-rule="evenodd" d="M8 5.5a.5.5 0 0 1 .5.5v1.5H10a.5.5 0 0 1 0 1H8.5V10a.5.5 0 0 1-1 0V8.5H6a.5.5 0 0 1 0-1h1.5V6a.5.5 0 0 1 .5-.5z"/>'); // eslint-disable-next-line
+
+exports.BIconCloudPlus = BIconCloudPlus;
+var BIconCloudPlusFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('CloudPlusFill', '<path fill-rule="evenodd" d="M8 2a5.53 5.53 0 0 0-3.594 1.342c-.766.66-1.321 1.52-1.464 2.383C1.266 6.095 0 7.555 0 9.318 0 11.366 1.708 13 3.781 13h8.906C14.502 13 16 11.57 16 9.773c0-1.636-1.242-2.969-2.834-3.194C12.923 3.999 10.69 2 8 2zm.5 4a.5.5 0 0 0-1 0v1.5H6a.5.5 0 0 0 0 1h1.5V10a.5.5 0 0 0 1 0V8.5H10a.5.5 0 0 0 0-1H8.5V6z"/>'); // eslint-disable-next-line
+
+exports.BIconCloudPlusFill = BIconCloudPlusFill;
+var BIconCloudSlash = /*#__PURE__*/(0, _makeIcon.makeIcon)('CloudSlash', '<path fill-rule="evenodd" d="M3.112 5.112a3.125 3.125 0 0 0-.17.613C1.266 6.095 0 7.555 0 9.318 0 11.366 1.708 13 3.781 13H11l-1-1H3.781C2.231 12 1 10.785 1 9.318c0-1.365 1.064-2.513 2.46-2.666l.446-.05v-.447c0-.075.006-.152.018-.231l-.812-.812zm2.55-1.45l-.725-.725A5.512 5.512 0 0 1 8 2c2.69 0 4.923 2 5.166 4.579C14.758 6.804 16 8.137 16 9.773a3.2 3.2 0 0 1-1.516 2.711l-.733-.733C14.498 11.378 15 10.626 15 9.773c0-1.216-1.02-2.228-2.313-2.228h-.5v-.5C12.188 4.825 10.328 3 8 3c-.875 0-1.678.26-2.339.661zm7.984 10.692l-12-12 .708-.708 12 12-.707.707z"/>'); // eslint-disable-next-line
 
 exports.BIconCloudSlash = BIconCloudSlash;
-var BIconCloudSlashFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('CloudSlashFill', '<path d="M3.901 6.023A3.5 3.5 0 1 0 3.5 13h7.379L3.9 6.023zm10.872 6.629a2.5 2.5 0 0 0-.88-4.621 5 5 0 0 0-8.368-4.626l9.248 9.247z"/><path fill-rule="evenodd" d="M13.646 14.354l-12-12 .708-.708 12 12-.707.707z"/>'); // eslint-disable-next-line
+var BIconCloudSlashFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('CloudSlashFill', '<path fill-rule="evenodd" d="M3.112 5.112a3.125 3.125 0 0 0-.17.613C1.266 6.095 0 7.555 0 9.318 0 11.366 1.708 13 3.781 13H11L3.112 5.112zm11.372 7.372L4.937 2.937A5.512 5.512 0 0 1 8 2c2.69 0 4.923 2 5.166 4.579C14.758 6.804 16 8.137 16 9.773a3.2 3.2 0 0 1-1.516 2.711zm-.838 1.87l-12-12 .708-.708 12 12-.707.707z"/>'); // eslint-disable-next-line
 
 exports.BIconCloudSlashFill = BIconCloudSlashFill;
-var BIconCloudUpload = /*#__PURE__*/(0, _makeIcon.makeIcon)('CloudUpload', '<path d="M4.887 6.2l-.964-.165A2.5 2.5 0 1 0 3.5 11H6v1H3.5a3.5 3.5 0 1 1 .59-6.95 5.002 5.002 0 1 1 9.804 1.98A2.501 2.501 0 0 1 13.5 12H10v-1h3.5a1.5 1.5 0 0 0 .237-2.981L12.7 7.854l.216-1.028a4 4 0 1 0-7.843-1.587l-.185.96z"/><path fill-rule="evenodd" d="M5 8.854a.5.5 0 0 0 .707 0L8 6.56l2.293 2.293A.5.5 0 1 0 11 8.146L8.354 5.5a.5.5 0 0 0-.708 0L5 8.146a.5.5 0 0 0 0 .708z"/><path fill-rule="evenodd" d="M8 6a.5.5 0 0 1 .5.5v8a.5.5 0 0 1-1 0v-8A.5.5 0 0 1 8 6z"/>'); // eslint-disable-next-line
+var BIconCloudUpload = /*#__PURE__*/(0, _makeIcon.makeIcon)('CloudUpload', '<path fill-rule="evenodd" d="M4.406 1.342A5.53 5.53 0 0 1 8 0c2.69 0 4.923 2 5.166 4.579C14.758 4.804 16 6.137 16 7.773 16 9.569 14.502 11 12.687 11H10a.5.5 0 0 1 0-1h2.688C13.979 10 15 8.988 15 7.773c0-1.216-1.02-2.228-2.313-2.228h-.5v-.5C12.188 2.825 10.328 1 8 1a4.53 4.53 0 0 0-2.941 1.1c-.757.652-1.153 1.438-1.153 2.055v.448l-.445.049C2.064 4.805 1 5.952 1 7.318 1 8.785 2.23 10 3.781 10H6a.5.5 0 0 1 0 1H3.781C1.708 11 0 9.366 0 7.318c0-1.763 1.266-3.223 2.942-3.593.143-.863.698-1.723 1.464-2.383z"/><path fill-rule="evenodd" d="M7.646 4.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 5.707V14.5a.5.5 0 0 1-1 0V5.707L5.354 7.854a.5.5 0 1 1-.708-.708l3-3z"/>'); // eslint-disable-next-line
 
 exports.BIconCloudUpload = BIconCloudUpload;
+var BIconCloudUploadFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('CloudUploadFill', '<path fill-rule="evenodd" d="M8 0a5.53 5.53 0 0 0-3.594 1.342c-.766.66-1.321 1.52-1.464 2.383C1.266 4.095 0 5.555 0 7.318 0 9.366 1.708 11 3.781 11H7.5V5.707L5.354 7.854a.5.5 0 1 1-.708-.708l3-3a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 5.707V11h4.188C14.502 11 16 9.57 16 7.773c0-1.636-1.242-2.969-2.834-3.194C12.923 1.999 10.69 0 8 0zm-.5 14.5V11h1v3.5a.5.5 0 0 1-1 0z"/>'); // eslint-disable-next-line
+
+exports.BIconCloudUploadFill = BIconCloudUploadFill;
 var BIconCode = /*#__PURE__*/(0, _makeIcon.makeIcon)('Code', '<path fill-rule="evenodd" d="M5.854 4.146a.5.5 0 0 1 0 .708L2.707 8l3.147 3.146a.5.5 0 0 1-.708.708l-3.5-3.5a.5.5 0 0 1 0-.708l3.5-3.5a.5.5 0 0 1 .708 0zm4.292 0a.5.5 0 0 0 0 .708L13.293 8l-3.147 3.146a.5.5 0 0 0 .708.708l3.5-3.5a.5.5 0 0 0 0-.708l-3.5-3.5a.5.5 0 0 0-.708 0z"/>'); // eslint-disable-next-line
 
 exports.BIconCode = BIconCode;
 var BIconCodeSlash = /*#__PURE__*/(0, _makeIcon.makeIcon)('CodeSlash', '<path fill-rule="evenodd" d="M4.854 4.146a.5.5 0 0 1 0 .708L1.707 8l3.147 3.146a.5.5 0 0 1-.708.708l-3.5-3.5a.5.5 0 0 1 0-.708l3.5-3.5a.5.5 0 0 1 .708 0zm6.292 0a.5.5 0 0 0 0 .708L14.293 8l-3.147 3.146a.5.5 0 0 0 .708.708l3.5-3.5a.5.5 0 0 0 0-.708l-3.5-3.5a.5.5 0 0 0-.708 0zm-.999-3.124a.5.5 0 0 1 .33.625l-4 13a.5.5 0 0 1-.955-.294l4-13a.5.5 0 0 1 .625-.33z"/>'); // eslint-disable-next-line
 
 exports.BIconCodeSlash = BIconCodeSlash;
+var BIconCodeSquare = /*#__PURE__*/(0, _makeIcon.makeIcon)('CodeSquare', '<path fill-rule="evenodd" d="M14 1H2a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1zM2 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2H2z"/><path fill-rule="evenodd" d="M6.854 4.646a.5.5 0 0 1 0 .708L4.207 8l2.647 2.646a.5.5 0 0 1-.708.708l-3-3a.5.5 0 0 1 0-.708l3-3a.5.5 0 0 1 .708 0zm2.292 0a.5.5 0 0 0 0 .708L11.793 8l-2.647 2.646a.5.5 0 0 0 .708.708l3-3a.5.5 0 0 0 0-.708l-3-3a.5.5 0 0 0-.708 0z"/>'); // eslint-disable-next-line
+
+exports.BIconCodeSquare = BIconCodeSquare;
 var BIconCollection = /*#__PURE__*/(0, _makeIcon.makeIcon)('Collection', '<path fill-rule="evenodd" d="M14.5 13.5h-13A.5.5 0 0 1 1 13V6a.5.5 0 0 1 .5-.5h13a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-.5.5zm-13 1A1.5 1.5 0 0 1 0 13V6a1.5 1.5 0 0 1 1.5-1.5h13A1.5 1.5 0 0 1 16 6v7a1.5 1.5 0 0 1-1.5 1.5h-13zM2 3a.5.5 0 0 0 .5.5h11a.5.5 0 0 0 0-1h-11A.5.5 0 0 0 2 3zm2-2a.5.5 0 0 0 .5.5h7a.5.5 0 0 0 0-1h-7A.5.5 0 0 0 4 1z"/>'); // eslint-disable-next-line
 
 exports.BIconCollection = BIconCollection;
-var BIconCollectionFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('CollectionFill', '<rect width="16" height="10" rx="1.5" transform="matrix(1 0 0 -1 0 14.5)"/><path fill-rule="evenodd" d="M2 3a.5.5 0 0 0 .5.5h11a.5.5 0 0 0 0-1h-11A.5.5 0 0 0 2 3zm2-2a.5.5 0 0 0 .5.5h7a.5.5 0 0 0 0-1h-7A.5.5 0 0 0 4 1z"/>'); // eslint-disable-next-line
+var BIconCollectionFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('CollectionFill', '<path d="M0 13a1.5 1.5 0 0 0 1.5 1.5h13A1.5 1.5 0 0 0 16 13V6a1.5 1.5 0 0 0-1.5-1.5h-13A1.5 1.5 0 0 0 0 6v7z"/><path fill-rule="evenodd" d="M2 3a.5.5 0 0 0 .5.5h11a.5.5 0 0 0 0-1h-11A.5.5 0 0 0 2 3zm2-2a.5.5 0 0 0 .5.5h7a.5.5 0 0 0 0-1h-7A.5.5 0 0 0 4 1z"/>'); // eslint-disable-next-line
 
 exports.BIconCollectionFill = BIconCollectionFill;
 var BIconCollectionPlay = /*#__PURE__*/(0, _makeIcon.makeIcon)('CollectionPlay', '<path fill-rule="evenodd" d="M14.5 13.5h-13A.5.5 0 0 1 1 13V6a.5.5 0 0 1 .5-.5h13a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-.5.5zm-13 1A1.5 1.5 0 0 1 0 13V6a1.5 1.5 0 0 1 1.5-1.5h13A1.5 1.5 0 0 1 16 6v7a1.5 1.5 0 0 1-1.5 1.5h-13zM2 3a.5.5 0 0 0 .5.5h11a.5.5 0 0 0 0-1h-11A.5.5 0 0 0 2 3zm2-2a.5.5 0 0 0 .5.5h7a.5.5 0 0 0 0-1h-7A.5.5 0 0 0 4 1z"/><path fill-rule="evenodd" d="M6.258 6.563a.5.5 0 0 1 .507.013l4 2.5a.5.5 0 0 1 0 .848l-4 2.5A.5.5 0 0 1 6 12V7a.5.5 0 0 1 .258-.437z"/>'); // eslint-disable-next-line
@@ -53873,21 +54291,45 @@ exports.BIconCompass = BIconCompass;
 var BIconCone = /*#__PURE__*/(0, _makeIcon.makeIcon)('Cone', '<path d="M7.03 1.88c.252-1.01 1.688-1.01 1.94 0L12 14H4L7.03 1.88z"/><path fill-rule="evenodd" d="M1.5 14a.5.5 0 0 1 .5-.5h12a.5.5 0 0 1 0 1H2a.5.5 0 0 1-.5-.5z"/>'); // eslint-disable-next-line
 
 exports.BIconCone = BIconCone;
-var BIconConeStriped = /*#__PURE__*/(0, _makeIcon.makeIcon)('ConeStriped', '<path fill-rule="evenodd" d="M7.879 11.015a.5.5 0 0 1 .242 0l6 1.5a.5.5 0 0 1 .037.96l-6 2a.499.499 0 0 1-.316 0l-6-2a.5.5 0 0 1 .037-.96l6-1.5z"/><path d="M11.885 12.538l-.72-2.877C10.303 9.873 9.201 10 8 10s-2.303-.127-3.165-.339l-.72 2.877c-.073.292-.002.6.256.756C4.86 13.589 5.916 14 8 14s3.14-.411 3.63-.706c.257-.155.328-.464.255-.756zM9.97 4.88l.953 3.811C10.159 8.878 9.14 9 8 9c-1.14 0-2.159-.122-2.923-.309L6.03 4.88C6.635 4.957 7.3 5 8 5s1.365-.043 1.97-.12zm-.245-.978L8.97.88C8.718-.13 7.282-.13 7.03.88L6.275 3.9C6.8 3.965 7.382 4 8 4c.618 0 1.2-.036 1.725-.098z"/>'); // eslint-disable-next-line
+var BIconConeStriped = /*#__PURE__*/(0, _makeIcon.makeIcon)('ConeStriped', '<path fill-rule="evenodd" d="M7.879 11.015a.5.5 0 0 1 .242 0l6 1.5a.5.5 0 0 1 .037.96l-6 2a.499.499 0 0 1-.316 0l-6-2a.5.5 0 0 1 .037-.96l6-1.5z"/><path d="M9.97 4.88l.953 3.811C10.159 8.878 9.14 9 8 9c-1.14 0-2.159-.122-2.923-.309L6.03 4.88C6.635 4.957 7.3 5 8 5s1.365-.043 1.97-.12zm-.245-.978L8.97.88C8.718-.13 7.282-.13 7.03.88L6.275 3.9C6.8 3.965 7.382 4 8 4c.618 0 1.2-.036 1.725-.098zm2.005 8.015l-.565-2.257c-.862.212-1.964.339-3.165.339s-2.303-.127-3.165-.339l-.565 2.257 3.609-.902a.5.5 0 0 1 .242 0l3.609.902z"/>'); // eslint-disable-next-line
 
 exports.BIconConeStriped = BIconConeStriped;
 var BIconController = /*#__PURE__*/(0, _makeIcon.makeIcon)('Controller', '<path fill-rule="evenodd" d="M11.119 2.693c.904.19 1.75.495 2.235.98.407.408.779 1.05 1.094 1.772.32.733.599 1.591.805 2.466.206.875.34 1.78.364 2.606.024.815-.059 1.602-.328 2.21a1.42 1.42 0 0 1-1.445.83c-.636-.067-1.115-.394-1.513-.773a11.307 11.307 0 0 1-.739-.809c-.126-.147-.25-.291-.368-.422-.728-.804-1.597-1.527-3.224-1.527-1.627 0-2.496.723-3.224 1.527-.119.131-.242.275-.368.422-.243.283-.494.576-.739.81-.398.378-.877.705-1.513.772a1.42 1.42 0 0 1-1.445-.83c-.27-.608-.352-1.395-.329-2.21.024-.826.16-1.73.365-2.606.206-.875.486-1.733.805-2.466.315-.722.687-1.364 1.094-1.772.486-.485 1.331-.79 2.235-.98.932-.196 2.03-.292 3.119-.292 1.089 0 2.187.096 3.119.292zm-6.032.979c-.877.185-1.469.443-1.733.708-.276.276-.587.783-.885 1.465a13.748 13.748 0 0 0-.748 2.295 12.351 12.351 0 0 0-.339 2.406c-.022.755.062 1.368.243 1.776a.42.42 0 0 0 .426.24c.327-.034.61-.199.929-.502.212-.202.4-.423.615-.674.133-.156.276-.323.44-.505C4.861 9.97 5.978 9.026 8 9.026s3.139.943 3.965 1.855c.164.182.307.35.44.505.214.25.403.472.615.674.318.303.601.468.929.503a.42.42 0 0 0 .426-.241c.18-.408.265-1.02.243-1.776a12.354 12.354 0 0 0-.339-2.406 13.753 13.753 0 0 0-.748-2.295c-.298-.682-.61-1.19-.885-1.465-.264-.265-.856-.523-1.733-.708-.85-.179-1.877-.27-2.913-.27-1.036 0-2.063.091-2.913.27z"/><path d="M11.5 6.026a.5.5 0 1 1-1 0 .5.5 0 0 1 1 0zm-1 1a.5.5 0 1 1-1 0 .5.5 0 0 1 1 0zm2 0a.5.5 0 1 1-1 0 .5.5 0 0 1 1 0zm-1 1a.5.5 0 1 1-1 0 .5.5 0 0 1 1 0zm-7-2.5h1v3h-1v-3z"/><path d="M3.5 6.526h3v1h-3v-1zM3.051 3.26a.5.5 0 0 1 .354-.613l1.932-.518a.5.5 0 0 1 .258.966l-1.932.518a.5.5 0 0 1-.612-.354zm9.976 0a.5.5 0 0 0-.353-.613l-1.932-.518a.5.5 0 1 0-.259.966l1.932.518a.5.5 0 0 0 .612-.354z"/>'); // eslint-disable-next-line
 
 exports.BIconController = BIconController;
-var BIconCreditCard = /*#__PURE__*/(0, _makeIcon.makeIcon)('CreditCard', '<path fill-rule="evenodd" d="M14 3H2a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4a1 1 0 0 0-1-1zM2 2a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H2z"/><rect width="3" height="3" x="2" y="9" rx="1"/><path d="M1 5h14v2H1z"/>'); // eslint-disable-next-line
+var BIconCpu = /*#__PURE__*/(0, _makeIcon.makeIcon)('Cpu', '<path fill-rule="evenodd" d="M5 0a.5.5 0 0 1 .5.5V2h1V.5a.5.5 0 0 1 1 0V2h1V.5a.5.5 0 0 1 1 0V2h1V.5a.5.5 0 0 1 1 0V2A2.5 2.5 0 0 1 14 4.5h1.5a.5.5 0 0 1 0 1H14v1h1.5a.5.5 0 0 1 0 1H14v1h1.5a.5.5 0 0 1 0 1H14v1h1.5a.5.5 0 0 1 0 1H14a2.5 2.5 0 0 1-2.5 2.5v1.5a.5.5 0 0 1-1 0V14h-1v1.5a.5.5 0 0 1-1 0V14h-1v1.5a.5.5 0 0 1-1 0V14h-1v1.5a.5.5 0 0 1-1 0V14A2.5 2.5 0 0 1 2 11.5H.5a.5.5 0 0 1 0-1H2v-1H.5a.5.5 0 0 1 0-1H2v-1H.5a.5.5 0 0 1 0-1H2v-1H.5a.5.5 0 0 1 0-1H2A2.5 2.5 0 0 1 4.5 2V.5A.5.5 0 0 1 5 0zm-.5 3A1.5 1.5 0 0 0 3 4.5v7A1.5 1.5 0 0 0 4.5 13h7a1.5 1.5 0 0 0 1.5-1.5v-7A1.5 1.5 0 0 0 11.5 3h-7zM5 6.5A1.5 1.5 0 0 1 6.5 5h3A1.5 1.5 0 0 1 11 6.5v3A1.5 1.5 0 0 1 9.5 11h-3A1.5 1.5 0 0 1 5 9.5v-3zM6.5 6a.5.5 0 0 0-.5.5v3a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5v-3a.5.5 0 0 0-.5-.5h-3z"/>'); // eslint-disable-next-line
+
+exports.BIconCpu = BIconCpu;
+var BIconCpuFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('CpuFill', '<path fill-rule="evenodd" d="M5.5.5a.5.5 0 0 0-1 0V2A2.5 2.5 0 0 0 2 4.5H.5a.5.5 0 0 0 0 1H2v1H.5a.5.5 0 0 0 0 1H2v1H.5a.5.5 0 0 0 0 1H2v1H.5a.5.5 0 0 0 0 1H2A2.5 2.5 0 0 0 4.5 14v1.5a.5.5 0 0 0 1 0V14h1v1.5a.5.5 0 0 0 1 0V14h1v1.5a.5.5 0 0 0 1 0V14h1v1.5a.5.5 0 0 0 1 0V14a2.5 2.5 0 0 0 2.5-2.5h1.5a.5.5 0 0 0 0-1H14v-1h1.5a.5.5 0 0 0 0-1H14v-1h1.5a.5.5 0 0 0 0-1H14v-1h1.5a.5.5 0 0 0 0-1H14A2.5 2.5 0 0 0 11.5 2V.5a.5.5 0 0 0-1 0V2h-1V.5a.5.5 0 0 0-1 0V2h-1V.5a.5.5 0 0 0-1 0V2h-1V.5zm1 4.5A1.5 1.5 0 0 0 5 6.5v3A1.5 1.5 0 0 0 6.5 11h3A1.5 1.5 0 0 0 11 9.5v-3A1.5 1.5 0 0 0 9.5 5h-3zm0 1a.5.5 0 0 0-.5.5v3a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5v-3a.5.5 0 0 0-.5-.5h-3z"/>'); // eslint-disable-next-line
+
+exports.BIconCpuFill = BIconCpuFill;
+var BIconCreditCard = /*#__PURE__*/(0, _makeIcon.makeIcon)('CreditCard', '<path fill-rule="evenodd" d="M0 4a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V4zm2-1a1 1 0 0 0-1 1v1h14V4a1 1 0 0 0-1-1H2zm13 4H1v5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V7z"/><path d="M2 10a1 1 0 0 1 1-1h1a1 1 0 0 1 1 1v1a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1v-1z"/>'); // eslint-disable-next-line
 
 exports.BIconCreditCard = BIconCreditCard;
+var BIconCreditCard2Back = /*#__PURE__*/(0, _makeIcon.makeIcon)('CreditCard2Back', '<path fill-rule="evenodd" d="M14 3H2a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4a1 1 0 0 0-1-1zM2 2a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H2z"/><path d="M11 5.5a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1-.5-.5v-1zM1 9h14v2H1V9z"/>'); // eslint-disable-next-line
+
+exports.BIconCreditCard2Back = BIconCreditCard2Back;
+var BIconCreditCard2BackFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('CreditCard2BackFill', '<path fill-rule="evenodd" d="M0 4a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v5H0V4zm11.5 1a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h2a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5h-2z"/><path d="M0 11v1a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-1H0z"/>'); // eslint-disable-next-line
+
+exports.BIconCreditCard2BackFill = BIconCreditCard2BackFill;
+var BIconCreditCard2Front = /*#__PURE__*/(0, _makeIcon.makeIcon)('CreditCard2Front', '<path fill-rule="evenodd" d="M14 3H2a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4a1 1 0 0 0-1-1zM2 2a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H2z"/><path d="M2 5.5a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1-.5-.5v-1z"/><path fill-rule="evenodd" d="M2 8.5a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5zm0 2a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 0 1h-1a.5.5 0 0 1-.5-.5zm3 0a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 0 1h-1a.5.5 0 0 1-.5-.5zm3 0a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 0 1h-1a.5.5 0 0 1-.5-.5zm3 0a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 0 1h-1a.5.5 0 0 1-.5-.5z"/>'); // eslint-disable-next-line
+
+exports.BIconCreditCard2Front = BIconCreditCard2Front;
+var BIconCreditCard2FrontFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('CreditCard2FrontFill', '<path fill-rule="evenodd" d="M0 4a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V4zm2.5 1a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h2a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5h-2zm0 3a.5.5 0 0 0 0 1h5a.5.5 0 0 0 0-1h-5zm0 2a.5.5 0 0 0 0 1h1a.5.5 0 0 0 0-1h-1zm3 0a.5.5 0 0 0 0 1h1a.5.5 0 0 0 0-1h-1zm3 0a.5.5 0 0 0 0 1h1a.5.5 0 0 0 0-1h-1zm3 0a.5.5 0 0 0 0 1h1a.5.5 0 0 0 0-1h-1z"/>'); // eslint-disable-next-line
+
+exports.BIconCreditCard2FrontFill = BIconCreditCard2FrontFill;
+var BIconCreditCardFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('CreditCardFill', '<path d="M0 4a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v1H0V4z"/><path fill-rule="evenodd" d="M0 7v5a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7H0zm3 2a1 1 0 0 0-1 1v1a1 1 0 0 0 1 1h1a1 1 0 0 0 1-1v-1a1 1 0 0 0-1-1H3z"/>'); // eslint-disable-next-line
+
+exports.BIconCreditCardFill = BIconCreditCardFill;
 var BIconCrop = /*#__PURE__*/(0, _makeIcon.makeIcon)('Crop', '<path fill-rule="evenodd" d="M3.5.5A.5.5 0 0 1 4 1v13h13a.5.5 0 0 1 0 1H3.5a.5.5 0 0 1-.5-.5V1a.5.5 0 0 1 .5-.5z"/><path fill-rule="evenodd" d="M.5 3.5A.5.5 0 0 1 1 3h2.5a.5.5 0 0 1 0 1H1a.5.5 0 0 1-.5-.5zm5.5 0a.5.5 0 0 1 .5-.5h8a.5.5 0 0 1 .5.5v8a.5.5 0 0 1-1 0V4H6.5a.5.5 0 0 1-.5-.5zM14.5 14a.5.5 0 0 1 .5.5V17a.5.5 0 0 1-1 0v-2.5a.5.5 0 0 1 .5-.5z"/>'); // eslint-disable-next-line
 
 exports.BIconCrop = BIconCrop;
 var BIconCup = /*#__PURE__*/(0, _makeIcon.makeIcon)('Cup', '<path fill-rule="evenodd" d="M12 4H4v8a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4zM3 3v9a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V3H3z"/><path fill-rule="evenodd" d="M14.5 5.5h-2v-1h2A1.5 1.5 0 0 1 16 6v4a1.5 1.5 0 0 1-1.5 1.5h-2v-1h2a.5.5 0 0 0 .5-.5V6a.5.5 0 0 0-.5-.5z"/>'); // eslint-disable-next-line
 
 exports.BIconCup = BIconCup;
+var BIconCupStraw = /*#__PURE__*/(0, _makeIcon.makeIcon)('CupStraw', '<path fill-rule="evenodd" d="M4.497 5.942l.959 8.155c.014.118.06.181.101.21C5.912 14.555 6.724 15 8 15s2.088-.445 2.443-.693c.04-.029.087-.092.101-.21l.96-8.155.993.116-.96 8.156a1.279 1.279 0 0 1-.52.912C10.53 15.466 9.522 16 8 16s-2.531-.534-3.016-.874a1.279 1.279 0 0 1-.521-.912l-.96-8.156.994-.116z"/><path fill-rule="evenodd" d="M4.467 6.116l.005-.006a.024.024 0 0 1-.005.006zM4.645 6c.146-.073.362-.15.648-.222C5.967 5.61 6.924 5.5 8 5.5c1.076 0 2.033.11 2.707.278.286.072.502.149.648.222-.146.073-.362.15-.648.222C10.033 6.39 9.076 6.5 8 6.5c-1.076 0-2.033-.11-2.707-.278A3.284 3.284 0 0 1 4.645 6zm6.888.116s-.003-.002-.005-.006l.005.006zm-.005-.226a.026.026 0 0 1 .005-.006l-.005.006zm-7.056 0l-.005-.006s.003.002.005.006zm.578-1.082C5.824 4.614 6.867 4.5 8 4.5c1.133 0 2.176.114 2.95.308.383.096.728.218.99.372.228.135.56.396.56.82 0 .424-.332.685-.56.82-.262.154-.607.276-.99.372-.774.194-1.817.308-2.95.308-1.133 0-2.176-.114-2.95-.308-.383-.096-.728-.218-.99-.372-.228-.135-.56-.396-.56-.82 0-.424.332-.685.56-.82.262-.154.607-.276.99-.372z"/><path fill-rule="evenodd" d="M12.964 1.314a.5.5 0 0 1-.278.65l-2.255.902-.943 4.242-.976-.216 1-4.5a.5.5 0 0 1 .302-.356l2.5-1a.5.5 0 0 1 .65.278z"/>'); // eslint-disable-next-line
+
+exports.BIconCupStraw = BIconCupStraw;
 var BIconCursor = /*#__PURE__*/(0, _makeIcon.makeIcon)('Cursor', '<path fill-rule="evenodd" d="M14.082 2.182a.5.5 0 0 1 .103.557L8.528 15.467a.5.5 0 0 1-.917-.007L5.57 10.694.803 8.652a.5.5 0 0 1-.006-.916l12.728-5.657a.5.5 0 0 1 .556.103zM2.25 8.184l3.897 1.67a.5.5 0 0 1 .262.263l1.67 3.897L12.743 3.52 2.25 8.184z"/>'); // eslint-disable-next-line
 
 exports.BIconCursor = BIconCursor;
@@ -53912,6 +54354,18 @@ exports.BIconDashSquare = BIconDashSquare;
 var BIconDashSquareFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('DashSquareFill', '<path fill-rule="evenodd" d="M2 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2H2zm2 7.5a.5.5 0 0 0 0 1h8a.5.5 0 0 0 0-1H4z"/>'); // eslint-disable-next-line
 
 exports.BIconDashSquareFill = BIconDashSquareFill;
+var BIconDiagram2 = /*#__PURE__*/(0, _makeIcon.makeIcon)('Diagram2', '<path fill-rule="evenodd" d="M3 11.5A1.5 1.5 0 0 1 4.5 10h1A1.5 1.5 0 0 1 7 11.5v1A1.5 1.5 0 0 1 5.5 14h-1A1.5 1.5 0 0 1 3 12.5v-1zm1.5-.5a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5h-1zm4.5.5a1.5 1.5 0 0 1 1.5-1.5h1a1.5 1.5 0 0 1 1.5 1.5v1a1.5 1.5 0 0 1-1.5 1.5h-1A1.5 1.5 0 0 1 9 12.5v-1zm1.5-.5a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5h-1zM6 3.5A1.5 1.5 0 0 1 7.5 2h1A1.5 1.5 0 0 1 10 3.5v1A1.5 1.5 0 0 1 8.5 6h-1A1.5 1.5 0 0 1 6 4.5v-1zM7.5 3a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5h-1z"/><path fill-rule="evenodd" d="M8 5a.5.5 0 0 1 .5.5V7H11a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-1 0V8h-5v.5a.5.5 0 0 1-1 0v-1A.5.5 0 0 1 5 7h2.5V5.5A.5.5 0 0 1 8 5z"/>'); // eslint-disable-next-line
+
+exports.BIconDiagram2 = BIconDiagram2;
+var BIconDiagram2Fill = /*#__PURE__*/(0, _makeIcon.makeIcon)('Diagram2Fill', '<path fill-rule="evenodd" d="M3 11.5A1.5 1.5 0 0 1 4.5 10h1A1.5 1.5 0 0 1 7 11.5v1A1.5 1.5 0 0 1 5.5 14h-1A1.5 1.5 0 0 1 3 12.5v-1zm6 0a1.5 1.5 0 0 1 1.5-1.5h1a1.5 1.5 0 0 1 1.5 1.5v1a1.5 1.5 0 0 1-1.5 1.5h-1A1.5 1.5 0 0 1 9 12.5v-1zm-3-8A1.5 1.5 0 0 1 7.5 2h1A1.5 1.5 0 0 1 10 3.5v1A1.5 1.5 0 0 1 8.5 6h-1A1.5 1.5 0 0 1 6 4.5v-1z"/><path fill-rule="evenodd" d="M8 5a.5.5 0 0 1 .5.5V7H11a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-1 0V8h-5v.5a.5.5 0 0 1-1 0v-1A.5.5 0 0 1 5 7h2.5V5.5A.5.5 0 0 1 8 5z"/>'); // eslint-disable-next-line
+
+exports.BIconDiagram2Fill = BIconDiagram2Fill;
+var BIconDiagram3 = /*#__PURE__*/(0, _makeIcon.makeIcon)('Diagram3', '<path fill-rule="evenodd" d="M0 11.5A1.5 1.5 0 0 1 1.5 10h1A1.5 1.5 0 0 1 4 11.5v1A1.5 1.5 0 0 1 2.5 14h-1A1.5 1.5 0 0 1 0 12.5v-1zm1.5-.5a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5h-1zm4.5.5A1.5 1.5 0 0 1 7.5 10h1a1.5 1.5 0 0 1 1.5 1.5v1A1.5 1.5 0 0 1 8.5 14h-1A1.5 1.5 0 0 1 6 12.5v-1zm1.5-.5a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5h-1zm4.5.5a1.5 1.5 0 0 1 1.5-1.5h1a1.5 1.5 0 0 1 1.5 1.5v1a1.5 1.5 0 0 1-1.5 1.5h-1a1.5 1.5 0 0 1-1.5-1.5v-1zm1.5-.5a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5h-1zM6 3.5A1.5 1.5 0 0 1 7.5 2h1A1.5 1.5 0 0 1 10 3.5v1A1.5 1.5 0 0 1 8.5 6h-1A1.5 1.5 0 0 1 6 4.5v-1zM7.5 3a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5h-1z"/><path fill-rule="evenodd" d="M8 5a.5.5 0 0 1 .5.5V7H14a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-1 0V8h-5v.5a.5.5 0 0 1-1 0V8h-5v.5a.5.5 0 0 1-1 0v-1A.5.5 0 0 1 2 7h5.5V5.5A.5.5 0 0 1 8 5z"/>'); // eslint-disable-next-line
+
+exports.BIconDiagram3 = BIconDiagram3;
+var BIconDiagram3Fill = /*#__PURE__*/(0, _makeIcon.makeIcon)('Diagram3Fill', '<path fill-rule="evenodd" d="M8 5a.5.5 0 0 1 .5.5V7H14a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-1 0V8h-5v.5a.5.5 0 0 1-1 0V8h-5v.5a.5.5 0 0 1-1 0v-1A.5.5 0 0 1 2 7h5.5V5.5A.5.5 0 0 1 8 5zm-8 6.5A1.5 1.5 0 0 1 1.5 10h1A1.5 1.5 0 0 1 4 11.5v1A1.5 1.5 0 0 1 2.5 14h-1A1.5 1.5 0 0 1 0 12.5v-1zm6 0A1.5 1.5 0 0 1 7.5 10h1a1.5 1.5 0 0 1 1.5 1.5v1A1.5 1.5 0 0 1 8.5 14h-1A1.5 1.5 0 0 1 6 12.5v-1zm6 0a1.5 1.5 0 0 1 1.5-1.5h1a1.5 1.5 0 0 1 1.5 1.5v1a1.5 1.5 0 0 1-1.5 1.5h-1a1.5 1.5 0 0 1-1.5-1.5v-1z"/><path fill-rule="evenodd" d="M6 3.5A1.5 1.5 0 0 1 7.5 2h1A1.5 1.5 0 0 1 10 3.5v1A1.5 1.5 0 0 1 8.5 6h-1A1.5 1.5 0 0 1 6 4.5v-1z"/>'); // eslint-disable-next-line
+
+exports.BIconDiagram3Fill = BIconDiagram3Fill;
 var BIconDiamond = /*#__PURE__*/(0, _makeIcon.makeIcon)('Diamond', '<path fill-rule="evenodd" d="M6.95.435c.58-.58 1.52-.58 2.1 0l6.515 6.516c.58.58.58 1.519 0 2.098L9.05 15.565c-.58.58-1.519.58-2.098 0L.435 9.05a1.482 1.482 0 0 1 0-2.098L6.95.435zm1.4.7a.495.495 0 0 0-.7 0L1.134 7.65a.495.495 0 0 0 0 .7l6.516 6.516a.495.495 0 0 0 .7 0l6.516-6.516a.495.495 0 0 0 0-.7L8.35 1.134z"/>'); // eslint-disable-next-line
 
 exports.BIconDiamond = BIconDiamond;
@@ -53921,18 +54375,66 @@ exports.BIconDiamondFill = BIconDiamondFill;
 var BIconDiamondHalf = /*#__PURE__*/(0, _makeIcon.makeIcon)('DiamondHalf', '<path fill-rule="evenodd" d="M9.05.435c-.58-.58-1.52-.58-2.1 0L.436 6.95c-.58.58-.58 1.519 0 2.098l6.516 6.516c.58.58 1.519.58 2.098 0l6.516-6.516c.58-.58.58-1.519 0-2.098L9.05.435zM8 .989c.127 0 .253.049.35.145l6.516 6.516a.495.495 0 0 1 0 .7L8.35 14.866a.493.493 0 0 1-.35.145V.989z"/>'); // eslint-disable-next-line
 
 exports.BIconDiamondHalf = BIconDiamondHalf;
+var BIconDice1 = /*#__PURE__*/(0, _makeIcon.makeIcon)('Dice1', '<path fill-rule="evenodd" d="M13 1H3a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3a2 2 0 0 0-2-2zM3 0a3 3 0 0 0-3 3v10a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3V3a3 3 0 0 0-3-3H3z"/><circle cx="8" cy="8" r="1.5"/>'); // eslint-disable-next-line
+
+exports.BIconDice1 = BIconDice1;
+var BIconDice1Fill = /*#__PURE__*/(0, _makeIcon.makeIcon)('Dice1Fill', '<path fill-rule="evenodd" d="M3 0a3 3 0 0 0-3 3v10a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3V3a3 3 0 0 0-3-3H3zm5 9.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z"/>'); // eslint-disable-next-line
+
+exports.BIconDice1Fill = BIconDice1Fill;
+var BIconDice2 = /*#__PURE__*/(0, _makeIcon.makeIcon)('Dice2', '<path fill-rule="evenodd" d="M13 1H3a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3a2 2 0 0 0-2-2zM3 0a3 3 0 0 0-3 3v10a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3V3a3 3 0 0 0-3-3H3z"/><circle cx="4" cy="4" r="1.5"/><circle cx="12" cy="12" r="1.5"/>'); // eslint-disable-next-line
+
+exports.BIconDice2 = BIconDice2;
+var BIconDice2Fill = /*#__PURE__*/(0, _makeIcon.makeIcon)('Dice2Fill', '<path fill-rule="evenodd" d="M0 3a3 3 0 0 1 3-3h10a3 3 0 0 1 3 3v10a3 3 0 0 1-3 3H3a3 3 0 0 1-3-3V3zm5.5 1a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm6.5 9.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z"/>'); // eslint-disable-next-line
+
+exports.BIconDice2Fill = BIconDice2Fill;
+var BIconDice3 = /*#__PURE__*/(0, _makeIcon.makeIcon)('Dice3', '<path fill-rule="evenodd" d="M13 1H3a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3a2 2 0 0 0-2-2zM3 0a3 3 0 0 0-3 3v10a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3V3a3 3 0 0 0-3-3H3z"/><circle cx="4" cy="4" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="8" cy="8" r="1.5"/>'); // eslint-disable-next-line
+
+exports.BIconDice3 = BIconDice3;
+var BIconDice3Fill = /*#__PURE__*/(0, _makeIcon.makeIcon)('Dice3Fill', '<path fill-rule="evenodd" d="M3 0a3 3 0 0 0-3 3v10a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3V3a3 3 0 0 0-3-3H3zm2.5 4a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm8 8a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zM8 9.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z"/>'); // eslint-disable-next-line
+
+exports.BIconDice3Fill = BIconDice3Fill;
+var BIconDice4 = /*#__PURE__*/(0, _makeIcon.makeIcon)('Dice4', '<path fill-rule="evenodd" d="M13 1H3a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3a2 2 0 0 0-2-2zM3 0a3 3 0 0 0-3 3v10a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3V3a3 3 0 0 0-3-3H3z"/><circle cx="4" cy="4" r="1.5"/><circle cx="12" cy="4" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="4" cy="12" r="1.5"/>'); // eslint-disable-next-line
+
+exports.BIconDice4 = BIconDice4;
+var BIconDice4Fill = /*#__PURE__*/(0, _makeIcon.makeIcon)('Dice4Fill', '<path fill-rule="evenodd" d="M3 0a3 3 0 0 0-3 3v10a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3V3a3 3 0 0 0-3-3H3zm1 5.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zm8 0a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zm1.5 6.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zM4 13.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z"/>'); // eslint-disable-next-line
+
+exports.BIconDice4Fill = BIconDice4Fill;
+var BIconDice5 = /*#__PURE__*/(0, _makeIcon.makeIcon)('Dice5', '<path fill-rule="evenodd" d="M13 1H3a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3a2 2 0 0 0-2-2zM3 0a3 3 0 0 0-3 3v10a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3V3a3 3 0 0 0-3-3H3z"/><circle cx="4" cy="4" r="1.5"/><circle cx="12" cy="4" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="4" cy="12" r="1.5"/><circle cx="8" cy="8" r="1.5"/>'); // eslint-disable-next-line
+
+exports.BIconDice5 = BIconDice5;
+var BIconDice5Fill = /*#__PURE__*/(0, _makeIcon.makeIcon)('Dice5Fill', '<path fill-rule="evenodd" d="M3 0a3 3 0 0 0-3 3v10a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3V3a3 3 0 0 0-3-3H3zm2.5 4a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm8 0a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zM12 13.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zM5.5 12a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zM8 9.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z"/>'); // eslint-disable-next-line
+
+exports.BIconDice5Fill = BIconDice5Fill;
+var BIconDice6 = /*#__PURE__*/(0, _makeIcon.makeIcon)('Dice6', '<path fill-rule="evenodd" d="M13 1H3a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3a2 2 0 0 0-2-2zM3 0a3 3 0 0 0-3 3v10a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3V3a3 3 0 0 0-3-3H3z"/><circle cx="4" cy="4" r="1.5"/><circle cx="12" cy="4" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="8" r="1.5"/><circle cx="4" cy="12" r="1.5"/><circle cx="4" cy="8" r="1.5"/>'); // eslint-disable-next-line
+
+exports.BIconDice6 = BIconDice6;
+var BIconDice6Fill = /*#__PURE__*/(0, _makeIcon.makeIcon)('Dice6Fill', '<path fill-rule="evenodd" d="M3 0a3 3 0 0 0-3 3v10a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3V3a3 3 0 0 0-3-3H3zm1 5.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zm8 0a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zm1.5 6.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zM12 9.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zM5.5 12a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zM4 9.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z"/>'); // eslint-disable-next-line
+
+exports.BIconDice6Fill = BIconDice6Fill;
 var BIconDisplay = /*#__PURE__*/(0, _makeIcon.makeIcon)('Display', '<path d="M5.75 13.5c.167-.333.25-.833.25-1.5h4c0 .667.083 1.167.25 1.5H11a.5.5 0 0 1 0 1H5a.5.5 0 0 1 0-1h.75z"/><path fill-rule="evenodd" d="M13.991 3H2c-.325 0-.502.078-.602.145a.758.758 0 0 0-.254.302A1.46 1.46 0 0 0 1 4.01V10c0 .325.078.502.145.602.07.105.17.188.302.254a1.464 1.464 0 0 0 .538.143L2.01 11H14c.325 0 .502-.078.602-.145a.758.758 0 0 0 .254-.302 1.464 1.464 0 0 0 .143-.538L15 9.99V4c0-.325-.078-.502-.145-.602a.757.757 0 0 0-.302-.254A1.46 1.46 0 0 0 13.99 3zM14 2H2C0 2 0 4 0 4v6c0 2 2 2 2 2h12c2 0 2-2 2-2V4c0-2-2-2-2-2z"/>'); // eslint-disable-next-line
 
 exports.BIconDisplay = BIconDisplay;
-var BIconDisplayFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('DisplayFill', '<path d="M5.75 13.5c.167-.333.25-.833.25-1.5h4c0 .667.083 1.167.25 1.5H11a.5.5 0 0 1 0 1H5a.5.5 0 0 1 0-1h.75z"/><path fill-rule="evenodd" d="M13.991 3H2c-.325 0-.502.078-.602.145a.758.758 0 0 0-.254.302A1.46 1.46 0 0 0 1 4.01V10c0 .325.078.502.145.602.07.105.17.188.302.254a1.464 1.464 0 0 0 .538.143L2.01 11H14c.325 0 .502-.078.602-.145a.758.758 0 0 0 .254-.302 1.464 1.464 0 0 0 .143-.538L15 9.99V4c0-.325-.078-.502-.145-.602a.757.757 0 0 0-.302-.254A1.46 1.46 0 0 0 13.99 3zM14 2H2C0 2 0 4 0 4v6c0 2 2 2 2 2h12c2 0 2-2 2-2V4c0-2-2-2-2-2z"/><path d="M2 4h12v6H2z"/>'); // eslint-disable-next-line
+var BIconDisplayFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('DisplayFill', '<path d="M6 12c0 .667-.083 1.167-.25 1.5H5a.5.5 0 0 0 0 1h6a.5.5 0 0 0 0-1h-.75c-.167-.333-.25-.833-.25-1.5h4c2 0 2-2 2-2V4c0-2-2-2-2-2H2C0 2 0 4 0 4v6c0 2 2 2 2 2h4z"/>'); // eslint-disable-next-line
 
 exports.BIconDisplayFill = BIconDisplayFill;
+var BIconDistributeHorizontal = /*#__PURE__*/(0, _makeIcon.makeIcon)('DistributeHorizontal', '<path fill-rule="evenodd" d="M14.5 1a.5.5 0 0 0-.5.5v13a.5.5 0 0 0 1 0v-13a.5.5 0 0 0-.5-.5zm-13 0a.5.5 0 0 0-.5.5v13a.5.5 0 0 0 1 0v-13a.5.5 0 0 0-.5-.5z"/><path d="M6 13a1 1 0 0 0 1 1h2a1 1 0 0 0 1-1V3a1 1 0 0 0-1-1H7a1 1 0 0 0-1 1v10z"/>'); // eslint-disable-next-line
+
+exports.BIconDistributeHorizontal = BIconDistributeHorizontal;
+var BIconDistributeVertical = /*#__PURE__*/(0, _makeIcon.makeIcon)('DistributeVertical', '<path fill-rule="evenodd" d="M1 1.5a.5.5 0 0 0 .5.5h13a.5.5 0 0 0 0-1h-13a.5.5 0 0 0-.5.5zm0 13a.5.5 0 0 0 .5.5h13a.5.5 0 0 0 0-1h-13a.5.5 0 0 0-.5.5z"/><path d="M2 7a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V7z"/>'); // eslint-disable-next-line
+
+exports.BIconDistributeVertical = BIconDistributeVertical;
 var BIconDoorClosed = /*#__PURE__*/(0, _makeIcon.makeIcon)('DoorClosed', '<path fill-rule="evenodd" d="M3 2a1 1 0 0 1 1-1h8a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2zm1 0v13h8V2H4z"/><path d="M7 9a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/><path fill-rule="evenodd" d="M1 15.5a.5.5 0 0 1 .5-.5h13a.5.5 0 0 1 0 1h-13a.5.5 0 0 1-.5-.5z"/>'); // eslint-disable-next-line
 
 exports.BIconDoorClosed = BIconDoorClosed;
 var BIconDoorClosedFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('DoorClosedFill', '<path fill-rule="evenodd" d="M4 1a1 1 0 0 0-1 1v13H1.5a.5.5 0 0 0 0 1h13a.5.5 0 0 0 0-1H13V2a1 1 0 0 0-1-1H4zm2 9a1 1 0 1 0 0-2 1 1 0 0 0 0 2z"/>'); // eslint-disable-next-line
 
 exports.BIconDoorClosedFill = BIconDoorClosedFill;
+var BIconDoorOpen = /*#__PURE__*/(0, _makeIcon.makeIcon)('DoorOpen', '<path fill-rule="evenodd" d="M1 15.5a.5.5 0 0 1 .5-.5h13a.5.5 0 0 1 0 1h-13a.5.5 0 0 1-.5-.5zM11.5 2H11V1h.5A1.5 1.5 0 0 1 13 2.5V15h-1V2.5a.5.5 0 0 0-.5-.5z"/><path fill-rule="evenodd" d="M10.828.122A.5.5 0 0 1 11 .5V15h-1V1.077l-6 .857V15H3V1.5a.5.5 0 0 1 .43-.495l7-1a.5.5 0 0 1 .398.117z"/><path d="M8 9c0 .552.224 1 .5 1s.5-.448.5-1-.224-1-.5-1-.5.448-.5 1z"/>'); // eslint-disable-next-line
+
+exports.BIconDoorOpen = BIconDoorOpen;
+var BIconDoorOpenFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('DoorOpenFill', '<path fill-rule="evenodd" d="M1.5 15a.5.5 0 0 0 0 1h13a.5.5 0 0 0 0-1H13V2.5A1.5 1.5 0 0 0 11.5 1H11V.5a.5.5 0 0 0-.57-.495l-7 1A.5.5 0 0 0 3 1.5V15H1.5zM11 2v13h1V2.5a.5.5 0 0 0-.5-.5H11zm-2.5 8c-.276 0-.5-.448-.5-1s.224-1 .5-1 .5.448.5 1-.224 1-.5 1z"/>'); // eslint-disable-next-line
+
+exports.BIconDoorOpenFill = BIconDoorOpenFill;
 var BIconDot = /*#__PURE__*/(0, _makeIcon.makeIcon)('Dot', '<path fill-rule="evenodd" d="M8 9.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z"/>'); // eslint-disable-next-line
 
 exports.BIconDot = BIconDot;
@@ -53945,9 +54447,18 @@ exports.BIconDroplet = BIconDroplet;
 var BIconDropletFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('DropletFill', '<path fill-rule="evenodd" d="M8 16a6 6 0 0 0 6-6c0-1.655-1.122-2.904-2.432-4.362C10.254 4.176 8.75 2.503 8 0c0 0-6 5.686-6 10a6 6 0 0 0 6 6zM6.646 4.646c-.376.377-1.272 1.489-2.093 3.13l.894.448c.78-1.559 1.616-2.58 1.907-2.87l-.708-.708z"/>'); // eslint-disable-next-line
 
 exports.BIconDropletFill = BIconDropletFill;
-var BIconDropletHalf = /*#__PURE__*/(0, _makeIcon.makeIcon)('DropletHalf', '<path fill-rule="evenodd" d="M7.21.8C7.69.295 8 0 8 0c.109.363.234.708.371 1.038.812 1.946 2.073 3.35 3.197 4.6C12.878 7.096 14 8.345 14 10a6 6 0 0 1-12 0C2 6.668 5.58 2.517 7.21.8zm.413 1.021A31.25 31.25 0 0 0 5.794 3.99c-.726.95-1.436 2.008-1.96 3.07C3.304 8.133 3 9.138 3 10a5 5 0 0 0 10 0c0-1.201-.796-2.157-2.181-3.7l-.03-.032C9.75 5.11 8.5 3.72 7.623 1.82z"/><path fill-rule="evenodd" d="M4.553 7.776c.82-1.641 1.717-2.753 2.093-3.13l.708.708c-.29.29-1.128 1.311-1.907 2.87l-.894-.448z"/><path d="M14 10a6 6 0 0 1-12 0s2.5 2.5 6.5.5S14 10 14 10z"/>'); // eslint-disable-next-line
+var BIconDropletHalf = /*#__PURE__*/(0, _makeIcon.makeIcon)('DropletHalf', '<path fill-rule="evenodd" d="M7.21.8C7.69.295 8 0 8 0c.109.363.234.708.371 1.038.812 1.946 2.073 3.35 3.197 4.6C12.878 7.096 14 8.345 14 10a6 6 0 0 1-12 0C2 6.668 5.58 2.517 7.21.8zm.413 1.021A31.25 31.25 0 0 0 5.794 3.99c-.726.95-1.436 2.008-1.96 3.07C3.304 8.133 3 9.138 3 10c0 0 2.5 1.5 5 .5s5-.5 5-.5c0-1.201-.796-2.157-2.181-3.7l-.03-.032C9.75 5.11 8.5 3.72 7.623 1.82z"/><path fill-rule="evenodd" d="M4.553 7.776c.82-1.641 1.717-2.753 2.093-3.13l.708.708c-.29.29-1.128 1.311-1.907 2.87l-.894-.448z"/>'); // eslint-disable-next-line
 
 exports.BIconDropletHalf = BIconDropletHalf;
+var BIconEarbuds = /*#__PURE__*/(0, _makeIcon.makeIcon)('Earbuds', '<path fill-rule="evenodd" d="M6.825 4.138c.596 2.141-.36 3.593-2.389 4.117a4.432 4.432 0 0 1-2.018.054c-.048-.01.9 2.778 1.522 4.61l.41 1.205a.52.52 0 0 1-.346.659l-.593.19a.548.548 0 0 1-.69-.34L.184 6.99c-.696-2.137.662-4.309 2.564-4.8 2.029-.523 3.402 0 4.076 1.948zm-.868 2.221c.43-.112.561-.993.292-1.969-.269-.975-.836-1.675-1.266-1.563-.43.112-.561.994-.292 1.969.269.975.836 1.675 1.266 1.563zm3.218-2.221c-.596 2.141.36 3.593 2.389 4.117a4.434 4.434 0 0 0 2.018.054c.048-.01-.9 2.778-1.522 4.61l-.41 1.205a.52.52 0 0 0 .346.659l.593.19c.289.092.6-.06.69-.34l2.536-7.643c.696-2.137-.662-4.309-2.564-4.8-2.029-.523-3.402 0-4.076 1.948zm.868 2.221c-.43-.112-.561-.993-.292-1.969.269-.975.836-1.675 1.266-1.563.43.112.561.994.292 1.969-.269.975-.836 1.675-1.266 1.563z"/>'); // eslint-disable-next-line
+
+exports.BIconEarbuds = BIconEarbuds;
+var BIconEasel = /*#__PURE__*/(0, _makeIcon.makeIcon)('Easel', '<path d="M8.473.337a.5.5 0 0 0-.946 0L6.954 2h2.092L8.473.337zM12.15 11h-1.058l1.435 4.163a.5.5 0 0 0 .946-.326L12.15 11zM8.5 11h-1v2.5a.5.5 0 0 0 1 0V11zm-3.592 0H3.85l-1.323 3.837a.5.5 0 1 0 .946.326L4.908 11z"/><path fill-rule="evenodd" d="M14 3H2v7h12V3zM2 2a1 1 0 0 0-1 1v7a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V3a1 1 0 0 0-1-1H2z"/>'); // eslint-disable-next-line
+
+exports.BIconEasel = BIconEasel;
+var BIconEaselFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('EaselFill', '<path d="M8.473.337a.5.5 0 0 0-.946 0L6.954 2h2.092L8.473.337zM12.15 11h-1.058l1.435 4.163a.5.5 0 0 0 .946-.326L12.15 11zM8.5 11h-1v2.5a.5.5 0 0 0 1 0V11zm-3.592 0H3.85l-1.323 3.837a.5.5 0 1 0 .946.326L4.908 11zM1 3a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V3z"/>'); // eslint-disable-next-line
+
+exports.BIconEaselFill = BIconEaselFill;
 var BIconEgg = /*#__PURE__*/(0, _makeIcon.makeIcon)('Egg', '<path fill-rule="evenodd" d="M8 15a5 5 0 0 0 5-5c0-1.956-.69-4.286-1.742-6.12-.524-.913-1.112-1.658-1.704-2.164C8.956 1.206 8.428 1 8 1c-.428 0-.956.206-1.554.716-.592.506-1.18 1.251-1.704 2.164C3.69 5.714 3 8.044 3 10a5 5 0 0 0 5 5zm0 1a6 6 0 0 0 6-6c0-4.314-3-10-6-10S2 5.686 2 10a6 6 0 0 0 6 6z"/>'); // eslint-disable-next-line
 
 exports.BIconEgg = BIconEgg;
@@ -53969,6 +54480,9 @@ exports.BIconEmojiAngry = BIconEmojiAngry;
 var BIconEmojiDizzy = /*#__PURE__*/(0, _makeIcon.makeIcon)('EmojiDizzy', '<path fill-rule="evenodd" d="M8 15A7 7 0 1 0 8 1a7 7 0 0 0 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/><path fill-rule="evenodd" d="M9.146 5.146a.5.5 0 0 1 .708 0l.646.647.646-.647a.5.5 0 0 1 .708.708l-.647.646.647.646a.5.5 0 0 1-.708.708l-.646-.647-.646.647a.5.5 0 1 1-.708-.708l.647-.646-.647-.646a.5.5 0 0 1 0-.708zm-5 0a.5.5 0 0 1 .708 0l.646.647.646-.647a.5.5 0 1 1 .708.708l-.647.646.647.646a.5.5 0 1 1-.708.708L5.5 7.207l-.646.647a.5.5 0 1 1-.708-.708l.647-.646-.647-.646a.5.5 0 0 1 0-.708z"/><path d="M10 11a2 2 0 1 1-4 0 2 2 0 0 1 4 0z"/>'); // eslint-disable-next-line
 
 exports.BIconEmojiDizzy = BIconEmojiDizzy;
+var BIconEmojiExpressionless = /*#__PURE__*/(0, _makeIcon.makeIcon)('EmojiExpressionless', '<path fill-rule="evenodd" d="M8 15A7 7 0 1 0 8 1a7 7 0 0 0 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/><path fill-rule="evenodd" d="M4 10.5a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 0 1h-2a.5.5 0 0 1-.5-.5zm5 0a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 0 1h-2a.5.5 0 0 1-.5-.5z"/>'); // eslint-disable-next-line
+
+exports.BIconEmojiExpressionless = BIconEmojiExpressionless;
 var BIconEmojiFrown = /*#__PURE__*/(0, _makeIcon.makeIcon)('EmojiFrown', '<path fill-rule="evenodd" d="M8 15A7 7 0 1 0 8 1a7 7 0 0 0 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/><path fill-rule="evenodd" d="M4.285 12.433a.5.5 0 0 0 .683-.183A3.498 3.498 0 0 1 8 10.5c1.295 0 2.426.703 3.032 1.75a.5.5 0 0 0 .866-.5A4.498 4.498 0 0 0 8 9.5a4.5 4.5 0 0 0-3.898 2.25.5.5 0 0 0 .183.683z"/><path d="M7 6.5C7 7.328 6.552 8 6 8s-1-.672-1-1.5S5.448 5 6 5s1 .672 1 1.5zm4 0c0 .828-.448 1.5-1 1.5s-1-.672-1-1.5S9.448 5 10 5s1 .672 1 1.5z"/>'); // eslint-disable-next-line
 
 exports.BIconEmojiFrown = BIconEmojiFrown;
@@ -53987,13 +54501,13 @@ exports.BIconEmojiSmileUpsideDown = BIconEmojiSmileUpsideDown;
 var BIconEmojiSunglasses = /*#__PURE__*/(0, _makeIcon.makeIcon)('EmojiSunglasses', '<path fill-rule="evenodd" d="M8 15A7 7 0 1 0 8 1a7 7 0 0 0 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/><path fill-rule="evenodd" d="M4.285 9.567a.5.5 0 0 1 .683.183A3.498 3.498 0 0 0 8 11.5a3.498 3.498 0 0 0 3.032-1.75.5.5 0 1 1 .866.5A4.498 4.498 0 0 1 8 12.5a4.498 4.498 0 0 1-3.898-2.25.5.5 0 0 1 .183-.683zM6.5 6.497V6.5h-1c0-.568.447-.947.862-1.154C6.807 5.123 7.387 5 8 5s1.193.123 1.638.346c.415.207.862.586.862 1.154h-1v-.003l-.003-.01a.213.213 0 0 0-.036-.053.86.86 0 0 0-.27-.194C8.91 6.1 8.49 6 8 6c-.491 0-.912.1-1.19.24a.86.86 0 0 0-.271.194.213.213 0 0 0-.036.054l-.003.01z"/><path d="M2.31 5.243A1 1 0 0 1 3.28 4H6a1 1 0 0 1 1 1v1a2 2 0 0 1-2 2h-.438a2 2 0 0 1-1.94-1.515L2.31 5.243zM9 5a1 1 0 0 1 1-1h2.72a1 1 0 0 1 .97 1.243l-.311 1.242A2 2 0 0 1 11.439 8H11a2 2 0 0 1-2-2V5z"/>'); // eslint-disable-next-line
 
 exports.BIconEmojiSunglasses = BIconEmojiSunglasses;
-var BIconEnvelope = /*#__PURE__*/(0, _makeIcon.makeIcon)('Envelope', '<path fill-rule="evenodd" d="M14 3H2a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4a1 1 0 0 0-1-1zM2 2a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H2z"/><path d="M.05 3.555C.017 3.698 0 3.847 0 4v.697l5.803 3.546L0 11.801V12c0 .306.069.596.192.856l6.57-4.027L8 9.586l1.239-.757 6.57 4.027c.122-.26.191-.55.191-.856v-.2l-5.803-3.557L16 4.697V4c0-.153-.017-.302-.05-.445L8 8.414.05 3.555z"/>'); // eslint-disable-next-line
+var BIconEnvelope = /*#__PURE__*/(0, _makeIcon.makeIcon)('Envelope', '<path fill-rule="evenodd" d="M0 4a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V4zm2-1a1 1 0 0 0-1 1v.217l7 4.2 7-4.2V4a1 1 0 0 0-1-1H2zm13 2.383l-4.758 2.855L15 11.114v-5.73zm-.034 6.878L9.271 8.82 8 9.583 6.728 8.82l-5.694 3.44A1 1 0 0 0 2 13h12a1 1 0 0 0 .966-.739zM1 11.114l4.758-2.876L1 5.383v5.73z"/>'); // eslint-disable-next-line
 
 exports.BIconEnvelope = BIconEnvelope;
 var BIconEnvelopeFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('EnvelopeFill', '<path fill-rule="evenodd" d="M.05 3.555A2 2 0 0 1 2 2h12a2 2 0 0 1 1.95 1.555L8 8.414.05 3.555zM0 4.697v7.104l5.803-3.558L0 4.697zM6.761 8.83l-6.57 4.027A2 2 0 0 0 2 14h12a2 2 0 0 0 1.808-1.144l-6.57-4.027L8 9.586l-1.239-.757zm3.436-.586L16 11.801V4.697l-5.803 3.546z"/>'); // eslint-disable-next-line
 
 exports.BIconEnvelopeFill = BIconEnvelopeFill;
-var BIconEnvelopeOpen = /*#__PURE__*/(0, _makeIcon.makeIcon)('EnvelopeOpen', '<path fill-rule="evenodd" d="M8 8.917l7.757 4.654-.514.858L8 10.083.757 14.43l-.514-.858L8 8.917z"/><path fill-rule="evenodd" d="M6.447 10.651L.243 6.93l.514-.858 6.204 3.723-.514.857zm9.31-3.722L9.553 10.65l-.514-.857 6.204-3.723.514.858z"/><path fill-rule="evenodd" d="M15 14V5.236a1 1 0 0 0-.553-.894l-6-3a1 1 0 0 0-.894 0l-6 3A1 1 0 0 0 1 5.236V14a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1zM1.106 3.447A2 2 0 0 0 0 5.237V14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V5.236a2 2 0 0 0-1.106-1.789l-6-3a2 2 0 0 0-1.788 0l-6 3z"/>'); // eslint-disable-next-line
+var BIconEnvelopeOpen = /*#__PURE__*/(0, _makeIcon.makeIcon)('EnvelopeOpen', '<path fill-rule="evenodd" d="M8.47 1.318a1 1 0 0 0-.94 0l-6 3.2A1 1 0 0 0 1 5.4v.818l5.724 3.465L8 8.917l1.276.766L15 6.218V5.4a1 1 0 0 0-.53-.882l-6-3.2zM15 7.388l-4.754 2.877L15 13.117v-5.73zm-.035 6.874L8 10.083l-6.965 4.18A1 1 0 0 0 2 15h12a1 1 0 0 0 .965-.738zM1 13.117l4.754-2.852L1 7.387v5.73zM7.059.435a2 2 0 0 1 1.882 0l6 3.2A2 2 0 0 1 16 5.4V14a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V5.4a2 2 0 0 1 1.059-1.765l6-3.2z"/>'); // eslint-disable-next-line
 
 exports.BIconEnvelopeOpen = BIconEnvelopeOpen;
 var BIconEnvelopeOpenFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('EnvelopeOpenFill', '<path d="M8.941.435a2 2 0 0 0-1.882 0l-6 3.2A2 2 0 0 0 0 5.4v.313l6.709 3.933L8 8.928l1.291.717L16 5.715V5.4a2 2 0 0 0-1.059-1.765l-6-3.2zM16 6.873l-5.693 3.337L16 13.372v-6.5zm-.059 7.611L8 10.072.059 14.484A2 2 0 0 0 2 16h12a2 2 0 0 0 1.941-1.516zM0 13.373l5.693-3.163L0 6.873v6.5z"/>'); // eslint-disable-next-line
@@ -54032,7 +54546,7 @@ exports.BIconExclamationTriangle = BIconExclamationTriangle;
 var BIconExclamationTriangleFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('ExclamationTriangleFill', '<path fill-rule="evenodd" d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5a.905.905 0 0 0-.9.995l.35 3.507a.552.552 0 0 0 1.1 0l.35-3.507A.905.905 0 0 0 8 5zm.002 6a1 1 0 1 0 0 2 1 1 0 0 0 0-2z"/>'); // eslint-disable-next-line
 
 exports.BIconExclamationTriangleFill = BIconExclamationTriangleFill;
-var BIconExclude = /*#__PURE__*/(0, _makeIcon.makeIcon)('Exclude', '<path fill-rule="evenodd" d="M1.5 0A1.5 1.5 0 0 0 0 1.5v9A1.5 1.5 0 0 0 1.5 12H4v2.5A1.5 1.5 0 0 0 5.5 16h9a1.5 1.5 0 0 0 1.5-1.5v-9A1.5 1.5 0 0 0 14.5 4H12V1.5A1.5 1.5 0 0 0 10.5 0h-9zM12 4H5.5A1.5 1.5 0 0 0 4 5.5V12h6.5a1.5 1.5 0 0 0 1.5-1.5V4z"/>'); // eslint-disable-next-line
+var BIconExclude = /*#__PURE__*/(0, _makeIcon.makeIcon)('Exclude', '<path fill-rule="evenodd" d="M0 2a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v2h2a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-2H2a2 2 0 0 1-2-2V2zm12 2v7a1 1 0 0 1-1 1H4V5a1 1 0 0 1 1-1h7z"/>'); // eslint-disable-next-line
 
 exports.BIconExclude = BIconExclude;
 var BIconEye = /*#__PURE__*/(0, _makeIcon.makeIcon)('Eye', '<path fill-rule="evenodd" d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zM1.173 8a13.134 13.134 0 0 0 1.66 2.043C4.12 11.332 5.88 12.5 8 12.5c2.12 0 3.879-1.168 5.168-2.457A13.134 13.134 0 0 0 14.828 8a13.133 13.133 0 0 0-1.66-2.043C11.879 4.668 10.119 3.5 8 3.5c-2.12 0-3.879 1.168-5.168 2.457A13.133 13.133 0 0 0 1.172 8z"/><path fill-rule="evenodd" d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0z"/>'); // eslint-disable-next-line
@@ -54047,27 +54561,54 @@ exports.BIconEyeSlash = BIconEyeSlash;
 var BIconEyeSlashFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('EyeSlashFill', '<path d="M10.79 12.912l-1.614-1.615a3.5 3.5 0 0 1-4.474-4.474l-2.06-2.06C.938 6.278 0 8 0 8s3 5.5 8 5.5a7.029 7.029 0 0 0 2.79-.588zM5.21 3.088A7.028 7.028 0 0 1 8 2.5c5 0 8 5.5 8 5.5s-.939 1.721-2.641 3.238l-2.062-2.062a3.5 3.5 0 0 0-4.474-4.474L5.21 3.089z"/><path d="M5.525 7.646a2.5 2.5 0 0 0 2.829 2.829l-2.83-2.829zm4.95.708l-2.829-2.83a2.5 2.5 0 0 1 2.829 2.829z"/><path fill-rule="evenodd" d="M13.646 14.354l-12-12 .708-.708 12 12-.708.708z"/>'); // eslint-disable-next-line
 
 exports.BIconEyeSlashFill = BIconEyeSlashFill;
+var BIconEyeglasses = /*#__PURE__*/(0, _makeIcon.makeIcon)('Eyeglasses', '<path fill-rule="evenodd" d="M4 10a2 2 0 1 0 0-4 2 2 0 0 0 0 4zm0 1a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm8-1a2 2 0 1 0 0-4 2 2 0 0 0 0 4zm0 1a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/><path fill-rule="evenodd" d="M8 7a1 1 0 0 0-1 1H6a2 2 0 1 1 4 0H9a1 1 0 0 0-1-1zM0 8a.5.5 0 0 1 .5-.5h1v1h-1A.5.5 0 0 1 0 8zm15.5.5h-1v-1h1a.5.5 0 0 1 0 1z"/>'); // eslint-disable-next-line
+
+exports.BIconEyeglasses = BIconEyeglasses;
 var BIconFile = /*#__PURE__*/(0, _makeIcon.makeIcon)('File', '<path fill-rule="evenodd" d="M4 1h8a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2zm0 1a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V3a1 1 0 0 0-1-1H4z"/>'); // eslint-disable-next-line
 
 exports.BIconFile = BIconFile;
 var BIconFileArrowDown = /*#__PURE__*/(0, _makeIcon.makeIcon)('FileArrowDown', '<path fill-rule="evenodd" d="M4 1h8a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2zm0 1a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V3a1 1 0 0 0-1-1H4z"/><path fill-rule="evenodd" d="M4.646 8.146a.5.5 0 0 1 .708 0L8 10.793l2.646-2.647a.5.5 0 0 1 .708.708l-3 3a.5.5 0 0 1-.708 0l-3-3a.5.5 0 0 1 0-.708z"/><path fill-rule="evenodd" d="M8 4a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0v-6A.5.5 0 0 1 8 4z"/>'); // eslint-disable-next-line
 
 exports.BIconFileArrowDown = BIconFileArrowDown;
+var BIconFileArrowDownFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('FileArrowDownFill', '<path fill-rule="evenodd" d="M12 1H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V3a2 2 0 0 0-2-2zM8.5 4.5a.5.5 0 0 0-1 0v5.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V4.5z"/>'); // eslint-disable-next-line
+
+exports.BIconFileArrowDownFill = BIconFileArrowDownFill;
 var BIconFileArrowUp = /*#__PURE__*/(0, _makeIcon.makeIcon)('FileArrowUp', '<path fill-rule="evenodd" d="M4 1h8a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2zm0 1a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V3a1 1 0 0 0-1-1H4z"/><path fill-rule="evenodd" d="M4.646 7.854a.5.5 0 0 0 .708 0L8 5.207l2.646 2.647a.5.5 0 0 0 .708-.708l-3-3a.5.5 0 0 0-.708 0l-3 3a.5.5 0 0 0 0 .708z"/><path fill-rule="evenodd" d="M8 12a.5.5 0 0 0 .5-.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 0 .5.5z"/>'); // eslint-disable-next-line
 
 exports.BIconFileArrowUp = BIconFileArrowUp;
+var BIconFileArrowUpFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('FileArrowUpFill', '<path fill-rule="evenodd" d="M12 15H4a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2zm-3.5-3.5a.5.5 0 0 1-1 0V5.707L5.354 7.854a.5.5 0 1 1-.708-.708l3-3a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 5.707V11.5z"/>'); // eslint-disable-next-line
+
+exports.BIconFileArrowUpFill = BIconFileArrowUpFill;
+var BIconFileBinary = /*#__PURE__*/(0, _makeIcon.makeIcon)('FileBinary', '<path fill-rule="evenodd" d="M4 1h8a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2zm0 1a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V3a1 1 0 0 0-1-1H4z"/><path d="M5.526 13.09c.976 0 1.524-.79 1.524-2.205 0-1.412-.548-2.203-1.524-2.203-.978 0-1.526.79-1.526 2.203 0 1.415.548 2.206 1.526 2.206zm-.832-2.205c0-1.05.29-1.612.832-1.612.358 0 .607.247.733.721L4.7 11.137a6.749 6.749 0 0 1-.006-.252zm.832 1.614c-.36 0-.606-.246-.732-.718l1.556-1.145c.003.079.005.164.005.249 0 1.052-.29 1.614-.829 1.614zm5.329.501v-.595H9.73V8.772h-.69l-1.19.786v.688L8.986 9.5h.05v2.906h-1.18V13h3z"/>'); // eslint-disable-next-line
+
+exports.BIconFileBinary = BIconFileBinary;
+var BIconFileBinaryFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('FileBinaryFill', '<path fill-rule="evenodd" d="M12 1H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V3a2 2 0 0 0-2-2zm-4.95 9.885c0 1.415-.548 2.206-1.524 2.206C4.548 13.09 4 12.3 4 10.885c0-1.412.548-2.203 1.526-2.203.976 0 1.524.79 1.524 2.203zM5.526 9.273c-.542 0-.832.563-.832 1.612 0 .088.003.173.006.252l1.56-1.143c-.126-.474-.375-.72-.733-.72zm-.732 2.508c.126.472.372.718.732.718.54 0 .83-.563.83-1.614 0-.085-.003-.17-.006-.25l-1.556 1.146zm6.061.624V13h-3v-.595h1.181V9.5h-.05l-1.136.747v-.688l1.19-.786h.69v3.633h1.125z"/>'); // eslint-disable-next-line
+
+exports.BIconFileBinaryFill = BIconFileBinaryFill;
 var BIconFileBreak = /*#__PURE__*/(0, _makeIcon.makeIcon)('FileBreak', '<path fill-rule="evenodd" d="M0 10.5a.5.5 0 0 1 .5-.5h15a.5.5 0 0 1 0 1H.5a.5.5 0 0 1-.5-.5z"/><path d="M12 1H4a2 2 0 0 0-2 2v6h1V3a1 1 0 0 1 1-1h8a1 1 0 0 1 1 1v6h1V3a2 2 0 0 0-2-2zm2 11h-1v1a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-1H2v1a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2v-1z"/>'); // eslint-disable-next-line
 
 exports.BIconFileBreak = BIconFileBreak;
-var BIconFileCheck = /*#__PURE__*/(0, _makeIcon.makeIcon)('FileCheck', '<path d="M9 1H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V8h-1v5a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1h5V1z"/><path fill-rule="evenodd" d="M15.854 2.146a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708 0l-1.5-1.5a.5.5 0 0 1 .708-.708L12.5 4.793l2.646-2.647a.5.5 0 0 1 .708 0z"/>'); // eslint-disable-next-line
+var BIconFileBreakFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('FileBreakFill', '<path fill-rule="evenodd" d="M0 10.5a.5.5 0 0 1 .5-.5h15a.5.5 0 0 1 0 1H.5a.5.5 0 0 1-.5-.5z"/><path d="M12 1H4a2 2 0 0 0-2 2v6h12V3a2 2 0 0 0-2-2zm2 11H2v1a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2v-1z"/>'); // eslint-disable-next-line
+
+exports.BIconFileBreakFill = BIconFileBreakFill;
+var BIconFileCheck = /*#__PURE__*/(0, _makeIcon.makeIcon)('FileCheck', '<path fill-rule="evenodd" d="M10.854 6.146a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708 0l-1.5-1.5a.5.5 0 1 1 .708-.708L7.5 8.793l2.646-2.647a.5.5 0 0 1 .708 0z"/><path fill-rule="evenodd" d="M4 1h8a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2zm0 1a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V3a1 1 0 0 0-1-1H4z"/>'); // eslint-disable-next-line
 
 exports.BIconFileCheck = BIconFileCheck;
+var BIconFileCheckFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('FileCheckFill', '<path fill-rule="evenodd" d="M12 1H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V3a2 2 0 0 0-2-2zm-1.146 5.854a.5.5 0 0 0-.708-.708L7.5 8.793 6.354 7.646a.5.5 0 1 0-.708.708l1.5 1.5a.5.5 0 0 0 .708 0l3-3z"/>'); // eslint-disable-next-line
+
+exports.BIconFileCheckFill = BIconFileCheckFill;
 var BIconFileCode = /*#__PURE__*/(0, _makeIcon.makeIcon)('FileCode', '<path fill-rule="evenodd" d="M4 1h8a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2zm0 1a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V3a1 1 0 0 0-1-1H4z"/><path fill-rule="evenodd" d="M8.646 5.646a.5.5 0 0 1 .708 0l2 2a.5.5 0 0 1 0 .708l-2 2a.5.5 0 0 1-.708-.708L10.293 8 8.646 6.354a.5.5 0 0 1 0-.708zm-1.292 0a.5.5 0 0 0-.708 0l-2 2a.5.5 0 0 0 0 .708l2 2a.5.5 0 0 0 .708-.708L5.707 8l1.647-1.646a.5.5 0 0 0 0-.708z"/>'); // eslint-disable-next-line
 
 exports.BIconFileCode = BIconFileCode;
+var BIconFileCodeFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('FileCodeFill', '<path fill-rule="evenodd" d="M12 1H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V3a2 2 0 0 0-2-2zM6.646 5.646a.5.5 0 1 1 .708.708L5.707 8l1.647 1.646a.5.5 0 0 1-.708.708l-2-2a.5.5 0 0 1 0-.708l2-2zm2.708 0a.5.5 0 1 0-.708.708L10.293 8 8.646 9.646a.5.5 0 0 0 .708.708l2-2a.5.5 0 0 0 0-.708l-2-2z"/>'); // eslint-disable-next-line
+
+exports.BIconFileCodeFill = BIconFileCodeFill;
 var BIconFileDiff = /*#__PURE__*/(0, _makeIcon.makeIcon)('FileDiff', '<path fill-rule="evenodd" d="M4 1h8a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2zm0 1a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V3a1 1 0 0 0-1-1H4z"/><path fill-rule="evenodd" d="M5.5 10.5A.5.5 0 0 1 6 10h4a.5.5 0 0 1 0 1H6a.5.5 0 0 1-.5-.5zM8 4a.5.5 0 0 1 .5.5v4a.5.5 0 0 1-1 0v-4A.5.5 0 0 1 8 4z"/><path fill-rule="evenodd" d="M5.5 6.5A.5.5 0 0 1 6 6h4a.5.5 0 0 1 0 1H6a.5.5 0 0 1-.5-.5z"/>'); // eslint-disable-next-line
 
 exports.BIconFileDiff = BIconFileDiff;
+var BIconFileDiffFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('FileDiffFill', '<path fill-rule="evenodd" d="M12 1H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V3a2 2 0 0 0-2-2zM8.5 4.5a.5.5 0 0 0-1 0V6H6a.5.5 0 0 0 0 1h1.5v1.5a.5.5 0 0 0 1 0V7H10a.5.5 0 0 0 0-1H8.5V4.5zM6 10a.5.5 0 0 0 0 1h4a.5.5 0 0 0 0-1H6z"/>'); // eslint-disable-next-line
+
+exports.BIconFileDiffFill = BIconFileDiffFill;
 var BIconFileEarmark = /*#__PURE__*/(0, _makeIcon.makeIcon)('FileEarmark', '<path d="M4 1h5v1H4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V6h1v7a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2z"/><path d="M9 4.5V1l5 5h-3.5A1.5 1.5 0 0 1 9 4.5z"/>'); // eslint-disable-next-line
 
 exports.BIconFileEarmark = BIconFileEarmark;
@@ -54077,60 +54618,153 @@ exports.BIconFileEarmarkArrowDown = BIconFileEarmarkArrowDown;
 var BIconFileEarmarkArrowUp = /*#__PURE__*/(0, _makeIcon.makeIcon)('FileEarmarkArrowUp', '<path d="M4 1h5v1H4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V6h1v7a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2z"/><path d="M9 4.5V1l5 5h-3.5A1.5 1.5 0 0 1 9 4.5z"/><path fill-rule="evenodd" d="M5.646 8.854a.5.5 0 0 0 .708 0L8 7.207l1.646 1.647a.5.5 0 0 0 .708-.708l-2-2a.5.5 0 0 0-.708 0l-2 2a.5.5 0 0 0 0 .708z"/><path fill-rule="evenodd" d="M8 12a.5.5 0 0 0 .5-.5v-4a.5.5 0 0 0-1 0v4a.5.5 0 0 0 .5.5z"/>'); // eslint-disable-next-line
 
 exports.BIconFileEarmarkArrowUp = BIconFileEarmarkArrowUp;
+var BIconFileEarmarkArrowUpFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('FileEarmarkArrowUpFill', '<path fill-rule="evenodd" d="M2 3a2 2 0 0 1 2-2h5.293a1 1 0 0 1 .707.293L13.707 5a1 1 0 0 1 .293.707V13a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V3zm7 2V2l4 4h-3a1 1 0 0 1-1-1zM6.354 9.854a.5.5 0 0 1-.708-.708l2-2a.5.5 0 0 1 .708 0l2 2a.5.5 0 0 1-.708.708L8.5 8.707V12.5a.5.5 0 0 1-1 0V8.707L6.354 9.854z"/>'); // eslint-disable-next-line
+
+exports.BIconFileEarmarkArrowUpFill = BIconFileEarmarkArrowUpFill;
+var BIconFileEarmarkBinary = /*#__PURE__*/(0, _makeIcon.makeIcon)('FileEarmarkBinary', '<path d="M4 1h5v1H4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V6h1v7a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2z"/><path d="M9 4.5V1l5 5h-3.5A1.5 1.5 0 0 1 9 4.5zm-3.474 8.59c.976 0 1.524-.79 1.524-2.205 0-1.412-.548-2.203-1.524-2.203-.978 0-1.526.79-1.526 2.203 0 1.415.548 2.206 1.526 2.206zm-.832-2.205c0-1.05.29-1.612.832-1.612.358 0 .607.247.733.721L4.7 11.137a6.749 6.749 0 0 1-.006-.252zm.832 1.614c-.36 0-.606-.246-.732-.718l1.556-1.145c.003.079.005.164.005.249 0 1.052-.29 1.614-.829 1.614zm5.329.501v-.595H9.73V8.772h-.69l-1.19.786v.688L8.986 9.5h.05v2.906h-1.18V13h3z"/>'); // eslint-disable-next-line
+
+exports.BIconFileEarmarkBinary = BIconFileEarmarkBinary;
+var BIconFileEarmarkBinaryFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('FileEarmarkBinaryFill', '<path fill-rule="evenodd" d="M2 3a2 2 0 0 1 2-2h5.293a1 1 0 0 1 .707.293L13.707 5a1 1 0 0 1 .293.707V13a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V3zm7 2V2l4 4h-3a1 1 0 0 1-1-1zm-1.95 5.885c0 1.415-.548 2.206-1.524 2.206C4.548 13.09 4 12.3 4 10.885c0-1.412.548-2.203 1.526-2.203.976 0 1.524.79 1.524 2.203zM5.526 9.273c-.542 0-.832.563-.832 1.612 0 .088.003.173.006.252l1.56-1.143c-.126-.474-.375-.72-.733-.72zm-.732 2.508c.126.472.372.718.732.718.54 0 .83-.563.83-1.614 0-.085-.003-.17-.006-.25l-1.556 1.146zm6.061.624V13h-3v-.595h1.181V9.5h-.05l-1.136.747v-.688l1.19-.786h.69v3.633h1.125z"/>'); // eslint-disable-next-line
+
+exports.BIconFileEarmarkBinaryFill = BIconFileEarmarkBinaryFill;
 var BIconFileEarmarkBreak = /*#__PURE__*/(0, _makeIcon.makeIcon)('FileEarmarkBreak', '<path fill-rule="evenodd" d="M9 1H4a2 2 0 0 0-2 2v6h1V3a1 1 0 0 1 1-1h5v2.5A1.5 1.5 0 0 0 10.5 6H13v3h1V6L9 1zm5 11h-1v1a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-1H2v1a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2v-1zM0 10.5a.5.5 0 0 1 .5-.5h15a.5.5 0 0 1 0 1H.5a.5.5 0 0 1-.5-.5z"/>'); // eslint-disable-next-line
 
 exports.BIconFileEarmarkBreak = BIconFileEarmarkBreak;
+var BIconFileEarmarkBreakFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('FileEarmarkBreakFill', '<path fill-rule="evenodd" d="M0 10.5a.5.5 0 0 1 .5-.5h15a.5.5 0 0 1 0 1H.5a.5.5 0 0 1-.5-.5zM2 3a2 2 0 0 1 2-2h5.293a1 1 0 0 1 .707.293L13.707 5a1 1 0 0 1 .293.707V9H2V3zm7 2V2l4 4h-3a1 1 0 0 1-1-1z"/><path d="M2 13a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2v-1H2v1z"/>'); // eslint-disable-next-line
+
+exports.BIconFileEarmarkBreakFill = BIconFileEarmarkBreakFill;
 var BIconFileEarmarkCheck = /*#__PURE__*/(0, _makeIcon.makeIcon)('FileEarmarkCheck', '<path d="M9 1H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h5v-1H4a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1h5v2.5A1.5 1.5 0 0 0 10.5 6H13v2h1V6L9 1z"/><path fill-rule="evenodd" d="M15.854 10.146a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708 0l-1.5-1.5a.5.5 0 0 1 .708-.708l1.146 1.147 2.646-2.647a.5.5 0 0 1 .708 0z"/>'); // eslint-disable-next-line
 
 exports.BIconFileEarmarkCheck = BIconFileEarmarkCheck;
+var BIconFileEarmarkCheckFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('FileEarmarkCheckFill', '<path fill-rule="evenodd" d="M2 3a2 2 0 0 1 2-2h5.293a1 1 0 0 1 .707.293L13.707 5a1 1 0 0 1 .293.707V13a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V3zm7 2V2l4 4h-3a1 1 0 0 1-1-1zm1.854 2.854a.5.5 0 0 0-.708-.708L7.5 9.793 6.354 8.646a.5.5 0 1 0-.708.708l1.5 1.5a.5.5 0 0 0 .708 0l3-3z"/>'); // eslint-disable-next-line
+
+exports.BIconFileEarmarkCheckFill = BIconFileEarmarkCheckFill;
 var BIconFileEarmarkCode = /*#__PURE__*/(0, _makeIcon.makeIcon)('FileEarmarkCode', '<path d="M4 1h5v1H4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V6h1v7a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2z"/><path d="M9 4.5V1l5 5h-3.5A1.5 1.5 0 0 1 9 4.5z"/><path fill-rule="evenodd" d="M8.646 6.646a.5.5 0 0 1 .708 0l2 2a.5.5 0 0 1 0 .708l-2 2a.5.5 0 0 1-.708-.708L10.293 9 8.646 7.354a.5.5 0 0 1 0-.708zm-1.292 0a.5.5 0 0 0-.708 0l-2 2a.5.5 0 0 0 0 .708l2 2a.5.5 0 0 0 .708-.708L5.707 9l1.647-1.646a.5.5 0 0 0 0-.708z"/>'); // eslint-disable-next-line
 
 exports.BIconFileEarmarkCode = BIconFileEarmarkCode;
+var BIconFileEarmarkCodeFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('FileEarmarkCodeFill', '<path fill-rule="evenodd" d="M2 3a2 2 0 0 1 2-2h5.293a1 1 0 0 1 .707.293L13.707 5a1 1 0 0 1 .293.707V13a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V3zm7 2V2l4 4h-3a1 1 0 0 1-1-1zM6.646 7.646a.5.5 0 1 1 .708.708L5.707 10l1.647 1.646a.5.5 0 0 1-.708.708l-2-2a.5.5 0 0 1 0-.708l2-2zm4.708 2l-2-2a.5.5 0 1 0-.708.708L10.293 10l-1.647 1.646a.5.5 0 0 0 .708.708l2-2a.5.5 0 0 0 0-.708z"/>'); // eslint-disable-next-line
+
+exports.BIconFileEarmarkCodeFill = BIconFileEarmarkCodeFill;
 var BIconFileEarmarkDiff = /*#__PURE__*/(0, _makeIcon.makeIcon)('FileEarmarkDiff', '<path d="M4 1h5v1H4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V6h1v7a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2z"/><path d="M9 4.5V1l5 5h-3.5A1.5 1.5 0 0 1 9 4.5z"/><path fill-rule="evenodd" d="M5.5 11.5A.5.5 0 0 1 6 11h4a.5.5 0 0 1 0 1H6a.5.5 0 0 1-.5-.5zM8 5a.5.5 0 0 1 .5.5v4a.5.5 0 0 1-1 0v-4A.5.5 0 0 1 8 5z"/><path fill-rule="evenodd" d="M5.5 7.5A.5.5 0 0 1 6 7h4a.5.5 0 0 1 0 1H6a.5.5 0 0 1-.5-.5z"/>'); // eslint-disable-next-line
 
 exports.BIconFileEarmarkDiff = BIconFileEarmarkDiff;
+var BIconFileEarmarkDiffFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('FileEarmarkDiffFill', '<path fill-rule="evenodd" d="M2 3a2 2 0 0 1 2-2h5.293a1 1 0 0 1 .707.293L13.707 5a1 1 0 0 1 .293.707V13a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V3zm7 2V2l4 4h-3a1 1 0 0 1-1-1zM8 6a.5.5 0 0 1 .5.5V8H10a.5.5 0 0 1 0 1H8.5v1.5a.5.5 0 0 1-1 0V9H6a.5.5 0 0 1 0-1h1.5V6.5A.5.5 0 0 1 8 6zm-2.5 6.5A.5.5 0 0 1 6 12h4a.5.5 0 0 1 0 1H6a.5.5 0 0 1-.5-.5z"/>'); // eslint-disable-next-line
+
+exports.BIconFileEarmarkDiffFill = BIconFileEarmarkDiffFill;
+var BIconFileEarmarkFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('FileEarmarkFill', '<path fill-rule="evenodd" d="M4 1a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V5.707A1 1 0 0 0 13.707 5L10 1.293A1 1 0 0 0 9.293 1H4zm5 1v3a1 1 0 0 0 1 1h3L9 2z"/>'); // eslint-disable-next-line
+
+exports.BIconFileEarmarkFill = BIconFileEarmarkFill;
+var BIconFileEarmarkMedical = /*#__PURE__*/(0, _makeIcon.makeIcon)('FileEarmarkMedical', '<path d="M4 1h5v1H4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V6h1v7a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2z"/><path d="M9 4.5V1l5 5h-3.5A1.5 1.5 0 0 1 9 4.5z"/><path fill-rule="evenodd" d="M7 4a.5.5 0 0 1 .5.5v.634l.549-.317a.5.5 0 1 1 .5.866L8 6l.549.317a.5.5 0 1 1-.5.866L7.5 6.866V7.5a.5.5 0 0 1-1 0v-.634l-.549.317a.5.5 0 1 1-.5-.866L6 6l-.549-.317a.5.5 0 0 1 .5-.866l.549.317V4.5A.5.5 0 0 1 7 4zM5 9.5a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5zm0 2a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5z"/>'); // eslint-disable-next-line
+
+exports.BIconFileEarmarkMedical = BIconFileEarmarkMedical;
+var BIconFileEarmarkMedicalFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('FileEarmarkMedicalFill', '<path fill-rule="evenodd" d="M2 3a2 2 0 0 1 2-2h5.293a1 1 0 0 1 .707.293L13.707 5a1 1 0 0 1 .293.707V13a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V3zm7 2V2l4 4h-3a1 1 0 0 1-1-1zm-2.5.5a.5.5 0 0 0-1 0v.634l-.549-.317a.5.5 0 1 0-.5.866L5 7l-.549.317a.5.5 0 1 0 .5.866l.549-.317V8.5a.5.5 0 1 0 1 0v-.634l.549.317a.5.5 0 1 0 .5-.866L7 7l.549-.317a.5.5 0 1 0-.5-.866l-.549.317V5.5zm-2 4.5a.5.5 0 0 0 0 1h5a.5.5 0 0 0 0-1h-5zm0 2a.5.5 0 0 0 0 1h5a.5.5 0 0 0 0-1h-5z"/>'); // eslint-disable-next-line
+
+exports.BIconFileEarmarkMedicalFill = BIconFileEarmarkMedicalFill;
 var BIconFileEarmarkMinus = /*#__PURE__*/(0, _makeIcon.makeIcon)('FileEarmarkMinus', '<path d="M9 1H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h5v-1H4a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1h5v2.5A1.5 1.5 0 0 0 10.5 6H13v2h1V6L9 1z"/><path fill-rule="evenodd" d="M11 11.5a.5.5 0 0 1 .5-.5h4a.5.5 0 0 1 0 1h-4a.5.5 0 0 1-.5-.5z"/>'); // eslint-disable-next-line
 
 exports.BIconFileEarmarkMinus = BIconFileEarmarkMinus;
+var BIconFileEarmarkMinusFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('FileEarmarkMinusFill', '<path fill-rule="evenodd" d="M2 3a2 2 0 0 1 2-2h5.293a1 1 0 0 1 .707.293L13.707 5a1 1 0 0 1 .293.707V13a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V3zm7 2V2l4 4h-3a1 1 0 0 1-1-1zM6 8.5a.5.5 0 0 0 0 1h4a.5.5 0 0 0 0-1H6z"/>'); // eslint-disable-next-line
+
+exports.BIconFileEarmarkMinusFill = BIconFileEarmarkMinusFill;
 var BIconFileEarmarkPlus = /*#__PURE__*/(0, _makeIcon.makeIcon)('FileEarmarkPlus', '<path d="M9 1H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h5v-1H4a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1h5v2.5A1.5 1.5 0 0 0 10.5 6H13v2h1V6L9 1z"/><path fill-rule="evenodd" d="M13.5 10a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1H13v-1.5a.5.5 0 0 1 .5-.5z"/><path fill-rule="evenodd" d="M13 12.5a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 0 1H14v1.5a.5.5 0 0 1-1 0v-2z"/>'); // eslint-disable-next-line
 
 exports.BIconFileEarmarkPlus = BIconFileEarmarkPlus;
-var BIconFileEarmarkRuled = /*#__PURE__*/(0, _makeIcon.makeIcon)('FileEarmarkRuled', '<path fill-rule="evenodd" d="M13 9H3V8h10v1zm0 3H3v-1h10v1z"/><path fill-rule="evenodd" d="M5 14V9h1v5H5z"/><path d="M4 1h5v1H4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V6h1v7a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2z"/><path d="M9 4.5V1l5 5h-3.5A1.5 1.5 0 0 1 9 4.5z"/>'); // eslint-disable-next-line
+var BIconFileEarmarkPlusFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('FileEarmarkPlusFill', '<path fill-rule="evenodd" d="M2 3a2 2 0 0 1 2-2h5.293a1 1 0 0 1 .707.293L13.707 5a1 1 0 0 1 .293.707V13a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V3zm7 2V2l4 4h-3a1 1 0 0 1-1-1zm-.5 2a.5.5 0 0 0-1 0v1.5H6a.5.5 0 0 0 0 1h1.5V11a.5.5 0 0 0 1 0V9.5H10a.5.5 0 0 0 0-1H8.5V7z"/>'); // eslint-disable-next-line
+
+exports.BIconFileEarmarkPlusFill = BIconFileEarmarkPlusFill;
+var BIconFileEarmarkRuled = /*#__PURE__*/(0, _makeIcon.makeIcon)('FileEarmarkRuled', '<path fill-rule="evenodd" d="M5 9H3V8h10v1H6v2h7v1H6v2H5v-2H3v-1h2V9z"/><path d="M4 1h5v1H4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V6h1v7a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2z"/><path d="M9 4.5V1l5 5h-3.5A1.5 1.5 0 0 1 9 4.5z"/>'); // eslint-disable-next-line
 
 exports.BIconFileEarmarkRuled = BIconFileEarmarkRuled;
-var BIconFileEarmarkSpreadsheet = /*#__PURE__*/(0, _makeIcon.makeIcon)('FileEarmarkSpreadsheet', '<path fill-rule="evenodd" d="M13 9H3V8h10v1zm0 3H3v-1h10v1z"/><path fill-rule="evenodd" d="M5 14V9h1v5H5zm4 0V9h1v5H9z"/><path d="M4 1h5v1H4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V6h1v7a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2z"/><path d="M9 4.5V1l5 5h-3.5A1.5 1.5 0 0 1 9 4.5z"/>'); // eslint-disable-next-line
+var BIconFileEarmarkRuledFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('FileEarmarkRuledFill', '<path fill-rule="evenodd" d="M2 3a2 2 0 0 1 2-2h5.293a1 1 0 0 1 .707.293L13.707 5a1 1 0 0 1 .293.707V13a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V3zm7 2V2l4 4h-3a1 1 0 0 1-1-1zM3 8v1h2v2H3v1h2v2h1v-2h7v-1H6V9h7V8H3z"/>'); // eslint-disable-next-line
+
+exports.BIconFileEarmarkRuledFill = BIconFileEarmarkRuledFill;
+var BIconFileEarmarkSpreadsheet = /*#__PURE__*/(0, _makeIcon.makeIcon)('FileEarmarkSpreadsheet', '<path fill-rule="evenodd" d="M5 9H3V8h10v1h-3v2h3v1h-3v2H9v-2H6v2H5v-2H3v-1h2V9zm1 0v2h3V9H6z"/><path d="M4 1h5v1H4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V6h1v7a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2z"/><path d="M9 4.5V1l5 5h-3.5A1.5 1.5 0 0 1 9 4.5z"/>'); // eslint-disable-next-line
 
 exports.BIconFileEarmarkSpreadsheet = BIconFileEarmarkSpreadsheet;
+var BIconFileEarmarkSpreadsheetFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('FileEarmarkSpreadsheetFill', '<path fill-rule="evenodd" d="M2 3a2 2 0 0 1 2-2h5.293a1 1 0 0 1 .707.293L13.707 5a1 1 0 0 1 .293.707V13a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V3zm7 2V2l4 4h-3a1 1 0 0 1-1-1zM3 8v1h2v2H3v1h2v2h1v-2h3v2h1v-2h3v-1h-3V9h3V8H3zm3 3V9h3v2H6z"/>'); // eslint-disable-next-line
+
+exports.BIconFileEarmarkSpreadsheetFill = BIconFileEarmarkSpreadsheetFill;
 var BIconFileEarmarkText = /*#__PURE__*/(0, _makeIcon.makeIcon)('FileEarmarkText', '<path d="M4 1h5v1H4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V6h1v7a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2z"/><path d="M9 4.5V1l5 5h-3.5A1.5 1.5 0 0 1 9 4.5z"/><path fill-rule="evenodd" d="M5 11.5a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 0 1h-2a.5.5 0 0 1-.5-.5zm0-2a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5zm0-2a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5z"/>'); // eslint-disable-next-line
 
 exports.BIconFileEarmarkText = BIconFileEarmarkText;
+var BIconFileEarmarkTextFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('FileEarmarkTextFill', '<path fill-rule="evenodd" d="M2 3a2 2 0 0 1 2-2h5.293a1 1 0 0 1 .707.293L13.707 5a1 1 0 0 1 .293.707V13a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V3zm7 2V2l4 4h-3a1 1 0 0 1-1-1zM4.5 8a.5.5 0 0 0 0 1h7a.5.5 0 0 0 0-1h-7zM4 10.5a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7a.5.5 0 0 1-.5-.5zm0 2a.5.5 0 0 1 .5-.5h4a.5.5 0 0 1 0 1h-4a.5.5 0 0 1-.5-.5z"/>'); // eslint-disable-next-line
+
+exports.BIconFileEarmarkTextFill = BIconFileEarmarkTextFill;
 var BIconFileEarmarkZip = /*#__PURE__*/(0, _makeIcon.makeIcon)('FileEarmarkZip', '<path d="M4 1h5v1H4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V6h1v7a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2z"/><path d="M9 4.5V1l5 5h-3.5A1.5 1.5 0 0 1 9 4.5z"/><path fill-rule="evenodd" d="M5 8.5a1 1 0 0 1 1-1h1a1 1 0 0 1 1 1v.938l.4 1.599a1 1 0 0 1-.416 1.074l-.93.62a1 1 0 0 1-1.11 0l-.929-.62a1 1 0 0 1-.415-1.074L5 9.438V8.5zm2 0H6v.938a1 1 0 0 1-.03.243l-.4 1.598.93.62.929-.62-.4-1.598A1 1 0 0 1 7 9.438V8.5z"/><path d="M6 2h1.5v1H6zM5 3h1.5v1H5zm1 1h1.5v1H6zM5 5h1.5v1H5zm1 1h1.5v1H6V6z"/>'); // eslint-disable-next-line
 
 exports.BIconFileEarmarkZip = BIconFileEarmarkZip;
-var BIconFileMinus = /*#__PURE__*/(0, _makeIcon.makeIcon)('FileMinus', '<path d="M9 1H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V8h-1v5a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1h5V1z"/><path fill-rule="evenodd" d="M11 3.5a.5.5 0 0 1 .5-.5h4a.5.5 0 0 1 0 1h-4a.5.5 0 0 1-.5-.5z"/>'); // eslint-disable-next-line
+var BIconFileEarmarkZipFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('FileEarmarkZipFill', '<path fill-rule="evenodd" d="M2 3a2 2 0 0 1 2-2h.5v1h1v1h-1v1h1v1h-1v1h1v1H7V6H6V5h1V4H6V3h1V2H6V1h3.293a1 1 0 0 1 .707.293L13.707 5a1 1 0 0 1 .293.707V13a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V3zm7 2V2l4 4h-3a1 1 0 0 1-1-1zM5.5 7.5a1 1 0 0 0-1 1v.938l-.4 1.599a1 1 0 0 0 .416 1.074l.93.62a1 1 0 0 0 1.109 0l.93-.62a1 1 0 0 0 .415-1.074l-.4-1.599V8.5a1 1 0 0 0-1-1h-1zm0 1.938V8.5h1v.938a1 1 0 0 0 .03.243l.4 1.598-.93.62-.93-.62.4-1.598a1 1 0 0 0 .03-.243z"/>'); // eslint-disable-next-line
+
+exports.BIconFileEarmarkZipFill = BIconFileEarmarkZipFill;
+var BIconFileFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('FileFill', '<path fill-rule="evenodd" d="M4 1h8a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2z"/>'); // eslint-disable-next-line
+
+exports.BIconFileFill = BIconFileFill;
+var BIconFileMedical = /*#__PURE__*/(0, _makeIcon.makeIcon)('FileMedical', '<path fill-rule="evenodd" d="M4 1h8a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2zm0 1a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V3a1 1 0 0 0-1-1H4z"/><path fill-rule="evenodd" d="M8 4a.5.5 0 0 1 .5.5v.634l.549-.317a.5.5 0 1 1 .5.866L9 6l.549.317a.5.5 0 1 1-.5.866L8.5 6.866V7.5a.5.5 0 0 1-1 0v-.634l-.549.317a.5.5 0 1 1-.5-.866L7 6l-.549-.317a.5.5 0 0 1 .5-.866l.549.317V4.5A.5.5 0 0 1 8 4zM5 9.5a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5zm0 2a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5z"/>'); // eslint-disable-next-line
+
+exports.BIconFileMedical = BIconFileMedical;
+var BIconFileMedicalFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('FileMedicalFill', '<path fill-rule="evenodd" d="M12 1H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V3a2 2 0 0 0-2-2zM8.5 4.5a.5.5 0 0 0-1 0v.634l-.549-.317a.5.5 0 1 0-.5.866L7 6l-.549.317a.5.5 0 1 0 .5.866l.549-.317V7.5a.5.5 0 1 0 1 0v-.634l.549.317a.5.5 0 1 0 .5-.866L9 6l.549-.317a.5.5 0 1 0-.5-.866l-.549.317V4.5zM5.5 9a.5.5 0 0 0 0 1h5a.5.5 0 0 0 0-1h-5zm0 2a.5.5 0 0 0 0 1h5a.5.5 0 0 0 0-1h-5z"/>'); // eslint-disable-next-line
+
+exports.BIconFileMedicalFill = BIconFileMedicalFill;
+var BIconFileMinus = /*#__PURE__*/(0, _makeIcon.makeIcon)('FileMinus', '<path fill-rule="evenodd" d="M4 1h8a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2zm0 1a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V3a1 1 0 0 0-1-1H4z"/><path fill-rule="evenodd" d="M5.5 8a.5.5 0 0 1 .5-.5h4a.5.5 0 0 1 0 1H6a.5.5 0 0 1-.5-.5z"/>'); // eslint-disable-next-line
 
 exports.BIconFileMinus = BIconFileMinus;
-var BIconFilePlus = /*#__PURE__*/(0, _makeIcon.makeIcon)('FilePlus', '<path d="M9 1H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V8h-1v5a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1h5V1z"/><path fill-rule="evenodd" d="M13.5 1a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1H13V1.5a.5.5 0 0 1 .5-.5z"/><path fill-rule="evenodd" d="M13 3.5a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 0 1H14v1.5a.5.5 0 0 1-1 0v-2z"/>'); // eslint-disable-next-line
+var BIconFileMinusFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('FileMinusFill', '<path fill-rule="evenodd" d="M12 1H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V3a2 2 0 0 0-2-2zM6 7.5a.5.5 0 0 0 0 1h4a.5.5 0 0 0 0-1H6z"/>'); // eslint-disable-next-line
+
+exports.BIconFileMinusFill = BIconFileMinusFill;
+var BIconFileMusic = /*#__PURE__*/(0, _makeIcon.makeIcon)('FileMusic', '<path fill-rule="evenodd" d="M4 1h8a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2zm0 1a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V3a1 1 0 0 0-1-1H4z"/><path d="M9 11.5c0 .828-.895 1.5-2 1.5s-2-.672-2-1.5.895-1.5 2-1.5 2 .672 2 1.5z"/><path fill-rule="evenodd" d="M9 5v6.5H8V5h1z"/><path d="M8 4.754a1 1 0 0 1 .725-.961l1.5-.429a1 1 0 0 1 1.275.962V6L8 7V4.754z"/>'); // eslint-disable-next-line
+
+exports.BIconFileMusic = BIconFileMusic;
+var BIconFileMusicFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('FileMusicFill', '<path fill-rule="evenodd" d="M12 1H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V3a2 2 0 0 0-2-2zM8.725 3.793A1 1 0 0 0 8 4.754V10.2a2.52 2.52 0 0 0-1-.2c-1.105 0-2 .672-2 1.5S5.895 13 7 13s2-.672 2-1.5V6.714L11.5 6V4.326a1 1 0 0 0-1.275-.962l-1.5.429z"/>'); // eslint-disable-next-line
+
+exports.BIconFileMusicFill = BIconFileMusicFill;
+var BIconFilePerson = /*#__PURE__*/(0, _makeIcon.makeIcon)('FilePerson', '<path fill-rule="evenodd" d="M4 1h8a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2zm0 1a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V3a1 1 0 0 0-1-1H4z"/><path d="M13.784 14c-.497-1.27-1.988-3-5.784-3s-5.287 1.73-5.784 3h11.568z"/><path fill-rule="evenodd" d="M8 10a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/>'); // eslint-disable-next-line
+
+exports.BIconFilePerson = BIconFilePerson;
+var BIconFilePersonFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('FilePersonFill', '<path fill-rule="evenodd" d="M2 3a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V3zm6 7a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm5 2.755C12.146 11.825 10.623 11 8 11s-4.146.826-5 1.755V13a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1v-.245z"/>'); // eslint-disable-next-line
+
+exports.BIconFilePersonFill = BIconFilePersonFill;
+var BIconFilePlus = /*#__PURE__*/(0, _makeIcon.makeIcon)('FilePlus', '<path fill-rule="evenodd" d="M4 1h8a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2zm0 1a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V3a1 1 0 0 0-1-1H4z"/><path fill-rule="evenodd" d="M8 5.5a.5.5 0 0 1 .5.5v1.5H10a.5.5 0 0 1 0 1H8.5V10a.5.5 0 0 1-1 0V8.5H6a.5.5 0 0 1 0-1h1.5V6a.5.5 0 0 1 .5-.5z"/>'); // eslint-disable-next-line
 
 exports.BIconFilePlus = BIconFilePlus;
+var BIconFilePlusFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('FilePlusFill', '<path fill-rule="evenodd" d="M12 1H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V3a2 2 0 0 0-2-2zM8.5 6a.5.5 0 0 0-1 0v1.5H6a.5.5 0 0 0 0 1h1.5V10a.5.5 0 0 0 1 0V8.5H10a.5.5 0 0 0 0-1H8.5V6z"/>'); // eslint-disable-next-line
+
+exports.BIconFilePlusFill = BIconFilePlusFill;
 var BIconFilePost = /*#__PURE__*/(0, _makeIcon.makeIcon)('FilePost', '<path fill-rule="evenodd" d="M4 1h8a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2zm0 1a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V3a1 1 0 0 0-1-1H4z"/><path d="M4 5.5a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-.5.5h-7a.5.5 0 0 1-.5-.5v-7z"/><path fill-rule="evenodd" d="M4 3.5a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5z"/>'); // eslint-disable-next-line
 
 exports.BIconFilePost = BIconFilePost;
+var BIconFilePostFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('FilePostFill', '<path fill-rule="evenodd" d="M12 1H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V3a2 2 0 0 0-2-2zM4.5 3a.5.5 0 0 0 0 1h5a.5.5 0 0 0 0-1h-5zm0 2a.5.5 0 0 0-.5.5v7a.5.5 0 0 0 .5.5h7a.5.5 0 0 0 .5-.5v-7a.5.5 0 0 0-.5-.5h-7z"/>'); // eslint-disable-next-line
+
+exports.BIconFilePostFill = BIconFilePostFill;
 var BIconFileRichtext = /*#__PURE__*/(0, _makeIcon.makeIcon)('FileRichtext', '<path fill-rule="evenodd" d="M4 1h8a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2zm0 1a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V3a1 1 0 0 0-1-1H4z"/><path fill-rule="evenodd" d="M4.5 11.5A.5.5 0 0 1 5 11h3a.5.5 0 0 1 0 1H5a.5.5 0 0 1-.5-.5zm0-2A.5.5 0 0 1 5 9h6a.5.5 0 0 1 0 1H5a.5.5 0 0 1-.5-.5zm1.639-3.708l1.33.886 1.854-1.855a.25.25 0 0 1 .289-.047l1.888.974V7.5a.5.5 0 0 1-.5.5H5a.5.5 0 0 1-.5-.5V7s1.54-1.274 1.639-1.208zM6.25 5a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5z"/>'); // eslint-disable-next-line
 
 exports.BIconFileRichtext = BIconFileRichtext;
+var BIconFileRichtextFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('FileRichtextFill', '<path fill-rule="evenodd" d="M12 1H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V3a2 2 0 0 0-2-2zM7 4.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0zm-.861 1.542l1.33.886 1.854-1.855a.25.25 0 0 1 .289-.047l1.888.974V7.5a.5.5 0 0 1-.5.5H5a.5.5 0 0 1-.5-.5V7s1.54-1.274 1.639-1.208zM5 9a.5.5 0 0 0 0 1h6a.5.5 0 0 0 0-1H5zm0 2a.5.5 0 0 0 0 1h3a.5.5 0 0 0 0-1H5z"/>'); // eslint-disable-next-line
+
+exports.BIconFileRichtextFill = BIconFileRichtextFill;
 var BIconFileRuled = /*#__PURE__*/(0, _makeIcon.makeIcon)('FileRuled', '<path fill-rule="evenodd" d="M4 1h8a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2zm0 1a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V3a1 1 0 0 0-1-1H4z"/><path fill-rule="evenodd" d="M13 6H3V5h10v1zm0 3H3V8h10v1zm0 3H3v-1h10v1z"/><path fill-rule="evenodd" d="M5 14V6h1v8H5z"/>'); // eslint-disable-next-line
 
 exports.BIconFileRuled = BIconFileRuled;
+var BIconFileRuledFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('FileRuledFill', '<path fill-rule="evenodd" d="M12 1H4a2 2 0 0 0-2 2v2h12V3a2 2 0 0 0-2-2zm2 5H6v2h8V6zm0 3H6v2h8V9zm0 3H6v3h6a2 2 0 0 0 2-2v-1zm-9 3v-3H2v1a2 2 0 0 0 2 2h1zm-3-4h3V9H2v2zm0-3h3V6H2v2z"/>'); // eslint-disable-next-line
+
+exports.BIconFileRuledFill = BIconFileRuledFill;
 var BIconFileSpreadsheet = /*#__PURE__*/(0, _makeIcon.makeIcon)('FileSpreadsheet', '<path fill-rule="evenodd" d="M4 1h8a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2zm0 1a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V3a1 1 0 0 0-1-1H4z"/><path fill-rule="evenodd" d="M13 6H3V5h10v1zm0 3H3V8h10v1zm0 3H3v-1h10v1z"/><path fill-rule="evenodd" d="M5 14V6h1v8H5zm4 0V6h1v8H9z"/>'); // eslint-disable-next-line
 
 exports.BIconFileSpreadsheet = BIconFileSpreadsheet;
+var BIconFileSpreadsheetFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('FileSpreadsheetFill', '<path fill-rule="evenodd" d="M12 1H4a2 2 0 0 0-2 2v2h12V3a2 2 0 0 0-2-2zm2 5h-4v2h4V6zm0 3h-4v2h4V9zm0 3h-4v3h2a2 2 0 0 0 2-2v-1zm-5 3v-3H6v3h3zm-4 0v-3H2v1a2 2 0 0 0 2 2h1zm-3-4h3V9H2v2zm0-3h3V6H2v2zm4 0V6h3v2H6zm0 1h3v2H6V9z"/>'); // eslint-disable-next-line
+
+exports.BIconFileSpreadsheetFill = BIconFileSpreadsheetFill;
 var BIconFileText = /*#__PURE__*/(0, _makeIcon.makeIcon)('FileText', '<path fill-rule="evenodd" d="M4 1h8a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2zm0 1a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V3a1 1 0 0 0-1-1H4z"/><path fill-rule="evenodd" d="M4.5 10.5A.5.5 0 0 1 5 10h3a.5.5 0 0 1 0 1H5a.5.5 0 0 1-.5-.5zm0-2A.5.5 0 0 1 5 8h6a.5.5 0 0 1 0 1H5a.5.5 0 0 1-.5-.5zm0-2A.5.5 0 0 1 5 6h6a.5.5 0 0 1 0 1H5a.5.5 0 0 1-.5-.5zm0-2A.5.5 0 0 1 5 4h6a.5.5 0 0 1 0 1H5a.5.5 0 0 1-.5-.5z"/>'); // eslint-disable-next-line
 
 exports.BIconFileText = BIconFileText;
+var BIconFileTextFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('FileTextFill', '<path fill-rule="evenodd" d="M12 1H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V3a2 2 0 0 0-2-2zM5 4a.5.5 0 0 0 0 1h6a.5.5 0 0 0 0-1H5zm-.5 2.5A.5.5 0 0 1 5 6h6a.5.5 0 0 1 0 1H5a.5.5 0 0 1-.5-.5zM5 8a.5.5 0 0 0 0 1h6a.5.5 0 0 0 0-1H5zm0 2a.5.5 0 0 0 0 1h3a.5.5 0 0 0 0-1H5z"/>'); // eslint-disable-next-line
+
+exports.BIconFileTextFill = BIconFileTextFill;
 var BIconFileZip = /*#__PURE__*/(0, _makeIcon.makeIcon)('FileZip', '<path fill-rule="evenodd" d="M4 1h8a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2zm0 1a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V3a1 1 0 0 0-1-1H4z"/><path fill-rule="evenodd" d="M6.5 8.5a1 1 0 0 1 1-1h1a1 1 0 0 1 1 1v.938l.4 1.599a1 1 0 0 1-.416 1.074l-.93.62a1 1 0 0 1-1.109 0l-.93-.62a1 1 0 0 1-.415-1.074l.4-1.599V8.5zm2 0h-1v.938a1 1 0 0 1-.03.243l-.4 1.598.93.62.93-.62-.4-1.598a1 1 0 0 1-.03-.243V8.5z"/><path d="M7.5 2H9v1H7.5zm-1 1H8v1H6.5zm1 1H9v1H7.5zm-1 1H8v1H6.5zm1 1H9v1H7.5V6z"/>'); // eslint-disable-next-line
 
 exports.BIconFileZip = BIconFileZip;
+var BIconFileZipFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('FileZipFill', '<path fill-rule="evenodd" d="M8 1h4a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h2.5v1h1v1h-1v1h1v1h-1v1h1v1H9V6H8V5h1V4H8V3h1V2H8V1zM6.5 8.5a1 1 0 0 1 1-1h1a1 1 0 0 1 1 1v.938l.4 1.599a1 1 0 0 1-.416 1.074l-.93.62a1 1 0 0 1-1.109 0l-.93-.62a1 1 0 0 1-.415-1.074l.4-1.599V8.5zm2 .938V8.5h-1v.938a1 1 0 0 1-.03.243l-.4 1.598.93.62.93-.62-.4-1.598a1 1 0 0 1-.03-.243z"/>'); // eslint-disable-next-line
+
+exports.BIconFileZipFill = BIconFileZipFill;
 var BIconFiles = /*#__PURE__*/(0, _makeIcon.makeIcon)('Files', '<path fill-rule="evenodd" d="M3 2h8a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2zm0 1a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V4a1 1 0 0 0-1-1H3z"/><path d="M5 0h8a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2v-1a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1H3a2 2 0 0 1 2-2z"/>'); // eslint-disable-next-line
 
 exports.BIconFiles = BIconFiles;
@@ -54143,21 +54777,48 @@ exports.BIconFilm = BIconFilm;
 var BIconFilter = /*#__PURE__*/(0, _makeIcon.makeIcon)('Filter', '<path fill-rule="evenodd" d="M6 10.5a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 0 1h-3a.5.5 0 0 1-.5-.5zm-2-3a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7a.5.5 0 0 1-.5-.5zm-2-3a.5.5 0 0 1 .5-.5h11a.5.5 0 0 1 0 1h-11a.5.5 0 0 1-.5-.5z"/>'); // eslint-disable-next-line
 
 exports.BIconFilter = BIconFilter;
+var BIconFilterCircle = /*#__PURE__*/(0, _makeIcon.makeIcon)('FilterCircle', '<path fill-rule="evenodd" d="M8 15A7 7 0 1 0 8 1a7 7 0 0 0 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/><path fill-rule="evenodd" d="M7 11.5a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 0 1h-1a.5.5 0 0 1-.5-.5zm-2-3a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5zm-2-3a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5z"/>'); // eslint-disable-next-line
+
+exports.BIconFilterCircle = BIconFilterCircle;
+var BIconFilterCircleFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('FilterCircleFill', '<path fill-rule="evenodd" d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zM3.5 5a.5.5 0 0 0 0 1h9a.5.5 0 0 0 0-1h-9zM5 8.5a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5zm2 3a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 0 1h-1a.5.5 0 0 1-.5-.5z"/>'); // eslint-disable-next-line
+
+exports.BIconFilterCircleFill = BIconFilterCircleFill;
 var BIconFilterLeft = /*#__PURE__*/(0, _makeIcon.makeIcon)('FilterLeft', '<path fill-rule="evenodd" d="M2 10.5a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 0 1h-3a.5.5 0 0 1-.5-.5zm0-3a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7a.5.5 0 0 1-.5-.5zm0-3a.5.5 0 0 1 .5-.5h11a.5.5 0 0 1 0 1h-11a.5.5 0 0 1-.5-.5z"/>'); // eslint-disable-next-line
 
 exports.BIconFilterLeft = BIconFilterLeft;
 var BIconFilterRight = /*#__PURE__*/(0, _makeIcon.makeIcon)('FilterRight', '<path fill-rule="evenodd" d="M14 10.5a.5.5 0 0 0-.5-.5h-3a.5.5 0 0 0 0 1h3a.5.5 0 0 0 .5-.5zm0-3a.5.5 0 0 0-.5-.5h-7a.5.5 0 0 0 0 1h7a.5.5 0 0 0 .5-.5zm0-3a.5.5 0 0 0-.5-.5h-11a.5.5 0 0 0 0 1h11a.5.5 0 0 0 .5-.5z"/>'); // eslint-disable-next-line
 
 exports.BIconFilterRight = BIconFilterRight;
+var BIconFilterSquare = /*#__PURE__*/(0, _makeIcon.makeIcon)('FilterSquare', '<path fill-rule="evenodd" d="M14 1H2a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1zM2 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2H2z"/><path fill-rule="evenodd" d="M6 11.5a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 0 1h-3a.5.5 0 0 1-.5-.5zm-2-3a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7a.5.5 0 0 1-.5-.5zm-2-3a.5.5 0 0 1 .5-.5h11a.5.5 0 0 1 0 1h-11a.5.5 0 0 1-.5-.5z"/>'); // eslint-disable-next-line
+
+exports.BIconFilterSquare = BIconFilterSquare;
+var BIconFilterSquareFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('FilterSquareFill', '<path fill-rule="evenodd" d="M2 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2H2zm.5 5a.5.5 0 0 0 0 1h11a.5.5 0 0 0 0-1h-11zM4 8.5a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7a.5.5 0 0 1-.5-.5zm2 3a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 0 1h-3a.5.5 0 0 1-.5-.5z"/>'); // eslint-disable-next-line
+
+exports.BIconFilterSquareFill = BIconFilterSquareFill;
 var BIconFlag = /*#__PURE__*/(0, _makeIcon.makeIcon)('Flag', '<path fill-rule="evenodd" d="M3.5 1a.5.5 0 0 1 .5.5v13a.5.5 0 0 1-1 0v-13a.5.5 0 0 1 .5-.5z"/><path fill-rule="evenodd" d="M3.762 2.558C4.735 1.909 5.348 1.5 6.5 1.5c.653 0 1.139.325 1.495.562l.032.022c.391.26.646.416.973.416.168 0 .356-.042.587-.126a8.89 8.89 0 0 0 .593-.25c.058-.027.117-.053.18-.08.57-.255 1.278-.544 2.14-.544a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-.5.5c-.638 0-1.18.21-1.734.457l-.159.07c-.22.1-.453.205-.678.287A2.719 2.719 0 0 1 9 9.5c-.653 0-1.139-.325-1.495-.562l-.032-.022c-.391-.26-.646-.416-.973-.416-.833 0-1.218.246-2.223.916a.5.5 0 1 1-.515-.858C4.735 7.909 5.348 7.5 6.5 7.5c.653 0 1.139.325 1.495.562l.032.022c.391.26.646.416.973.416.168 0 .356-.042.587-.126.187-.068.376-.153.593-.25.058-.027.117-.053.18-.08.456-.204 1-.43 1.64-.512V2.543c-.433.074-.83.234-1.234.414l-.159.07c-.22.1-.453.205-.678.287A2.719 2.719 0 0 1 9 3.5c-.653 0-1.139-.325-1.495-.562l-.032-.022c-.391-.26-.646-.416-.973-.416-.833 0-1.218.246-2.223.916a.5.5 0 0 1-.554-.832l.04-.026z"/>'); // eslint-disable-next-line
 
 exports.BIconFlag = BIconFlag;
 var BIconFlagFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('FlagFill', '<path fill-rule="evenodd" d="M3.5 1a.5.5 0 0 1 .5.5v13a.5.5 0 0 1-1 0v-13a.5.5 0 0 1 .5-.5z"/><path fill-rule="evenodd" d="M3.762 2.558C4.735 1.909 5.348 1.5 6.5 1.5c.653 0 1.139.325 1.495.562l.032.022c.391.26.646.416.973.416.168 0 .356-.042.587-.126a8.89 8.89 0 0 0 .593-.25c.058-.027.117-.053.18-.08.57-.255 1.278-.544 2.14-.544a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-.5.5c-.638 0-1.18.21-1.734.457l-.159.07c-.22.1-.453.205-.678.287A2.719 2.719 0 0 1 9 9.5c-.653 0-1.139-.325-1.495-.562l-.032-.022c-.391-.26-.646-.416-.973-.416-.833 0-1.218.246-2.223.916A.5.5 0 0 1 3.5 9V3a.5.5 0 0 1 .223-.416l.04-.026z"/>'); // eslint-disable-next-line
 
 exports.BIconFlagFill = BIconFlagFill;
+var BIconFlower1 = /*#__PURE__*/(0, _makeIcon.makeIcon)('Flower1', '<path fill-rule="evenodd" d="M6.174 1.184a2 2 0 0 1 3.652 0A2 2 0 0 1 12.99 3.01a2 2 0 0 1 1.826 3.164 2 2 0 0 1 0 3.652 2 2 0 0 1-1.826 3.164 2 2 0 0 1-3.164 1.826 2 2 0 0 1-3.652 0A2 2 0 0 1 3.01 12.99a2 2 0 0 1-1.826-3.164 2 2 0 0 1 0-3.652A2 2 0 0 1 3.01 3.01a2 2 0 0 1 3.164-1.826zM8 1a1 1 0 0 1 1 1l-.002.03a4.997 4.997 0 0 1-.064.387c-.049.241-.122.542-.213.887a60.59 60.59 0 0 1-.676 2.314L8 5.762l-.045-.144a60.59 60.59 0 0 1-.676-2.314 16.705 16.705 0 0 1-.213-.887 4.99 4.99 0 0 1-.064-.386A1 1 0 0 1 8 1zM2 9a1 1 0 1 1 .03-1.998l.091.01c.077.012.176.029.296.054.241.049.542.122.887.213a60.59 60.59 0 0 1 2.314.676L5.762 8l-.144.045c-.8.248-1.626.494-2.314.676-.345.091-.646.164-.887.213a4.99 4.99 0 0 1-.386.064L2 9zm7 5a1 1 0 0 1-2 0l.002-.03a4.996 4.996 0 0 1 .064-.386c.049-.242.122-.543.213-.888.182-.688.428-1.513.676-2.314L8 10.238l.045.144c.248.8.494 1.626.676 2.314.091.345.164.646.213.887a5.005 5.005 0 0 1 .064.386L9 14zm-5.696-2.134a1 1 0 0 1-1-1.732l.027-.014c.02-.01.048-.021.084-.036a5.09 5.09 0 0 1 .283-.102c.233-.078.53-.165.874-.258a60.598 60.598 0 0 1 2.343-.572l.147-.033-.103.11a58.239 58.239 0 0 1-1.666 1.743c-.253.252-.477.465-.66.629a5.001 5.001 0 0 1-.304.248l-.025.017zM4.5 14.062a1 1 0 0 0 1.366-.366l.014-.027c.01-.02.021-.048.036-.084a5.09 5.09 0 0 0 .102-.283c.078-.233.165-.53.258-.874a60.6 60.6 0 0 0 .572-2.343l.033-.147-.11.102a60.848 60.848 0 0 0-1.743 1.667 17.07 17.07 0 0 0-.629.66 5.06 5.06 0 0 0-.248.304l-.017.025a1 1 0 0 0 .366 1.366zm9.196-8.196a1 1 0 0 0-1-1.732l-.025.017a4.951 4.951 0 0 0-.303.248 16.69 16.69 0 0 0-.661.629A60.72 60.72 0 0 0 10.04 6.77l-.102.111.147-.033a60.6 60.6 0 0 0 2.342-.572c.345-.093.642-.18.875-.258a4.993 4.993 0 0 0 .367-.138.53.53 0 0 0 .027-.014zM11.5 1.938a1 1 0 0 1 .366 1.366l-.017.025a5.001 5.001 0 0 1-.248.303 17.01 17.01 0 0 1-.629.661A60.614 60.614 0 0 1 9.23 5.96l-.111.102.033-.147a60.62 60.62 0 0 1 .572-2.342c.093-.345.18-.642.258-.875a5.066 5.066 0 0 1 .138-.367l.014-.027a1 1 0 0 1 1.366-.366zM14 9a1 1 0 0 0 0-2l-.03.002a4.996 4.996 0 0 0-.386.064c-.242.049-.543.122-.888.213-.688.182-1.513.428-2.314.676L10.238 8l.144.045c.8.248 1.626.494 2.314.676.345.091.646.164.887.213a4.996 4.996 0 0 0 .386.064L14 9zM1.938 4.5a1 1 0 0 0 .393 1.38l.084.035c.072.03.166.064.283.103.233.078.53.165.874.258a60.88 60.88 0 0 0 2.343.572l.147.033-.103-.111a60.584 60.584 0 0 0-1.666-1.742 16.705 16.705 0 0 0-.66-.629 4.996 4.996 0 0 0-.304-.248l-.025-.017a1 1 0 0 0-1.366.366zm2.196-1.196A1 1 0 1 1 5.88 2.33c.01.02.021.048.036.084.029.072.063.166.102.283.078.233.165.53.258.875.186.687.387 1.524.572 2.342l.033.147-.11-.102a60.597 60.597 0 0 1-1.743-1.667 16.713 16.713 0 0 1-.629-.66 4.996 4.996 0 0 1-.248-.304l-.017-.025zm9.928 8.196a1 1 0 0 1-1.366.366l-.025-.017a4.946 4.946 0 0 1-.303-.248 16.71 16.71 0 0 1-.661-.629A60.73 60.73 0 0 1 10.04 9.23l-.102-.111.147.033c.818.185 1.655.386 2.342.572.345.093.642.18.875.258a5 5 0 0 1 .367.138 1 1 0 0 1 .394 1.38zm-3.928 2.196a1 1 0 0 0 1.732-1l-.017-.025a5.065 5.065 0 0 0-.248-.303 16.705 16.705 0 0 0-.629-.661A60.462 60.462 0 0 0 9.23 10.04l-.111-.102.033.147a60.6 60.6 0 0 0 .572 2.342c.093.345.18.642.258.875a4.985 4.985 0 0 0 .138.367.575.575 0 0 0 .014.027zM8 9.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z"/>'); // eslint-disable-next-line
+
+exports.BIconFlower1 = BIconFlower1;
+var BIconFlower2 = /*#__PURE__*/(0, _makeIcon.makeIcon)('Flower2', '<path fill-rule="evenodd" d="M8 16a4 4 0 0 0 4-4 4 4 0 0 0 0-8 4 4 0 0 0-8 0 4 4 0 1 0 0 8 4 4 0 0 0 4 4zm3-12a3 3 0 0 0-6 0c0 .073.01.155.03.247.544.241 1.091.638 1.598 1.084A2.987 2.987 0 0 1 8 5c.494 0 .96.12 1.372.331.507-.446 1.054-.843 1.598-1.084.02-.092.03-.174.03-.247zm-.812 6.052A2.99 2.99 0 0 0 11 8a2.99 2.99 0 0 0-.812-2.052c.215-.18.432-.346.647-.487C11.34 5.131 11.732 5 12 5a3 3 0 1 1 0 6c-.268 0-.66-.13-1.165-.461a6.833 6.833 0 0 1-.647-.487zm-3.56.617a3.001 3.001 0 0 0 2.744 0c.507.446 1.054.842 1.598 1.084.02.091.03.174.03.247a3 3 0 1 1-6 0c0-.073.01-.155.03-.247.544-.242 1.091-.638 1.598-1.084zm-.816-4.721A2.99 2.99 0 0 0 5 8c0 .794.308 1.516.812 2.052a6.83 6.83 0 0 1-.647.487C4.66 10.869 4.268 11 4 11a3 3 0 0 1 0-6c.268 0 .66.13 1.165.461.215.141.432.306.647.487zM8 9a1 1 0 1 1 0-2 1 1 0 0 1 0 2z"/>'); // eslint-disable-next-line
+
+exports.BIconFlower2 = BIconFlower2;
+var BIconFlower3 = /*#__PURE__*/(0, _makeIcon.makeIcon)('Flower3', '<path fill-rule="evenodd" d="M11.424 8c.437-.052.811-.136 1.04-.268a2 2 0 0 0-2-3.464c-.229.132-.489.414-.752.767C9.886 4.63 10 4.264 10 4a2 2 0 1 0-4 0c0 .264.114.63.288 1.035-.263-.353-.523-.635-.752-.767a2 2 0 0 0-2 3.464c.229.132.603.216 1.04.268-.437.052-.811.136-1.04.268a2 2 0 1 0 2 3.464c.229-.132.489-.414.752-.767C6.114 11.37 6 11.736 6 12a2 2 0 1 0 4 0c0-.264-.114-.63-.288-1.035.263.353.523.635.752.767a2 2 0 1 0 2-3.464c-.229-.132-.603-.216-1.04-.268zM9 4a1 1 0 0 0-2 0 1.473 1.473 0 0 0 .045.206c.039.131.1.294.183.483.166.378.396.808.637 1.223l.135.23.135-.23c.241-.415.47-.845.637-1.223.083-.19.144-.352.183-.484.02-.065.031-.116.038-.154C9 4.018 9 4.002 9 4zM3.67 5.5a1 1 0 0 0 .366 1.366 1.47 1.47 0 0 0 .2.064c.134.032.305.06.51.083.411.045.898.061 1.379.06.09 0 .178 0 .266-.002a21.82 21.82 0 0 0-.131-.232 12.88 12.88 0 0 0-.742-1.163 4.215 4.215 0 0 0-.327-.4 1.472 1.472 0 0 0-.115-.11c-.025-.022-.038-.03-.04-.032A1 1 0 0 0 3.67 5.5zm1.366 5.366a1 1 0 0 1-1-1.732c.001 0 .016-.008.047-.02.037-.013.087-.028.153-.044.134-.032.305-.06.51-.083a12.88 12.88 0 0 1 1.379-.06c.09 0 .178 0 .266.002a21.82 21.82 0 0 1-.131.232c-.24.416-.497.83-.742 1.163a4.1 4.1 0 0 1-.327.4 1.483 1.483 0 0 1-.155.142zM9 12a1 1 0 0 1-2 0 1.476 1.476 0 0 1 .045-.206c.039-.131.1-.294.183-.483.166-.378.396-.808.637-1.223L8 9.858l.135.23c.241.415.47.845.637 1.223.083.19.144.352.183.484A1.338 1.338 0 0 1 9 12zm3.33-6.5a1 1 0 0 1-.366 1.366 1.478 1.478 0 0 1-.2.064c-.134.032-.305.06-.51.083-.412.045-.898.061-1.379.06-.09 0-.178 0-.266-.002l.131-.232c.24-.416.497-.83.742-1.163a4.1 4.1 0 0 1 .327-.4c.046-.05.085-.086.114-.11.026-.022.04-.03.041-.032a1 1 0 0 1 1.366.366zm-1.366 5.366a1 1 0 0 0 1-1.732c-.002 0-.016-.008-.047-.02a1.478 1.478 0 0 0-.153-.044 4.217 4.217 0 0 0-.51-.083 12.881 12.881 0 0 0-1.379-.06c-.09 0-.178 0-.266.002a22 22 0 0 0 .131.232c.24.416.497.83.742 1.163.122.167.232.3.327.4a1.494 1.494 0 0 0 .155.142zM8 9a1 1 0 1 0 0-2 1 1 0 0 0 0 2z"/>'); // eslint-disable-next-line
+
+exports.BIconFlower3 = BIconFlower3;
 var BIconFolder = /*#__PURE__*/(0, _makeIcon.makeIcon)('Folder', '<path d="M9.828 4a3 3 0 0 1-2.12-.879l-.83-.828A1 1 0 0 0 6.173 2H2.5a1 1 0 0 0-1 .981L1.546 4h-1L.5 3a2 2 0 0 1 2-2h3.672a2 2 0 0 1 1.414.586l.828.828A2 2 0 0 0 9.828 3v1z"/><path fill-rule="evenodd" d="M13.81 4H2.19a1 1 0 0 0-.996 1.09l.637 7a1 1 0 0 0 .995.91h10.348a1 1 0 0 0 .995-.91l.637-7A1 1 0 0 0 13.81 4zM2.19 3A2 2 0 0 0 .198 5.181l.637 7A2 2 0 0 0 2.826 14h10.348a2 2 0 0 0 1.991-1.819l.637-7A2 2 0 0 0 13.81 3H2.19z"/>'); // eslint-disable-next-line
 
 exports.BIconFolder = BIconFolder;
+var BIconFolder2 = /*#__PURE__*/(0, _makeIcon.makeIcon)('Folder2', '<path fill-rule="evenodd" d="M1 3.5A1.5 1.5 0 0 1 2.5 2h2.764c.958 0 1.76.56 2.311 1.184C7.985 3.648 8.48 4 9 4h4.5A1.5 1.5 0 0 1 15 5.5v7a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 1 12.5v-9zM2.5 3a.5.5 0 0 0-.5.5V6h12v-.5a.5.5 0 0 0-.5-.5H9c-.964 0-1.71-.629-2.174-1.154C6.374 3.334 5.82 3 5.264 3H2.5zM14 7H2v5.5a.5.5 0 0 0 .5.5h11a.5.5 0 0 0 .5-.5V7z"/>'); // eslint-disable-next-line
+
+exports.BIconFolder2 = BIconFolder2;
+var BIconFolder2Open = /*#__PURE__*/(0, _makeIcon.makeIcon)('Folder2Open', '<path fill-rule="evenodd" d="M1 3.5A1.5 1.5 0 0 1 2.5 2h2.764c.958 0 1.76.56 2.311 1.184C7.985 3.648 8.48 4 9 4h4.5A1.5 1.5 0 0 1 15 5.5v.64c.57.265.94.876.856 1.546l-.64 5.124A2.5 2.5 0 0 1 12.733 15H3.266a2.5 2.5 0 0 1-2.481-2.19l-.64-5.124A1.5 1.5 0 0 1 1 6.14V3.5zM2 6h12v-.5a.5.5 0 0 0-.5-.5H9c-.964 0-1.71-.629-2.174-1.154C6.374 3.334 5.82 3 5.264 3H2.5a.5.5 0 0 0-.5.5V6zm-.367 1a.5.5 0 0 0-.496.562l.64 5.124A1.5 1.5 0 0 0 3.266 14h9.468a1.5 1.5 0 0 0 1.489-1.314l.64-5.124A.5.5 0 0 0 14.367 7H1.633z"/>'); // eslint-disable-next-line
+
+exports.BIconFolder2Open = BIconFolder2Open;
 var BIconFolderCheck = /*#__PURE__*/(0, _makeIcon.makeIcon)('FolderCheck', '<path fill-rule="evenodd" d="M9.828 4H2.19a1 1 0 0 0-.996 1.09l.637 7a1 1 0 0 0 .995.91H9v1H2.826a2 2 0 0 1-1.991-1.819l-.637-7a1.99 1.99 0 0 1 .342-1.31L.5 3a2 2 0 0 1 2-2h3.672a2 2 0 0 1 1.414.586l.828.828A2 2 0 0 0 9.828 3h3.982a2 2 0 0 1 1.992 2.181L15.546 8H14.54l.265-2.91A1 1 0 0 0 13.81 4H9.828zm-2.95-1.707L7.587 3H2.19c-.24 0-.47.042-.684.12L1.5 2.98a1 1 0 0 1 1-.98h3.672a1 1 0 0 1 .707.293z"/><path fill-rule="evenodd" d="M15.854 10.146a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708 0l-1.5-1.5a.5.5 0 0 1 .708-.708l1.146 1.147 2.646-2.647a.5.5 0 0 1 .708 0z"/>'); // eslint-disable-next-line
 
 exports.BIconFolderCheck = BIconFolderCheck;
@@ -54185,6 +54846,9 @@ exports.BIconForward = BIconForward;
 var BIconForwardFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('ForwardFill', '<path d="M9.77 12.11l4.012-2.953a.647.647 0 0 0 0-1.114L9.771 5.09a.644.644 0 0 0-.971.557V6.65H2v3.9h6.8v1.003c0 .505.545.808.97.557z"/>'); // eslint-disable-next-line
 
 exports.BIconForwardFill = BIconForwardFill;
+var BIconFront = /*#__PURE__*/(0, _makeIcon.makeIcon)('Front', '<path fill-rule="evenodd" d="M0 2a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v2h2a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-2H2a2 2 0 0 1-2-2V2zm5 10v2a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V6a1 1 0 0 0-1-1h-2v5a2 2 0 0 1-2 2H5z"/>'); // eslint-disable-next-line
+
+exports.BIconFront = BIconFront;
 var BIconFullscreen = /*#__PURE__*/(0, _makeIcon.makeIcon)('Fullscreen', '<path fill-rule="evenodd" d="M1.5 1a.5.5 0 0 0-.5.5v4a.5.5 0 0 1-1 0v-4A1.5 1.5 0 0 1 1.5 0h4a.5.5 0 0 1 0 1h-4zM10 .5a.5.5 0 0 1 .5-.5h4A1.5 1.5 0 0 1 16 1.5v4a.5.5 0 0 1-1 0v-4a.5.5 0 0 0-.5-.5h-4a.5.5 0 0 1-.5-.5zM.5 10a.5.5 0 0 1 .5.5v4a.5.5 0 0 0 .5.5h4a.5.5 0 0 1 0 1h-4A1.5 1.5 0 0 1 0 14.5v-4a.5.5 0 0 1 .5-.5zm15 0a.5.5 0 0 1 .5.5v4a1.5 1.5 0 0 1-1.5 1.5h-4a.5.5 0 0 1 0-1h4a.5.5 0 0 0 .5-.5v-4a.5.5 0 0 1 .5-.5z"/>'); // eslint-disable-next-line
 
 exports.BIconFullscreen = BIconFullscreen;
@@ -54194,7 +54858,7 @@ exports.BIconFullscreenExit = BIconFullscreenExit;
 var BIconFunnel = /*#__PURE__*/(0, _makeIcon.makeIcon)('Funnel', '<path fill-rule="evenodd" d="M1.5 1.5A.5.5 0 0 1 2 1h12a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-.128.334L10 8.692V13.5a.5.5 0 0 1-.342.474l-3 1A.5.5 0 0 1 6 14.5V8.692L1.628 3.834A.5.5 0 0 1 1.5 3.5v-2zm1 .5v1.308l4.372 4.858A.5.5 0 0 1 7 8.5v5.306l2-.666V8.5a.5.5 0 0 1 .128-.334L13.5 3.308V2h-11z"/>'); // eslint-disable-next-line
 
 exports.BIconFunnel = BIconFunnel;
-var BIconFunnelFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('FunnelFill', '<path d="M2 3.5v-2h12v2l-4.5 5v5l-3 1v-6L2 3.5z"/><path fill-rule="evenodd" d="M1.5 1.5A.5.5 0 0 1 2 1h12a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-.128.334L10 8.692V13.5a.5.5 0 0 1-.342.474l-3 1A.5.5 0 0 1 6 14.5V8.692L1.628 3.834A.5.5 0 0 1 1.5 3.5v-2zm1 .5v1.308l4.372 4.858A.5.5 0 0 1 7 8.5v5.306l2-.666V8.5a.5.5 0 0 1 .128-.334L13.5 3.308V2h-11z"/>'); // eslint-disable-next-line
+var BIconFunnelFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('FunnelFill', '<path fill-rule="evenodd" d="M1.5 1.5A.5.5 0 0 1 2 1h12a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-.128.334L10 8.692V13.5a.5.5 0 0 1-.342.474l-3 1A.5.5 0 0 1 6 14.5V8.692L1.628 3.834A.5.5 0 0 1 1.5 3.5v-2z"/>'); // eslint-disable-next-line
 
 exports.BIconFunnelFill = BIconFunnelFill;
 var BIconGear = /*#__PURE__*/(0, _makeIcon.makeIcon)('Gear', '<path fill-rule="evenodd" d="M8.837 1.626c-.246-.835-1.428-.835-1.674 0l-.094.319A1.873 1.873 0 0 1 4.377 3.06l-.292-.16c-.764-.415-1.6.42-1.184 1.185l.159.292a1.873 1.873 0 0 1-1.115 2.692l-.319.094c-.835.246-.835 1.428 0 1.674l.319.094a1.873 1.873 0 0 1 1.115 2.693l-.16.291c-.415.764.42 1.6 1.185 1.184l.292-.159a1.873 1.873 0 0 1 2.692 1.116l.094.318c.246.835 1.428.835 1.674 0l.094-.319a1.873 1.873 0 0 1 2.693-1.115l.291.16c.764.415 1.6-.42 1.184-1.185l-.159-.291a1.873 1.873 0 0 1 1.116-2.693l.318-.094c.835-.246.835-1.428 0-1.674l-.319-.094a1.873 1.873 0 0 1-1.115-2.692l.16-.292c.415-.764-.42-1.6-1.185-1.184l-.291.159A1.873 1.873 0 0 1 8.93 1.945l-.094-.319zm-2.633-.283c.527-1.79 3.065-1.79 3.592 0l.094.319a.873.873 0 0 0 1.255.52l.292-.16c1.64-.892 3.434.901 2.54 2.541l-.159.292a.873.873 0 0 0 .52 1.255l.319.094c1.79.527 1.79 3.065 0 3.592l-.319.094a.873.873 0 0 0-.52 1.255l.16.292c.893 1.64-.902 3.434-2.541 2.54l-.292-.159a.873.873 0 0 0-1.255.52l-.094.319c-.527 1.79-3.065 1.79-3.592 0l-.094-.319a.873.873 0 0 0-1.255-.52l-.292.16c-1.64.893-3.433-.902-2.54-2.541l.159-.292a.873.873 0 0 0-.52-1.255l-.319-.094c-1.79-.527-1.79-3.065 0-3.592l.319-.094a.873.873 0 0 0 .52-1.255l-.16-.292c-.892-1.64.902-3.433 2.541-2.54l.292.159a.873.873 0 0 0 1.255-.52l.094-.319z"/><path fill-rule="evenodd" d="M8 5.754a2.246 2.246 0 1 0 0 4.492 2.246 2.246 0 0 0 0-4.492zM4.754 8a3.246 3.246 0 1 1 6.492 0 3.246 3.246 0 0 1-6.492 0z"/>'); // eslint-disable-next-line
@@ -54218,12 +54882,18 @@ exports.BIconGeo = BIconGeo;
 var BIconGeoAlt = /*#__PURE__*/(0, _makeIcon.makeIcon)('GeoAlt', '<path fill-rule="evenodd" d="M8 16s6-5.686 6-10A6 6 0 0 0 2 6c0 4.314 6 10 6 10zm0-7a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/>'); // eslint-disable-next-line
 
 exports.BIconGeoAlt = BIconGeoAlt;
-var BIconGift = /*#__PURE__*/(0, _makeIcon.makeIcon)('Gift', '<path fill-rule="evenodd" d="M2 6v8.5a.5.5 0 0 0 .5.5h11a.5.5 0 0 0 .5-.5V6h1v8.5a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 1 14.5V6h1zm8-5a1.5 1.5 0 0 0-1.5 1.5c0 .098.033.16.12.227.103.081.272.15.49.2A3.44 3.44 0 0 0 9.96 3h.015L10 2.999l.025.002h.014A2.569 2.569 0 0 0 10.293 3c.17-.006.387-.026.598-.073.217-.048.386-.118.49-.199.086-.066.119-.13.119-.227A1.5 1.5 0 0 0 10 1zm0 3h-.006a3.535 3.535 0 0 1-.326 0 4.435 4.435 0 0 1-.777-.097c-.283-.063-.614-.175-.885-.385A1.255 1.255 0 0 1 7.5 2.5a2.5 2.5 0 0 1 5 0c0 .454-.217.793-.506 1.017-.27.21-.602.322-.885.385a4.434 4.434 0 0 1-1.104.099H10z"/><path fill-rule="evenodd" d="M6 1a1.5 1.5 0 0 0-1.5 1.5c0 .098.033.16.12.227.103.081.272.15.49.2A3.44 3.44 0 0 0 5.96 3h.015L6 2.999l.025.002h.014l.053.001a3.869 3.869 0 0 0 .799-.076c.217-.048.386-.118.49-.199.086-.066.119-.13.119-.227A1.5 1.5 0 0 0 6 1zm0 3h-.006a3.535 3.535 0 0 1-.326 0 4.435 4.435 0 0 1-.777-.097c-.283-.063-.614-.175-.885-.385A1.255 1.255 0 0 1 3.5 2.5a2.5 2.5 0 0 1 5 0c0 .454-.217.793-.506 1.017-.27.21-.602.322-.885.385a4.435 4.435 0 0 1-1.103.099H6zm1.5 12V6h1v10h-1z"/><path fill-rule="evenodd" d="M15 4H1v1h14V4zM1 3a1 1 0 0 0-1 1v1a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1V4a1 1 0 0 0-1-1H1z"/>'); // eslint-disable-next-line
+var BIconGift = /*#__PURE__*/(0, _makeIcon.makeIcon)('Gift', '<path fill-rule="evenodd" d="M3 2.5a2.5 2.5 0 0 1 5 0 2.5 2.5 0 0 1 5 0v.006c0 .07 0 .27-.038.494H15a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1v7.5a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 1 14.5V7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h2.038A2.968 2.968 0 0 1 3 2.506V2.5zm1.068.5H7v-.5a1.5 1.5 0 1 0-3 0c0 .085.002.274.045.43a.522.522 0 0 0 .023.07zM9 3h2.932a.56.56 0 0 0 .023-.07c.043-.156.045-.345.045-.43a1.5 1.5 0 0 0-3 0V3zM1 4v2h6V4H1zm8 0v2h6V4H9zm5 3H9v8h4.5a.5.5 0 0 0 .5-.5V7zm-7 8V7H2v7.5a.5.5 0 0 0 .5.5H7z"/>'); // eslint-disable-next-line
 
 exports.BIconGift = BIconGift;
-var BIconGiftFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('GiftFill', '<path fill-rule="evenodd" d="M10 1a1.5 1.5 0 0 0-1.5 1.5c0 .098.033.16.12.227.103.081.272.15.49.2A3.44 3.44 0 0 0 9.96 3h.015L10 2.999l.025.002h.014A2.569 2.569 0 0 0 10.293 3c.17-.006.387-.026.598-.073.217-.048.386-.118.49-.199.086-.066.119-.13.119-.227A1.5 1.5 0 0 0 10 1zm0 3h-.006a3.535 3.535 0 0 1-.326 0 4.435 4.435 0 0 1-.777-.097c-.283-.063-.614-.175-.885-.385A1.255 1.255 0 0 1 7.5 2.5a2.5 2.5 0 0 1 5 0c0 .454-.217.793-.506 1.017-.27.21-.602.322-.885.385a4.434 4.434 0 0 1-1.104.099H10z"/><path fill-rule="evenodd" d="M6 1a1.5 1.5 0 0 0-1.5 1.5c0 .098.033.16.12.227.103.081.272.15.49.2A3.44 3.44 0 0 0 5.96 3h.015L6 2.999l.025.002h.014l.053.001a3.869 3.869 0 0 0 .799-.076c.217-.048.386-.118.49-.199.086-.066.119-.13.119-.227A1.5 1.5 0 0 0 6 1zm0 3h-.006a3.535 3.535 0 0 1-.326 0 4.435 4.435 0 0 1-.777-.097c-.283-.063-.614-.175-.885-.385A1.255 1.255 0 0 1 3.5 2.5a2.5 2.5 0 0 1 5 0c0 .454-.217.793-.506 1.017-.27.21-.602.322-.885.385a4.435 4.435 0 0 1-1.103.099H6zm9 10.5V7H8.5v9h5a1.5 1.5 0 0 0 1.5-1.5zM7.5 16h-5A1.5 1.5 0 0 1 1 14.5V7h6.5v9z"/><path d="M0 4a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1v1a1 1 0 0 1-1 1H1a1 1 0 0 1-1-1V4z"/>'); // eslint-disable-next-line
+var BIconGiftFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('GiftFill', '<path fill-rule="evenodd" d="M3 2.5a2.5 2.5 0 0 1 5 0 2.5 2.5 0 0 1 5 0v.006c0 .07 0 .27-.038.494H15a1 1 0 0 1 1 1v1a1 1 0 0 1-1 1H1a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h2.038A2.968 2.968 0 0 1 3 2.506V2.5zm1.068.5H7v-.5a1.5 1.5 0 1 0-3 0c0 .085.002.274.045.43a.522.522 0 0 0 .023.07zM9 3h2.932a.56.56 0 0 0 .023-.07c.043-.156.045-.345.045-.43a1.5 1.5 0 0 0-3 0V3z"/><path d="M15 7v7.5a1.5 1.5 0 0 1-1.5 1.5H9V7h6zM2.5 16A1.5 1.5 0 0 1 1 14.5V7h6v9H2.5z"/>'); // eslint-disable-next-line
 
 exports.BIconGiftFill = BIconGiftFill;
+var BIconGlobe = /*#__PURE__*/(0, _makeIcon.makeIcon)('Globe', '<path fill-rule="evenodd" d="M1.018 7.5h2.49c.03-.877.138-1.718.312-2.5H1.674a6.958 6.958 0 0 0-.656 2.5zM2.255 4H4.09a9.266 9.266 0 0 1 .64-1.539 6.7 6.7 0 0 1 .597-.933A7.024 7.024 0 0 0 2.255 4zM8 0a8 8 0 1 0 0 16A8 8 0 0 0 8 0zm-.5 1.077c-.67.204-1.335.82-1.887 1.855-.173.324-.33.682-.468 1.068H7.5V1.077zM7.5 5H4.847a12.5 12.5 0 0 0-.338 2.5H7.5V5zm1 2.5V5h2.653c.187.765.306 1.608.338 2.5H8.5zm-1 1H4.51a12.5 12.5 0 0 0 .337 2.5H7.5V8.5zm1 2.5V8.5h2.99a12.495 12.495 0 0 1-.337 2.5H8.5zm-1 1H5.145c.138.386.295.744.468 1.068.552 1.035 1.218 1.65 1.887 1.855V12zm-2.173 2.472a6.695 6.695 0 0 1-.597-.933A9.267 9.267 0 0 1 4.09 12H2.255a7.024 7.024 0 0 0 3.072 2.472zM1.674 11H3.82a13.651 13.651 0 0 1-.312-2.5h-2.49c.062.89.291 1.733.656 2.5zm8.999 3.472A7.024 7.024 0 0 0 13.745 12h-1.834a9.278 9.278 0 0 1-.641 1.539 6.688 6.688 0 0 1-.597.933zM10.855 12H8.5v2.923c.67-.204 1.335-.82 1.887-1.855A7.98 7.98 0 0 0 10.855 12zm1.325-1h2.146c.365-.767.594-1.61.656-2.5h-2.49a13.65 13.65 0 0 1-.312 2.5zm.312-3.5h2.49a6.959 6.959 0 0 0-.656-2.5H12.18c.174.782.282 1.623.312 2.5zM11.91 4a9.277 9.277 0 0 0-.64-1.539 6.692 6.692 0 0 0-.597-.933A7.024 7.024 0 0 1 13.745 4h-1.834zm-1.055 0H8.5V1.077c.67.204 1.335.82 1.887 1.855.173.324.33.682.468 1.068z"/>'); // eslint-disable-next-line
+
+exports.BIconGlobe = BIconGlobe;
+var BIconGlobe2 = /*#__PURE__*/(0, _makeIcon.makeIcon)('Globe2', '<path fill-rule="evenodd" d="M1.018 7.5h2.49c.037-1.07.189-2.087.437-3.008a9.124 9.124 0 0 1-1.565-.667A6.964 6.964 0 0 0 1.018 7.5zM3.05 3.049c.362.184.763.349 1.198.49.142-.384.304-.744.481-1.078a6.7 6.7 0 0 1 .597-.933A7.01 7.01 0 0 0 3.051 3.05zM8 0a8 8 0 1 0 0 16A8 8 0 0 0 8 0zm-.5 1.077c-.67.204-1.335.82-1.887 1.855-.143.268-.276.56-.395.872.705.157 1.473.257 2.282.287V1.077zm0 4.014c-.91-.03-1.783-.145-2.591-.332a12.344 12.344 0 0 0-.4 2.741H7.5V5.091zm1 2.409V5.091c.91-.03 1.783-.145 2.591-.332.223.827.364 1.754.4 2.741H8.5zm-1 1H4.51c.035.987.176 1.914.399 2.741A13.596 13.596 0 0 1 7.5 10.91V8.5zm1 2.409V8.5h2.99a12.343 12.343 0 0 1-.399 2.741A13.596 13.596 0 0 0 8.5 10.91zm-1 1c-.81.03-1.577.13-2.282.287.12.312.252.604.395.872.552 1.035 1.218 1.65 1.887 1.855V11.91zm-2.173 2.563a6.695 6.695 0 0 1-.597-.933 8.857 8.857 0 0 1-.481-1.078 8.356 8.356 0 0 0-1.198.49 7.01 7.01 0 0 0 2.276 1.52zM2.38 12.175c.47-.258.995-.482 1.565-.667A13.36 13.36 0 0 1 3.508 8.5h-2.49a6.964 6.964 0 0 0 1.362 3.675zm8.293 2.297a7.01 7.01 0 0 0 2.275-1.521 8.353 8.353 0 0 0-1.197-.49 8.859 8.859 0 0 1-.481 1.078 6.688 6.688 0 0 1-.597.933zm.11-2.276A12.63 12.63 0 0 0 8.5 11.91v3.014c.67-.204 1.335-.82 1.887-1.855.143-.268.276-.56.395-.872zm1.272-.688c.57.185 1.095.409 1.565.667A6.964 6.964 0 0 0 14.982 8.5h-2.49a13.355 13.355 0 0 1-.437 3.008zm.437-4.008h2.49a6.963 6.963 0 0 0-1.362-3.675c-.47.258-.995.482-1.565.667.248.92.4 1.938.437 3.008zm-.74-3.96a8.854 8.854 0 0 0-.482-1.079 6.692 6.692 0 0 0-.597-.933c.857.355 1.63.875 2.275 1.521a8.368 8.368 0 0 1-1.197.49zm-.97.264c-.705.157-1.473.257-2.282.287V1.077c.67.204 1.335.82 1.887 1.855.143.268.276.56.395.872z"/>'); // eslint-disable-next-line
+
+exports.BIconGlobe2 = BIconGlobe2;
 var BIconGraphDown = /*#__PURE__*/(0, _makeIcon.makeIcon)('GraphDown', '<path d="M0 0h1v16H0V0zm1 15h15v1H1v-1z"/><path fill-rule="evenodd" d="M14.39 9.041l-4.349-5.436L7 6.646 3.354 3l-.708.707L7 8.061l2.959-2.959 3.65 4.564.781-.625z"/><path fill-rule="evenodd" d="M10 9.854a.5.5 0 0 0 .5.5h4a.5.5 0 0 0 .5-.5v-4a.5.5 0 0 0-1 0v3.5h-3.5a.5.5 0 0 0-.5.5z"/>'); // eslint-disable-next-line
 
 exports.BIconGraphDown = BIconGraphDown;
@@ -54290,9 +54960,36 @@ exports.BIconHandbagFill = BIconHandbagFill;
 var BIconHash = /*#__PURE__*/(0, _makeIcon.makeIcon)('Hash', '<path d="M8.39 12.648a1.32 1.32 0 0 0-.015.18c0 .305.21.508.5.508.266 0 .492-.172.555-.477l.554-2.703h1.204c.421 0 .617-.234.617-.547 0-.312-.188-.53-.617-.53h-.985l.516-2.524h1.265c.43 0 .618-.227.618-.547 0-.313-.188-.524-.618-.524h-1.046l.476-2.304a1.06 1.06 0 0 0 .016-.164.51.51 0 0 0-.516-.516.54.54 0 0 0-.539.43l-.523 2.554H7.617l.477-2.304c.008-.04.015-.118.015-.164a.512.512 0 0 0-.523-.516.539.539 0 0 0-.531.43L6.53 5.484H5.414c-.43 0-.617.22-.617.532 0 .312.187.539.617.539h.906l-.515 2.523H4.609c-.421 0-.609.219-.609.531 0 .313.188.547.61.547h.976l-.516 2.492c-.008.04-.015.125-.015.18 0 .305.21.508.5.508.265 0 .492-.172.554-.477l.555-2.703h2.242l-.515 2.492zm-1-6.109h2.266l-.515 2.563H6.859l.532-2.563z"/>'); // eslint-disable-next-line
 
 exports.BIconHash = BIconHash;
+var BIconHdd = /*#__PURE__*/(0, _makeIcon.makeIcon)('Hdd', '<path fill-rule="evenodd" d="M14 9H2a1 1 0 0 0-1 1v1a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-1a1 1 0 0 0-1-1zM2 8a2 2 0 0 0-2 2v1a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-1a2 2 0 0 0-2-2H2z"/><path d="M5 10.5a.5.5 0 1 1-1 0 .5.5 0 0 1 1 0zm-2 0a.5.5 0 1 1-1 0 .5.5 0 0 1 1 0z"/><path fill-rule="evenodd" d="M4.094 4a.5.5 0 0 0-.44.26l-2.47 4.532A1.5 1.5 0 0 0 1 9.51v.99H0v-.99c0-.418.105-.83.305-1.197l2.472-4.531A1.5 1.5 0 0 1 4.094 3h7.812a1.5 1.5 0 0 1 1.317.782l2.472 4.53c.2.368.305.78.305 1.198v.99h-1v-.99a1.5 1.5 0 0 0-.183-.718L12.345 4.26a.5.5 0 0 0-.439-.26H4.094z"/>'); // eslint-disable-next-line
+
+exports.BIconHdd = BIconHdd;
+var BIconHddFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('HddFill', '<path fill-rule="evenodd" d="M0 10a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v1a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-1zm2.5 1a.5.5 0 1 0 0-1 .5.5 0 0 0 0 1zm2 0a.5.5 0 1 0 0-1 .5.5 0 0 0 0 1z"/><path d="M.91 7.204A2.993 2.993 0 0 1 2 7h12c.384 0 .752.072 1.09.204l-1.867-3.422A1.5 1.5 0 0 0 11.906 3H4.094a1.5 1.5 0 0 0-1.317.782L.91 7.204z"/>'); // eslint-disable-next-line
+
+exports.BIconHddFill = BIconHddFill;
+var BIconHddNetwork = /*#__PURE__*/(0, _makeIcon.makeIcon)('HddNetwork', '<path fill-rule="evenodd" d="M14 3H2a1 1 0 0 0-1 1v1a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4a1 1 0 0 0-1-1zM2 2a2 2 0 0 0-2 2v1a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H2z"/><path d="M5 4.5a.5.5 0 1 1-1 0 .5.5 0 0 1 1 0zm-2 0a.5.5 0 1 1-1 0 .5.5 0 0 1 1 0z"/><path fill-rule="evenodd" d="M7.5 10V7h1v3a1.5 1.5 0 0 1 1.5 1.5h5.5a.5.5 0 0 1 0 1H10A1.5 1.5 0 0 1 8.5 14h-1A1.5 1.5 0 0 1 6 12.5H.5a.5.5 0 0 1 0-1H6A1.5 1.5 0 0 1 7.5 10zm0 1a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5h-1z"/>'); // eslint-disable-next-line
+
+exports.BIconHddNetwork = BIconHddNetwork;
+var BIconHddNetworkFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('HddNetworkFill', '<path fill-rule="evenodd" d="M2 2a2 2 0 0 0-2 2v1a2 2 0 0 0 2 2h5.5v3A1.5 1.5 0 0 0 6 11.5H.5a.5.5 0 0 0 0 1H6A1.5 1.5 0 0 0 7.5 14h1a1.5 1.5 0 0 0 1.5-1.5h5.5a.5.5 0 0 0 0-1H10A1.5 1.5 0 0 0 8.5 10V7H14a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H2zm.5 3a.5.5 0 1 0 0-1 .5.5 0 0 0 0 1zm2 0a.5.5 0 1 0 0-1 .5.5 0 0 0 0 1z"/>'); // eslint-disable-next-line
+
+exports.BIconHddNetworkFill = BIconHddNetworkFill;
+var BIconHddRack = /*#__PURE__*/(0, _makeIcon.makeIcon)('HddRack', '<path fill-rule="evenodd" d="M14 10H2a1 1 0 0 0-1 1v1a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-1a1 1 0 0 0-1-1zM2 9a2 2 0 0 0-2 2v1a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-1a2 2 0 0 0-2-2H2z"/><path d="M5 11.5a.5.5 0 1 1-1 0 .5.5 0 0 1 1 0zm-2 0a.5.5 0 1 1-1 0 .5.5 0 0 1 1 0z"/><path fill-rule="evenodd" d="M14 3H2a1 1 0 0 0-1 1v1a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4a1 1 0 0 0-1-1zM2 2a2 2 0 0 0-2 2v1a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H2z"/><path d="M5 4.5a.5.5 0 1 1-1 0 .5.5 0 0 1 1 0zm-2 0a.5.5 0 1 1-1 0 .5.5 0 0 1 1 0z"/><path fill-rule="evenodd" d="M3 9V7h1v2H3zm9 0V7h1v2h-1z"/>'); // eslint-disable-next-line
+
+exports.BIconHddRack = BIconHddRack;
+var BIconHddRackFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('HddRackFill', '<path fill-rule="evenodd" d="M2 9a2 2 0 0 0-2 2v1a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-1a2 2 0 0 0-2-2H2zm.5 3a.5.5 0 1 0 0-1 .5.5 0 0 0 0 1zm2 0a.5.5 0 1 0 0-1 .5.5 0 0 0 0 1zM2 2a2 2 0 0 0-2 2v1a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H2zm.5 3a.5.5 0 1 0 0-1 .5.5 0 0 0 0 1zm2 0a.5.5 0 1 0 0-1 .5.5 0 0 0 0 1zM3 9V7h1v2H3zm9 0V7h1v2h-1z"/>'); // eslint-disable-next-line
+
+exports.BIconHddRackFill = BIconHddRackFill;
+var BIconHddStack = /*#__PURE__*/(0, _makeIcon.makeIcon)('HddStack', '<path fill-rule="evenodd" d="M14 10H2a1 1 0 0 0-1 1v1a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-1a1 1 0 0 0-1-1zM2 9a2 2 0 0 0-2 2v1a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-1a2 2 0 0 0-2-2H2z"/><path d="M5 11.5a.5.5 0 1 1-1 0 .5.5 0 0 1 1 0zm-2 0a.5.5 0 1 1-1 0 .5.5 0 0 1 1 0z"/><path fill-rule="evenodd" d="M14 3H2a1 1 0 0 0-1 1v1a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4a1 1 0 0 0-1-1zM2 2a2 2 0 0 0-2 2v1a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H2z"/><path d="M5 4.5a.5.5 0 1 1-1 0 .5.5 0 0 1 1 0zm-2 0a.5.5 0 1 1-1 0 .5.5 0 0 1 1 0z"/>'); // eslint-disable-next-line
+
+exports.BIconHddStack = BIconHddStack;
+var BIconHddStackFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('HddStackFill', '<path fill-rule="evenodd" d="M2 9a2 2 0 0 0-2 2v1a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-1a2 2 0 0 0-2-2H2zm.5 3a.5.5 0 1 0 0-1 .5.5 0 0 0 0 1zm2 0a.5.5 0 1 0 0-1 .5.5 0 0 0 0 1zM2 2a2 2 0 0 0-2 2v1a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H2zm.5 3a.5.5 0 1 0 0-1 .5.5 0 0 0 0 1zm2 0a.5.5 0 1 0 0-1 .5.5 0 0 0 0 1z"/>'); // eslint-disable-next-line
+
+exports.BIconHddStackFill = BIconHddStackFill;
 var BIconHeadphones = /*#__PURE__*/(0, _makeIcon.makeIcon)('Headphones', '<path fill-rule="evenodd" d="M8 3a5 5 0 0 0-5 5v4.5H2V8a6 6 0 1 1 12 0v4.5h-1V8a5 5 0 0 0-5-5z"/><path d="M11 10a1 1 0 0 1 1-1h2v4a1 1 0 0 1-1 1h-1a1 1 0 0 1-1-1v-3zm-6 0a1 1 0 0 0-1-1H2v4a1 1 0 0 0 1 1h1a1 1 0 0 0 1-1v-3z"/>'); // eslint-disable-next-line
 
 exports.BIconHeadphones = BIconHeadphones;
+var BIconHeadset = /*#__PURE__*/(0, _makeIcon.makeIcon)('Headset', '<path fill-rule="evenodd" d="M8 1a5 5 0 0 0-5 5v4.5H2V6a6 6 0 1 1 12 0v4.5h-1V6a5 5 0 0 0-5-5z"/><path d="M11 8a1 1 0 0 1 1-1h2v4a1 1 0 0 1-1 1h-1a1 1 0 0 1-1-1V8zM5 8a1 1 0 0 0-1-1H2v4a1 1 0 0 0 1 1h1a1 1 0 0 0 1-1V8z"/><path fill-rule="evenodd" d="M13.5 8.5a.5.5 0 0 1 .5.5v3a2.5 2.5 0 0 1-2.5 2.5H8a.5.5 0 0 1 0-1h3.5A1.5 1.5 0 0 0 13 12V9a.5.5 0 0 1 .5-.5z"/><path d="M6.5 14a1 1 0 0 1 1-1h1a1 1 0 1 1 0 2h-1a1 1 0 0 1-1-1z"/>'); // eslint-disable-next-line
+
+exports.BIconHeadset = BIconHeadset;
 var BIconHeart = /*#__PURE__*/(0, _makeIcon.makeIcon)('Heart', '<path fill-rule="evenodd" d="M8 2.748l-.717-.737C5.6.281 2.514.878 1.4 3.053c-.523 1.023-.641 2.5.314 4.385.92 1.815 2.834 3.989 6.286 6.357 3.452-2.368 5.365-4.542 6.286-6.357.955-1.886.838-3.362.314-4.385C13.486.878 10.4.28 8.717 2.01L8 2.748zM8 15C-7.333 4.868 3.279-3.04 7.824 1.143c.06.055.119.112.176.171a3.12 3.12 0 0 1 .176-.17C12.72-3.042 23.333 4.867 8 15z"/>'); // eslint-disable-next-line
 
 exports.BIconHeart = BIconHeart;
@@ -54302,6 +54999,15 @@ exports.BIconHeartFill = BIconHeartFill;
 var BIconHeartHalf = /*#__PURE__*/(0, _makeIcon.makeIcon)('HeartHalf', '<path fill-rule="evenodd" d="M8 1.314C3.562-3.248-7.534 4.735 8 15V1.314z"/><path fill-rule="evenodd" d="M8 2.748l-.717-.737C5.6.281 2.514.878 1.4 3.053c-.523 1.023-.641 2.5.314 4.385.92 1.815 2.834 3.989 6.286 6.357 3.452-2.368 5.365-4.542 6.286-6.357.955-1.886.838-3.362.314-4.385C13.486.878 10.4.28 8.717 2.01L8 2.748zM8 15C-7.333 4.868 3.279-3.04 7.824 1.143c.06.055.119.112.176.171a3.12 3.12 0 0 1 .176-.17C12.72-3.042 23.333 4.867 8 15z"/>'); // eslint-disable-next-line
 
 exports.BIconHeartHalf = BIconHeartHalf;
+var BIconHeptagon = /*#__PURE__*/(0, _makeIcon.makeIcon)('Heptagon', '<path fill-rule="evenodd" d="M7.779.052a.5.5 0 0 1 .442 0l6.015 2.97a.5.5 0 0 1 .267.34l1.485 6.676a.5.5 0 0 1-.093.415l-4.162 5.354a.5.5 0 0 1-.395.193H4.662a.5.5 0 0 1-.395-.193L.105 10.453a.5.5 0 0 1-.093-.415l1.485-6.676a.5.5 0 0 1 .267-.34L7.779.053zM2.422 3.813l-1.383 6.212L4.907 15h6.186l3.868-4.975-1.383-6.212L8 1.058 2.422 3.813z"/>'); // eslint-disable-next-line
+
+exports.BIconHeptagon = BIconHeptagon;
+var BIconHeptagonFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('HeptagonFill', '<path fill-rule="evenodd" d="M7.779.052a.5.5 0 0 1 .442 0l6.015 2.97a.5.5 0 0 1 .267.34l1.485 6.676a.5.5 0 0 1-.093.415l-4.162 5.354a.5.5 0 0 1-.395.193H4.662a.5.5 0 0 1-.395-.193L.105 10.453a.5.5 0 0 1-.093-.415l1.485-6.676a.5.5 0 0 1 .267-.34L7.779.053z"/>'); // eslint-disable-next-line
+
+exports.BIconHeptagonFill = BIconHeptagonFill;
+var BIconHeptagonHalf = /*#__PURE__*/(0, _makeIcon.makeIcon)('HeptagonHalf', '<path fill-rule="evenodd" d="M7.779.052a.5.5 0 0 1 .442 0l6.015 2.97a.5.5 0 0 1 .267.34l1.485 6.676a.5.5 0 0 1-.093.415l-4.162 5.354a.5.5 0 0 1-.395.193H4.662a.5.5 0 0 1-.395-.193L.105 10.453a.5.5 0 0 1-.093-.415l1.485-6.676a.5.5 0 0 1 .267-.34L7.779.053zM8 15h3.093l3.868-4.975-1.383-6.212L8 1.058V15z"/>'); // eslint-disable-next-line
+
+exports.BIconHeptagonHalf = BIconHeptagonHalf;
 var BIconHexagon = /*#__PURE__*/(0, _makeIcon.makeIcon)('Hexagon', '<path fill-rule="evenodd" d="M14 4.577L8 1 2 4.577v6.846L8 15l6-3.577V4.577zM8.5.134a1 1 0 0 0-1 0l-6 3.577a1 1 0 0 0-.5.866v6.846a1 1 0 0 0 .5.866l6 3.577a1 1 0 0 0 1 0l6-3.577a1 1 0 0 0 .5-.866V4.577a1 1 0 0 0-.5-.866L8.5.134z"/>'); // eslint-disable-next-line
 
 exports.BIconHexagon = BIconHexagon;
@@ -54311,6 +55017,18 @@ exports.BIconHexagonFill = BIconHexagonFill;
 var BIconHexagonHalf = /*#__PURE__*/(0, _makeIcon.makeIcon)('HexagonHalf', '<path fill-rule="evenodd" d="M14 4.577L8 1v14l6-3.577V4.577zM8.5.134a1 1 0 0 0-1 0l-6 3.577a1 1 0 0 0-.5.866v6.846a1 1 0 0 0 .5.866l6 3.577a1 1 0 0 0 1 0l6-3.577a1 1 0 0 0 .5-.866V4.577a1 1 0 0 0-.5-.866L8.5.134z"/>'); // eslint-disable-next-line
 
 exports.BIconHexagonHalf = BIconHexagonHalf;
+var BIconHourglass = /*#__PURE__*/(0, _makeIcon.makeIcon)('Hourglass', '<path fill-rule="evenodd" d="M2 1.5a.5.5 0 0 1 .5-.5h11a.5.5 0 0 1 0 1h-1v1a4.5 4.5 0 0 1-2.557 4.06c-.29.139-.443.377-.443.59v.7c0 .213.154.451.443.59A4.5 4.5 0 0 1 12.5 13v1h1a.5.5 0 0 1 0 1h-11a.5.5 0 1 1 0-1h1v-1a4.5 4.5 0 0 1 2.557-4.06c.29-.139.443-.377.443-.59v-.7c0-.213-.154-.451-.443-.59A4.5 4.5 0 0 1 3.5 3V2h-1a.5.5 0 0 1-.5-.5zm2.5.5v1a3.5 3.5 0 0 0 1.989 3.158c.533.256 1.011.791 1.011 1.491v.702c0 .7-.478 1.235-1.011 1.491A3.5 3.5 0 0 0 4.5 13v1h7v-1a3.5 3.5 0 0 0-1.989-3.158C8.978 9.586 8.5 9.052 8.5 8.351v-.702c0-.7.478-1.235 1.011-1.491A3.5 3.5 0 0 0 11.5 3V2h-7z"/>'); // eslint-disable-next-line
+
+exports.BIconHourglass = BIconHourglass;
+var BIconHourglassBottom = /*#__PURE__*/(0, _makeIcon.makeIcon)('HourglassBottom', '<path fill-rule="evenodd" d="M2 1.5a.5.5 0 0 1 .5-.5h11a.5.5 0 0 1 0 1h-1v1a4.5 4.5 0 0 1-2.557 4.06c-.29.139-.443.377-.443.59v.7c0 .213.154.451.443.59A4.5 4.5 0 0 1 12.5 13v1h1a.5.5 0 0 1 0 1h-11a.5.5 0 1 1 0-1h1v-1a4.5 4.5 0 0 1 2.557-4.06c.29-.139.443-.377.443-.59v-.7c0-.213-.154-.451-.443-.59A4.5 4.5 0 0 1 3.5 3V2h-1a.5.5 0 0 1-.5-.5zm2.5.5v1a3.5 3.5 0 0 0 1.989 3.158c.533.256 1.011.791 1.011 1.491v.702s.18.149.5.149.5-.15.5-.15v-.7c0-.701.478-1.236 1.011-1.492A3.5 3.5 0 0 0 11.5 3V2h-7z"/>'); // eslint-disable-next-line
+
+exports.BIconHourglassBottom = BIconHourglassBottom;
+var BIconHourglassSplit = /*#__PURE__*/(0, _makeIcon.makeIcon)('HourglassSplit', '<path fill-rule="evenodd" d="M2.5 15a.5.5 0 1 1 0-1h1v-1a4.5 4.5 0 0 1 2.557-4.06c.29-.139.443-.377.443-.59v-.7c0-.213-.154-.451-.443-.59A4.5 4.5 0 0 1 3.5 3V2h-1a.5.5 0 0 1 0-1h11a.5.5 0 0 1 0 1h-1v1a4.5 4.5 0 0 1-2.557 4.06c-.29.139-.443.377-.443.59v.7c0 .213.154.451.443.59A4.5 4.5 0 0 1 12.5 13v1h1a.5.5 0 0 1 0 1h-11zm2-13v1c0 .537.12 1.045.337 1.5h6.326c.216-.455.337-.963.337-1.5V2h-7zm3 6.35c0 .701-.478 1.236-1.011 1.492A3.5 3.5 0 0 0 4.5 13s.866-1.299 3-1.48V8.35zm1 0c0 .701.478 1.236 1.011 1.492A3.5 3.5 0 0 1 11.5 13s-.866-1.299-3-1.48V8.35z"/>'); // eslint-disable-next-line
+
+exports.BIconHourglassSplit = BIconHourglassSplit;
+var BIconHourglassTop = /*#__PURE__*/(0, _makeIcon.makeIcon)('HourglassTop', '<path fill-rule="evenodd" d="M2 14.5a.5.5 0 0 0 .5.5h11a.5.5 0 1 0 0-1h-1v-1a4.5 4.5 0 0 0-2.557-4.06c-.29-.139-.443-.377-.443-.59v-.7c0-.213.154-.451.443-.59A4.5 4.5 0 0 0 12.5 3V2h1a.5.5 0 0 0 0-1h-11a.5.5 0 0 0 0 1h1v1a4.5 4.5 0 0 0 2.557 4.06c.29.139.443.377.443.59v.7c0 .213-.154.451-.443.59A4.5 4.5 0 0 0 3.5 13v1h-1a.5.5 0 0 0-.5.5zm2.5-.5v-1a3.5 3.5 0 0 1 1.989-3.158c.533-.256 1.011-.79 1.011-1.491v-.702s.18.101.5.101.5-.1.5-.1v.7c0 .701.478 1.236 1.011 1.492A3.5 3.5 0 0 1 11.5 13v1h-7z"/>'); // eslint-disable-next-line
+
+exports.BIconHourglassTop = BIconHourglassTop;
 var BIconHouse = /*#__PURE__*/(0, _makeIcon.makeIcon)('House', '<path fill-rule="evenodd" d="M2 13.5V7h1v6.5a.5.5 0 0 0 .5.5h9a.5.5 0 0 0 .5-.5V7h1v6.5a1.5 1.5 0 0 1-1.5 1.5h-9A1.5 1.5 0 0 1 2 13.5zm11-11V6l-2-2V2.5a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5z"/><path fill-rule="evenodd" d="M7.293 1.5a1 1 0 0 1 1.414 0l6.647 6.646a.5.5 0 0 1-.708.708L8 2.207 1.354 8.854a.5.5 0 1 1-.708-.708L7.293 1.5z"/>'); // eslint-disable-next-line
 
 exports.BIconHouse = BIconHouse;
@@ -54365,9 +55083,54 @@ exports.BIconInfoSquare = BIconInfoSquare;
 var BIconInfoSquareFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('InfoSquareFill', '<path fill-rule="evenodd" d="M0 2a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V2zm8.93 4.588l-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 1.178-.252 1.465-.598l.088-.416c-.2.176-.492.246-.686.246-.275 0-.375-.193-.304-.533L8.93 6.588zM8 5.5a1 1 0 1 0 0-2 1 1 0 0 0 0 2z"/>'); // eslint-disable-next-line
 
 exports.BIconInfoSquareFill = BIconInfoSquareFill;
-var BIconIntersect = /*#__PURE__*/(0, _makeIcon.makeIcon)('Intersect', '<path fill-rule="evenodd" d="M12 4v6.5a1.5 1.5 0 0 1-1.5 1.5H4V5.5A1.5 1.5 0 0 1 5.5 4H12z"/><path fill-rule="evenodd" d="M14.5 5h-9a.5.5 0 0 0-.5.5v9a.5.5 0 0 0 .5.5h9a.5.5 0 0 0 .5-.5v-9a.5.5 0 0 0-.5-.5zm-9-1A1.5 1.5 0 0 0 4 5.5v9A1.5 1.5 0 0 0 5.5 16h9a1.5 1.5 0 0 0 1.5-1.5v-9A1.5 1.5 0 0 0 14.5 4h-9z"/><path fill-rule="evenodd" d="M10.5 1h-9a.5.5 0 0 0-.5.5v9a.5.5 0 0 0 .5.5h9a.5.5 0 0 0 .5-.5v-9a.5.5 0 0 0-.5-.5zm-9-1A1.5 1.5 0 0 0 0 1.5v9A1.5 1.5 0 0 0 1.5 12h9a1.5 1.5 0 0 0 1.5-1.5v-9A1.5 1.5 0 0 0 10.5 0h-9z"/>'); // eslint-disable-next-line
+var BIconInputCursor = /*#__PURE__*/(0, _makeIcon.makeIcon)('InputCursor', '<path d="M10 5h4a1 1 0 0 1 1 1v4a1 1 0 0 1-1 1h-4v1h4a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-4v1zM6 5V4H2a2 2 0 0 0-2 2v4a2 2 0 0 0 2 2h4v-1H2a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h4z"/><path fill-rule="evenodd" d="M8 1a.5.5 0 0 1 .5.5v13a.5.5 0 0 1-1 0v-13A.5.5 0 0 1 8 1z"/>'); // eslint-disable-next-line
+
+exports.BIconInputCursor = BIconInputCursor;
+var BIconInputCursorText = /*#__PURE__*/(0, _makeIcon.makeIcon)('InputCursorText', '<path fill-rule="evenodd" d="M5 2a.5.5 0 0 1 .5-.5c.862 0 1.573.287 2.06.566.174.099.321.198.44.286.119-.088.266-.187.44-.286A4.165 4.165 0 0 1 10.5 1.5a.5.5 0 0 1 0 1c-.638 0-1.177.213-1.564.434a3.49 3.49 0 0 0-.436.294V7.5H9a.5.5 0 0 1 0 1h-.5v4.272c.1.08.248.187.436.294.387.221.926.434 1.564.434a.5.5 0 0 1 0 1 4.165 4.165 0 0 1-2.06-.566A4.561 4.561 0 0 1 8 13.65a4.561 4.561 0 0 1-.44.285 4.165 4.165 0 0 1-2.06.566.5.5 0 0 1 0-1c.638 0 1.177-.213 1.564-.434.188-.107.335-.214.436-.294V8.5H7a.5.5 0 0 1 0-1h.5V3.228a3.49 3.49 0 0 0-.436-.294A3.166 3.166 0 0 0 5.5 2.5.5.5 0 0 1 5 2zm3.352 1.355zm-.704 9.29z"/><path d="M10 5h4a1 1 0 0 1 1 1v4a1 1 0 0 1-1 1h-4v1h4a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-4v1zM6 5V4H2a2 2 0 0 0-2 2v4a2 2 0 0 0 2 2h4v-1H2a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h4z"/>'); // eslint-disable-next-line
+
+exports.BIconInputCursorText = BIconInputCursorText;
+var BIconIntersect = /*#__PURE__*/(0, _makeIcon.makeIcon)('Intersect', '<path fill-rule="evenodd" d="M0 2a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v2h2a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-2H2a2 2 0 0 1-2-2V2zm5 10v2a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V6a1 1 0 0 0-1-1h-2v5a2 2 0 0 1-2 2H5zm6-8H6a2 2 0 0 0-2 2v5H2a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h8a1 1 0 0 1 1 1v2z"/>'); // eslint-disable-next-line
 
 exports.BIconIntersect = BIconIntersect;
+var BIconJournal = /*#__PURE__*/(0, _makeIcon.makeIcon)('Journal', '<path d="M4 1h8a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2h1a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V3a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1H2a2 2 0 0 1 2-2z"/><path d="M2 5v-.5a.5.5 0 0 1 1 0V5h.5a.5.5 0 0 1 0 1h-2a.5.5 0 0 1 0-1H2zm0 3v-.5a.5.5 0 0 1 1 0V8h.5a.5.5 0 0 1 0 1h-2a.5.5 0 0 1 0-1H2zm0 3v-.5a.5.5 0 0 1 1 0v.5h.5a.5.5 0 0 1 0 1h-2a.5.5 0 0 1 0-1H2z"/>'); // eslint-disable-next-line
+
+exports.BIconJournal = BIconJournal;
+var BIconJournalAlbum = /*#__PURE__*/(0, _makeIcon.makeIcon)('JournalAlbum', '<path d="M4 1h8a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2h1a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V3a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1H2a2 2 0 0 1 2-2z"/><path d="M2 5v-.5a.5.5 0 0 1 1 0V5h.5a.5.5 0 0 1 0 1h-2a.5.5 0 0 1 0-1H2zm0 3v-.5a.5.5 0 0 1 1 0V8h.5a.5.5 0 0 1 0 1h-2a.5.5 0 0 1 0-1H2zm0 3v-.5a.5.5 0 0 1 1 0v.5h.5a.5.5 0 0 1 0 1h-2a.5.5 0 0 1 0-1H2zm3-6.5a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 .5.5v5a.5.5 0 0 1-.5.5h-5a.5.5 0 0 1-.5-.5v-5z"/><path fill-rule="evenodd" d="M6 11.5a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 0 1h-3a.5.5 0 0 1-.5-.5z"/>'); // eslint-disable-next-line
+
+exports.BIconJournalAlbum = BIconJournalAlbum;
+var BIconJournalArrowDown = /*#__PURE__*/(0, _makeIcon.makeIcon)('JournalArrowDown', '<path d="M4 1h8a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2h1a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V3a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1H2a2 2 0 0 1 2-2z"/><path d="M2 5v-.5a.5.5 0 0 1 1 0V5h.5a.5.5 0 0 1 0 1h-2a.5.5 0 0 1 0-1H2zm0 3v-.5a.5.5 0 0 1 1 0V8h.5a.5.5 0 0 1 0 1h-2a.5.5 0 0 1 0-1H2zm0 3v-.5a.5.5 0 0 1 1 0v.5h.5a.5.5 0 0 1 0 1h-2a.5.5 0 0 1 0-1H2z"/><path fill-rule="evenodd" d="M8 4a.5.5 0 0 1 .5.5v5.793l1.646-1.647a.5.5 0 0 1 .708.708l-2.5 2.5a.5.5 0 0 1-.708 0l-2.5-2.5a.5.5 0 1 1 .708-.708L7.5 10.293V4.5A.5.5 0 0 1 8 4z"/>'); // eslint-disable-next-line
+
+exports.BIconJournalArrowDown = BIconJournalArrowDown;
+var BIconJournalArrowUp = /*#__PURE__*/(0, _makeIcon.makeIcon)('JournalArrowUp', '<path d="M4 1h8a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2h1a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V3a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1H2a2 2 0 0 1 2-2z"/><path d="M2 5v-.5a.5.5 0 0 1 1 0V5h.5a.5.5 0 0 1 0 1h-2a.5.5 0 0 1 0-1H2zm0 3v-.5a.5.5 0 0 1 1 0V8h.5a.5.5 0 0 1 0 1h-2a.5.5 0 0 1 0-1H2zm0 3v-.5a.5.5 0 0 1 1 0v.5h.5a.5.5 0 0 1 0 1h-2a.5.5 0 0 1 0-1H2z"/><path fill-rule="evenodd" d="M8 12a.5.5 0 0 0 .5-.5V5.707l1.646 1.647a.5.5 0 0 0 .708-.708l-2.5-2.5a.5.5 0 0 0-.708 0l-2.5 2.5a.5.5 0 1 0 .708.708L7.5 5.707V11.5a.5.5 0 0 0 .5.5z"/>'); // eslint-disable-next-line
+
+exports.BIconJournalArrowUp = BIconJournalArrowUp;
+var BIconJournalCheck = /*#__PURE__*/(0, _makeIcon.makeIcon)('JournalCheck', '<path d="M4 1h5v1H4a1 1 0 0 0-1 1H2a2 2 0 0 1 2-2zm10 7v5a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2h1a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V8h1zM2 5v-.5a.5.5 0 0 1 1 0V5h.5a.5.5 0 0 1 0 1h-2a.5.5 0 0 1 0-1H2zm0 3v-.5a.5.5 0 0 1 1 0V8h.5a.5.5 0 0 1 0 1h-2a.5.5 0 0 1 0-1H2zm0 3v-.5a.5.5 0 0 1 1 0v.5h.5a.5.5 0 0 1 0 1h-2a.5.5 0 0 1 0-1H2z"/><path fill-rule="evenodd" d="M15.854 2.146a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708 0l-1.5-1.5a.5.5 0 0 1 .708-.708L12.5 4.793l2.646-2.647a.5.5 0 0 1 .708 0z"/>'); // eslint-disable-next-line
+
+exports.BIconJournalCheck = BIconJournalCheck;
+var BIconJournalCode = /*#__PURE__*/(0, _makeIcon.makeIcon)('JournalCode', '<path d="M4 1h8a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2h1a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V3a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1H2a2 2 0 0 1 2-2z"/><path d="M2 5v-.5a.5.5 0 0 1 1 0V5h.5a.5.5 0 0 1 0 1h-2a.5.5 0 0 1 0-1H2zm0 3v-.5a.5.5 0 0 1 1 0V8h.5a.5.5 0 0 1 0 1h-2a.5.5 0 0 1 0-1H2zm0 3v-.5a.5.5 0 0 1 1 0v.5h.5a.5.5 0 0 1 0 1h-2a.5.5 0 0 1 0-1H2z"/><path fill-rule="evenodd" d="M8.646 5.646a.5.5 0 0 1 .708 0l2 2a.5.5 0 0 1 0 .708l-2 2a.5.5 0 0 1-.708-.708L10.293 8 8.646 6.354a.5.5 0 0 1 0-.708zm-1.292 0a.5.5 0 0 0-.708 0l-2 2a.5.5 0 0 0 0 .708l2 2a.5.5 0 0 0 .708-.708L5.707 8l1.647-1.646a.5.5 0 0 0 0-.708z"/>'); // eslint-disable-next-line
+
+exports.BIconJournalCode = BIconJournalCode;
+var BIconJournalMedical = /*#__PURE__*/(0, _makeIcon.makeIcon)('JournalMedical', '<path d="M4 1h8a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2h1a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V3a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1H2a2 2 0 0 1 2-2z"/><path d="M2 5v-.5a.5.5 0 0 1 1 0V5h.5a.5.5 0 0 1 0 1h-2a.5.5 0 0 1 0-1H2zm0 3v-.5a.5.5 0 0 1 1 0V8h.5a.5.5 0 0 1 0 1h-2a.5.5 0 0 1 0-1H2zm0 3v-.5a.5.5 0 0 1 1 0v.5h.5a.5.5 0 0 1 0 1h-2a.5.5 0 0 1 0-1H2z"/><path fill-rule="evenodd" d="M8 4a.5.5 0 0 1 .5.5v.634l.549-.317a.5.5 0 1 1 .5.866L9 6l.549.317a.5.5 0 1 1-.5.866L8.5 6.866V7.5a.5.5 0 0 1-1 0v-.634l-.549.317a.5.5 0 1 1-.5-.866L7 6l-.549-.317a.5.5 0 0 1 .5-.866l.549.317V4.5A.5.5 0 0 1 8 4zM5 9.5a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5zm0 2a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5z"/>'); // eslint-disable-next-line
+
+exports.BIconJournalMedical = BIconJournalMedical;
+var BIconJournalMinus = /*#__PURE__*/(0, _makeIcon.makeIcon)('JournalMinus', '<path d="M4 1h5v1H4a1 1 0 0 0-1 1H2a2 2 0 0 1 2-2zm10 7v5a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2h1a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V8h1zM2 5v-.5a.5.5 0 0 1 1 0V5h.5a.5.5 0 0 1 0 1h-2a.5.5 0 0 1 0-1H2zm0 3v-.5a.5.5 0 0 1 1 0V8h.5a.5.5 0 0 1 0 1h-2a.5.5 0 0 1 0-1H2zm0 3v-.5a.5.5 0 0 1 1 0v.5h.5a.5.5 0 0 1 0 1h-2a.5.5 0 0 1 0-1H2z"/><path fill-rule="evenodd" d="M11 3.5a.5.5 0 0 1 .5-.5h4a.5.5 0 0 1 0 1h-4a.5.5 0 0 1-.5-.5z"/>'); // eslint-disable-next-line
+
+exports.BIconJournalMinus = BIconJournalMinus;
+var BIconJournalPlus = /*#__PURE__*/(0, _makeIcon.makeIcon)('JournalPlus', '<path d="M4 1h5v1H4a1 1 0 0 0-1 1H2a2 2 0 0 1 2-2zm10 7v5a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2h1a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V8h1zM2 5v-.5a.5.5 0 0 1 1 0V5h.5a.5.5 0 0 1 0 1h-2a.5.5 0 0 1 0-1H2zm0 3v-.5a.5.5 0 0 1 1 0V8h.5a.5.5 0 0 1 0 1h-2a.5.5 0 0 1 0-1H2zm0 3v-.5a.5.5 0 0 1 1 0v.5h.5a.5.5 0 0 1 0 1h-2a.5.5 0 0 1 0-1H2z"/><path fill-rule="evenodd" d="M13.5 1a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1H13V1.5a.5.5 0 0 1 .5-.5z"/><path fill-rule="evenodd" d="M13 3.5a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 0 1H14v1.5a.5.5 0 0 1-1 0v-2z"/>'); // eslint-disable-next-line
+
+exports.BIconJournalPlus = BIconJournalPlus;
+var BIconJournalRichtext = /*#__PURE__*/(0, _makeIcon.makeIcon)('JournalRichtext', '<path d="M4 1h8a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2h1a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V3a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1H2a2 2 0 0 1 2-2z"/><path d="M2 5v-.5a.5.5 0 0 1 1 0V5h.5a.5.5 0 0 1 0 1h-2a.5.5 0 0 1 0-1H2zm0 3v-.5a.5.5 0 0 1 1 0V8h.5a.5.5 0 0 1 0 1h-2a.5.5 0 0 1 0-1H2zm0 3v-.5a.5.5 0 0 1 1 0v.5h.5a.5.5 0 0 1 0 1h-2a.5.5 0 0 1 0-1H2z"/><path fill-rule="evenodd" d="M5 11.5a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 0 1h-2a.5.5 0 0 1-.5-.5zm0-2a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5zm1.639-4.208l1.33.886 1.854-1.855a.25.25 0 0 1 .289-.047L11 4.75V7a.5.5 0 0 1-.5.5h-5A.5.5 0 0 1 5 7v-.5s1.54-1.274 1.639-1.208zM6.75 4.5a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5z"/>'); // eslint-disable-next-line
+
+exports.BIconJournalRichtext = BIconJournalRichtext;
+var BIconJournalText = /*#__PURE__*/(0, _makeIcon.makeIcon)('JournalText', '<path d="M4 1h8a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2h1a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V3a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1H2a2 2 0 0 1 2-2z"/><path d="M2 5v-.5a.5.5 0 0 1 1 0V5h.5a.5.5 0 0 1 0 1h-2a.5.5 0 0 1 0-1H2zm0 3v-.5a.5.5 0 0 1 1 0V8h.5a.5.5 0 0 1 0 1h-2a.5.5 0 0 1 0-1H2zm0 3v-.5a.5.5 0 0 1 1 0v.5h.5a.5.5 0 0 1 0 1h-2a.5.5 0 0 1 0-1H2z"/><path fill-rule="evenodd" d="M5 10.5a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 0 1h-2a.5.5 0 0 1-.5-.5zm0-2a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5zm0-2a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5zm0-2a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5z"/>'); // eslint-disable-next-line
+
+exports.BIconJournalText = BIconJournalText;
+var BIconJournals = /*#__PURE__*/(0, _makeIcon.makeIcon)('Journals', '<path d="M3 2h8a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2h1a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V4a1 1 0 0 0-1-1H3a1 1 0 0 0-1 1H1a2 2 0 0 1 2-2z"/><path d="M5 0h8a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2v-1a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1H3a2 2 0 0 1 2-2zM1 6v-.5a.5.5 0 0 1 1 0V6h.5a.5.5 0 0 1 0 1h-2a.5.5 0 0 1 0-1H1zm0 3v-.5a.5.5 0 0 1 1 0V9h.5a.5.5 0 0 1 0 1h-2a.5.5 0 0 1 0-1H1zm0 3v-.5a.5.5 0 0 1 1 0v.5h.5a.5.5 0 0 1 0 1h-2a.5.5 0 0 1 0-1H1z"/>'); // eslint-disable-next-line
+
+exports.BIconJournals = BIconJournals;
+var BIconJoystick = /*#__PURE__*/(0, _makeIcon.makeIcon)('Joystick', '<path d="M7.106 15.553L.553 12.276A1 1 0 0 1 0 11.382V9.471a1 1 0 0 1 .606-.89L6 6.269v1.088L1 9.5l5.658 2.83a3 3 0 0 0 2.684 0L15 9.5l-5-2.143V6.27l5.394 2.312a1 1 0 0 1 .606.89v1.911a1 1 0 0 1-.553.894l-6.553 3.277a2 2 0 0 1-1.788 0z"/><path fill-rule="evenodd" d="M7.5 9.5v-6h1v6h-1z"/><path d="M10 9.75c0 .414-.895.75-2 .75s-2-.336-2-.75S6.895 9 8 9s2 .336 2 .75zM10 2a2 2 0 1 1-4 0 2 2 0 0 1 4 0z"/>'); // eslint-disable-next-line
+
+exports.BIconJoystick = BIconJoystick;
 var BIconJustify = /*#__PURE__*/(0, _makeIcon.makeIcon)('Justify', '<path fill-rule="evenodd" d="M2 12.5a.5.5 0 0 1 .5-.5h11a.5.5 0 0 1 0 1h-11a.5.5 0 0 1-.5-.5zm0-3a.5.5 0 0 1 .5-.5h11a.5.5 0 0 1 0 1h-11a.5.5 0 0 1-.5-.5zm0-3a.5.5 0 0 1 .5-.5h11a.5.5 0 0 1 0 1h-11a.5.5 0 0 1-.5-.5zm0-3a.5.5 0 0 1 .5-.5h11a.5.5 0 0 1 0 1h-11a.5.5 0 0 1-.5-.5z"/>'); // eslint-disable-next-line
 
 exports.BIconJustify = BIconJustify;
@@ -54377,15 +55140,39 @@ exports.BIconJustifyLeft = BIconJustifyLeft;
 var BIconJustifyRight = /*#__PURE__*/(0, _makeIcon.makeIcon)('JustifyRight', '<path fill-rule="evenodd" d="M6 12.5a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7a.5.5 0 0 1-.5-.5zm-4-3a.5.5 0 0 1 .5-.5h11a.5.5 0 0 1 0 1h-11a.5.5 0 0 1-.5-.5zm0-3a.5.5 0 0 1 .5-.5h11a.5.5 0 0 1 0 1h-11a.5.5 0 0 1-.5-.5zm0-3a.5.5 0 0 1 .5-.5h11a.5.5 0 0 1 0 1h-11a.5.5 0 0 1-.5-.5z"/>'); // eslint-disable-next-line
 
 exports.BIconJustifyRight = BIconJustifyRight;
-var BIconKanban = /*#__PURE__*/(0, _makeIcon.makeIcon)('Kanban', '<path fill-rule="evenodd" d="M13.5 1h-11a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1zm-11-1a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2h-11z"/><rect width="3" height="5" x="6.5" y="2" rx="1"/><rect width="3" height="9" x="2.5" y="2" rx="1"/><rect width="3" height="12" x="10.5" y="2" rx="1"/>'); // eslint-disable-next-line
+var BIconKanban = /*#__PURE__*/(0, _makeIcon.makeIcon)('Kanban', '<path fill-rule="evenodd" d="M13.5 1h-11a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1zm-11-1a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2h-11z"/><path d="M6.5 3a1 1 0 0 1 1-1h1a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1a1 1 0 0 1-1-1V3zm-4 0a1 1 0 0 1 1-1h1a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1h-1a1 1 0 0 1-1-1V3zm8 0a1 1 0 0 1 1-1h1a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1h-1a1 1 0 0 1-1-1V3z"/>'); // eslint-disable-next-line
 
 exports.BIconKanban = BIconKanban;
 var BIconKanbanFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('KanbanFill', '<path fill-rule="evenodd" d="M2.5 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2h-11zm5 2a1 1 0 0 0-1 1v3a1 1 0 0 0 1 1h1a1 1 0 0 0 1-1V3a1 1 0 0 0-1-1h-1zm-5 1a1 1 0 0 1 1-1h1a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1h-1a1 1 0 0 1-1-1V3zm9-1a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h1a1 1 0 0 0 1-1V3a1 1 0 0 0-1-1h-1z"/>'); // eslint-disable-next-line
 
 exports.BIconKanbanFill = BIconKanbanFill;
+var BIconKey = /*#__PURE__*/(0, _makeIcon.makeIcon)('Key', '<path fill-rule="evenodd" d="M0 8a4 4 0 0 1 7.465-2H14a.5.5 0 0 1 .354.146l1.5 1.5a.5.5 0 0 1 0 .708l-1.5 1.5a.5.5 0 0 1-.708 0L13 9.207l-.646.647a.5.5 0 0 1-.708 0L11 9.207l-.646.647a.5.5 0 0 1-.708 0L9 9.207l-.646.647A.5.5 0 0 1 8 10h-.535A4 4 0 0 1 0 8zm4-3a3 3 0 1 0 2.712 4.285A.5.5 0 0 1 7.163 9h.63l.853-.854a.5.5 0 0 1 .708 0l.646.647.646-.647a.5.5 0 0 1 .708 0l.646.647.646-.647a.5.5 0 0 1 .708 0l.646.647.793-.793-1-1h-6.63a.5.5 0 0 1-.451-.285A3 3 0 0 0 4 5z"/><path d="M4 8a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/>'); // eslint-disable-next-line
+
+exports.BIconKey = BIconKey;
+var BIconKeyFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('KeyFill', '<path fill-rule="evenodd" d="M3.5 11.5a3.5 3.5 0 1 1 3.163-5H14L15.5 8 14 9.5l-1-1-1 1-1-1-1 1-1-1-1 1H6.663a3.5 3.5 0 0 1-3.163 2zM2.5 9a1 1 0 1 0 0-2 1 1 0 0 0 0 2z"/>'); // eslint-disable-next-line
+
+exports.BIconKeyFill = BIconKeyFill;
+var BIconKeyboard = /*#__PURE__*/(0, _makeIcon.makeIcon)('Keyboard', '<path fill-rule="evenodd" d="M14 5H2a1 1 0 0 0-1 1v5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V6a1 1 0 0 0-1-1zM2 4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2H2z"/><path d="M13 10.25a.25.25 0 0 1 .25-.25h.5a.25.25 0 0 1 .25.25v.5a.25.25 0 0 1-.25.25h-.5a.25.25 0 0 1-.25-.25v-.5zm0-2a.25.25 0 0 1 .25-.25h.5a.25.25 0 0 1 .25.25v.5a.25.25 0 0 1-.25.25h-.5a.25.25 0 0 1-.25-.25v-.5zm-5 0A.25.25 0 0 1 8.25 8h.5a.25.25 0 0 1 .25.25v.5a.25.25 0 0 1-.25.25h-.5A.25.25 0 0 1 8 8.75v-.5zm2 0a.25.25 0 0 1 .25-.25h1.5a.25.25 0 0 1 .25.25v.5a.25.25 0 0 1-.25.25h-1.5a.25.25 0 0 1-.25-.25v-.5zm1 2a.25.25 0 0 1 .25-.25h.5a.25.25 0 0 1 .25.25v.5a.25.25 0 0 1-.25.25h-.5a.25.25 0 0 1-.25-.25v-.5zm-5-2A.25.25 0 0 1 6.25 8h.5a.25.25 0 0 1 .25.25v.5a.25.25 0 0 1-.25.25h-.5A.25.25 0 0 1 6 8.75v-.5zm-2 0A.25.25 0 0 1 4.25 8h.5a.25.25 0 0 1 .25.25v.5a.25.25 0 0 1-.25.25h-.5A.25.25 0 0 1 4 8.75v-.5zm-2 0A.25.25 0 0 1 2.25 8h.5a.25.25 0 0 1 .25.25v.5a.25.25 0 0 1-.25.25h-.5A.25.25 0 0 1 2 8.75v-.5zm11-2a.25.25 0 0 1 .25-.25h.5a.25.25 0 0 1 .25.25v.5a.25.25 0 0 1-.25.25h-.5a.25.25 0 0 1-.25-.25v-.5zm-2 0a.25.25 0 0 1 .25-.25h.5a.25.25 0 0 1 .25.25v.5a.25.25 0 0 1-.25.25h-.5a.25.25 0 0 1-.25-.25v-.5zm-2 0A.25.25 0 0 1 9.25 6h.5a.25.25 0 0 1 .25.25v.5a.25.25 0 0 1-.25.25h-.5A.25.25 0 0 1 9 6.75v-.5zm-2 0A.25.25 0 0 1 7.25 6h.5a.25.25 0 0 1 .25.25v.5a.25.25 0 0 1-.25.25h-.5A.25.25 0 0 1 7 6.75v-.5zm-2 0A.25.25 0 0 1 5.25 6h.5a.25.25 0 0 1 .25.25v.5a.25.25 0 0 1-.25.25h-.5A.25.25 0 0 1 5 6.75v-.5zm-3 0A.25.25 0 0 1 2.25 6h1.5a.25.25 0 0 1 .25.25v.5a.25.25 0 0 1-.25.25h-1.5A.25.25 0 0 1 2 6.75v-.5zm0 4a.25.25 0 0 1 .25-.25h.5a.25.25 0 0 1 .25.25v.5a.25.25 0 0 1-.25.25h-.5a.25.25 0 0 1-.25-.25v-.5zm2 0a.25.25 0 0 1 .25-.25h5.5a.25.25 0 0 1 .25.25v.5a.25.25 0 0 1-.25.25h-5.5a.25.25 0 0 1-.25-.25v-.5z"/>'); // eslint-disable-next-line
+
+exports.BIconKeyboard = BIconKeyboard;
+var BIconKeyboardFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('KeyboardFill', '<path fill-rule="evenodd" d="M0 6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V6zm13 .25a.25.25 0 0 1 .25-.25h.5a.25.25 0 0 1 .25.25v.5a.25.25 0 0 1-.25.25h-.5a.25.25 0 0 1-.25-.25v-.5zM2.25 8a.25.25 0 0 0-.25.25v.5c0 .138.112.25.25.25h.5A.25.25 0 0 0 3 8.75v-.5A.25.25 0 0 0 2.75 8h-.5zM4 8.25A.25.25 0 0 1 4.25 8h.5a.25.25 0 0 1 .25.25v.5a.25.25 0 0 1-.25.25h-.5A.25.25 0 0 1 4 8.75v-.5zM6.25 8a.25.25 0 0 0-.25.25v.5c0 .138.112.25.25.25h.5A.25.25 0 0 0 7 8.75v-.5A.25.25 0 0 0 6.75 8h-.5zM8 8.25A.25.25 0 0 1 8.25 8h.5a.25.25 0 0 1 .25.25v.5a.25.25 0 0 1-.25.25h-.5A.25.25 0 0 1 8 8.75v-.5zM13.25 8a.25.25 0 0 0-.25.25v.5c0 .138.112.25.25.25h.5a.25.25 0 0 0 .25-.25v-.5a.25.25 0 0 0-.25-.25h-.5zm0 2a.25.25 0 0 0-.25.25v.5c0 .138.112.25.25.25h.5a.25.25 0 0 0 .25-.25v-.5a.25.25 0 0 0-.25-.25h-.5zm-3-2a.25.25 0 0 0-.25.25v.5c0 .138.112.25.25.25h1.5a.25.25 0 0 0 .25-.25v-.5a.25.25 0 0 0-.25-.25h-1.5zm.75 2.25a.25.25 0 0 1 .25-.25h.5a.25.25 0 0 1 .25.25v.5a.25.25 0 0 1-.25.25h-.5a.25.25 0 0 1-.25-.25v-.5zM11.25 6a.25.25 0 0 0-.25.25v.5c0 .138.112.25.25.25h.5a.25.25 0 0 0 .25-.25v-.5a.25.25 0 0 0-.25-.25h-.5zM9 6.25A.25.25 0 0 1 9.25 6h.5a.25.25 0 0 1 .25.25v.5a.25.25 0 0 1-.25.25h-.5A.25.25 0 0 1 9 6.75v-.5zM7.25 6a.25.25 0 0 0-.25.25v.5c0 .138.112.25.25.25h.5A.25.25 0 0 0 8 6.75v-.5A.25.25 0 0 0 7.75 6h-.5zM5 6.25A.25.25 0 0 1 5.25 6h.5a.25.25 0 0 1 .25.25v.5a.25.25 0 0 1-.25.25h-.5A.25.25 0 0 1 5 6.75v-.5zM2.25 6a.25.25 0 0 0-.25.25v.5c0 .138.112.25.25.25h1.5A.25.25 0 0 0 4 6.75v-.5A.25.25 0 0 0 3.75 6h-1.5zM2 10.25a.25.25 0 0 1 .25-.25h.5a.25.25 0 0 1 .25.25v.5a.25.25 0 0 1-.25.25h-.5a.25.25 0 0 1-.25-.25v-.5zM4.25 10a.25.25 0 0 0-.25.25v.5c0 .138.112.25.25.25h5.5a.25.25 0 0 0 .25-.25v-.5a.25.25 0 0 0-.25-.25h-5.5z"/>'); // eslint-disable-next-line
+
+exports.BIconKeyboardFill = BIconKeyboardFill;
+var BIconLadder = /*#__PURE__*/(0, _makeIcon.makeIcon)('Ladder', '<path fill-rule="evenodd" d="M4.5 1a.5.5 0 0 1 .5.5V2h6v-.5a.5.5 0 0 1 1 0v14a.5.5 0 0 1-1 0V15H5v.5a.5.5 0 0 1-1 0v-14a.5.5 0 0 1 .5-.5zM5 14h6v-2H5v2zm0-3h6V9H5v2zm0-3h6V6H5v2zm0-3h6V3H5v2z"/>'); // eslint-disable-next-line
+
+exports.BIconLadder = BIconLadder;
+var BIconLamp = /*#__PURE__*/(0, _makeIcon.makeIcon)('Lamp', '<path fill-rule="evenodd" d="M13 3H3v4h10V3zM3 2a1 1 0 0 0-1 1v4a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V3a1 1 0 0 0-1-1H3zm4.5-1l.276-.553a.25.25 0 0 1 .448 0L8.5 1h-1zm-.012 9c-.337.646-.677 1.33-.95 1.949-.176.396-.318.75-.413 1.042a3.904 3.904 0 0 0-.102.36c-.01.047-.016.083-.02.11L6 13.5c0 .665.717 1.5 2 1.5s2-.835 2-1.5c0 0 0-.013-.004-.039a1.347 1.347 0 0 0-.02-.11 3.696 3.696 0 0 0-.1-.36 11.747 11.747 0 0 0-.413-1.042A34.827 34.827 0 0 0 8.513 10H7.487zm1.627-1h-2.23C6.032 10.595 5 12.69 5 13.5 5 14.88 6.343 16 8 16s3-1.12 3-2.5c0-.81-1.032-2.905-1.885-4.5z"/>'); // eslint-disable-next-line
+
+exports.BIconLamp = BIconLamp;
+var BIconLampFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('LampFill', '<path d="M2 3a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v4a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3z"/><path fill-rule="evenodd" d="M7.5 1l.276-.553a.25.25 0 0 1 .448 0L8.5 1h-1zm-.615 8h2.23C9.968 10.595 11 12.69 11 13.5c0 1.38-1.343 2.5-3 2.5s-3-1.12-3-2.5c0-.81 1.032-2.905 1.885-4.5z"/>'); // eslint-disable-next-line
+
+exports.BIconLampFill = BIconLampFill;
 var BIconLaptop = /*#__PURE__*/(0, _makeIcon.makeIcon)('Laptop', '<path fill-rule="evenodd" d="M13.5 3h-11a.5.5 0 0 0-.5.5V11h12V3.5a.5.5 0 0 0-.5-.5zm-11-1A1.5 1.5 0 0 0 1 3.5V12h14V3.5A1.5 1.5 0 0 0 13.5 2h-11z"/><path d="M0 12h16v.5a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 0 12.5V12z"/>'); // eslint-disable-next-line
 
 exports.BIconLaptop = BIconLaptop;
+var BIconLaptopFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('LaptopFill', '<path fill-rule="evenodd" d="M2.5 2A1.5 1.5 0 0 0 1 3.5V12h14V3.5A1.5 1.5 0 0 0 13.5 2h-11z"/><path d="M0 12h16v.5a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 0 12.5V12z"/>'); // eslint-disable-next-line
+
+exports.BIconLaptopFill = BIconLaptopFill;
 var BIconLayers = /*#__PURE__*/(0, _makeIcon.makeIcon)('Layers', '<path fill-rule="evenodd" d="M3.188 8L.264 9.559a.5.5 0 0 0 0 .882l7.5 4a.5.5 0 0 0 .47 0l7.5-4a.5.5 0 0 0 0-.882L12.813 8l-1.063.567L14.438 10 8 13.433 1.562 10 4.25 8.567 3.187 8z"/><path fill-rule="evenodd" d="M7.765 1.559a.5.5 0 0 1 .47 0l7.5 4a.5.5 0 0 1 0 .882l-7.5 4a.5.5 0 0 1-.47 0l-7.5-4a.5.5 0 0 1 0-.882l7.5-4zM1.563 6L8 9.433 14.438 6 8 2.567 1.562 6z"/>'); // eslint-disable-next-line
 
 exports.BIconLayers = BIconLayers;
@@ -54437,7 +55224,7 @@ exports.BIconLightning = BIconLightning;
 var BIconLightningFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('LightningFill', '<path fill-rule="evenodd" d="M11.251.068a.5.5 0 0 1 .227.58L9.677 6.5H13a.5.5 0 0 1 .364.843l-8 8.5a.5.5 0 0 1-.842-.49L6.323 9.5H3a.5.5 0 0 1-.364-.843l8-8.5a.5.5 0 0 1 .615-.09z"/>'); // eslint-disable-next-line
 
 exports.BIconLightningFill = BIconLightningFill;
-var BIconLink = /*#__PURE__*/(0, _makeIcon.makeIcon)('Link', '<path d="M6.354 5.5H4a3 3 0 0 0 0 6h3a3 3 0 0 0 2.83-4H9c-.086 0-.17.01-.25.031A2 2 0 0 1 7 10.5H4a2 2 0 1 1 0-4h1.535c.218-.376.495-.714.82-1z"/><path d="M6.764 6.5H7c.364 0 .706.097 1 .268A1.99 1.99 0 0 1 9 6.5h.236A3.004 3.004 0 0 0 8 5.67a3 3 0 0 0-1.236.83z"/><path d="M9 5.5a3 3 0 0 0-2.83 4h1.098A2 2 0 0 1 9 6.5h3a2 2 0 1 1 0 4h-1.535a4.02 4.02 0 0 1-.82 1H12a3 3 0 1 0 0-6H9z"/><path d="M8 11.33a3.01 3.01 0 0 0 1.236-.83H9a1.99 1.99 0 0 1-1-.268 1.99 1.99 0 0 1-1 .268h-.236c.332.371.756.66 1.236.83z"/>'); // eslint-disable-next-line
+var BIconLink = /*#__PURE__*/(0, _makeIcon.makeIcon)('Link', '<path d="M6.354 5.5H4a3 3 0 0 0 0 6h3a3 3 0 0 0 2.83-4H9c-.086 0-.17.01-.25.031A2 2 0 0 1 7 10.5H4a2 2 0 1 1 0-4h1.535c.218-.376.495-.714.82-1z"/><path d="M9 5.5a3 3 0 0 0-2.83 4h1.098A2 2 0 0 1 9 6.5h3a2 2 0 1 1 0 4h-1.535a4.02 4.02 0 0 1-.82 1H12a3 3 0 1 0 0-6H9z"/>'); // eslint-disable-next-line
 
 exports.BIconLink = BIconLink;
 var BIconLink45deg = /*#__PURE__*/(0, _makeIcon.makeIcon)('Link45deg', '<path d="M4.715 6.542L3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1.001 1.001 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4.018 4.018 0 0 1-.128-1.287z"/><path d="M5.712 6.96l.167-.167a1.99 1.99 0 0 1 .896-.518 1.99 1.99 0 0 1 .518-.896l.167-.167A3.004 3.004 0 0 0 6 5.499c-.22.46-.316.963-.288 1.46z"/><path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 0 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 0 0-4.243-4.243L6.586 4.672z"/><path d="M10 9.5a2.99 2.99 0 0 0 .288-1.46l-.167.167a1.99 1.99 0 0 1-.896.518 1.99 1.99 0 0 1-.518.896l-.167.167A3.004 3.004 0 0 0 10 9.501z"/>'); // eslint-disable-next-line
@@ -54455,6 +55242,9 @@ exports.BIconListNested = BIconListNested;
 var BIconListOl = /*#__PURE__*/(0, _makeIcon.makeIcon)('ListOl', '<path fill-rule="evenodd" d="M5 11.5a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5z"/><path d="M1.713 11.865v-.474H2c.217 0 .363-.137.363-.317 0-.185-.158-.31-.361-.31-.223 0-.367.152-.373.31h-.59c.016-.467.373-.787.986-.787.588-.002.954.291.957.703a.595.595 0 0 1-.492.594v.033a.615.615 0 0 1 .569.631c.003.533-.502.8-1.051.8-.656 0-1-.37-1.008-.794h.582c.008.178.186.306.422.309.254 0 .424-.145.422-.35-.002-.195-.155-.348-.414-.348h-.3zm-.004-4.699h-.604v-.035c0-.408.295-.844.958-.844.583 0 .96.326.96.756 0 .389-.257.617-.476.848l-.537.572v.03h1.054V9H1.143v-.395l.957-.99c.138-.142.293-.304.293-.508 0-.18-.147-.32-.342-.32a.33.33 0 0 0-.342.338v.041zM2.564 5h-.635V2.924h-.031l-.598.42v-.567l.629-.443h.635V5z"/>'); // eslint-disable-next-line
 
 exports.BIconListOl = BIconListOl;
+var BIconListStars = /*#__PURE__*/(0, _makeIcon.makeIcon)('ListStars', '<path fill-rule="evenodd" d="M5 11.5a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5z"/><path d="M2.242 2.194a.27.27 0 0 1 .516 0l.162.53c.035.115.14.194.258.194h.551c.259 0 .37.333.164.493l-.468.363a.277.277 0 0 0-.094.3l.173.569c.078.256-.213.462-.423.3l-.417-.324a.267.267 0 0 0-.328 0l-.417.323c-.21.163-.5-.043-.423-.299l.173-.57a.277.277 0 0 0-.094-.299l-.468-.363c-.206-.16-.095-.493.164-.493h.55a.271.271 0 0 0 .259-.194l.162-.53zm0 4a.27.27 0 0 1 .516 0l.162.53c.035.115.14.194.258.194h.551c.259 0 .37.333.164.493l-.468.363a.277.277 0 0 0-.094.3l.173.569c.078.255-.213.462-.423.3l-.417-.324a.267.267 0 0 0-.328 0l-.417.323c-.21.163-.5-.043-.423-.299l.173-.57a.277.277 0 0 0-.094-.299l-.468-.363c-.206-.16-.095-.493.164-.493h.55a.271.271 0 0 0 .259-.194l.162-.53zm0 4a.27.27 0 0 1 .516 0l.162.53c.035.115.14.194.258.194h.551c.259 0 .37.333.164.493l-.468.363a.277.277 0 0 0-.094.3l.173.569c.078.255-.213.462-.423.3l-.417-.324a.267.267 0 0 0-.328 0l-.417.323c-.21.163-.5-.043-.423-.299l.173-.57a.277.277 0 0 0-.094-.299l-.468-.363c-.206-.16-.095-.493.164-.493h.55a.271.271 0 0 0 .259-.194l.162-.53z"/>'); // eslint-disable-next-line
+
+exports.BIconListStars = BIconListStars;
 var BIconListTask = /*#__PURE__*/(0, _makeIcon.makeIcon)('ListTask', '<path fill-rule="evenodd" d="M2 2.5a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5V3a.5.5 0 0 0-.5-.5H2zM3 3H2v1h1V3z"/><path d="M5 3.5a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5zM5.5 7a.5.5 0 0 0 0 1h9a.5.5 0 0 0 0-1h-9zm0 4a.5.5 0 0 0 0 1h9a.5.5 0 0 0 0-1h-9z"/><path fill-rule="evenodd" d="M1.5 7a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5H2a.5.5 0 0 1-.5-.5V7zM2 7h1v1H2V7zm0 3.5a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5H2zm1 .5H2v1h1v-1z"/>'); // eslint-disable-next-line
 
 exports.BIconListTask = BIconListTask;
@@ -54464,12 +55254,48 @@ exports.BIconListUl = BIconListUl;
 var BIconLock = /*#__PURE__*/(0, _makeIcon.makeIcon)('Lock', '<path fill-rule="evenodd" d="M11.5 8h-7a1 1 0 0 0-1 1v5a1 1 0 0 0 1 1h7a1 1 0 0 0 1-1V9a1 1 0 0 0-1-1zm-7-1a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h7a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-7zm0-3a3.5 3.5 0 1 1 7 0v3h-1V4a2.5 2.5 0 0 0-5 0v3h-1V4z"/>'); // eslint-disable-next-line
 
 exports.BIconLock = BIconLock;
-var BIconLockFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('LockFill', '<rect width="11" height="9" x="2.5" y="7" rx="2"/><path fill-rule="evenodd" d="M4.5 4a3.5 3.5 0 1 1 7 0v3h-1V4a2.5 2.5 0 0 0-5 0v3h-1V4z"/>'); // eslint-disable-next-line
+var BIconLockFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('LockFill', '<path d="M2.5 9a2 2 0 0 1 2-2h7a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-7a2 2 0 0 1-2-2V9z"/><path fill-rule="evenodd" d="M4.5 4a3.5 3.5 0 1 1 7 0v3h-1V4a2.5 2.5 0 0 0-5 0v3h-1V4z"/>'); // eslint-disable-next-line
 
 exports.BIconLockFill = BIconLockFill;
+var BIconMailbox = /*#__PURE__*/(0, _makeIcon.makeIcon)('Mailbox', '<path fill-rule="evenodd" d="M4 4a3 3 0 0 0-3 3v6h6V7a3 3 0 0 0-3-3zm0-1h8a4 4 0 0 1 4 4v6a1 1 0 0 1-1 1H1a1 1 0 0 1-1-1V7a4 4 0 0 1 4-4zm2.646 1A3.99 3.99 0 0 1 8 7v6h7V7a3 3 0 0 0-3-3H6.646z"/><path fill-rule="evenodd" d="M11.793 8.5H9v-1h5a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.354-.146l-.853-.854z"/><path d="M5 7c0 .552-.448 0-1 0s-1 .552-1 0a1 1 0 0 1 2 0z"/>'); // eslint-disable-next-line
+
+exports.BIconMailbox = BIconMailbox;
+var BIconMailbox2 = /*#__PURE__*/(0, _makeIcon.makeIcon)('Mailbox2', '<path fill-rule="evenodd" d="M12 3H4a4 4 0 0 0-4 4v6a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1V7a4 4 0 0 0-4-4zM8 7a3.99 3.99 0 0 0-1.354-3H12a3 3 0 0 1 3 3v6H8V7zm1 1.5h2.793l.853.854A.5.5 0 0 0 13 9.5h1a.5.5 0 0 0 .5-.5V8a.5.5 0 0 0-.5-.5H9v1zM4.585 7.157C4.836 7.264 5 7.334 5 7a1 1 0 0 0-2 0c0 .334.164.264.415.157C3.58 7.087 3.782 7 4 7c.218 0 .42.086.585.157z"/>'); // eslint-disable-next-line
+
+exports.BIconMailbox2 = BIconMailbox2;
 var BIconMap = /*#__PURE__*/(0, _makeIcon.makeIcon)('Map', '<path fill-rule="evenodd" d="M15.817.613A.5.5 0 0 1 16 1v13a.5.5 0 0 1-.402.49l-5 1a.502.502 0 0 1-.196 0L5.5 14.51l-4.902.98A.5.5 0 0 1 0 15V2a.5.5 0 0 1 .402-.49l5-1a.5.5 0 0 1 .196 0l4.902.98 4.902-.98a.5.5 0 0 1 .415.103zM10 2.41l-4-.8v11.98l4 .8V2.41zm1 11.98l4-.8V1.61l-4 .8v11.98zm-6-.8V1.61l-4 .8v11.98l4-.8z"/>'); // eslint-disable-next-line
 
 exports.BIconMap = BIconMap;
+var BIconMarkdown = /*#__PURE__*/(0, _makeIcon.makeIcon)('Markdown', '<path fill-rule="evenodd" d="M14 3H2a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4a1 1 0 0 0-1-1zM2 2a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H2z"/><path fill-rule="evenodd" d="M9.146 8.146a.5.5 0 0 1 .708 0L11.5 9.793l1.646-1.647a.5.5 0 0 1 .708.708l-2 2a.5.5 0 0 1-.708 0l-2-2a.5.5 0 0 1 0-.708z"/><path fill-rule="evenodd" d="M11.5 5a.5.5 0 0 1 .5.5v4a.5.5 0 0 1-1 0v-4a.5.5 0 0 1 .5-.5z"/><path d="M3.56 11V7.01h.056l1.428 3.239h.774l1.42-3.24h.056V11h1.073V5.001h-1.2l-1.71 3.894h-.039l-1.71-3.894H2.5V11h1.06z"/>'); // eslint-disable-next-line
+
+exports.BIconMarkdown = BIconMarkdown;
+var BIconMarkdownFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('MarkdownFill', '<path fill-rule="evenodd" d="M0 4a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V4zm11.5 1a.5.5 0 0 1 .5.5v3.793l1.146-1.147a.5.5 0 0 1 .708.708l-2 2a.5.5 0 0 1-.708 0l-2-2a.5.5 0 1 1 .708-.708L11 9.293V5.5a.5.5 0 0 1 .5-.5zM3.56 7.01V11H2.5V5.001h1.208l1.71 3.894h.04l1.709-3.894h1.2V11H7.294V7.01h-.057l-1.42 3.239h-.773l-1.428-3.24H3.56z"/>'); // eslint-disable-next-line
+
+exports.BIconMarkdownFill = BIconMarkdownFill;
+var BIconMenuApp = /*#__PURE__*/(0, _makeIcon.makeIcon)('MenuApp', '<path fill-rule="evenodd" d="M0 1.5A1.5 1.5 0 0 1 1.5 0h2A1.5 1.5 0 0 1 5 1.5v2A1.5 1.5 0 0 1 3.5 5h-2A1.5 1.5 0 0 1 0 3.5v-2zM1.5 1a.5.5 0 0 0-.5.5v2a.5.5 0 0 0 .5.5h2a.5.5 0 0 0 .5-.5v-2a.5.5 0 0 0-.5-.5h-2zM14 7H2a1 1 0 0 0-1 1v5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8a1 1 0 0 0-1-1zM2 6a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2H2z"/><path fill-rule="evenodd" d="M15 11H1v-1h14v1zM2 12.5a.5.5 0 0 1 .5-.5h6a.5.5 0 0 1 0 1h-6a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5z"/>'); // eslint-disable-next-line
+
+exports.BIconMenuApp = BIconMenuApp;
+var BIconMenuAppFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('MenuAppFill', '<path fill-rule="evenodd" d="M0 1.5A1.5 1.5 0 0 1 1.5 0h2A1.5 1.5 0 0 1 5 1.5v2A1.5 1.5 0 0 1 3.5 5h-2A1.5 1.5 0 0 1 0 3.5v-2zM14 7H2a1 1 0 0 0-1 1v5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8a1 1 0 0 0-1-1zM2 6a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2H2z"/><path fill-rule="evenodd" d="M15 11H1v-1h14v1zM2 12.5a.5.5 0 0 1 .5-.5h6a.5.5 0 0 1 0 1h-6a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5z"/>'); // eslint-disable-next-line
+
+exports.BIconMenuAppFill = BIconMenuAppFill;
+var BIconMenuButton = /*#__PURE__*/(0, _makeIcon.makeIcon)('MenuButton', '<path fill-rule="evenodd" d="M0 1.5A1.5 1.5 0 0 1 1.5 0h8A1.5 1.5 0 0 1 11 1.5v2A1.5 1.5 0 0 1 9.5 5h-8A1.5 1.5 0 0 1 0 3.5v-2zM1.5 1a.5.5 0 0 0-.5.5v2a.5.5 0 0 0 .5.5h8a.5.5 0 0 0 .5-.5v-2a.5.5 0 0 0-.5-.5h-8zM14 7H2a1 1 0 0 0-1 1v5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8a1 1 0 0 0-1-1zM2 6a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2H2z"/><path fill-rule="evenodd" d="M15 11H1v-1h14v1zM2 12.5a.5.5 0 0 1 .5-.5h6a.5.5 0 0 1 0 1h-6a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5z"/><path d="M7.823 2.823l-.396-.396A.25.25 0 0 1 7.604 2h.792a.25.25 0 0 1 .177.427l-.396.396a.25.25 0 0 1-.354 0z"/>'); // eslint-disable-next-line
+
+exports.BIconMenuButton = BIconMenuButton;
+var BIconMenuButtonFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('MenuButtonFill', '<path fill-rule="evenodd" d="M14 7H2a1 1 0 0 0-1 1v5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8a1 1 0 0 0-1-1zM2 6a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2H2z"/><path fill-rule="evenodd" d="M15 11H1v-1h14v1zM2 12.5a.5.5 0 0 1 .5-.5h6a.5.5 0 0 1 0 1h-6a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5zM1.5 0A1.5 1.5 0 0 0 0 1.5v2A1.5 1.5 0 0 0 1.5 5h8A1.5 1.5 0 0 0 11 3.5v-2A1.5 1.5 0 0 0 9.5 0h-8zm5.927 2.427l.396.396a.25.25 0 0 0 .354 0l.396-.396A.25.25 0 0 0 8.396 2h-.792a.25.25 0 0 0-.177.427z"/>'); // eslint-disable-next-line
+
+exports.BIconMenuButtonFill = BIconMenuButtonFill;
+var BIconMenuButtonWide = /*#__PURE__*/(0, _makeIcon.makeIcon)('MenuButtonWide', '<path fill-rule="evenodd" d="M0 1.5A1.5 1.5 0 0 1 1.5 0h13A1.5 1.5 0 0 1 16 1.5v2A1.5 1.5 0 0 1 14.5 5h-13A1.5 1.5 0 0 1 0 3.5v-2zM1.5 1a.5.5 0 0 0-.5.5v2a.5.5 0 0 0 .5.5h13a.5.5 0 0 0 .5-.5v-2a.5.5 0 0 0-.5-.5h-13zM14 7H2a1 1 0 0 0-1 1v5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8a1 1 0 0 0-1-1zM2 6a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2H2z"/><path fill-rule="evenodd" d="M15 11H1v-1h14v1zM2 12.5a.5.5 0 0 1 .5-.5h6a.5.5 0 0 1 0 1h-6a.5.5 0 0 1-.5-.5zm0-10a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 0 1h-3a.5.5 0 0 1-.5-.5zm0 6a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5z"/><path d="M12.823 2.823l-.396-.396A.25.25 0 0 1 12.604 2h.792a.25.25 0 0 1 .177.427l-.396.396a.25.25 0 0 1-.354 0z"/>'); // eslint-disable-next-line
+
+exports.BIconMenuButtonWide = BIconMenuButtonWide;
+var BIconMenuButtonWideFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('MenuButtonWideFill', '<path fill-rule="evenodd" d="M14 7H2a1 1 0 0 0-1 1v5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8a1 1 0 0 0-1-1zM2 6a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2H2z"/><path fill-rule="evenodd" d="M15 11H1v-1h14v1zM2 12.5a.5.5 0 0 1 .5-.5h6a.5.5 0 0 1 0 1h-6a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5zM1.5 0A1.5 1.5 0 0 0 0 1.5v2A1.5 1.5 0 0 0 1.5 5h13A1.5 1.5 0 0 0 16 3.5v-2A1.5 1.5 0 0 0 14.5 0h-13zm1 2a.5.5 0 0 0 0 1h3a.5.5 0 0 0 0-1h-3zm9.927.427l.396.396a.25.25 0 0 0 .354 0l.396-.396A.25.25 0 0 0 13.396 2h-.792a.25.25 0 0 0-.177.427z"/>'); // eslint-disable-next-line
+
+exports.BIconMenuButtonWideFill = BIconMenuButtonWideFill;
+var BIconMenuDown = /*#__PURE__*/(0, _makeIcon.makeIcon)('MenuDown', '<path fill-rule="evenodd" d="M15 13V4a1 1 0 0 0-1-1h-3.586A2 2 0 0 1 9 2.414l-1-1-1 1A2 2 0 0 1 5.586 3H2a1 1 0 0 0-1 1v9a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1zM2 2a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2h-3.586a1 1 0 0 1-.707-.293L8.354.354a.5.5 0 0 0-.708 0L6.293 1.707A1 1 0 0 1 5.586 2H2z"/><path fill-rule="evenodd" d="M15 11H1v-1h14v1zm0-4H1V6h14v1zM2 12.5a.5.5 0 0 1 .5-.5h6a.5.5 0 0 1 0 1h-6a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h11a.5.5 0 0 1 0 1h-11a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h8a.5.5 0 0 1 0 1h-8a.5.5 0 0 1-.5-.5z"/>'); // eslint-disable-next-line
+
+exports.BIconMenuDown = BIconMenuDown;
+var BIconMenuUp = /*#__PURE__*/(0, _makeIcon.makeIcon)('MenuUp', '<path fill-rule="evenodd" d="M15 3.207v9a1 1 0 0 1-1 1h-3.586A2 2 0 0 0 9 13.793l-1 1-1-1a2 2 0 0 0-1.414-.586H2a1 1 0 0 1-1-1v-9a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1zm-13 11a2 2 0 0 1-2-2v-9a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-3.586a1 1 0 0 0-.707.293l-1.353 1.354a.5.5 0 0 1-.708 0L6.293 14.5a1 1 0 0 0-.707-.293H2z"/><path fill-rule="evenodd" d="M15 5.207H1v1h14v-1zm0 4H1v1h14v-1zm-13-5.5a.5.5 0 0 0 .5.5h6a.5.5 0 1 0 0-1h-6a.5.5 0 0 0-.5.5zm0 4a.5.5 0 0 0 .5.5h11a.5.5 0 0 0 0-1h-11a.5.5 0 0 0-.5.5zm0 4a.5.5 0 0 0 .5.5h8a.5.5 0 0 0 0-1h-8a.5.5 0 0 0-.5.5z"/>'); // eslint-disable-next-line
+
+exports.BIconMenuUp = BIconMenuUp;
 var BIconMic = /*#__PURE__*/(0, _makeIcon.makeIcon)('Mic', '<path fill-rule="evenodd" d="M3.5 6.5A.5.5 0 0 1 4 7v1a4 4 0 0 0 8 0V7a.5.5 0 0 1 1 0v1a5 5 0 0 1-4.5 4.975V15h3a.5.5 0 0 1 0 1h-7a.5.5 0 0 1 0-1h3v-2.025A5 5 0 0 1 3 8V7a.5.5 0 0 1 .5-.5z"/><path fill-rule="evenodd" d="M10 8V3a2 2 0 1 0-4 0v5a2 2 0 1 0 4 0zM8 0a3 3 0 0 0-3 3v5a3 3 0 0 0 6 0V3a3 3 0 0 0-3-3z"/>'); // eslint-disable-next-line
 
 exports.BIconMic = BIconMic;
@@ -54491,6 +55317,15 @@ exports.BIconMinecartLoaded = BIconMinecartLoaded;
 var BIconMoon = /*#__PURE__*/(0, _makeIcon.makeIcon)('Moon', '<path fill-rule="evenodd" d="M14.53 10.53a7 7 0 0 1-9.058-9.058A7.003 7.003 0 0 0 8 15a7.002 7.002 0 0 0 6.53-4.47z"/>'); // eslint-disable-next-line
 
 exports.BIconMoon = BIconMoon;
+var BIconMouse = /*#__PURE__*/(0, _makeIcon.makeIcon)('Mouse', '<path fill-rule="evenodd" d="M8 3a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 3zm4 8V5a4 4 0 0 0-8 0v6a4 4 0 0 0 8 0zM8 0a5 5 0 0 0-5 5v6a5 5 0 0 0 10 0V5a5 5 0 0 0-5-5z"/>'); // eslint-disable-next-line
+
+exports.BIconMouse = BIconMouse;
+var BIconMouse2 = /*#__PURE__*/(0, _makeIcon.makeIcon)('Mouse2', '<path fill-rule="evenodd" d="M3 5.188C3 2.341 5.22 0 8 0s5 2.342 5 5.188v5.625C13 13.658 10.78 16 8 16s-5-2.342-5-5.188V5.189zm4.5-4.155C5.541 1.289 4 3.035 4 5.188V5.5h3.5V1.033zm1 0V5.5H12v-.313c0-2.152-1.541-3.898-3.5-4.154zM12 6.5H4v4.313C4 13.145 5.81 15 8 15s4-1.855 4-4.188V6.5z"/>'); // eslint-disable-next-line
+
+exports.BIconMouse2 = BIconMouse2;
+var BIconMouse3 = /*#__PURE__*/(0, _makeIcon.makeIcon)('Mouse3', '<path fill-rule="evenodd" d="M5.473.463C5.896.157 6.407 0 7 0c1.26 0 2.981.123 4.403.825.72.355 1.375.864 1.85 1.59.475.728.747 1.642.747 2.772v5.625C14 13.659 11.78 16 9 16H7c-2.78 0-5-2.342-5-5.188V8.236A2.5 2.5 0 0 1 3.382 6L4 5.691v-.503c0-1.31.124-2.569.543-3.517.213-.482.512-.906.93-1.208zM4.017 6.801l-.188.093A1.5 1.5 0 0 0 3 8.236v2.576C3 13.146 4.81 15 7 15h2c2.19 0 4-1.855 4-4.188V5.189c0-.964-.23-1.683-.585-2.226-.356-.546-.86-.947-1.454-1.24C9.754 1.127 8.226 1 7 1c-.407 0-.708.105-.941.274-.239.172-.44.435-.602.801C5.127 2.823 5 3.907 5 5.187v.844a16.734 16.734 0 0 0 .008.448c.007.3.023.715.053 1.175.063.937.186 2.005.413 2.688a.5.5 0 1 1-.948.316c-.273-.817-.4-2-.462-2.937a27.75 27.75 0 0 1-.047-.92z"/><path fill-rule="evenodd" d="M9 .5a.5.5 0 0 1 .5.5v5.099l4.108.913a.5.5 0 0 1-.216.976l-9-2a.5.5 0 1 1 .216-.976l3.892.865V1A.5.5 0 0 1 9 .5z"/>'); // eslint-disable-next-line
+
+exports.BIconMouse3 = BIconMouse3;
 var BIconMusicNote = /*#__PURE__*/(0, _makeIcon.makeIcon)('MusicNote', '<path d="M9 13c0 1.105-1.12 2-2.5 2S4 14.105 4 13s1.12-2 2.5-2 2.5.895 2.5 2z"/><path fill-rule="evenodd" d="M9 3v10H8V3h1z"/><path d="M8 2.82a1 1 0 0 1 .804-.98l3-.6A1 1 0 0 1 13 2.22V4L8 5V2.82z"/>'); // eslint-disable-next-line
 
 exports.BIconMusicNote = BIconMusicNote;
@@ -54509,6 +55344,24 @@ exports.BIconMusicPlayerFill = BIconMusicPlayerFill;
 var BIconNewspaper = /*#__PURE__*/(0, _makeIcon.makeIcon)('Newspaper', '<path fill-rule="evenodd" d="M0 2A1.5 1.5 0 0 1 1.5.5h11A1.5 1.5 0 0 1 14 2v12a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 0 14V2zm1.5-.5A.5.5 0 0 0 1 2v12a.5.5 0 0 0 .5.5h11a.5.5 0 0 0 .5-.5V2a.5.5 0 0 0-.5-.5h-11z"/><path fill-rule="evenodd" d="M15.5 3a.5.5 0 0 1 .5.5V14a1.5 1.5 0 0 1-1.5 1.5h-3v-1h3a.5.5 0 0 0 .5-.5V3.5a.5.5 0 0 1 .5-.5z"/><path d="M2 3h10v2H2V3zm0 3h4v3H2V6zm0 4h4v1H2v-1zm0 2h4v1H2v-1zm5-6h2v1H7V6zm3 0h2v1h-2V6zM7 8h2v1H7V8zm3 0h2v1h-2V8zm-3 2h2v1H7v-1zm3 0h2v1h-2v-1zm-3 2h2v1H7v-1zm3 0h2v1h-2v-1z"/>'); // eslint-disable-next-line
 
 exports.BIconNewspaper = BIconNewspaper;
+var BIconNodeMinus = /*#__PURE__*/(0, _makeIcon.makeIcon)('NodeMinus', '<path fill-rule="evenodd" d="M0 7.5A1.5 1.5 0 0 1 1.5 6h1A1.5 1.5 0 0 1 4 7.5v1A1.5 1.5 0 0 1 2.5 10h-1A1.5 1.5 0 0 1 0 8.5v-1zM1.5 7a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5h-1zM7 8.5H4v-1h3v1z"/><path fill-rule="evenodd" d="M11 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zm0 1a5 5 0 1 0 0-10 5 5 0 0 0 0 10z"/><path d="M13.5 7.5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1 0-1h5z"/>'); // eslint-disable-next-line
+
+exports.BIconNodeMinus = BIconNodeMinus;
+var BIconNodeMinusFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('NodeMinusFill', '<path fill-rule="evenodd" d="M16 8a5 5 0 0 1-9.975.5H4A1.5 1.5 0 0 1 2.5 10h-1A1.5 1.5 0 0 1 0 8.5v-1A1.5 1.5 0 0 1 1.5 6h1A1.5 1.5 0 0 1 4 7.5h2.025A5 5 0 0 1 16 8zm-2 0a.5.5 0 0 0-.5-.5h-5a.5.5 0 0 0 0 1h5A.5.5 0 0 0 14 8z"/>'); // eslint-disable-next-line
+
+exports.BIconNodeMinusFill = BIconNodeMinusFill;
+var BIconNodePlus = /*#__PURE__*/(0, _makeIcon.makeIcon)('NodePlus', '<path fill-rule="evenodd" d="M0 7.5A1.5 1.5 0 0 1 1.5 6h1A1.5 1.5 0 0 1 4 7.5v1A1.5 1.5 0 0 1 2.5 10h-1A1.5 1.5 0 0 1 0 8.5v-1zM1.5 7a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5h-1zM7 8.5H4v-1h3v1z"/><path fill-rule="evenodd" d="M11 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zm0 1a5 5 0 1 0 0-10 5 5 0 0 0 0 10z"/><path fill-rule="evenodd" d="M11 5a.5.5 0 0 1 .5.5v2h2a.5.5 0 0 1 0 1h-2v2a.5.5 0 0 1-1 0v-2h-2a.5.5 0 0 1 0-1h2v-2A.5.5 0 0 1 11 5z"/>'); // eslint-disable-next-line
+
+exports.BIconNodePlus = BIconNodePlus;
+var BIconNodePlusFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('NodePlusFill', '<path fill-rule="evenodd" d="M11 13a5 5 0 1 0-4.975-5.5H4A1.5 1.5 0 0 0 2.5 6h-1A1.5 1.5 0 0 0 0 7.5v1A1.5 1.5 0 0 0 1.5 10h1A1.5 1.5 0 0 0 4 8.5h2.025A5 5 0 0 0 11 13zm.5-7.5a.5.5 0 0 0-1 0v2h-2a.5.5 0 0 0 0 1h2v2a.5.5 0 0 0 1 0v-2h2a.5.5 0 0 0 0-1h-2v-2z"/>'); // eslint-disable-next-line
+
+exports.BIconNodePlusFill = BIconNodePlusFill;
+var BIconNut = /*#__PURE__*/(0, _makeIcon.makeIcon)('Nut', '<path fill-rule="evenodd" d="M11.42 2H4.58L1.152 8l3.428 6h6.84l3.428-6-3.428-6zM4.58 1a1 1 0 0 0-.868.504l-3.429 6a1 1 0 0 0 0 .992l3.429 6A1 1 0 0 0 4.58 15h6.84a1 1 0 0 0 .868-.504l3.428-6a1 1 0 0 0 0-.992l-3.428-6A1 1 0 0 0 11.42 1H4.58z"/><path fill-rule="evenodd" d="M6.848 5.933a2.5 2.5 0 1 0 2.5 4.33 2.5 2.5 0 0 0-2.5-4.33zM5.067 9.848a3.5 3.5 0 1 1 6.062-3.5 3.5 3.5 0 0 1-6.062 3.5z"/>'); // eslint-disable-next-line
+
+exports.BIconNut = BIconNut;
+var BIconNutFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('NutFill', '<path fill-rule="evenodd" d="M4.58 1a1 1 0 0 0-.868.504l-3.429 6a1 1 0 0 0 0 .992l3.429 6A1 1 0 0 0 4.58 15h6.84a1 1 0 0 0 .868-.504l3.428-6a1 1 0 0 0 0-.992l-3.428-6A1 1 0 0 0 11.42 1H4.58zm5.018 9.696a3 3 0 1 0-3-5.196 3 3 0 0 0 3 5.196z"/>'); // eslint-disable-next-line
+
+exports.BIconNutFill = BIconNutFill;
 var BIconOctagon = /*#__PURE__*/(0, _makeIcon.makeIcon)('Octagon', '<path fill-rule="evenodd" d="M4.54.146A.5.5 0 0 1 4.893 0h6.214a.5.5 0 0 1 .353.146l4.394 4.394a.5.5 0 0 1 .146.353v6.214a.5.5 0 0 1-.146.353l-4.394 4.394a.5.5 0 0 1-.353.146H4.893a.5.5 0 0 1-.353-.146L.146 11.46A.5.5 0 0 1 0 11.107V4.893a.5.5 0 0 1 .146-.353L4.54.146zM5.1 1L1 5.1v5.8L5.1 15h5.8l4.1-4.1V5.1L10.9 1H5.1z"/>'); // eslint-disable-next-line
 
 exports.BIconOctagon = BIconOctagon;
@@ -54527,12 +55380,51 @@ exports.BIconOutlet = BIconOutlet;
 var BIconPaperclip = /*#__PURE__*/(0, _makeIcon.makeIcon)('Paperclip', '<path fill-rule="evenodd" d="M4.5 3a2.5 2.5 0 0 1 5 0v9a1.5 1.5 0 0 1-3 0V5a.5.5 0 0 1 1 0v7a.5.5 0 0 0 1 0V3a1.5 1.5 0 1 0-3 0v9a2.5 2.5 0 0 0 5 0V5a.5.5 0 0 1 1 0v7a3.5 3.5 0 1 1-7 0V3z"/>'); // eslint-disable-next-line
 
 exports.BIconPaperclip = BIconPaperclip;
+var BIconParagraph = /*#__PURE__*/(0, _makeIcon.makeIcon)('Paragraph', '<path fill-rule="evenodd" d="M8 1h4.5a.5.5 0 0 1 0 1H11v12.5a.5.5 0 0 1-1 0V2H9v12.5a.5.5 0 0 1-1 0V1z"/><path d="M9 1v8H7a4 4 0 1 1 0-8h2z"/>'); // eslint-disable-next-line
+
+exports.BIconParagraph = BIconParagraph;
+var BIconPatchCheck = /*#__PURE__*/(0, _makeIcon.makeIcon)('PatchCheck', '<path fill-rule="evenodd" d="M10.273 2.513l-.921-.944.715-.698.622.637.89-.011a2.89 2.89 0 0 1 2.924 2.924l-.01.89.636.622a2.89 2.89 0 0 1 0 4.134l-.637.622.011.89a2.89 2.89 0 0 1-2.924 2.924l-.89-.01-.622.636a2.89 2.89 0 0 1-4.134 0l-.622-.637-.89.011a2.89 2.89 0 0 1-2.924-2.924l.01-.89-.636-.622a2.89 2.89 0 0 1 0-4.134l.637-.622-.011-.89a2.89 2.89 0 0 1 2.924-2.924l.89.01.622-.636a2.89 2.89 0 0 1 4.134 0l-.715.698a1.89 1.89 0 0 0-2.704 0l-.92.944-1.32-.016a1.89 1.89 0 0 0-1.911 1.912l.016 1.318-.944.921a1.89 1.89 0 0 0 0 2.704l.944.92-.016 1.32a1.89 1.89 0 0 0 1.912 1.911l1.318-.016.921.944a1.89 1.89 0 0 0 2.704 0l.92-.944 1.32.016a1.89 1.89 0 0 0 1.911-1.912l-.016-1.318.944-.921a1.89 1.89 0 0 0 0-2.704l-.944-.92.016-1.32a1.89 1.89 0 0 0-1.912-1.911l-1.318.016z"/><path fill-rule="evenodd" d="M10.354 6.146a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708 0l-1.5-1.5a.5.5 0 1 1 .708-.708L7 8.793l2.646-2.647a.5.5 0 0 1 .708 0z"/>'); // eslint-disable-next-line
+
+exports.BIconPatchCheck = BIconPatchCheck;
+var BIconPatchCheckFll = /*#__PURE__*/(0, _makeIcon.makeIcon)('PatchCheckFll', '<path fill-rule="evenodd" d="M10.067.87a2.89 2.89 0 0 0-4.134 0l-.622.638-.89-.011a2.89 2.89 0 0 0-2.924 2.924l.01.89-.636.622a2.89 2.89 0 0 0 0 4.134l.637.622-.011.89a2.89 2.89 0 0 0 2.924 2.924l.89-.01.622.636a2.89 2.89 0 0 0 4.134 0l.622-.637.89.011a2.89 2.89 0 0 0 2.924-2.924l-.01-.89.636-.622a2.89 2.89 0 0 0 0-4.134l-.637-.622.011-.89a2.89 2.89 0 0 0-2.924-2.924l-.89.01-.622-.636zm.287 5.984a.5.5 0 0 0-.708-.708L7 8.793 5.854 7.646a.5.5 0 1 0-.708.708l1.5 1.5a.5.5 0 0 0 .708 0l3-3z"/>'); // eslint-disable-next-line
+
+exports.BIconPatchCheckFll = BIconPatchCheckFll;
+var BIconPatchExclamation = /*#__PURE__*/(0, _makeIcon.makeIcon)('PatchExclamation', '<path d="M7.002 11a1 1 0 1 1 2 0 1 1 0 0 1-2 0zM7.1 4.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 4.995z"/><path fill-rule="evenodd" d="M10.273 2.513l-.921-.944.715-.698.622.637.89-.011a2.89 2.89 0 0 1 2.924 2.924l-.01.89.636.622a2.89 2.89 0 0 1 0 4.134l-.637.622.011.89a2.89 2.89 0 0 1-2.924 2.924l-.89-.01-.622.636a2.89 2.89 0 0 1-4.134 0l-.622-.637-.89.011a2.89 2.89 0 0 1-2.924-2.924l.01-.89-.636-.622a2.89 2.89 0 0 1 0-4.134l.637-.622-.011-.89a2.89 2.89 0 0 1 2.924-2.924l.89.01.622-.636a2.89 2.89 0 0 1 4.134 0l-.715.698a1.89 1.89 0 0 0-2.704 0l-.92.944-1.32-.016a1.89 1.89 0 0 0-1.911 1.912l.016 1.318-.944.921a1.89 1.89 0 0 0 0 2.704l.944.92-.016 1.32a1.89 1.89 0 0 0 1.912 1.911l1.318-.016.921.944a1.89 1.89 0 0 0 2.704 0l.92-.944 1.32.016a1.89 1.89 0 0 0 1.911-1.912l-.016-1.318.944-.921a1.89 1.89 0 0 0 0-2.704l-.944-.92.016-1.32a1.89 1.89 0 0 0-1.912-1.911l-1.318.016z"/>'); // eslint-disable-next-line
+
+exports.BIconPatchExclamation = BIconPatchExclamation;
+var BIconPatchExclamationFll = /*#__PURE__*/(0, _makeIcon.makeIcon)('PatchExclamationFll', '<path fill-rule="evenodd" d="M10.067.87a2.89 2.89 0 0 0-4.134 0l-.622.638-.89-.011a2.89 2.89 0 0 0-2.924 2.924l.01.89-.636.622a2.89 2.89 0 0 0 0 4.134l.637.622-.011.89a2.89 2.89 0 0 0 2.924 2.924l.89-.01.622.636a2.89 2.89 0 0 0 4.134 0l.622-.637.89.011a2.89 2.89 0 0 0 2.924-2.924l-.01-.89.636-.622a2.89 2.89 0 0 0 0-4.134l-.637-.622.011-.89a2.89 2.89 0 0 0-2.924-2.924l-.89.01-.622-.636zM8 4a.905.905 0 0 0-.9.995l.35 3.507a.553.553 0 0 0 1.1 0l.35-3.507A.905.905 0 0 0 8 4zm.002 6a1 1 0 1 0 0 2 1 1 0 0 0 0-2z"/>'); // eslint-disable-next-line
+
+exports.BIconPatchExclamationFll = BIconPatchExclamationFll;
+var BIconPatchMinus = /*#__PURE__*/(0, _makeIcon.makeIcon)('PatchMinus', '<path fill-rule="evenodd" d="M5.5 8a.5.5 0 0 1 .5-.5h4a.5.5 0 0 1 0 1H6a.5.5 0 0 1-.5-.5z"/><path fill-rule="evenodd" d="M10.273 2.513l-.921-.944.715-.698.622.637.89-.011a2.89 2.89 0 0 1 2.924 2.924l-.01.89.636.622a2.89 2.89 0 0 1 0 4.134l-.637.622.011.89a2.89 2.89 0 0 1-2.924 2.924l-.89-.01-.622.636a2.89 2.89 0 0 1-4.134 0l-.622-.637-.89.011a2.89 2.89 0 0 1-2.924-2.924l.01-.89-.636-.622a2.89 2.89 0 0 1 0-4.134l.637-.622-.011-.89a2.89 2.89 0 0 1 2.924-2.924l.89.01.622-.636a2.89 2.89 0 0 1 4.134 0l-.715.698a1.89 1.89 0 0 0-2.704 0l-.92.944-1.32-.016a1.89 1.89 0 0 0-1.911 1.912l.016 1.318-.944.921a1.89 1.89 0 0 0 0 2.704l.944.92-.016 1.32a1.89 1.89 0 0 0 1.912 1.911l1.318-.016.921.944a1.89 1.89 0 0 0 2.704 0l.92-.944 1.32.016a1.89 1.89 0 0 0 1.911-1.912l-.016-1.318.944-.921a1.89 1.89 0 0 0 0-2.704l-.944-.92.016-1.32a1.89 1.89 0 0 0-1.912-1.911l-1.318.016z"/>'); // eslint-disable-next-line
+
+exports.BIconPatchMinus = BIconPatchMinus;
+var BIconPatchMinusFll = /*#__PURE__*/(0, _makeIcon.makeIcon)('PatchMinusFll', '<path fill-rule="evenodd" d="M10.067.87a2.89 2.89 0 0 0-4.134 0l-.622.638-.89-.011a2.89 2.89 0 0 0-2.924 2.924l.01.89-.636.622a2.89 2.89 0 0 0 0 4.134l.637.622-.011.89a2.89 2.89 0 0 0 2.924 2.924l.89-.01.622.636a2.89 2.89 0 0 0 4.134 0l.622-.637.89.011a2.89 2.89 0 0 0 2.924-2.924l-.01-.89.636-.622a2.89 2.89 0 0 0 0-4.134l-.637-.622.011-.89a2.89 2.89 0 0 0-2.924-2.924l-.89.01-.622-.636zM6 7.5a.5.5 0 0 0 0 1h4a.5.5 0 0 0 0-1H6z"/>'); // eslint-disable-next-line
+
+exports.BIconPatchMinusFll = BIconPatchMinusFll;
+var BIconPatchPlus = /*#__PURE__*/(0, _makeIcon.makeIcon)('PatchPlus', '<path fill-rule="evenodd" d="M10.273 2.513l-.921-.944.715-.698.622.637.89-.011a2.89 2.89 0 0 1 2.924 2.924l-.01.89.636.622a2.89 2.89 0 0 1 0 4.134l-.637.622.011.89a2.89 2.89 0 0 1-2.924 2.924l-.89-.01-.622.636a2.89 2.89 0 0 1-4.134 0l-.622-.637-.89.011a2.89 2.89 0 0 1-2.924-2.924l.01-.89-.636-.622a2.89 2.89 0 0 1 0-4.134l.637-.622-.011-.89a2.89 2.89 0 0 1 2.924-2.924l.89.01.622-.636a2.89 2.89 0 0 1 4.134 0l-.715.698a1.89 1.89 0 0 0-2.704 0l-.92.944-1.32-.016a1.89 1.89 0 0 0-1.911 1.912l.016 1.318-.944.921a1.89 1.89 0 0 0 0 2.704l.944.92-.016 1.32a1.89 1.89 0 0 0 1.912 1.911l1.318-.016.921.944a1.89 1.89 0 0 0 2.704 0l.92-.944 1.32.016a1.89 1.89 0 0 0 1.911-1.912l-.016-1.318.944-.921a1.89 1.89 0 0 0 0-2.704l-.944-.92.016-1.32a1.89 1.89 0 0 0-1.912-1.911l-1.318.016z"/><path fill-rule="evenodd" d="M8 5.5a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-.5.5H6a.5.5 0 0 1 0-1h1.5V6a.5.5 0 0 1 .5-.5z"/><path fill-rule="evenodd" d="M7.5 8a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 0 1H8.5V10a.5.5 0 0 1-1 0V8z"/>'); // eslint-disable-next-line
+
+exports.BIconPatchPlus = BIconPatchPlus;
+var BIconPatchPlusFll = /*#__PURE__*/(0, _makeIcon.makeIcon)('PatchPlusFll', '<path fill-rule="evenodd" d="M10.067.87a2.89 2.89 0 0 0-4.134 0l-.622.638-.89-.011a2.89 2.89 0 0 0-2.924 2.924l.01.89-.636.622a2.89 2.89 0 0 0 0 4.134l.637.622-.011.89a2.89 2.89 0 0 0 2.924 2.924l.89-.01.622.636a2.89 2.89 0 0 0 4.134 0l.622-.637.89.011a2.89 2.89 0 0 0 2.924-2.924l-.01-.89.636-.622a2.89 2.89 0 0 0 0-4.134l-.637-.622.011-.89a2.89 2.89 0 0 0-2.924-2.924l-.89.01-.622-.636zM8.5 6a.5.5 0 0 0-1 0v1.5H6a.5.5 0 0 0 0 1h1.5V10a.5.5 0 0 0 1 0V8.5H10a.5.5 0 0 0 0-1H8.5V6z"/>'); // eslint-disable-next-line
+
+exports.BIconPatchPlusFll = BIconPatchPlusFll;
+var BIconPatchQuestion = /*#__PURE__*/(0, _makeIcon.makeIcon)('PatchQuestion', '<path d="M7.002 11a1 1 0 1 1 2 0 1 1 0 0 1-2 0zM8.05 9.6c.336 0 .504-.24.554-.627.04-.534.198-.815.847-1.26.673-.475 1.049-1.09 1.049-1.986 0-1.325-.92-2.227-2.262-2.227-1.02 0-1.792.492-2.1 1.29A1.71 1.71 0 0 0 6 5.48c0 .393.203.64.545.64.272 0 .455-.147.564-.51.158-.592.525-.915 1.074-.915.61 0 1.03.446 1.03 1.084 0 .563-.208.885-.822 1.325-.619.433-.926.914-.926 1.64v.111c0 .428.208.745.585.745z"/><path fill-rule="evenodd" d="M10.273 2.513l-.921-.944.715-.698.622.637.89-.011a2.89 2.89 0 0 1 2.924 2.924l-.01.89.636.622a2.89 2.89 0 0 1 0 4.134l-.637.622.011.89a2.89 2.89 0 0 1-2.924 2.924l-.89-.01-.622.636a2.89 2.89 0 0 1-4.134 0l-.622-.637-.89.011a2.89 2.89 0 0 1-2.924-2.924l.01-.89-.636-.622a2.89 2.89 0 0 1 0-4.134l.637-.622-.011-.89a2.89 2.89 0 0 1 2.924-2.924l.89.01.622-.636a2.89 2.89 0 0 1 4.134 0l-.715.698a1.89 1.89 0 0 0-2.704 0l-.92.944-1.32-.016a1.89 1.89 0 0 0-1.911 1.912l.016 1.318-.944.921a1.89 1.89 0 0 0 0 2.704l.944.92-.016 1.32a1.89 1.89 0 0 0 1.912 1.911l1.318-.016.921.944a1.89 1.89 0 0 0 2.704 0l.92-.944 1.32.016a1.89 1.89 0 0 0 1.911-1.912l-.016-1.318.944-.921a1.89 1.89 0 0 0 0-2.704l-.944-.92.016-1.32a1.89 1.89 0 0 0-1.912-1.911l-1.318.016z"/>'); // eslint-disable-next-line
+
+exports.BIconPatchQuestion = BIconPatchQuestion;
+var BIconPatchQuestionFll = /*#__PURE__*/(0, _makeIcon.makeIcon)('PatchQuestionFll', '<path fill-rule="evenodd" d="M5.933.87a2.89 2.89 0 0 1 4.134 0l.622.638.89-.011a2.89 2.89 0 0 1 2.924 2.924l-.01.89.636.622a2.89 2.89 0 0 1 0 4.134l-.637.622.011.89a2.89 2.89 0 0 1-2.924 2.924l-.89-.01-.622.636a2.89 2.89 0 0 1-4.134 0l-.622-.637-.89.011a2.89 2.89 0 0 1-2.924-2.924l.01-.89-.636-.622a2.89 2.89 0 0 1 0-4.134l.637-.622-.011-.89a2.89 2.89 0 0 1 2.924-2.924l.89.01.622-.636zM7.002 11a1 1 0 1 1 2 0 1 1 0 0 1-2 0zm1.602-2.027c-.05.386-.218.627-.554.627-.377 0-.585-.317-.585-.745v-.11c0-.727.307-1.208.926-1.641.614-.44.822-.762.822-1.325 0-.638-.42-1.084-1.03-1.084-.55 0-.916.323-1.074.914-.109.364-.292.51-.564.51C6.203 6.12 6 5.873 6 5.48c0-.251.045-.468.139-.69.307-.798 1.079-1.29 2.099-1.29 1.341 0 2.262.902 2.262 2.227 0 .896-.376 1.511-1.05 1.986-.648.445-.806.726-.846 1.26z"/>'); // eslint-disable-next-line
+
+exports.BIconPatchQuestionFll = BIconPatchQuestionFll;
 var BIconPause = /*#__PURE__*/(0, _makeIcon.makeIcon)('Pause', '<path fill-rule="evenodd" d="M6 3.5a.5.5 0 0 1 .5.5v8a.5.5 0 0 1-1 0V4a.5.5 0 0 1 .5-.5zm4 0a.5.5 0 0 1 .5.5v8a.5.5 0 0 1-1 0V4a.5.5 0 0 1 .5-.5z"/>'); // eslint-disable-next-line
 
 exports.BIconPause = BIconPause;
 var BIconPauseFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('PauseFill', '<path d="M5.5 3.5A1.5 1.5 0 0 1 7 5v6a1.5 1.5 0 0 1-3 0V5a1.5 1.5 0 0 1 1.5-1.5zm5 0A1.5 1.5 0 0 1 12 5v6a1.5 1.5 0 0 1-3 0V5a1.5 1.5 0 0 1 1.5-1.5z"/>'); // eslint-disable-next-line
 
 exports.BIconPauseFill = BIconPauseFill;
+var BIconPeace = /*#__PURE__*/(0, _makeIcon.makeIcon)('Peace', '<path fill-rule="evenodd" d="M7.5 1.018a7 7 0 0 0-4.79 11.566L7.5 7.793V1.018zm1 0v6.775l4.79 4.79A7 7 0 0 0 8.5 1.018zm4.084 12.273L8.5 9.207v5.775a6.97 6.97 0 0 0 4.084-1.691zM7.5 14.982V9.207l-4.084 4.084A6.97 6.97 0 0 0 7.5 14.982zM0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8z"/>'); // eslint-disable-next-line
+
+exports.BIconPeace = BIconPeace;
+var BIconPeaceFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('PeaceFill', '<path d="M14 13.292A8 8 0 0 0 8.5.015v7.778l5.5 5.5zm-.708.708L8.5 9.206v6.778a7.967 7.967 0 0 0 4.792-1.986zM7.5 15.985V9.207L2.708 14A7.967 7.967 0 0 0 7.5 15.985zM2 13.292A8 8 0 0 1 7.5.015v7.778l-5.5 5.5z"/>'); // eslint-disable-next-line
+
+exports.BIconPeaceFill = BIconPeaceFill;
 var BIconPen = /*#__PURE__*/(0, _makeIcon.makeIcon)('Pen', '<path fill-rule="evenodd" d="M5.707 13.707a1 1 0 0 1-.39.242l-3 1a1 1 0 0 1-1.266-1.265l1-3a1 1 0 0 1 .242-.391L10.086 2.5a2 2 0 0 1 2.828 0l.586.586a2 2 0 0 1 0 2.828l-7.793 7.793zM3 11l7.793-7.793a1 1 0 0 1 1.414 0l.586.586a1 1 0 0 1 0 1.414L5 13l-3 1 1-3z"/><path fill-rule="evenodd" d="M9.854 2.56a.5.5 0 0 0-.708 0L5.854 5.855a.5.5 0 0 1-.708-.708L8.44 1.854a1.5 1.5 0 0 1 2.122 0l.293.292a.5.5 0 0 1-.707.708l-.293-.293z"/><path d="M13.293 1.207a1 1 0 0 1 1.414 0l.03.03a1 1 0 0 1 .03 1.383L13.5 4 12 2.5l1.293-1.293z"/>'); // eslint-disable-next-line
 
 exports.BIconPen = BIconPen;
@@ -54557,9 +55449,18 @@ exports.BIconPeople = BIconPeople;
 var BIconPeopleFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('PeopleFill', '<path fill-rule="evenodd" d="M7 14s-1 0-1-1 1-4 5-4 5 3 5 4-1 1-1 1H7zm4-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-5.784 6A2.238 2.238 0 0 1 5 13c0-1.355.68-2.75 1.936-3.72A6.325 6.325 0 0 0 5 9c-4 0-5 3-5 4s1 1 1 1h4.216zM4.5 8a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z"/>'); // eslint-disable-next-line
 
 exports.BIconPeopleFill = BIconPeopleFill;
+var BIconPercent = /*#__PURE__*/(0, _makeIcon.makeIcon)('Percent', '<path fill-rule="evenodd" d="M13.442 2.558a.625.625 0 0 1 0 .884l-10 10a.625.625 0 1 1-.884-.884l10-10a.625.625 0 0 1 .884 0zM4.5 6a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zm0 1a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5zm7 6a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zm0 1a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z"/>'); // eslint-disable-next-line
+
+exports.BIconPercent = BIconPercent;
 var BIconPerson = /*#__PURE__*/(0, _makeIcon.makeIcon)('Person', '<path fill-rule="evenodd" d="M13 14s1 0 1-1-1-4-6-4-6 3-6 4 1 1 1 1h10zm-9.995-.944v-.002.002zM3.022 13h9.956a.274.274 0 0 0 .014-.002l.008-.002c-.001-.246-.154-.986-.832-1.664C11.516 10.68 10.289 10 8 10c-2.29 0-3.516.68-4.168 1.332-.678.678-.83 1.418-.832 1.664a1.05 1.05 0 0 0 .022.004zm9.974.056v-.002.002zM8 7a2 2 0 1 0 0-4 2 2 0 0 0 0 4zm3-2a3 3 0 1 1-6 0 3 3 0 0 1 6 0z"/>'); // eslint-disable-next-line
 
 exports.BIconPerson = BIconPerson;
+var BIconPersonBadge = /*#__PURE__*/(0, _makeIcon.makeIcon)('PersonBadge', '<path fill-rule="evenodd" d="M12 1H4a1 1 0 0 0-1 1v11.755S4 12 8 12s5 1.755 5 1.755V2a1 1 0 0 0-1-1zM4 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2H4z"/><path fill-rule="evenodd" d="M8 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM6 2.5a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 0 1h-3a.5.5 0 0 1-.5-.5z"/>'); // eslint-disable-next-line
+
+exports.BIconPersonBadge = BIconPersonBadge;
+var BIconPersonBadgeFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('PersonBadgeFill', '<path fill-rule="evenodd" d="M2 2a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V2zm4.5 0a.5.5 0 0 0 0 1h3a.5.5 0 0 0 0-1h-3zM8 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm5 2.755C12.146 12.825 10.623 12 8 12s-4.146.826-5 1.755V14a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1v-.245z"/>'); // eslint-disable-next-line
+
+exports.BIconPersonBadgeFill = BIconPersonBadgeFill;
 var BIconPersonBoundingBox = /*#__PURE__*/(0, _makeIcon.makeIcon)('PersonBoundingBox', '<path fill-rule="evenodd" d="M1.5 1a.5.5 0 0 0-.5.5v3a.5.5 0 0 1-1 0v-3A1.5 1.5 0 0 1 1.5 0h3a.5.5 0 0 1 0 1h-3zM11 .5a.5.5 0 0 1 .5-.5h3A1.5 1.5 0 0 1 16 1.5v3a.5.5 0 0 1-1 0v-3a.5.5 0 0 0-.5-.5h-3a.5.5 0 0 1-.5-.5zM.5 11a.5.5 0 0 1 .5.5v3a.5.5 0 0 0 .5.5h3a.5.5 0 0 1 0 1h-3A1.5 1.5 0 0 1 0 14.5v-3a.5.5 0 0 1 .5-.5zm15 0a.5.5 0 0 1 .5.5v3a1.5 1.5 0 0 1-1.5 1.5h-3a.5.5 0 0 1 0-1h3a.5.5 0 0 0 .5-.5v-3a.5.5 0 0 1 .5-.5z"/><path fill-rule="evenodd" d="M3 14s-1 0-1-1 1-4 6-4 6 3 6 4-1 1-1 1H3zm5-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/>'); // eslint-disable-next-line
 
 exports.BIconPersonBoundingBox = BIconPersonBoundingBox;
@@ -54596,9 +55497,15 @@ exports.BIconPersonSquare = BIconPersonSquare;
 var BIconPhone = /*#__PURE__*/(0, _makeIcon.makeIcon)('Phone', '<path fill-rule="evenodd" d="M11 1H5a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1zM5 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2H5z"/><path fill-rule="evenodd" d="M8 14a1 1 0 1 0 0-2 1 1 0 0 0 0 2z"/>'); // eslint-disable-next-line
 
 exports.BIconPhone = BIconPhone;
+var BIconPhoneFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('PhoneFill', '<path fill-rule="evenodd" d="M3 2a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V2zm6 11a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/>'); // eslint-disable-next-line
+
+exports.BIconPhoneFill = BIconPhoneFill;
 var BIconPhoneLandscape = /*#__PURE__*/(0, _makeIcon.makeIcon)('PhoneLandscape', '<path fill-rule="evenodd" d="M1 4.5v6a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-6a1 1 0 0 0-1-1H2a1 1 0 0 0-1 1zm-1 6a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2H2a2 2 0 0 0-2 2v6z"/><path fill-rule="evenodd" d="M14 7.5a1 1 0 1 0-2 0 1 1 0 0 0 2 0z"/>'); // eslint-disable-next-line
 
 exports.BIconPhoneLandscape = BIconPhoneLandscape;
+var BIconPhoneLandscapeFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('PhoneLandscapeFill', '<path fill-rule="evenodd" d="M2 12.5a2 2 0 0 1-2-2v-6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2H2zm11-6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>'); // eslint-disable-next-line
+
+exports.BIconPhoneLandscapeFill = BIconPhoneLandscapeFill;
 var BIconPieChart = /*#__PURE__*/(0, _makeIcon.makeIcon)('PieChart', '<path fill-rule="evenodd" d="M8 15A7 7 0 1 0 8 1a7 7 0 0 0 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/><path fill-rule="evenodd" d="M7.5 7.793V1h1v6.5H15v1H8.207l-4.853 4.854-.708-.708L7.5 7.793z"/>'); // eslint-disable-next-line
 
 exports.BIconPieChart = BIconPieChart;
@@ -54638,6 +55545,12 @@ exports.BIconPlusSquareFill = BIconPlusSquareFill;
 var BIconPower = /*#__PURE__*/(0, _makeIcon.makeIcon)('Power', '<path fill-rule="evenodd" d="M5.578 4.437a5 5 0 1 0 4.922.044l.5-.866a6 6 0 1 1-5.908-.053l.486.875z"/><path fill-rule="evenodd" d="M7.5 8V1h1v7h-1z"/>'); // eslint-disable-next-line
 
 exports.BIconPower = BIconPower;
+var BIconPrinter = /*#__PURE__*/(0, _makeIcon.makeIcon)('Printer', '<path d="M11 2H5a1 1 0 0 0-1 1v2H3V3a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v2h-1V3a1 1 0 0 0-1-1zm3 4H2a1 1 0 0 0-1 1v3a1 1 0 0 0 1 1h1v1H2a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2h-1v-1h1a1 1 0 0 0 1-1V7a1 1 0 0 0-1-1z"/><path fill-rule="evenodd" d="M11 9H5a1 1 0 0 0-1 1v3a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-3a1 1 0 0 0-1-1zM5 8a2 2 0 0 0-2 2v3a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H5z"/><path d="M3 7.5a.5.5 0 1 1-1 0 .5.5 0 0 1 1 0z"/>'); // eslint-disable-next-line
+
+exports.BIconPrinter = BIconPrinter;
+var BIconPrinterFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('PrinterFill', '<path d="M5 1a2 2 0 0 0-2 2v1h10V3a2 2 0 0 0-2-2H5z"/><path fill-rule="evenodd" d="M11 9H5a1 1 0 0 0-1 1v3a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-3a1 1 0 0 0-1-1z"/><path fill-rule="evenodd" d="M0 7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2h-1v-2a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v2H2a2 2 0 0 1-2-2V7zm2.5 1a.5.5 0 1 0 0-1 .5.5 0 0 0 0 1z"/>'); // eslint-disable-next-line
+
+exports.BIconPrinterFill = BIconPrinterFill;
 var BIconPuzzle = /*#__PURE__*/(0, _makeIcon.makeIcon)('Puzzle', '<path d="M4.605 2.5V2v.5zM3.61 3.6l.498-.043V3.55l-.498.05zM7 2.5h.5A.5.5 0 0 0 7 2v.5zm-.676 1.454l.304.397-.304-.397zm3.352 0l-.304.397.304-.397zM9 2.5V2a.5.5 0 0 0-.5.5H9zm3.39 1.1l-.498-.05v.007l.498.043zM12.1 7l-.498-.043a.5.5 0 0 0 .498.543V7zm1.854-.676l.397.304-.397-.304zm0 3.352l.397-.304-.397.304zM12.1 9v-.5a.5.5 0 0 0-.498.542L12.1 9zm.29 3.4l-.498.043v.007l.498-.05zM9 13.5h-.5a.5.5 0 0 0 .5.5v-.5zm.676-1.454l-.304-.397.304.397zm-3.352 0l.304-.397-.304.397zM7 13.5v.5a.5.5 0 0 0 .5-.5H7zm-2.395 0V13v.5zm-.995-1.1l.498.05v-.007L3.61 12.4zM3.9 9l.498.042A.5.5 0 0 0 3.9 8.5V9zm-1.854.676l-.397-.304.397.304zm0-3.352l-.397.304.397-.304zM3.9 7v.5a.5.5 0 0 0 .498-.543L3.9 7zm.705-5a1.5 1.5 0 0 0-1.493 1.65l.995-.1A.5.5 0 0 1 4.605 3V2zM7 2H4.605v1H7V2zm.5.882V2.5h-1v.382h1zm-.872 1.469c.375-.287.872-.773.872-1.469h-1c0 .195-.147.42-.48.675l.608.794zM6.5 4.5l.001-.006a.113.113 0 0 1 .012-.025.459.459 0 0 1 .115-.118l-.608-.794c-.274.21-.52.528-.52.943h1zM8 5c-.491 0-.912-.1-1.19-.24a.86.86 0 0 1-.271-.194.213.213 0 0 1-.039-.063V4.5h-1c0 .568.447.947.862 1.154C6.807 5.877 7.387 6 8 6V5zm1.5-.5v.003a.213.213 0 0 1-.039.064.86.86 0 0 1-.27.193C8.91 4.9 8.49 5 8 5v1c.613 0 1.193-.123 1.638-.346.415-.207.862-.586.862-1.154h-1zm-.128-.15c.065.05.099.092.115.119.008.013.01.021.012.025L9.5 4.5h1c0-.415-.246-.733-.52-.943l-.608.794zM8.5 2.883c0 .696.497 1.182.872 1.469l.608-.794c-.333-.255-.48-.48-.48-.675h-1zm0-.382v.382h1V2.5h-1zm2.895-.5H9v1h2.395V2zm1.493 1.65A1.5 1.5 0 0 0 11.395 2v1a.5.5 0 0 1 .498.55l.995.1zm-.29 3.392l.29-3.4-.996-.085-.29 3.4.996.085zm.284-.542H12.1v1h.782v-1zm.675-.48c-.255.333-.48.48-.675.48v1c.696 0 1.182-.497 1.469-.872l-.794-.608zm.943-.52c-.415 0-.733.246-.943.52l.794.608a.459.459 0 0 1 .118-.115.113.113 0 0 1 .025-.012L14.5 6.5v-1zM16 8c0-.613-.123-1.193-.346-1.638-.207-.415-.586-.862-1.154-.862v1h.003l.01.003a.237.237 0 0 1 .053.036.86.86 0 0 1 .194.27c.14.28.24.7.24 1.191h1zm-1.5 2.5c.568 0 .947-.447 1.154-.862C15.877 9.193 16 8.613 16 8h-1c0 .491-.1.912-.24 1.19a.86.86 0 0 1-.194.271.214.214 0 0 1-.063.039H14.5v1zm-.943-.52c.21.274.528.52.943.52v-1l-.006-.001a.113.113 0 0 1-.025-.012.458.458 0 0 1-.118-.115l-.794.608zm-.675-.48c.195 0 .42.147.675.48l.794-.608c-.287-.375-.773-.872-1.469-.872v1zm-.782 0h.782v-1H12.1v1zm.788 2.858l-.29-3.4-.996.084.29 3.401.996-.085zM11.395 14a1.5 1.5 0 0 0 1.493-1.65l-.995.1a.5.5 0 0 1-.498.55v1zM9 14h2.395v-1H9v1zm.5-.5v-.382h-1v.382h1zm0-.382c0-.195.147-.42.48-.675l-.608-.794c-.375.287-.872.773-.872 1.469h1zm.48-.675c.274-.21.52-.528.52-.943h-1l-.001.006a.113.113 0 0 1-.012.025.459.459 0 0 1-.115.118l.608.794zm.52-.943c0-.568-.447-.947-.862-1.154C9.193 10.123 8.613 10 8 10v1c.492 0 .912.1 1.19.24.14.07.226.14.271.194a.214.214 0 0 1 .039.063v.003h1zM8 10c-.613 0-1.193.123-1.638.346-.415.207-.862.586-.862 1.154h1v-.003l.003-.01a.214.214 0 0 1 .036-.053.859.859 0 0 1 .27-.194C7.09 11.1 7.51 11 8 11v-1zm-2.5 1.5c0 .415.246.733.52.943l.608-.794a.459.459 0 0 1-.115-.118.113.113 0 0 1-.012-.025L6.5 11.5h-1zm.52.943c.333.255.48.48.48.675h1c0-.696-.497-1.182-.872-1.469l-.608.794zm.48.675v.382h1v-.382h-1zM4.605 14H7v-1H4.605v1zm-1.493-1.65A1.5 1.5 0 0 0 4.605 14v-1a.5.5 0 0 1-.498-.55l-.995-.1zm.29-3.393l-.29 3.401.996.085.29-3.4-.996-.086zm-.284.543H3.9v-1h-.782v1zm-.675.48c.255-.333.48-.48.675-.48v-1c-.696 0-1.182.497-1.469.872l.794.608zm-.943.52c.415 0 .733-.246.943-.52l-.794-.608a.459.459 0 0 1-.118.115.112.112 0 0 1-.025.012L1.5 9.5v1zM0 8c0 .613.123 1.193.346 1.638.207.415.586.862 1.154.862v-1h-.003a.213.213 0 0 1-.064-.039.86.86 0 0 1-.193-.27C1.1 8.91 1 8.49 1 8H0zm1.5-2.5c-.568 0-.947.447-1.154.862C.123 6.807 0 7.387 0 8h1c0-.492.1-.912.24-1.19a.86.86 0 0 1 .194-.271.213.213 0 0 1 .063-.039H1.5v-1zm.943.52c-.21-.274-.528-.52-.943-.52v1l.006.001a.112.112 0 0 1 .025.012c.027.016.068.05.118.115l.794-.608zm.675.48c-.195 0-.42-.147-.675-.48l-.794.608c.287.375.773.872 1.469.872v-1zm.782 0h-.782v1H3.9v-1zm-.788-2.858l.29 3.4.996-.085-.29-3.4-.996.085z"/>'); // eslint-disable-next-line
 
 exports.BIconPuzzle = BIconPuzzle;
@@ -54677,6 +55590,21 @@ exports.BIconReceipt = BIconReceipt;
 var BIconReceiptCutoff = /*#__PURE__*/(0, _makeIcon.makeIcon)('ReceiptCutoff', '<path fill-rule="evenodd" d="M1.92.506a.5.5 0 0 1 .434.14L3 1.293l.646-.647a.5.5 0 0 1 .708 0L5 1.293l.646-.647a.5.5 0 0 1 .708 0L7 1.293l.646-.647a.5.5 0 0 1 .708 0L9 1.293l.646-.647a.5.5 0 0 1 .708 0l.646.647.646-.647a.5.5 0 0 1 .708 0l.646.647.646-.647a.5.5 0 0 1 .801.13l.5 1A.5.5 0 0 1 15 2v13h-1V2.118l-.137-.274-.51.51a.5.5 0 0 1-.707 0L12 1.707l-.646.647a.5.5 0 0 1-.708 0L10 1.707l-.646.647a.5.5 0 0 1-.708 0L8 1.707l-.646.647a.5.5 0 0 1-.708 0L6 1.707l-.646.647a.5.5 0 0 1-.708 0L4 1.707l-.646.647a.5.5 0 0 1-.708 0l-.509-.51L2 2.118V15H1V2a.5.5 0 0 1 .053-.224l.5-1a.5.5 0 0 1 .367-.27zM0 15.5a.5.5 0 0 1 .5-.5h15a.5.5 0 0 1 0 1H.5a.5.5 0 0 1-.5-.5z"/><path fill-rule="evenodd" d="M3 4.5a.5.5 0 0 1 .5-.5h6a.5.5 0 1 1 0 1h-6a.5.5 0 0 1-.5-.5zm0 2a.5.5 0 0 1 .5-.5h6a.5.5 0 1 1 0 1h-6a.5.5 0 0 1-.5-.5zm0 2a.5.5 0 0 1 .5-.5h6a.5.5 0 1 1 0 1h-6a.5.5 0 0 1-.5-.5zm0 2a.5.5 0 0 1 .5-.5h6a.5.5 0 0 1 0 1h-6a.5.5 0 0 1-.5-.5zm0 2a.5.5 0 0 1 .5-.5h6a.5.5 0 0 1 0 1h-6a.5.5 0 0 1-.5-.5zm8-8a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 0 1h-1a.5.5 0 0 1-.5-.5zm0 2a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 0 1h-1a.5.5 0 0 1-.5-.5zm0 2a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 0 1h-1a.5.5 0 0 1-.5-.5zm0 2a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 0 1h-1a.5.5 0 0 1-.5-.5zm0 2a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 0 1h-1a.5.5 0 0 1-.5-.5z"/>'); // eslint-disable-next-line
 
 exports.BIconReceiptCutoff = BIconReceiptCutoff;
+var BIconReception0 = /*#__PURE__*/(0, _makeIcon.makeIcon)('Reception0', '<path d="M0 13.5a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 0 1h-2a.5.5 0 0 1-.5-.5zm4 0a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 0 1h-2a.5.5 0 0 1-.5-.5zm4 0a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 0 1h-2a.5.5 0 0 1-.5-.5zm4 0a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 0 1h-2a.5.5 0 0 1-.5-.5z"/>'); // eslint-disable-next-line
+
+exports.BIconReception0 = BIconReception0;
+var BIconReception1 = /*#__PURE__*/(0, _makeIcon.makeIcon)('Reception1', '<path d="M0 11.5a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1-.5-.5v-2zm4 2a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 0 1h-2a.5.5 0 0 1-.5-.5zm4 0a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 0 1h-2a.5.5 0 0 1-.5-.5zm4 0a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 0 1h-2a.5.5 0 0 1-.5-.5z"/>'); // eslint-disable-next-line
+
+exports.BIconReception1 = BIconReception1;
+var BIconReception2 = /*#__PURE__*/(0, _makeIcon.makeIcon)('Reception2', '<path d="M0 11.5a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1-.5-.5v-2zm4-3a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 .5.5v5a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1-.5-.5v-5zm4 5a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 0 1h-2a.5.5 0 0 1-.5-.5zm4 0a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 0 1h-2a.5.5 0 0 1-.5-.5z"/>'); // eslint-disable-next-line
+
+exports.BIconReception2 = BIconReception2;
+var BIconReception3 = /*#__PURE__*/(0, _makeIcon.makeIcon)('Reception3', '<path d="M0 11.5a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1-.5-.5v-2zm4-3a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 .5.5v5a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1-.5-.5v-5zm4-3a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 .5.5v8a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1-.5-.5v-8zm4 8a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 0 1h-2a.5.5 0 0 1-.5-.5z"/>'); // eslint-disable-next-line
+
+exports.BIconReception3 = BIconReception3;
+var BIconReception4 = /*#__PURE__*/(0, _makeIcon.makeIcon)('Reception4', '<path d="M0 11.5a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1-.5-.5v-2zm4-3a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 .5.5v5a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1-.5-.5v-5zm4-3a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 .5.5v8a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1-.5-.5v-8zm4-3a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 .5.5v11a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1-.5-.5v-11z"/>'); // eslint-disable-next-line
+
+exports.BIconReception4 = BIconReception4;
 var BIconReply = /*#__PURE__*/(0, _makeIcon.makeIcon)('Reply', '<path fill-rule="evenodd" d="M9.502 5.013a.144.144 0 0 0-.202.134V6.3a.5.5 0 0 1-.5.5c-.667 0-2.013.005-3.3.822-.984.624-1.99 1.76-2.595 3.876C3.925 10.515 5.09 9.982 6.11 9.7a8.741 8.741 0 0 1 1.921-.306 7.403 7.403 0 0 1 .798.008h.013l.005.001h.001L8.8 9.9l.05-.498a.5.5 0 0 1 .45.498v1.153c0 .108.11.176.202.134l3.984-2.933a.494.494 0 0 1 .042-.028.147.147 0 0 0 0-.252.494.494 0 0 1-.042-.028L9.502 5.013zM8.3 10.386a7.745 7.745 0 0 0-1.923.277c-1.326.368-2.896 1.201-3.94 3.08a.5.5 0 0 1-.933-.305c.464-3.71 1.886-5.662 3.46-6.66 1.245-.79 2.527-.942 3.336-.971v-.66a1.144 1.144 0 0 1 1.767-.96l3.994 2.94a1.147 1.147 0 0 1 0 1.946l-3.994 2.94a1.144 1.144 0 0 1-1.767-.96v-.667z"/>'); // eslint-disable-next-line
 
 exports.BIconReply = BIconReply;
@@ -54689,27 +55617,66 @@ exports.BIconReplyAllFill = BIconReplyAllFill;
 var BIconReplyFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('ReplyFill', '<path d="M9.079 11.9l4.568-3.281a.719.719 0 0 0 0-1.238L9.079 4.1A.716.716 0 0 0 8 4.719V6c-1.5 0-6 0-7 8 2.5-4.5 7-4 7-4v1.281c0 .56.606.898 1.079.62z"/>'); // eslint-disable-next-line
 
 exports.BIconReplyFill = BIconReplyFill;
+var BIconRss = /*#__PURE__*/(0, _makeIcon.makeIcon)('Rss', '<path fill-rule="evenodd" d="M14 1H2a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1zM2 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2H2z"/><path d="M5.5 12a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/><path fill-rule="evenodd" d="M2.5 3.5a1 1 0 0 1 1-1c5.523 0 10 4.477 10 10a1 1 0 1 1-2 0 8 8 0 0 0-8-8 1 1 0 0 1-1-1zm0 4a1 1 0 0 1 1-1 6 6 0 0 1 6 6 1 1 0 1 1-2 0 4 4 0 0 0-4-4 1 1 0 0 1-1-1z"/>'); // eslint-disable-next-line
+
+exports.BIconRss = BIconRss;
+var BIconRssFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('RssFill', '<path fill-rule="evenodd" d="M2 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2H2zm1.5 2.5a1 1 0 0 0 0 2 8 8 0 0 1 8 8 1 1 0 1 0 2 0c0-5.523-4.477-10-10-10zm0 4a1 1 0 0 0 0 2 4 4 0 0 1 4 4 1 1 0 1 0 2 0 6 6 0 0 0-6-6zm.5 7a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z"/>'); // eslint-disable-next-line
+
+exports.BIconRssFill = BIconRssFill;
 var BIconScrewdriver = /*#__PURE__*/(0, _makeIcon.makeIcon)('Screwdriver', '<path fill-rule="evenodd" d="M0 1l1-1 3.081 2.2a1 1 0 0 1 .419.815v.07a1 1 0 0 0 .293.708L10.5 9.5l.914-.305a1 1 0 0 1 1.023.242l3.356 3.356a1 1 0 0 1 0 1.414l-1.586 1.586a1 1 0 0 1-1.414 0l-3.356-3.356a1 1 0 0 1-.242-1.023L9.5 10.5 3.793 4.793a1 1 0 0 0-.707-.293h-.071a1 1 0 0 1-.814-.419L0 1zm11.354 9.646a.5.5 0 0 0-.708.708l3 3a.5.5 0 0 0 .708-.708l-3-3z"/>'); // eslint-disable-next-line
 
 exports.BIconScrewdriver = BIconScrewdriver;
 var BIconSearch = /*#__PURE__*/(0, _makeIcon.makeIcon)('Search', '<path fill-rule="evenodd" d="M10.442 10.442a1 1 0 0 1 1.415 0l3.85 3.85a1 1 0 0 1-1.414 1.415l-3.85-3.85a1 1 0 0 1 0-1.415z"/><path fill-rule="evenodd" d="M6.5 12a5.5 5.5 0 1 0 0-11 5.5 5.5 0 0 0 0 11zM13 6.5a6.5 6.5 0 1 1-13 0 6.5 6.5 0 0 1 13 0z"/>'); // eslint-disable-next-line
 
 exports.BIconSearch = BIconSearch;
-var BIconServer = /*#__PURE__*/(0, _makeIcon.makeIcon)('Server', '<path d="M13 2c0-1.105-2.239-2-5-2S3 .895 3 2s2.239 2 5 2 5-.895 5-2z"/><path d="M13 3.75c-.322.24-.698.435-1.093.593C10.857 4.763 9.475 5 8 5s-2.857-.237-3.907-.657A4.881 4.881 0 0 1 3 3.75V6c0 1.105 2.239 2 5 2s5-.895 5-2V3.75z"/><path d="M13 7.75c-.322.24-.698.435-1.093.593C10.857 8.763 9.475 9 8 9s-2.857-.237-3.907-.657A4.881 4.881 0 0 1 3 7.75V10c0 1.105 2.239 2 5 2s5-.895 5-2V7.75z"/><path d="M13 11.75c-.322.24-.698.435-1.093.593-1.05.42-2.432.657-3.907.657s-2.857-.237-3.907-.657A4.883 4.883 0 0 1 3 11.75V14c0 1.105 2.239 2 5 2s5-.895 5-2v-2.25z"/>'); // eslint-disable-next-line
+var BIconSegmentedNav = /*#__PURE__*/(0, _makeIcon.makeIcon)('SegmentedNav', '<path fill-rule="evenodd" d="M14 5H6v4h8a1 1 0 0 0 1-1V6a1 1 0 0 0-1-1zM2 4a2 2 0 0 0-2 2v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2H2z"/><path fill-rule="evenodd" d="M10 9V5h1v4h-1z"/>'); // eslint-disable-next-line
+
+exports.BIconSegmentedNav = BIconSegmentedNav;
+var BIconServer = /*#__PURE__*/(0, _makeIcon.makeIcon)('Server', '<path d="M3 4h10v8H3V4z"/><ellipse cx="8" cy="12" rx="5" ry="2"/><path d="M13 4c0 1.105-2.239 2-5 2s-5-.895-5-2 2.239-2 5-2 5 .895 5 2z"/><path d="M11.907 7.343C10.857 7.763 9.475 8 8 8s-2.857-.237-3.907-.657A4.881 4.881 0 0 1 3 6.75V5c0 1.105 2.239 2 5 2s5-.895 5-2v1.75c-.322.24-.698.435-1.093.593zm0 4C10.857 11.763 9.475 12 8 12s-2.857-.237-3.907-.657A4.883 4.883 0 0 1 3 10.75V9c0 1.105 2.239 2 5 2s5-.895 5-2v1.75c-.322.24-.698.435-1.093.593z"/>'); // eslint-disable-next-line
 
 exports.BIconServer = BIconServer;
+var BIconShare = /*#__PURE__*/(0, _makeIcon.makeIcon)('Share', '<path fill-rule="evenodd" d="M11.724 3.947l-7 3.5-.448-.894 7-3.5.448.894zm-.448 9l-7-3.5.448-.894 7 3.5-.448.894z"/><path fill-rule="evenodd" d="M13.5 4a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zm0 1a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5zm0 10a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zm0 1a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5zm-11-6.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zm0 1a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z"/>'); // eslint-disable-next-line
+
+exports.BIconShare = BIconShare;
+var BIconShareFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('ShareFill', '<path fill-rule="evenodd" d="M12.024 3.797L4.499 7.56l-.448-.895 7.525-3.762.448.894zm-.448 9.3L4.051 9.335 4.5 8.44l7.525 3.763-.448.894z"/><path fill-rule="evenodd" d="M13.5 5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5zm0 11a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5zm-11-5.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z"/>'); // eslint-disable-next-line
+
+exports.BIconShareFill = BIconShareFill;
 var BIconShield = /*#__PURE__*/(0, _makeIcon.makeIcon)('Shield', '<path fill-rule="evenodd" d="M5.443 1.991a60.17 60.17 0 0 0-2.725.802.454.454 0 0 0-.315.366C1.87 7.056 3.1 9.9 4.567 11.773c.736.94 1.533 1.636 2.197 2.093.333.228.626.394.857.5.116.053.21.089.282.11A.73.73 0 0 0 8 14.5c.007-.001.038-.005.097-.023.072-.022.166-.058.282-.111.23-.106.525-.272.857-.5a10.197 10.197 0 0 0 2.197-2.093C12.9 9.9 14.13 7.056 13.597 3.159a.454.454 0 0 0-.315-.366c-.626-.2-1.682-.526-2.725-.802C9.491 1.71 8.51 1.5 8 1.5c-.51 0-1.49.21-2.557.491zm-.256-.966C6.23.749 7.337.5 8 .5c.662 0 1.77.249 2.813.525a61.09 61.09 0 0 1 2.772.815c.528.168.926.623 1.003 1.184.573 4.197-.756 7.307-2.367 9.365a11.191 11.191 0 0 1-2.418 2.3 6.942 6.942 0 0 1-1.007.586c-.27.124-.558.225-.796.225s-.526-.101-.796-.225a6.908 6.908 0 0 1-1.007-.586 11.192 11.192 0 0 1-2.417-2.3C2.167 10.331.839 7.221 1.412 3.024A1.454 1.454 0 0 1 2.415 1.84a61.11 61.11 0 0 1 2.772-.815z"/>'); // eslint-disable-next-line
 
 exports.BIconShield = BIconShield;
+var BIconShieldCheck = /*#__PURE__*/(0, _makeIcon.makeIcon)('ShieldCheck', '<path fill-rule="evenodd" d="M5.443 1.991a60.17 60.17 0 0 0-2.725.802.454.454 0 0 0-.315.366C1.87 7.056 3.1 9.9 4.567 11.773c.736.94 1.533 1.636 2.197 2.093.333.228.626.394.857.5.116.053.21.089.282.11A.73.73 0 0 0 8 14.5c.007-.001.038-.005.097-.023.072-.022.166-.058.282-.111.23-.106.525-.272.857-.5a10.197 10.197 0 0 0 2.197-2.093C12.9 9.9 14.13 7.056 13.597 3.159a.454.454 0 0 0-.315-.366c-.626-.2-1.682-.526-2.725-.802C9.491 1.71 8.51 1.5 8 1.5c-.51 0-1.49.21-2.557.491zm-.256-.966C6.23.749 7.337.5 8 .5c.662 0 1.77.249 2.813.525a61.09 61.09 0 0 1 2.772.815c.528.168.926.623 1.003 1.184.573 4.197-.756 7.307-2.367 9.365a11.191 11.191 0 0 1-2.418 2.3 6.942 6.942 0 0 1-1.007.586c-.27.124-.558.225-.796.225s-.526-.101-.796-.225a6.908 6.908 0 0 1-1.007-.586 11.192 11.192 0 0 1-2.417-2.3C2.167 10.331.839 7.221 1.412 3.024A1.454 1.454 0 0 1 2.415 1.84a61.11 61.11 0 0 1 2.772-.815z"/><path fill-rule="evenodd" d="M10.854 6.146a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708 0l-1.5-1.5a.5.5 0 1 1 .708-.708L7.5 8.793l2.646-2.647a.5.5 0 0 1 .708 0z"/>'); // eslint-disable-next-line
+
+exports.BIconShieldCheck = BIconShieldCheck;
+var BIconShieldExclamation = /*#__PURE__*/(0, _makeIcon.makeIcon)('ShieldExclamation', '<path fill-rule="evenodd" d="M5.443 1.991a60.17 60.17 0 0 0-2.725.802.454.454 0 0 0-.315.366C1.87 7.056 3.1 9.9 4.567 11.773c.736.94 1.533 1.636 2.197 2.093.333.228.626.394.857.5.116.053.21.089.282.11A.73.73 0 0 0 8 14.5c.007-.001.038-.005.097-.023.072-.022.166-.058.282-.111.23-.106.525-.272.857-.5a10.197 10.197 0 0 0 2.197-2.093C12.9 9.9 14.13 7.056 13.597 3.159a.454.454 0 0 0-.315-.366c-.626-.2-1.682-.526-2.725-.802C9.491 1.71 8.51 1.5 8 1.5c-.51 0-1.49.21-2.557.491zm-.256-.966C6.23.749 7.337.5 8 .5c.662 0 1.77.249 2.813.525a61.09 61.09 0 0 1 2.772.815c.528.168.926.623 1.003 1.184.573 4.197-.756 7.307-2.367 9.365a11.191 11.191 0 0 1-2.418 2.3 6.942 6.942 0 0 1-1.007.586c-.27.124-.558.225-.796.225s-.526-.101-.796-.225a6.908 6.908 0 0 1-1.007-.586 11.192 11.192 0 0 1-2.417-2.3C2.167 10.331.839 7.221 1.412 3.024A1.454 1.454 0 0 1 2.415 1.84a61.11 61.11 0 0 1 2.772-.815z"/><path d="M7.002 11a1 1 0 1 1 2 0 1 1 0 0 1-2 0zM7.1 4.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 4.995z"/>'); // eslint-disable-next-line
+
+exports.BIconShieldExclamation = BIconShieldExclamation;
 var BIconShieldFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('ShieldFill', '<path fill-rule="evenodd" d="M5.187 1.025C6.23.749 7.337.5 8 .5c.662 0 1.77.249 2.813.525a61.09 61.09 0 0 1 2.772.815c.528.168.926.623 1.003 1.184.573 4.197-.756 7.307-2.367 9.365a11.191 11.191 0 0 1-2.418 2.3 6.942 6.942 0 0 1-1.007.586c-.27.124-.558.225-.796.225s-.526-.101-.796-.225a6.908 6.908 0 0 1-1.007-.586 11.192 11.192 0 0 1-2.417-2.3C2.167 10.331.839 7.221 1.412 3.024A1.454 1.454 0 0 1 2.415 1.84a61.11 61.11 0 0 1 2.772-.815z"/>'); // eslint-disable-next-line
 
 exports.BIconShieldFill = BIconShieldFill;
+var BIconShieldFillCheck = /*#__PURE__*/(0, _makeIcon.makeIcon)('ShieldFillCheck', '<path fill-rule="evenodd" d="M8 .5c-.662 0-1.77.249-2.813.525a61.11 61.11 0 0 0-2.772.815 1.454 1.454 0 0 0-1.003 1.184c-.573 4.197.756 7.307 2.368 9.365a11.192 11.192 0 0 0 2.417 2.3c.371.256.715.451 1.007.586.27.124.558.225.796.225s.527-.101.796-.225c.292-.135.636-.33 1.007-.586a11.191 11.191 0 0 0 2.418-2.3c1.611-2.058 2.94-5.168 2.367-9.365a1.454 1.454 0 0 0-1.003-1.184 61.09 61.09 0 0 0-2.772-.815C9.77.749 8.663.5 8 .5zm2.854 6.354a.5.5 0 0 0-.708-.708L7.5 8.793 6.354 7.646a.5.5 0 1 0-.708.708l1.5 1.5a.5.5 0 0 0 .708 0l3-3z"/>'); // eslint-disable-next-line
+
+exports.BIconShieldFillCheck = BIconShieldFillCheck;
+var BIconShieldFillExclamation = /*#__PURE__*/(0, _makeIcon.makeIcon)('ShieldFillExclamation', '<path fill-rule="evenodd" d="M8 .5c-.662 0-1.77.249-2.813.525a61.11 61.11 0 0 0-2.772.815 1.454 1.454 0 0 0-1.003 1.184c-.573 4.197.756 7.307 2.368 9.365a11.192 11.192 0 0 0 2.417 2.3c.371.256.715.451 1.007.586.27.124.558.225.796.225s.527-.101.796-.225c.292-.135.636-.33 1.007-.586a11.191 11.191 0 0 0 2.418-2.3c1.611-2.058 2.94-5.168 2.367-9.365a1.454 1.454 0 0 0-1.003-1.184 61.09 61.09 0 0 0-2.772-.815C9.77.749 8.663.5 8 .5zM8 4a.905.905 0 0 0-.9.995l.35 3.507a.553.553 0 0 0 1.1 0l.35-3.507A.905.905 0 0 0 8 4zm.002 6a1 1 0 1 0 0 2 1 1 0 0 0 0-2z"/>'); // eslint-disable-next-line
+
+exports.BIconShieldFillExclamation = BIconShieldFillExclamation;
+var BIconShieldFillMinus = /*#__PURE__*/(0, _makeIcon.makeIcon)('ShieldFillMinus', '<path fill-rule="evenodd" d="M8 .5c-.662 0-1.77.249-2.813.525a61.11 61.11 0 0 0-2.772.815 1.454 1.454 0 0 0-1.003 1.184c-.573 4.197.756 7.307 2.368 9.365a11.192 11.192 0 0 0 2.417 2.3c.371.256.715.451 1.007.586.27.124.558.225.796.225s.527-.101.796-.225c.292-.135.636-.33 1.007-.586a11.191 11.191 0 0 0 2.418-2.3c1.611-2.058 2.94-5.168 2.367-9.365a1.454 1.454 0 0 0-1.003-1.184 61.09 61.09 0 0 0-2.772-.815C9.77.749 8.663.5 8 .5zm-2 7a.5.5 0 0 0 0 1h4a.5.5 0 0 0 0-1H6z"/>'); // eslint-disable-next-line
+
+exports.BIconShieldFillMinus = BIconShieldFillMinus;
+var BIconShieldFillPlus = /*#__PURE__*/(0, _makeIcon.makeIcon)('ShieldFillPlus', '<path fill-rule="evenodd" d="M8 .5c-.662 0-1.77.249-2.813.525a61.11 61.11 0 0 0-2.772.815 1.454 1.454 0 0 0-1.003 1.184c-.573 4.197.756 7.307 2.368 9.365a11.192 11.192 0 0 0 2.417 2.3c.371.256.715.451 1.007.586.27.124.558.225.796.225s.527-.101.796-.225c.292-.135.636-.33 1.007-.586a11.191 11.191 0 0 0 2.418-2.3c1.611-2.058 2.94-5.168 2.367-9.365a1.454 1.454 0 0 0-1.003-1.184 61.09 61.09 0 0 0-2.772-.815C9.77.749 8.663.5 8 .5zM8.5 6a.5.5 0 0 0-1 0v1.5H6a.5.5 0 0 0 0 1h1.5V10a.5.5 0 0 0 1 0V8.5H10a.5.5 0 0 0 0-1H8.5V6z"/>'); // eslint-disable-next-line
+
+exports.BIconShieldFillPlus = BIconShieldFillPlus;
 var BIconShieldLock = /*#__PURE__*/(0, _makeIcon.makeIcon)('ShieldLock', '<path fill-rule="evenodd" d="M5.443 1.991a60.17 60.17 0 0 0-2.725.802.454.454 0 0 0-.315.366C1.87 7.056 3.1 9.9 4.567 11.773c.736.94 1.533 1.636 2.197 2.093.333.228.626.394.857.5.116.053.21.089.282.11A.73.73 0 0 0 8 14.5c.007-.001.038-.005.097-.023.072-.022.166-.058.282-.111.23-.106.525-.272.857-.5a10.197 10.197 0 0 0 2.197-2.093C12.9 9.9 14.13 7.056 13.597 3.159a.454.454 0 0 0-.315-.366c-.626-.2-1.682-.526-2.725-.802C9.491 1.71 8.51 1.5 8 1.5c-.51 0-1.49.21-2.557.491zm-.256-.966C6.23.749 7.337.5 8 .5c.662 0 1.77.249 2.813.525a61.09 61.09 0 0 1 2.772.815c.528.168.926.623 1.003 1.184.573 4.197-.756 7.307-2.367 9.365a11.191 11.191 0 0 1-2.418 2.3 6.942 6.942 0 0 1-1.007.586c-.27.124-.558.225-.796.225s-.526-.101-.796-.225a6.908 6.908 0 0 1-1.007-.586 11.192 11.192 0 0 1-2.417-2.3C2.167 10.331.839 7.221 1.412 3.024A1.454 1.454 0 0 1 2.415 1.84a61.11 61.11 0 0 1 2.772-.815z"/><path d="M9.5 6.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/><path d="M7.411 8.034a.5.5 0 0 1 .493-.417h.156a.5.5 0 0 1 .492.414l.347 2a.5.5 0 0 1-.493.585h-.835a.5.5 0 0 1-.493-.582l.333-2z"/>'); // eslint-disable-next-line
 
 exports.BIconShieldLock = BIconShieldLock;
 var BIconShieldLockFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('ShieldLockFill', '<path fill-rule="evenodd" d="M5.187 1.025C6.23.749 7.337.5 8 .5c.662 0 1.77.249 2.813.525a61.09 61.09 0 0 1 2.772.815c.528.168.926.623 1.003 1.184.573 4.197-.756 7.307-2.367 9.365a11.191 11.191 0 0 1-2.418 2.3 6.942 6.942 0 0 1-1.007.586c-.27.124-.558.225-.796.225s-.526-.101-.796-.225a6.908 6.908 0 0 1-1.007-.586 11.192 11.192 0 0 1-2.417-2.3C2.167 10.331.839 7.221 1.412 3.024A1.454 1.454 0 0 1 2.415 1.84a61.11 61.11 0 0 1 2.772-.815zm3.328 6.884a1.5 1.5 0 1 0-1.06-.011.5.5 0 0 0-.044.136l-.333 2a.5.5 0 0 0 .493.582h.835a.5.5 0 0 0 .493-.585l-.347-2a.5.5 0 0 0-.037-.122z"/>'); // eslint-disable-next-line
 
 exports.BIconShieldLockFill = BIconShieldLockFill;
+var BIconShieldMinus = /*#__PURE__*/(0, _makeIcon.makeIcon)('ShieldMinus', '<path fill-rule="evenodd" d="M5.443 1.991a60.17 60.17 0 0 0-2.725.802.454.454 0 0 0-.315.366C1.87 7.056 3.1 9.9 4.567 11.773c.736.94 1.533 1.636 2.197 2.093.333.228.626.394.857.5.116.053.21.089.282.11A.73.73 0 0 0 8 14.5c.007-.001.038-.005.097-.023.072-.022.166-.058.282-.111.23-.106.525-.272.857-.5a10.197 10.197 0 0 0 2.197-2.093C12.9 9.9 14.13 7.056 13.597 3.159a.454.454 0 0 0-.315-.366c-.626-.2-1.682-.526-2.725-.802C9.491 1.71 8.51 1.5 8 1.5c-.51 0-1.49.21-2.557.491zm-.256-.966C6.23.749 7.337.5 8 .5c.662 0 1.77.249 2.813.525a61.09 61.09 0 0 1 2.772.815c.528.168.926.623 1.003 1.184.573 4.197-.756 7.307-2.367 9.365a11.191 11.191 0 0 1-2.418 2.3 6.942 6.942 0 0 1-1.007.586c-.27.124-.558.225-.796.225s-.526-.101-.796-.225a6.908 6.908 0 0 1-1.007-.586 11.192 11.192 0 0 1-2.417-2.3C2.167 10.331.839 7.221 1.412 3.024A1.454 1.454 0 0 1 2.415 1.84a61.11 61.11 0 0 1 2.772-.815z"/><path fill-rule="evenodd" d="M5.5 8a.5.5 0 0 1 .5-.5h4a.5.5 0 0 1 0 1H6a.5.5 0 0 1-.5-.5z"/>'); // eslint-disable-next-line
+
+exports.BIconShieldMinus = BIconShieldMinus;
+var BIconShieldPlus = /*#__PURE__*/(0, _makeIcon.makeIcon)('ShieldPlus', '<path fill-rule="evenodd" d="M5.443 1.991a60.17 60.17 0 0 0-2.725.802.454.454 0 0 0-.315.366C1.87 7.056 3.1 9.9 4.567 11.773c.736.94 1.533 1.636 2.197 2.093.333.228.626.394.857.5.116.053.21.089.282.11A.73.73 0 0 0 8 14.5c.007-.001.038-.005.097-.023.072-.022.166-.058.282-.111.23-.106.525-.272.857-.5a10.197 10.197 0 0 0 2.197-2.093C12.9 9.9 14.13 7.056 13.597 3.159a.454.454 0 0 0-.315-.366c-.626-.2-1.682-.526-2.725-.802C9.491 1.71 8.51 1.5 8 1.5c-.51 0-1.49.21-2.557.491zm-.256-.966C6.23.749 7.337.5 8 .5c.662 0 1.77.249 2.813.525a61.09 61.09 0 0 1 2.772.815c.528.168.926.623 1.003 1.184.573 4.197-.756 7.307-2.367 9.365a11.191 11.191 0 0 1-2.418 2.3 6.942 6.942 0 0 1-1.007.586c-.27.124-.558.225-.796.225s-.526-.101-.796-.225a6.908 6.908 0 0 1-1.007-.586 11.192 11.192 0 0 1-2.417-2.3C2.167 10.331.839 7.221 1.412 3.024A1.454 1.454 0 0 1 2.415 1.84a61.11 61.11 0 0 1 2.772-.815z"/><path fill-rule="evenodd" d="M8 5.5a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-.5.5H6a.5.5 0 0 1 0-1h1.5V6a.5.5 0 0 1 .5-.5z"/><path fill-rule="evenodd" d="M7.5 8a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 0 1H8.5V10a.5.5 0 0 1-1 0V8z"/>'); // eslint-disable-next-line
+
+exports.BIconShieldPlus = BIconShieldPlus;
 var BIconShieldShaded = /*#__PURE__*/(0, _makeIcon.makeIcon)('ShieldShaded', '<path fill-rule="evenodd" d="M5.443 1.991a60.17 60.17 0 0 0-2.725.802.454.454 0 0 0-.315.366C1.87 7.056 3.1 9.9 4.567 11.773c.736.94 1.533 1.636 2.197 2.093.333.228.626.394.857.5.116.053.21.089.282.11A.73.73 0 0 0 8 14.5c.007-.001.038-.005.097-.023.072-.022.166-.058.282-.111.23-.106.525-.272.857-.5a10.197 10.197 0 0 0 2.197-2.093C12.9 9.9 14.13 7.056 13.597 3.159a.454.454 0 0 0-.315-.366c-.626-.2-1.682-.526-2.725-.802C9.491 1.71 8.51 1.5 8 1.5c-.51 0-1.49.21-2.557.491zm-.256-.966C6.23.749 7.337.5 8 .5c.662 0 1.77.249 2.813.525a61.09 61.09 0 0 1 2.772.815c.528.168.926.623 1.003 1.184.573 4.197-.756 7.307-2.367 9.365a11.191 11.191 0 0 1-2.418 2.3 6.942 6.942 0 0 1-1.007.586c-.27.124-.558.225-.796.225s-.526-.101-.796-.225a6.908 6.908 0 0 1-1.007-.586 11.192 11.192 0 0 1-2.417-2.3C2.167 10.331.839 7.221 1.412 3.024A1.454 1.454 0 0 1 2.415 1.84a61.11 61.11 0 0 1 2.772-.815z"/><path d="M8 2.25c.909 0 3.188.685 4.254 1.022a.94.94 0 0 1 .656.773c.814 6.424-4.13 9.452-4.91 9.452V2.25z"/>'); // eslint-disable-next-line
 
 exports.BIconShieldShaded = BIconShieldShaded;
@@ -54734,6 +55701,30 @@ exports.BIconShopWindow = BIconShopWindow;
 var BIconShuffle = /*#__PURE__*/(0, _makeIcon.makeIcon)('Shuffle', '<path fill-rule="evenodd" d="M12.646 1.146a.5.5 0 0 1 .708 0l2.5 2.5a.5.5 0 0 1 0 .708l-2.5 2.5a.5.5 0 0 1-.708-.708L14.793 4l-2.147-2.146a.5.5 0 0 1 0-.708zm0 8a.5.5 0 0 1 .708 0l2.5 2.5a.5.5 0 0 1 0 .708l-2.5 2.5a.5.5 0 0 1-.708-.708L14.793 12l-2.147-2.146a.5.5 0 0 1 0-.708z"/><path fill-rule="evenodd" d="M0 4a.5.5 0 0 1 .5-.5h2c3.053 0 4.564 2.258 5.856 4.226l.08.123c.636.97 1.224 1.865 1.932 2.539.718.682 1.538 1.112 2.632 1.112h2a.5.5 0 0 1 0 1h-2c-1.406 0-2.461-.57-3.321-1.388-.795-.755-1.441-1.742-2.055-2.679l-.105-.159C6.186 6.242 4.947 4.5 2.5 4.5h-2A.5.5 0 0 1 0 4z"/><path fill-rule="evenodd" d="M0 12a.5.5 0 0 0 .5.5h2c3.053 0 4.564-2.258 5.856-4.226l.08-.123c.636-.97 1.224-1.865 1.932-2.539C11.086 4.93 11.906 4.5 13 4.5h2a.5.5 0 0 0 0-1h-2c-1.406 0-2.461.57-3.321 1.388-.795.755-1.441 1.742-2.055 2.679l-.105.159C6.186 9.758 4.947 11.5 2.5 11.5h-2a.5.5 0 0 0-.5.5z"/>'); // eslint-disable-next-line
 
 exports.BIconShuffle = BIconShuffle;
+var BIconSignpost = /*#__PURE__*/(0, _makeIcon.makeIcon)('Signpost', '<path d="M7 1.414V4h2V1.414a1 1 0 0 0-2 0z"/><path fill-rule="evenodd" d="M12.532 5H2v4h10.532l1.666-2-1.666-2zM2 4a1 1 0 0 0-1 1v4a1 1 0 0 0 1 1h10.532a1 1 0 0 0 .768-.36l1.933-2.32a.5.5 0 0 0 0-.64L13.3 4.36a1 1 0 0 0-.768-.36H2z"/><path d="M7 10h2v6H7v-6z"/>'); // eslint-disable-next-line
+
+exports.BIconSignpost = BIconSignpost;
+var BIconSignpost2 = /*#__PURE__*/(0, _makeIcon.makeIcon)('Signpost2', '<path d="M7 1.414V2h2v-.586a1 1 0 0 0-2 0z"/><path fill-rule="evenodd" d="M13.5 3H2v2h11.5l.75-1-.75-1zM2 2a1 1 0 0 0-1 1v2a1 1 0 0 0 1 1h11.5a1 1 0 0 0 .8-.4l.975-1.3a.5.5 0 0 0 0-.6L14.3 2.4a1 1 0 0 0-.8-.4H2zm.5 6H14v2H2.5l-.75-1 .75-1zM14 7a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1H2.5a1 1 0 0 1-.8-.4L.725 9.3a.5.5 0 0 1 0-.6L1.7 7.4a1 1 0 0 1 .8-.4H14z"/><path d="M7 6h2v1H7V6zm0 5h2v5H7v-5z"/>'); // eslint-disable-next-line
+
+exports.BIconSignpost2 = BIconSignpost2;
+var BIconSignpost2Fill = /*#__PURE__*/(0, _makeIcon.makeIcon)('Signpost2Fill', '<path d="M7 1.414V16h2V1.414a1 1 0 0 0-2 0z"/><path d="M1 3a1 1 0 0 1 1-1h11.5a1 1 0 0 1 .8.4l.975 1.3a.5.5 0 0 1 0 .6L14.3 5.6a1 1 0 0 1-.8.4H2a1 1 0 0 1-1-1V3zm14 5a1 1 0 0 0-1-1H2.5a1 1 0 0 0-.8.4L.725 8.7a.5.5 0 0 0 0 .6l.975 1.3a1 1 0 0 0 .8.4H14a1 1 0 0 0 1-1V8z"/>'); // eslint-disable-next-line
+
+exports.BIconSignpost2Fill = BIconSignpost2Fill;
+var BIconSignpostFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('SignpostFill', '<path d="M7 1.414V4h2V1.414a1 1 0 0 0-2 0zM1 5a1 1 0 0 1 1-1h10.532a1 1 0 0 1 .768.36l1.933 2.32a.5.5 0 0 1 0 .64L13.3 9.64a1 1 0 0 1-.768.36H2a1 1 0 0 1-1-1V5zm6 5h2v6H7v-6z"/>'); // eslint-disable-next-line
+
+exports.BIconSignpostFill = BIconSignpostFill;
+var BIconSignpostSplit = /*#__PURE__*/(0, _makeIcon.makeIcon)('SignpostSplit', '<path d="M7 16h2V6H8V2h1v-.586a1 1 0 0 0-2 0V7h1v4H7v5z"/><path fill-rule="evenodd" d="M14 3H8v2h6l.75-1L14 3zM8 2a1 1 0 0 0-1 1v2a1 1 0 0 0 1 1h6a1 1 0 0 0 .8-.4l.975-1.3a.5.5 0 0 0 0-.6L14.8 2.4A1 1 0 0 0 14 2H8zM2 8h6v2H2l-.75-1L2 8zm6-1a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1H2a1 1 0 0 1-.8-.4L.225 9.3a.5.5 0 0 1 0-.6L1.2 7.4A1 1 0 0 1 2 7h6z"/>'); // eslint-disable-next-line
+
+exports.BIconSignpostSplit = BIconSignpostSplit;
+var BIconSignpostSplitFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('SignpostSplitFill', '<path d="M7 16h2V6h5a1 1 0 0 0 .8-.4l.975-1.3a.5.5 0 0 0 0-.6L14.8 2.4A1 1 0 0 0 14 2H9v-.586a1 1 0 0 0-2 0V7H2a1 1 0 0 0-.8.4L.225 8.7a.5.5 0 0 0 0 .6l.975 1.3a1 1 0 0 0 .8.4h5v5z"/>'); // eslint-disable-next-line
+
+exports.BIconSignpostSplitFill = BIconSignpostSplitFill;
+var BIconSim = /*#__PURE__*/(0, _makeIcon.makeIcon)('Sim', '<path fill-rule="evenodd" d="M2 1.5A1.5 1.5 0 0 1 3.5 0h7.086a1.5 1.5 0 0 1 1.06.44l1.915 1.914A1.5 1.5 0 0 1 14 3.414V14.5a1.5 1.5 0 0 1-1.5 1.5h-9A1.5 1.5 0 0 1 2 14.5v-13zM3.5 1a.5.5 0 0 0-.5.5v13a.5.5 0 0 0 .5.5h9a.5.5 0 0 0 .5-.5V3.414a.5.5 0 0 0-.146-.353l-1.915-1.915A.5.5 0 0 0 10.586 1H3.5z"/><path fill-rule="evenodd" d="M5.5 4a.5.5 0 0 0-.5.5V6h2.5V4h-2zm3 0v2H11V4.5a.5.5 0 0 0-.5-.5h-2zM11 7H5v2h6V7zm0 3H8.5v2h2a.5.5 0 0 0 .5-.5V10zm-3.5 2v-2H5v1.5a.5.5 0 0 0 .5.5h2zM4 4.5A1.5 1.5 0 0 1 5.5 3h5A1.5 1.5 0 0 1 12 4.5v7a1.5 1.5 0 0 1-1.5 1.5h-5A1.5 1.5 0 0 1 4 11.5v-7z"/>'); // eslint-disable-next-line
+
+exports.BIconSim = BIconSim;
+var BIconSimFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('SimFill', '<path fill-rule="evenodd" d="M3.5 0A1.5 1.5 0 0 0 2 1.5v13A1.5 1.5 0 0 0 3.5 16h9a1.5 1.5 0 0 0 1.5-1.5V3.414a1.5 1.5 0 0 0-.44-1.06L11.647.439A1.5 1.5 0 0 0 10.586 0H3.5zM5 4.5a.5.5 0 0 1 .5-.5h2v2H5V4.5zM8.5 6V4h2a.5.5 0 0 1 .5.5V6H8.5zM5 7h6v2H5V7zm3.5 3H11v1.5a.5.5 0 0 1-.5.5h-2v-2zm-1 0v2h-2a.5.5 0 0 1-.5-.5V10h2.5zm-2-7A1.5 1.5 0 0 0 4 4.5v7A1.5 1.5 0 0 0 5.5 13h5a1.5 1.5 0 0 0 1.5-1.5v-7A1.5 1.5 0 0 0 10.5 3h-5z"/>'); // eslint-disable-next-line
+
+exports.BIconSimFill = BIconSimFill;
 var BIconSkipBackward = /*#__PURE__*/(0, _makeIcon.makeIcon)('SkipBackward', '<path fill-rule="evenodd" d="M.5 3.5A.5.5 0 0 1 1 4v3.248l6.267-3.636c.52-.302 1.233.043 1.233.696v2.94l6.267-3.636c.52-.302 1.233.043 1.233.696v7.384c0 .653-.713.998-1.233.696L8.5 8.752v2.94c0 .653-.713.998-1.233.696L1 8.752V12a.5.5 0 0 1-1 0V4a.5.5 0 0 1 .5-.5zm7 1.133L1.696 8 7.5 11.367V4.633zm7.5 0L9.196 8 15 11.367V4.633z"/>'); // eslint-disable-next-line
 
 exports.BIconSkipBackward = BIconSkipBackward;
@@ -54773,19 +55764,61 @@ exports.BIconSlashSquare = BIconSlashSquare;
 var BIconSlashSquareFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('SlashSquareFill', '<path fill-rule="evenodd" d="M2 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2H2zm9.854 4.854a.5.5 0 0 0-.708-.708l-7 7a.5.5 0 0 0 .708.708l7-7z"/>'); // eslint-disable-next-line
 
 exports.BIconSlashSquareFill = BIconSlashSquareFill;
-var BIconSliders = /*#__PURE__*/(0, _makeIcon.makeIcon)('Sliders', '<path d="M0 0h16v16H0z"/><path fill-rule="evenodd" d="M14 3.5a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0zM11.5 5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zM7 8.5a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0zM4.5 10a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zm9.5 3.5a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0zM11.5 15a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z"/><path fill-rule="evenodd" d="M9.5 4H0V3h9.5v1zM16 4h-2.5V3H16v1zM9.5 14H0v-1h9.5v1zm6.5 0h-2.5v-1H16v1zM6.5 9H16V8H6.5v1zM0 9h2.5V8H0v1z"/>'); // eslint-disable-next-line
+var BIconSliders = /*#__PURE__*/(0, _makeIcon.makeIcon)('Sliders', '<path fill-rule="evenodd" d="M14 3.5a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0zM11.5 5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zM7 8.5a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0zM4.5 10a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zm9.5 3.5a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0zM11.5 15a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z"/><path fill-rule="evenodd" d="M9.5 4H0V3h9.5v1zM16 4h-2.5V3H16v1zM9.5 14H0v-1h9.5v1zm6.5 0h-2.5v-1H16v1zM6.5 9H16V8H6.5v1zM0 9h2.5V8H0v1z"/>'); // eslint-disable-next-line
 
 exports.BIconSliders = BIconSliders;
+var BIconSmartwatch = /*#__PURE__*/(0, _makeIcon.makeIcon)('Smartwatch', '<path d="M14 5h.5a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-.5.5H14V5z"/><path fill-rule="evenodd" d="M8.5 4.5A.5.5 0 0 1 9 5v3.5a.5.5 0 0 1-.5.5H6a.5.5 0 0 1 0-1h2V5a.5.5 0 0 1 .5-.5z"/><path fill-rule="evenodd" d="M4.5 2h7A2.5 2.5 0 0 1 14 4.5v7a2.5 2.5 0 0 1-2.5 2.5h-7A2.5 2.5 0 0 1 2 11.5v-7A2.5 2.5 0 0 1 4.5 2zm0 1A1.5 1.5 0 0 0 3 4.5v7A1.5 1.5 0 0 0 4.5 13h7a1.5 1.5 0 0 0 1.5-1.5v-7A1.5 1.5 0 0 0 11.5 3h-7z"/><path d="M4 2.05v-.383C4 .747 4.746 0 5.667 0h4.666C11.253 0 12 .746 12 1.667v.383a2.512 2.512 0 0 0-.5-.05h-7c-.171 0-.338.017-.5.05zm0 11.9c.162.033.329.05.5.05h7c.171 0 .338-.017.5-.05v.383c0 .92-.746 1.667-1.667 1.667H5.667C4.747 16 4 15.254 4 14.333v-.383z"/>'); // eslint-disable-next-line
+
+exports.BIconSmartwatch = BIconSmartwatch;
+var BIconSortAlphaDown = /*#__PURE__*/(0, _makeIcon.makeIcon)('SortAlphaDown', '<path fill-rule="evenodd" d="M4 2a.5.5 0 0 1 .5.5v11a.5.5 0 0 1-1 0v-11A.5.5 0 0 1 4 2z"/><path fill-rule="evenodd" d="M6.354 11.146a.5.5 0 0 1 0 .708l-2 2a.5.5 0 0 1-.708 0l-2-2a.5.5 0 0 1 .708-.708L4 12.793l1.646-1.647a.5.5 0 0 1 .708 0z"/><path d="M9.664 7l.418-1.371h1.781L12.281 7h1.121l-1.78-5.332h-1.235L8.597 7h1.067zM11 2.687l.652 2.157h-1.351l.652-2.157H11zM9.027 14h3.934v-.867h-2.645v-.055l2.567-3.719v-.691H9.098v.867h2.507v.055l-2.578 3.719V14z"/>'); // eslint-disable-next-line
+
+exports.BIconSortAlphaDown = BIconSortAlphaDown;
+var BIconSortAlphaDownAlt = /*#__PURE__*/(0, _makeIcon.makeIcon)('SortAlphaDownAlt', '<path fill-rule="evenodd" d="M4 2a.5.5 0 0 1 .5.5v11a.5.5 0 0 1-1 0v-11A.5.5 0 0 1 4 2z"/><path fill-rule="evenodd" d="M6.354 11.146a.5.5 0 0 1 0 .708l-2 2a.5.5 0 0 1-.708 0l-2-2a.5.5 0 0 1 .708-.708L4 12.793l1.646-1.647a.5.5 0 0 1 .708 0z"/><path d="M9.027 7h3.934v-.867h-2.645v-.055l2.567-3.719v-.691H9.098v.867h2.507v.055L9.027 6.309V7zm.637 7l.418-1.371h1.781L12.281 14h1.121l-1.78-5.332h-1.235L8.597 14h1.067zM11 9.687l.652 2.157h-1.351l.652-2.156H11z"/>'); // eslint-disable-next-line
+
+exports.BIconSortAlphaDownAlt = BIconSortAlphaDownAlt;
+var BIconSortAlphaUp = /*#__PURE__*/(0, _makeIcon.makeIcon)('SortAlphaUp', '<path fill-rule="evenodd" d="M4 14a.5.5 0 0 0 .5-.5v-11a.5.5 0 0 0-1 0v11a.5.5 0 0 0 .5.5z"/><path fill-rule="evenodd" d="M6.354 4.854a.5.5 0 0 0 0-.708l-2-2a.5.5 0 0 0-.708 0l-2 2a.5.5 0 1 0 .708.708L4 3.207l1.646 1.647a.5.5 0 0 0 .708 0z"/><path d="M9.664 7l.418-1.371h1.781L12.281 7h1.121l-1.78-5.332h-1.235L8.597 7h1.067zM11 2.687l.652 2.157h-1.351l.652-2.157H11zM9.027 14h3.934v-.867h-2.645v-.055l2.567-3.719v-.691H9.098v.867h2.507v.055l-2.578 3.719V14z"/>'); // eslint-disable-next-line
+
+exports.BIconSortAlphaUp = BIconSortAlphaUp;
+var BIconSortAlphaUpAlt = /*#__PURE__*/(0, _makeIcon.makeIcon)('SortAlphaUpAlt', '<path fill-rule="evenodd" d="M4 14a.5.5 0 0 0 .5-.5v-11a.5.5 0 0 0-1 0v11a.5.5 0 0 0 .5.5z"/><path fill-rule="evenodd" d="M6.354 4.854a.5.5 0 0 0 0-.708l-2-2a.5.5 0 0 0-.708 0l-2 2a.5.5 0 1 0 .708.708L4 3.207l1.646 1.647a.5.5 0 0 0 .708 0z"/><path d="M9.027 7h3.934v-.867h-2.645v-.055l2.567-3.719v-.691H9.098v.867h2.507v.055L9.027 6.309V7zm.637 7l.418-1.371h1.781L12.281 14h1.121l-1.78-5.332h-1.235L8.597 14h1.067zM11 9.687l.652 2.157h-1.351l.652-2.156H11z"/>'); // eslint-disable-next-line
+
+exports.BIconSortAlphaUpAlt = BIconSortAlphaUpAlt;
+var BIconSortDown = /*#__PURE__*/(0, _makeIcon.makeIcon)('SortDown', '<path fill-rule="evenodd" d="M3 2a.5.5 0 0 1 .5.5v10a.5.5 0 0 1-1 0v-10A.5.5 0 0 1 3 2z"/><path fill-rule="evenodd" d="M5.354 10.146a.5.5 0 0 1 0 .708l-2 2a.5.5 0 0 1-.708 0l-2-2a.5.5 0 0 1 .708-.708L3 11.793l1.646-1.647a.5.5 0 0 1 .708 0zM7 9.5a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 0 1h-3a.5.5 0 0 1-.5-.5zm0-3a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5zm0-3a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7a.5.5 0 0 1-.5-.5zm0 9a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 0 1h-1a.5.5 0 0 1-.5-.5z"/>'); // eslint-disable-next-line
+
+exports.BIconSortDown = BIconSortDown;
+var BIconSortDownAlt = /*#__PURE__*/(0, _makeIcon.makeIcon)('SortDownAlt', '<path fill-rule="evenodd" d="M3 3a.5.5 0 0 1 .5.5v10a.5.5 0 0 1-1 0v-10A.5.5 0 0 1 3 3z"/><path fill-rule="evenodd" d="M5.354 11.146a.5.5 0 0 1 0 .708l-2 2a.5.5 0 0 1-.708 0l-2-2a.5.5 0 0 1 .708-.708L3 12.793l1.646-1.647a.5.5 0 0 1 .708 0zM7 6.5a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 0-1h-3a.5.5 0 0 0-.5.5zm0 3a.5.5 0 0 0 .5.5h5a.5.5 0 0 0 0-1h-5a.5.5 0 0 0-.5.5zm0 3a.5.5 0 0 0 .5.5h7a.5.5 0 0 0 0-1h-7a.5.5 0 0 0-.5.5zm0-9a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 0-1h-1a.5.5 0 0 0-.5.5z"/>'); // eslint-disable-next-line
+
+exports.BIconSortDownAlt = BIconSortDownAlt;
+var BIconSortNumericDown = /*#__PURE__*/(0, _makeIcon.makeIcon)('SortNumericDown', '<path fill-rule="evenodd" d="M4 2a.5.5 0 0 1 .5.5v11a.5.5 0 0 1-1 0v-11A.5.5 0 0 1 4 2z"/><path fill-rule="evenodd" d="M6.354 11.146a.5.5 0 0 1 0 .708l-2 2a.5.5 0 0 1-.708 0l-2-2a.5.5 0 0 1 .708-.708L4 12.793l1.646-1.647a.5.5 0 0 1 .708 0z"/><path d="M12.438 7V1.668H11.39l-1.262.906v.969l1.21-.86h.052V7h1.046zm-2.84 5.82c.054.621.625 1.278 1.761 1.278 1.422 0 2.145-.98 2.145-2.848 0-2.05-.973-2.688-2.063-2.688-1.125 0-1.972.688-1.972 1.836 0 1.145.808 1.758 1.719 1.758.69 0 1.113-.351 1.261-.742h.059c.031 1.027-.309 1.856-1.133 1.856-.43 0-.715-.227-.773-.45H9.598zm2.757-2.43c0 .637-.43.973-.933.973-.516 0-.934-.34-.934-.98 0-.625.407-1 .926-1 .543 0 .941.375.941 1.008z"/>'); // eslint-disable-next-line
+
+exports.BIconSortNumericDown = BIconSortNumericDown;
+var BIconSortNumericDownAlt = /*#__PURE__*/(0, _makeIcon.makeIcon)('SortNumericDownAlt', '<path fill-rule="evenodd" d="M4 2a.5.5 0 0 1 .5.5v11a.5.5 0 0 1-1 0v-11A.5.5 0 0 1 4 2z"/><path fill-rule="evenodd" d="M6.354 11.146a.5.5 0 0 1 0 .708l-2 2a.5.5 0 0 1-.708 0l-2-2a.5.5 0 0 1 .708-.708L4 12.793l1.646-1.647a.5.5 0 0 1 .708 0z"/><path d="M9.598 5.82c.054.621.625 1.278 1.761 1.278 1.422 0 2.145-.98 2.145-2.848 0-2.05-.973-2.688-2.063-2.688-1.125 0-1.972.688-1.972 1.836 0 1.145.808 1.758 1.719 1.758.69 0 1.113-.351 1.261-.742h.059c.031 1.027-.309 1.856-1.133 1.856-.43 0-.715-.227-.773-.45H9.598zm2.757-2.43c0 .637-.43.973-.933.973-.516 0-.934-.34-.934-.98 0-.625.407-1 .926-1 .543 0 .941.375.941 1.008zM12.438 14V8.668H11.39l-1.262.906v.969l1.21-.86h.052V14h1.046z"/>'); // eslint-disable-next-line
+
+exports.BIconSortNumericDownAlt = BIconSortNumericDownAlt;
+var BIconSortNumericUp = /*#__PURE__*/(0, _makeIcon.makeIcon)('SortNumericUp', '<path fill-rule="evenodd" d="M4 14a.5.5 0 0 0 .5-.5v-11a.5.5 0 0 0-1 0v11a.5.5 0 0 0 .5.5z"/><path fill-rule="evenodd" d="M6.354 4.854a.5.5 0 0 0 0-.708l-2-2a.5.5 0 0 0-.708 0l-2 2a.5.5 0 1 0 .708.708L4 3.207l1.646 1.647a.5.5 0 0 0 .708 0z"/><path d="M12.438 7V1.668H11.39l-1.262.906v.969l1.21-.86h.052V7h1.046zm-2.84 5.82c.054.621.625 1.278 1.761 1.278 1.422 0 2.145-.98 2.145-2.848 0-2.05-.973-2.688-2.063-2.688-1.125 0-1.972.688-1.972 1.836 0 1.145.808 1.758 1.719 1.758.69 0 1.113-.351 1.261-.742h.059c.031 1.027-.309 1.856-1.133 1.856-.43 0-.715-.227-.773-.45H9.598zm2.757-2.43c0 .637-.43.973-.933.973-.516 0-.934-.34-.934-.98 0-.625.407-1 .926-1 .543 0 .941.375.941 1.008z"/>'); // eslint-disable-next-line
+
+exports.BIconSortNumericUp = BIconSortNumericUp;
+var BIconSortNumericUpAlt = /*#__PURE__*/(0, _makeIcon.makeIcon)('SortNumericUpAlt', '<path fill-rule="evenodd" d="M4 14a.5.5 0 0 0 .5-.5v-11a.5.5 0 0 0-1 0v11a.5.5 0 0 0 .5.5z"/><path fill-rule="evenodd" d="M6.354 4.854a.5.5 0 0 0 0-.708l-2-2a.5.5 0 0 0-.708 0l-2 2a.5.5 0 1 0 .708.708L4 3.207l1.646 1.647a.5.5 0 0 0 .708 0z"/><path d="M9.598 5.82c.054.621.625 1.278 1.761 1.278 1.422 0 2.145-.98 2.145-2.848 0-2.05-.973-2.688-2.063-2.688-1.125 0-1.972.688-1.972 1.836 0 1.145.808 1.758 1.719 1.758.69 0 1.113-.351 1.261-.742h.059c.031 1.027-.309 1.856-1.133 1.856-.43 0-.715-.227-.773-.45H9.598zm2.757-2.43c0 .637-.43.973-.933.973-.516 0-.934-.34-.934-.98 0-.625.407-1 .926-1 .543 0 .941.375.941 1.008zM12.438 14V8.668H11.39l-1.262.906v.969l1.21-.86h.052V14h1.046z"/>'); // eslint-disable-next-line
+
+exports.BIconSortNumericUpAlt = BIconSortNumericUpAlt;
+var BIconSortUp = /*#__PURE__*/(0, _makeIcon.makeIcon)('SortUp', '<path fill-rule="evenodd" d="M3 13a.5.5 0 0 0 .5-.5v-10a.5.5 0 0 0-1 0v10a.5.5 0 0 0 .5.5z"/><path fill-rule="evenodd" d="M5.354 4.854a.5.5 0 0 0 0-.708l-2-2a.5.5 0 0 0-.708 0l-2 2a.5.5 0 1 0 .708.708L3 3.207l1.646 1.647a.5.5 0 0 0 .708 0zM7 9.5a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 0 1h-3a.5.5 0 0 1-.5-.5zm0-3a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5zm0-3a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7a.5.5 0 0 1-.5-.5zm0 9a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 0 1h-1a.5.5 0 0 1-.5-.5z"/>'); // eslint-disable-next-line
+
+exports.BIconSortUp = BIconSortUp;
+var BIconSortUpAlt = /*#__PURE__*/(0, _makeIcon.makeIcon)('SortUpAlt', '<path fill-rule="evenodd" d="M3 14a.5.5 0 0 0 .5-.5v-10a.5.5 0 0 0-1 0v10a.5.5 0 0 0 .5.5z"/><path fill-rule="evenodd" d="M5.354 5.854a.5.5 0 0 0 0-.708l-2-2a.5.5 0 0 0-.708 0l-2 2a.5.5 0 1 0 .708.708L3 4.207l1.646 1.647a.5.5 0 0 0 .708 0zM7 6.5a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 0-1h-3a.5.5 0 0 0-.5.5zm0 3a.5.5 0 0 0 .5.5h5a.5.5 0 0 0 0-1h-5a.5.5 0 0 0-.5.5zm0 3a.5.5 0 0 0 .5.5h7a.5.5 0 0 0 0-1h-7a.5.5 0 0 0-.5.5zm0-9a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 0-1h-1a.5.5 0 0 0-.5.5z"/>'); // eslint-disable-next-line
+
+exports.BIconSortUpAlt = BIconSortUpAlt;
 var BIconSoundwave = /*#__PURE__*/(0, _makeIcon.makeIcon)('Soundwave', '<path fill-rule="evenodd" d="M8.5 2a.5.5 0 0 1 .5.5v11a.5.5 0 0 1-1 0v-11a.5.5 0 0 1 .5-.5zm-2 2a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-1 0v-7a.5.5 0 0 1 .5-.5zm4 0a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-1 0v-7a.5.5 0 0 1 .5-.5zm-6 1.5A.5.5 0 0 1 5 6v4a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm8 0a.5.5 0 0 1 .5.5v4a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm-10 1A.5.5 0 0 1 3 7v2a.5.5 0 0 1-1 0V7a.5.5 0 0 1 .5-.5zm12 0a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0V7a.5.5 0 0 1 .5-.5z"/>'); // eslint-disable-next-line
 
 exports.BIconSoundwave = BIconSoundwave;
 var BIconSpeaker = /*#__PURE__*/(0, _makeIcon.makeIcon)('Speaker', '<path d="M9 4a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm-2.5 6.5a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0z"/><path fill-rule="evenodd" d="M4 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2H4zm6 4a2 2 0 1 1-4 0 2 2 0 0 1 4 0zM8 7a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7z"/>'); // eslint-disable-next-line
 
 exports.BIconSpeaker = BIconSpeaker;
+var BIconSpellcheck = /*#__PURE__*/(0, _makeIcon.makeIcon)('Spellcheck', '<path fill-rule="evenodd" d="M8.217 11.068c1.216 0 1.948-.869 1.948-2.31v-.702c0-1.44-.727-2.305-1.929-2.305-.742 0-1.328.347-1.499.889h-.063V3.983h-1.29V11h1.27v-.791h.064c.21.532.776.86 1.499.86zm-.43-1.025c-.66 0-1.113-.518-1.113-1.28V8.12c0-.825.42-1.343 1.098-1.343.684 0 1.075.518 1.075 1.416v.45c0 .888-.386 1.401-1.06 1.401zm-5.583 1.035c.767 0 1.201-.356 1.406-.737h.059V11h1.216V7.519c0-1.314-.947-1.783-2.11-1.783C1.355 5.736.75 6.42.69 7.27h1.216c.064-.323.313-.552.84-.552.527 0 .864.249.864.771v.464H2.346C1.145 7.953.5 8.568.5 9.496c0 .977.693 1.582 1.704 1.582zm.42-.947c-.44 0-.845-.235-.845-.718 0-.395.269-.684.84-.684h.991v.538c0 .503-.444.864-.986.864zm8.897.567c-.577-.4-.9-1.088-.9-1.983v-.65c0-1.42.894-2.338 2.305-2.338 1.352 0 2.119.82 2.139 1.806h-1.187c-.04-.351-.283-.776-.918-.776-.674 0-1.045.517-1.045 1.328v.625c0 .468.121.834.343 1.067l-.737.92z"/><path fill-rule="evenodd" d="M14.469 9.414a.75.75 0 0 1 .117 1.055l-4 5a.75.75 0 0 1-1.116.061l-2.5-2.5a.75.75 0 1 1 1.06-1.06l1.908 1.907 3.476-4.346a.75.75 0 0 1 1.055-.117z"/>'); // eslint-disable-next-line
+
+exports.BIconSpellcheck = BIconSpellcheck;
 var BIconSquare = /*#__PURE__*/(0, _makeIcon.makeIcon)('Square', '<path fill-rule="evenodd" d="M14 1H2a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1zM2 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2H2z"/>'); // eslint-disable-next-line
 
 exports.BIconSquare = BIconSquare;
-var BIconSquareFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('SquareFill', '<rect width="16" height="16" rx="2"/>'); // eslint-disable-next-line
+var BIconSquareFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('SquareFill', '<path d="M0 2a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V2z"/>'); // eslint-disable-next-line
 
 exports.BIconSquareFill = BIconSquareFill;
 var BIconSquareHalf = /*#__PURE__*/(0, _makeIcon.makeIcon)('SquareHalf', '<path fill-rule="evenodd" d="M8 1h6a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H8V1zm6-1a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2h12z"/>'); // eslint-disable-next-line
@@ -54800,39 +55833,138 @@ exports.BIconStarFill = BIconStarFill;
 var BIconStarHalf = /*#__PURE__*/(0, _makeIcon.makeIcon)('StarHalf', '<path fill-rule="evenodd" d="M5.354 5.119L7.538.792A.516.516 0 0 1 8 .5c.183 0 .366.097.465.292l2.184 4.327 4.898.696A.537.537 0 0 1 16 6.32a.55.55 0 0 1-.17.445l-3.523 3.356.83 4.73c.078.443-.36.79-.746.592L8 13.187l-4.389 2.256a.519.519 0 0 1-.146.05c-.341.06-.668-.254-.6-.642l.83-4.73L.173 6.765a.55.55 0 0 1-.171-.403.59.59 0 0 1 .084-.302.513.513 0 0 1 .37-.245l4.898-.696zM8 12.027c.08 0 .16.018.232.056l3.686 1.894-.694-3.957a.564.564 0 0 1 .163-.505l2.906-2.77-4.052-.576a.525.525 0 0 1-.393-.288L8.002 2.223 8 2.226v9.8z"/>'); // eslint-disable-next-line
 
 exports.BIconStarHalf = BIconStarHalf;
+var BIconStickies = /*#__PURE__*/(0, _makeIcon.makeIcon)('Stickies', '<path fill-rule="evenodd" d="M0 1.5A1.5 1.5 0 0 1 1.5 0H13a1 1 0 0 1 1 1H1.5a.5.5 0 0 0-.5.5V14a1 1 0 0 1-1-1V1.5z"/><path fill-rule="evenodd" d="M2 3.5A1.5 1.5 0 0 1 3.5 2h11A1.5 1.5 0 0 1 16 3.5v6.086a1.5 1.5 0 0 1-.44 1.06l-4.914 4.915a1.5 1.5 0 0 1-1.06.439H3.5A1.5 1.5 0 0 1 2 14.5v-11zM3.5 3a.5.5 0 0 0-.5.5v11a.5.5 0 0 0 .5.5h6.086a.5.5 0 0 0 .353-.146l4.915-4.915A.5.5 0 0 0 15 9.586V3.5a.5.5 0 0 0-.5-.5h-11z"/><path fill-rule="evenodd" d="M10.5 10a.5.5 0 0 0-.5.5v5H9v-5A1.5 1.5 0 0 1 10.5 9h5v1h-5z"/>'); // eslint-disable-next-line
+
+exports.BIconStickies = BIconStickies;
+var BIconStickiesFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('StickiesFill', '<path fill-rule="evenodd" d="M0 1.5A1.5 1.5 0 0 1 1.5 0H13a1 1 0 0 1 1 1H1.5a.5.5 0 0 0-.5.5V14a1 1 0 0 1-1-1V1.5z"/><path fill-rule="evenodd" d="M3.5 2A1.5 1.5 0 0 0 2 3.5v11A1.5 1.5 0 0 0 3.5 16h6.086a1.5 1.5 0 0 0 1.06-.44l4.915-4.914A1.5 1.5 0 0 0 16 9.586V3.5A1.5 1.5 0 0 0 14.5 2h-11zm6 8.5v4.396c0 .223.27.335.427.177l5.146-5.146a.25.25 0 0 0-.177-.427H10.5a1 1 0 0 0-1 1z"/>'); // eslint-disable-next-line
+
+exports.BIconStickiesFill = BIconStickiesFill;
+var BIconSticky = /*#__PURE__*/(0, _makeIcon.makeIcon)('Sticky', '<path fill-rule="evenodd" d="M1 2.5A1.5 1.5 0 0 1 2.5 1h11A1.5 1.5 0 0 1 15 2.5v6.086a1.5 1.5 0 0 1-.44 1.06l-4.914 4.915a1.5 1.5 0 0 1-1.06.439H2.5A1.5 1.5 0 0 1 1 13.5v-11zM2.5 2a.5.5 0 0 0-.5.5v11a.5.5 0 0 0 .5.5h6.086a.5.5 0 0 0 .353-.146l4.915-4.915A.5.5 0 0 0 14 8.586V2.5a.5.5 0 0 0-.5-.5h-11z"/><path fill-rule="evenodd" d="M9.5 9a.5.5 0 0 0-.5.5v5H8v-5A1.5 1.5 0 0 1 9.5 8h5v1h-5z"/>'); // eslint-disable-next-line
+
+exports.BIconSticky = BIconSticky;
+var BIconStickyFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('StickyFill', '<path fill-rule="evenodd" d="M2.5 1A1.5 1.5 0 0 0 1 2.5v11A1.5 1.5 0 0 0 2.5 15h6.086a1.5 1.5 0 0 0 1.06-.44l4.915-4.914A1.5 1.5 0 0 0 15 8.586V2.5A1.5 1.5 0 0 0 13.5 1h-11zm6 8.5v4.396c0 .223.27.335.427.177l5.146-5.146a.25.25 0 0 0-.177-.427H9.5a1 1 0 0 0-1 1z"/>'); // eslint-disable-next-line
+
+exports.BIconStickyFill = BIconStickyFill;
 var BIconStop = /*#__PURE__*/(0, _makeIcon.makeIcon)('Stop', '<path fill-rule="evenodd" d="M3.5 5A1.5 1.5 0 0 1 5 3.5h6A1.5 1.5 0 0 1 12.5 5v6a1.5 1.5 0 0 1-1.5 1.5H5A1.5 1.5 0 0 1 3.5 11V5zM5 4.5a.5.5 0 0 0-.5.5v6a.5.5 0 0 0 .5.5h6a.5.5 0 0 0 .5-.5V5a.5.5 0 0 0-.5-.5H5z"/>'); // eslint-disable-next-line
 
 exports.BIconStop = BIconStop;
 var BIconStopFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('StopFill', '<path d="M5 3.5h6A1.5 1.5 0 0 1 12.5 5v6a1.5 1.5 0 0 1-1.5 1.5H5A1.5 1.5 0 0 1 3.5 11V5A1.5 1.5 0 0 1 5 3.5z"/>'); // eslint-disable-next-line
 
 exports.BIconStopFill = BIconStopFill;
+var BIconStoplights = /*#__PURE__*/(0, _makeIcon.makeIcon)('Stoplights', '<path d="M9.5 3.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm0 4a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm0 4a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/><path fill-rule="evenodd" d="M10 1H6a1 1 0 0 0-1 1v11a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1zM6 0a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2H6z"/><path d="M14 2h-2v2c1.2-.4 1.833-1.5 2-2zM2 2h2v2c-1.2-.4-1.833-1.5-2-2zm12 4h-2v2c1.2-.4 1.833-1.5 2-2zM2 6h2v2c-1.2-.4-1.833-1.5-2-2zm12 4h-2v2c1.2-.4 1.833-1.5 2-2zM2 10h2v2c-1.2-.4-1.833-1.5-2-2z"/>'); // eslint-disable-next-line
+
+exports.BIconStoplights = BIconStoplights;
+var BIconStoplightsFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('StoplightsFill', '<path fill-rule="evenodd" d="M6 0a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2H6zm3.5 3.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm0 4a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zM8 13a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z"/><path d="M14 2h-2v2c1.2-.4 1.833-1.5 2-2zM2 2h2v2c-1.2-.4-1.833-1.5-2-2zm12 4h-2v2c1.2-.4 1.833-1.5 2-2zM2 6h2v2c-1.2-.4-1.833-1.5-2-2zm12 4h-2v2c1.2-.4 1.833-1.5 2-2zM2 10h2v2c-1.2-.4-1.833-1.5-2-2z"/>'); // eslint-disable-next-line
+
+exports.BIconStoplightsFill = BIconStoplightsFill;
 var BIconStopwatch = /*#__PURE__*/(0, _makeIcon.makeIcon)('Stopwatch', '<path fill-rule="evenodd" d="M8 15A6 6 0 1 0 8 3a6 6 0 0 0 0 12zm0 1A7 7 0 1 0 8 2a7 7 0 0 0 0 14z"/><path fill-rule="evenodd" d="M8 4.5a.5.5 0 0 1 .5.5v4a.5.5 0 0 1-.5.5H4.5a.5.5 0 0 1 0-1h3V5a.5.5 0 0 1 .5-.5zM5.5.5A.5.5 0 0 1 6 0h4a.5.5 0 0 1 0 1H6a.5.5 0 0 1-.5-.5z"/><path d="M7 1h2v2H7V1z"/>'); // eslint-disable-next-line
 
 exports.BIconStopwatch = BIconStopwatch;
 var BIconStopwatchFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('StopwatchFill', '<path fill-rule="evenodd" d="M5.5.5A.5.5 0 0 1 6 0h4a.5.5 0 0 1 0 1H9v1.07A7.002 7.002 0 0 1 8 16 7 7 0 0 1 7 2.07V1H6a.5.5 0 0 1-.5-.5zm3 4.5a.5.5 0 0 0-1 0v3.5h-3a.5.5 0 0 0 0 1H8a.5.5 0 0 0 .5-.5V5z"/>'); // eslint-disable-next-line
 
 exports.BIconStopwatchFill = BIconStopwatchFill;
-var BIconSubtract = /*#__PURE__*/(0, _makeIcon.makeIcon)('Subtract', '<path d="M4 12v2.5A1.5 1.5 0 0 0 5.5 16h9a1.5 1.5 0 0 0 1.5-1.5v-9A1.5 1.5 0 0 0 14.5 4H12v6.5a1.5 1.5 0 0 1-1.5 1.5H4z"/><path fill-rule="evenodd" d="M10.5 1h-9a.5.5 0 0 0-.5.5v9a.5.5 0 0 0 .5.5h9a.5.5 0 0 0 .5-.5v-9a.5.5 0 0 0-.5-.5zm-9-1A1.5 1.5 0 0 0 0 1.5v9A1.5 1.5 0 0 0 1.5 12h9a1.5 1.5 0 0 0 1.5-1.5v-9A1.5 1.5 0 0 0 10.5 0h-9z"/>'); // eslint-disable-next-line
+var BIconSubtract = /*#__PURE__*/(0, _makeIcon.makeIcon)('Subtract', '<path fill-rule="evenodd" d="M0 2a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v2h2a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-2H2a2 2 0 0 1-2-2V2zm2-1a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H2z"/>'); // eslint-disable-next-line
 
 exports.BIconSubtract = BIconSubtract;
+var BIconSuitClub = /*#__PURE__*/(0, _makeIcon.makeIcon)('SuitClub', '<path fill-rule="evenodd" d="M8 1a3.25 3.25 0 0 0-3.25 3.25c0 .186 0 .29.016.41.014.12.045.27.12.527l.19.665-.692-.028a3.25 3.25 0 1 0 2.357 5.334.5.5 0 0 1 .844.518l-.003.005-.006.015-.024.055a21.893 21.893 0 0 1-.438.92 22.38 22.38 0 0 1-1.266 2.197c-.013.018-.02.05.001.09.01.02.021.03.03.036A.036.036 0 0 0 5.9 15h4.2c.01 0 .016-.002.022-.006a.092.092 0 0 0 .029-.035c.02-.04.014-.073.001-.091a22.875 22.875 0 0 1-1.704-3.117l-.024-.054-.006-.015-.002-.004a.5.5 0 0 1 .838-.524c.601.7 1.516 1.168 2.496 1.168a3.25 3.25 0 1 0-.139-6.498l-.699.03.199-.671c.14-.47.14-.745.139-.927V4.25A3.25 3.25 0 0 0 8 1zm2.207 12.024c.225.405.487.848.78 1.294C11.437 15 10.975 16 10.1 16H5.9c-.876 0-1.338-1-.887-1.683.291-.442.552-.88.776-1.283a4.25 4.25 0 1 1-2.007-8.187 2.79 2.79 0 0 1-.009-.064c-.023-.187-.023-.348-.023-.52V4.25a4.25 4.25 0 0 1 8.5 0c0 .14 0 .333-.04.596a4.25 4.25 0 0 1-.46 8.476 4.186 4.186 0 0 1-1.543-.298z"/>'); // eslint-disable-next-line
+
+exports.BIconSuitClub = BIconSuitClub;
+var BIconSuitClubFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('SuitClubFill', '<path d="M11.5 4.5a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0z"/><path d="M8 9a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0zm7 0a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0z"/><path d="M5.602 14.153c.5-.758 1.224-1.98 1.83-3.498.187-.467.949-.467 1.136 0a19.816 19.816 0 0 0 1.83 3.498c.231.35-.02.847-.438.847H6.04c-.419 0-.67-.497-.438-.847z"/><path d="M7 7h2v4H7V7z"/>'); // eslint-disable-next-line
+
+exports.BIconSuitClubFill = BIconSuitClubFill;
+var BIconSuitDiamond = /*#__PURE__*/(0, _makeIcon.makeIcon)('SuitDiamond', '<path fill-rule="evenodd" d="M8.384 1.226a.463.463 0 0 0-.768 0l-4.56 6.468a.537.537 0 0 0 0 .612l4.56 6.469a.463.463 0 0 0 .768 0l4.56-6.469a.537.537 0 0 0 0-.612l-4.56-6.468zM6.848.613a1.39 1.39 0 0 1 2.304 0l4.56 6.468a1.61 1.61 0 0 1 0 1.838l-4.56 6.468a1.39 1.39 0 0 1-2.304 0L2.288 8.92a1.61 1.61 0 0 1 0-1.838L6.848.613z"/>'); // eslint-disable-next-line
+
+exports.BIconSuitDiamond = BIconSuitDiamond;
+var BIconSuitDiamondFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('SuitDiamondFill', '<path d="M2.45 7.4L7.2 1.067a1 1 0 0 1 1.6 0L13.55 7.4a1 1 0 0 1 0 1.2L8.8 14.933a1 1 0 0 1-1.6 0L2.45 8.6a1 1 0 0 1 0-1.2z"/>'); // eslint-disable-next-line
+
+exports.BIconSuitDiamondFill = BIconSuitDiamondFill;
+var BIconSuitHeart = /*#__PURE__*/(0, _makeIcon.makeIcon)('SuitHeart', '<path fill-rule="evenodd" d="M8 6.236l.894-1.789c.222-.443.607-1.08 1.152-1.595C10.582 2.345 11.224 2 12 2c1.676 0 3 1.326 3 2.92 0 1.211-.554 2.066-1.868 3.37-.337.334-.721.695-1.146 1.093C10.878 10.423 9.5 11.717 8 13.447c-1.5-1.73-2.878-3.024-3.986-4.064-.425-.398-.81-.76-1.146-1.093C1.554 6.986 1 6.131 1 4.92 1 3.326 2.324 2 4 2c.776 0 1.418.345 1.954.852.545.515.93 1.152 1.152 1.595L8 6.236zm.392 8.292a.513.513 0 0 1-.784 0c-1.601-1.902-3.05-3.262-4.243-4.381C1.3 8.208 0 6.989 0 4.92 0 2.755 1.79 1 4 1c1.6 0 2.719 1.05 3.404 2.008.26.365.458.716.596.992a7.55 7.55 0 0 1 .596-.992C9.281 2.049 10.4 1 12 1c2.21 0 4 1.755 4 3.92 0 2.069-1.3 3.288-3.365 5.227-1.193 1.12-2.642 2.48-4.243 4.38z"/>'); // eslint-disable-next-line
+
+exports.BIconSuitHeart = BIconSuitHeart;
+var BIconSuitHeartFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('SuitHeartFill', '<path d="M4 1c2.21 0 4 1.755 4 3.92C8 2.755 9.79 1 12 1s4 1.755 4 3.92c0 3.263-3.234 4.414-7.608 9.608a.513.513 0 0 1-.784 0C3.234 9.334 0 8.183 0 4.92 0 2.755 1.79 1 4 1z"/>'); // eslint-disable-next-line
+
+exports.BIconSuitHeartFill = BIconSuitHeartFill;
+var BIconSuitSpade = /*#__PURE__*/(0, _makeIcon.makeIcon)('SuitSpade', '<path fill-rule="evenodd" d="M8 0a.5.5 0 0 1 .429.243c1.359 2.265 2.925 3.682 4.25 4.882.096.086.19.17.282.255C14.308 6.604 15.5 7.747 15.5 9.5a4 4 0 0 1-5.406 3.746c.235.39.491.782.722 1.131.434.659-.01 1.623-.856 1.623H6.04c-.845 0-1.29-.964-.856-1.623.263-.397.51-.777.728-1.134A4 4 0 0 1 .5 9.5c0-1.753 1.192-2.896 2.539-4.12l.281-.255c1.326-1.2 2.892-2.617 4.251-4.882A.5.5 0 0 1 8 0zM3.711 6.12C2.308 7.396 1.5 8.253 1.5 9.5a3 3 0 0 0 5.275 1.956.5.5 0 0 1 .868.43c-.094.438-.33.932-.611 1.428a29.247 29.247 0 0 1-1.013 1.614.03.03 0 0 0-.005.018.074.074 0 0 0 .024.054h3.924a.074.074 0 0 0 .024-.054.03.03 0 0 0-.005-.018c-.3-.455-.658-1.005-.96-1.535-.294-.514-.57-1.064-.664-1.507a.5.5 0 0 1 .868-.43A3 3 0 0 0 14.5 9.5c0-1.247-.808-2.104-2.211-3.38L12 5.86c-1.196-1.084-2.668-2.416-4-4.424-1.332 2.008-2.804 3.34-4 4.422l-.289.261z"/>'); // eslint-disable-next-line
+
+exports.BIconSuitSpade = BIconSuitSpade;
+var BIconSuitSpadeFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('SuitSpadeFill', '<path d="M5.602 14.153C6.272 13.136 7.348 11.28 8 9c.652 2.28 1.727 4.136 2.398 5.153.231.35-.02.847-.438.847H6.04c-.419 0-.67-.497-.438-.847z"/><path d="M4.5 12.5A3.5 3.5 0 0 0 8 9a3.5 3.5 0 1 0 7 0c0-3-4-4-7-9-3 5-7 6-7 9a3.5 3.5 0 0 0 3.5 3.5z"/>'); // eslint-disable-next-line
+
+exports.BIconSuitSpadeFill = BIconSuitSpadeFill;
 var BIconSun = /*#__PURE__*/(0, _makeIcon.makeIcon)('Sun', '<path d="M3.5 8a4.5 4.5 0 1 1 9 0 4.5 4.5 0 0 1-9 0z"/><path fill-rule="evenodd" d="M8.202.28a.25.25 0 0 0-.404 0l-.91 1.255a.25.25 0 0 1-.334.067L5.232.79a.25.25 0 0 0-.374.155l-.36 1.508a.25.25 0 0 1-.282.19l-1.532-.245a.25.25 0 0 0-.286.286l.244 1.532a.25.25 0 0 1-.189.282l-1.509.36a.25.25 0 0 0-.154.374l.812 1.322a.25.25 0 0 1-.067.333l-1.256.91a.25.25 0 0 0 0 .405l1.256.91a.25.25 0 0 1 .067.334L.79 10.768a.25.25 0 0 0 .154.374l1.51.36a.25.25 0 0 1 .188.282l-.244 1.532a.25.25 0 0 0 .286.286l1.532-.244a.25.25 0 0 1 .282.189l.36 1.508a.25.25 0 0 0 .374.155l1.322-.812a.25.25 0 0 1 .333.067l.91 1.256a.25.25 0 0 0 .405 0l.91-1.256a.25.25 0 0 1 .334-.067l1.322.812a.25.25 0 0 0 .374-.155l.36-1.508a.25.25 0 0 1 .282-.19l1.532.245a.25.25 0 0 0 .286-.286l-.244-1.532a.25.25 0 0 1 .189-.282l1.508-.36a.25.25 0 0 0 .155-.374l-.812-1.322a.25.25 0 0 1 .067-.333l1.256-.91a.25.25 0 0 0 0-.405l-1.256-.91a.25.25 0 0 1-.067-.334l.812-1.322a.25.25 0 0 0-.155-.374l-1.508-.36a.25.25 0 0 1-.19-.282l.245-1.532a.25.25 0 0 0-.286-.286l-1.532.244a.25.25 0 0 1-.282-.189l-.36-1.508a.25.25 0 0 0-.374-.155l-1.322.812a.25.25 0 0 1-.333-.067L8.203.28zM8 2.5a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11z"/>'); // eslint-disable-next-line
 
 exports.BIconSun = BIconSun;
-var BIconTable = /*#__PURE__*/(0, _makeIcon.makeIcon)('Table', '<path fill-rule="evenodd" d="M14 1H2a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1zM2 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2H2z"/><path fill-rule="evenodd" d="M15 4H1V3h14v1z"/><path fill-rule="evenodd" d="M5 15.5v-14h1v14H5zm5 0v-14h1v14h-1z"/><path fill-rule="evenodd" d="M15 8H1V7h14v1zm0 4H1v-1h14v1z"/><path d="M0 2a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v2H0V2z"/>'); // eslint-disable-next-line
+var BIconSunglasses = /*#__PURE__*/(0, _makeIcon.makeIcon)('Sunglasses', '<path fill-rule="evenodd" d="M8 7a1 1 0 0 0-1 1H6a2 2 0 1 1 4 0H9a1 1 0 0 0-1-1zM0 8a.5.5 0 0 1 .5-.5h1v1h-1A.5.5 0 0 1 0 8zm15.5.5h-1v-1h1a.5.5 0 0 1 0 1z"/><path fill-rule="evenodd" d="M3 5a2 2 0 0 0-2 2v2a2 2 0 0 0 2 2h1a3 3 0 0 0 3-3V7a2 2 0 0 0-2-2H3zm0 1a1 1 0 0 0-1 1v.941c0 .264.356.348.474.112l.228-.457a2 2 0 0 1 .894-.894l.457-.228C4.289 6.356 4.205 6 3.94 6H3z"/><path fill-rule="evenodd" d="M2.023 6.784C2.008 6.854 2 6.926 2 7v.941c0 .264.356.348.474.112l.228-.457a2 2 0 0 1 .894-.894l.457-.228C4.289 6.356 4.205 6 3.94 6H3a1.001 1.001 0 0 0-.977.784zm3.146-.77A1.219 1.219 0 0 1 4.5 7.368l-.457.228a1 1 0 0 0-.447.447l-.228.457a1.22 1.22 0 0 1-1.354.669A1 1 0 0 0 3 10h1a2 2 0 0 0 2-2V7a1 1 0 0 0-.831-.986zM1 7a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v1a3 3 0 0 1-3 3H3a2 2 0 0 1-2-2V7z"/><path d="M9 7a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2h-1a3 3 0 0 1-3-3V7z"/><path fill-rule="evenodd" d="M13 6h-2a1 1 0 0 0-1 1v1a2 2 0 0 0 2 2h1a1 1 0 0 0 1-1V7a1 1 0 0 0-1-1zm-2-1a2 2 0 0 0-2 2v1a3 3 0 0 0 3 3h1a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2z"/>'); // eslint-disable-next-line
+
+exports.BIconSunglasses = BIconSunglasses;
+var BIconTable = /*#__PURE__*/(0, _makeIcon.makeIcon)('Table', '<path fill-rule="evenodd" d="M0 2a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V2zm15 2h-4v3h4V4zm0 4h-4v3h4V8zm0 4h-4v3h3a1 1 0 0 0 1-1v-2zm-5 3v-3H6v3h4zm-5 0v-3H1v2a1 1 0 0 0 1 1h3zm-4-4h4V8H1v3zm0-4h4V4H1v3zm5-3v3h4V4H6zm4 4H6v3h4V8z"/>'); // eslint-disable-next-line
 
 exports.BIconTable = BIconTable;
 var BIconTablet = /*#__PURE__*/(0, _makeIcon.makeIcon)('Tablet', '<path fill-rule="evenodd" d="M12 1H4a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1zM4 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2H4z"/><path fill-rule="evenodd" d="M8 14a1 1 0 1 0 0-2 1 1 0 0 0 0 2z"/>'); // eslint-disable-next-line
 
 exports.BIconTablet = BIconTablet;
+var BIconTabletFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('TabletFill', '<path fill-rule="evenodd" d="M2 2a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V2zm7 11a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/>'); // eslint-disable-next-line
+
+exports.BIconTabletFill = BIconTabletFill;
 var BIconTabletLandscape = /*#__PURE__*/(0, _makeIcon.makeIcon)('TabletLandscape', '<path fill-rule="evenodd" d="M1 4v8a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4a1 1 0 0 0-1-1H2a1 1 0 0 0-1 1zm-1 8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H2a2 2 0 0 0-2 2v8z"/><path fill-rule="evenodd" d="M14 8a1 1 0 1 0-2 0 1 1 0 0 0 2 0z"/>'); // eslint-disable-next-line
 
 exports.BIconTabletLandscape = BIconTabletLandscape;
-var BIconTag = /*#__PURE__*/(0, _makeIcon.makeIcon)('Tag', '<path fill-rule="evenodd" d="M.5 2A1.5 1.5 0 0 1 2 .5h4.586a1.5 1.5 0 0 1 1.06.44l7 7a1.5 1.5 0 0 1 0 2.12l-4.585 4.586a1.5 1.5 0 0 1-2.122 0l-7-7A1.5 1.5 0 0 1 .5 6.586V2zM2 1.5a.5.5 0 0 0-.5.5v4.586a.5.5 0 0 0 .146.353l7 7a.5.5 0 0 0 .708 0l4.585-4.585a.5.5 0 0 0 0-.708l-7-7a.5.5 0 0 0-.353-.146H2z"/><path fill-rule="evenodd" d="M2.5 4.5a2 2 0 1 1 4 0 2 2 0 0 1-4 0zm2-1a1 1 0 1 0 0 2 1 1 0 0 0 0-2z"/>'); // eslint-disable-next-line
+var BIconTabletLandscapeFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('TabletLandscapeFill', '<path fill-rule="evenodd" d="M2 14a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H2zm11-7a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>'); // eslint-disable-next-line
+
+exports.BIconTabletLandscapeFill = BIconTabletLandscapeFill;
+var BIconTag = /*#__PURE__*/(0, _makeIcon.makeIcon)('Tag', '<path fill-rule="evenodd" d="M2 2v4.586l7 7L13.586 9l-7-7H2zM1 2a1 1 0 0 1 1-1h4.586a1 1 0 0 1 .707.293l7 7a1 1 0 0 1 0 1.414l-4.586 4.586a1 1 0 0 1-1.414 0l-7-7A1 1 0 0 1 1 6.586V2z"/><path fill-rule="evenodd" d="M4.5 5a.5.5 0 1 0 0-1 .5.5 0 0 0 0 1zm0 1a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z"/>'); // eslint-disable-next-line
 
 exports.BIconTag = BIconTag;
 var BIconTagFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('TagFill', '<path fill-rule="evenodd" d="M2 1a1 1 0 0 0-1 1v4.586a1 1 0 0 0 .293.707l7 7a1 1 0 0 0 1.414 0l4.586-4.586a1 1 0 0 0 0-1.414l-7-7A1 1 0 0 0 6.586 1H2zm4 3.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/>'); // eslint-disable-next-line
 
 exports.BIconTagFill = BIconTagFill;
+var BIconTags = /*#__PURE__*/(0, _makeIcon.makeIcon)('Tags', '<path fill-rule="evenodd" d="M3 2v4.586l7 7L14.586 9l-7-7H3zM2 2a1 1 0 0 1 1-1h4.586a1 1 0 0 1 .707.293l7 7a1 1 0 0 1 0 1.414l-4.586 4.586a1 1 0 0 1-1.414 0l-7-7A1 1 0 0 1 2 6.586V2z"/><path fill-rule="evenodd" d="M5.5 5a.5.5 0 1 0 0-1 .5.5 0 0 0 0 1zm0 1a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z"/><path d="M1 7.086a1 1 0 0 0 .293.707L8.75 15.25l-.043.043a1 1 0 0 1-1.414 0l-7-7A1 1 0 0 1 0 7.586V3a1 1 0 0 1 1-1v5.086z"/>'); // eslint-disable-next-line
+
+exports.BIconTags = BIconTags;
+var BIconTagsFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('TagsFill', '<path fill-rule="evenodd" d="M3 1a1 1 0 0 0-1 1v4.586a1 1 0 0 0 .293.707l7 7a1 1 0 0 0 1.414 0l4.586-4.586a1 1 0 0 0 0-1.414l-7-7A1 1 0 0 0 7.586 1H3zm4 3.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/><path d="M1 7.086a1 1 0 0 0 .293.707L8.75 15.25l-.043.043a1 1 0 0 1-1.414 0l-7-7A1 1 0 0 1 0 7.586V3a1 1 0 0 1 1-1v5.086z"/>'); // eslint-disable-next-line
+
+exports.BIconTagsFill = BIconTagsFill;
+var BIconTelephone = /*#__PURE__*/(0, _makeIcon.makeIcon)('Telephone', '<path fill-rule="evenodd" d="M3.925 1.745a.636.636 0 0 0-.951-.059l-.97.97c-.453.453-.62 1.095-.421 1.658A16.47 16.47 0 0 0 5.49 10.51a16.471 16.471 0 0 0 6.196 3.907c.563.198 1.205.032 1.658-.421l.97-.97a.636.636 0 0 0-.06-.951l-2.162-1.682a.636.636 0 0 0-.544-.115l-2.052.513a1.636 1.636 0 0 1-1.554-.43L5.64 8.058a1.636 1.636 0 0 1-.43-1.554l.513-2.052a.636.636 0 0 0-.115-.544L3.925 1.745zM2.267.98a1.636 1.636 0 0 1 2.448.153l1.681 2.162c.309.396.418.913.296 1.4l-.513 2.053a.636.636 0 0 0 .167.604L8.65 9.654a.636.636 0 0 0 .604.167l2.052-.513a1.636 1.636 0 0 1 1.401.296l2.162 1.681c.777.604.849 1.753.153 2.448l-.97.97c-.693.693-1.73.998-2.697.658a17.47 17.47 0 0 1-6.571-4.144A17.47 17.47 0 0 1 .639 4.646c-.34-.967-.035-2.004.658-2.698l.97-.969z"/>'); // eslint-disable-next-line
+
+exports.BIconTelephone = BIconTelephone;
+var BIconTelephoneFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('TelephoneFill', '<path fill-rule="evenodd" d="M2.267.98a1.636 1.636 0 0 1 2.448.152l1.681 2.162c.309.396.418.913.296 1.4l-.513 2.053a.636.636 0 0 0 .167.604L8.65 9.654a.636.636 0 0 0 .604.167l2.052-.513a1.636 1.636 0 0 1 1.401.296l2.162 1.681c.777.604.849 1.753.153 2.448l-.97.97c-.693.693-1.73.998-2.697.658a17.47 17.47 0 0 1-6.571-4.144A17.47 17.47 0 0 1 .639 4.646c-.34-.967-.035-2.004.658-2.698l.97-.969z"/>'); // eslint-disable-next-line
+
+exports.BIconTelephoneFill = BIconTelephoneFill;
+var BIconTelephoneForward = /*#__PURE__*/(0, _makeIcon.makeIcon)('TelephoneForward', '<path fill-rule="evenodd" d="M3.925 1.745a.636.636 0 0 0-.951-.059l-.97.97c-.453.453-.62 1.095-.421 1.658A16.47 16.47 0 0 0 5.49 10.51a16.47 16.47 0 0 0 6.196 3.907c.563.198 1.205.032 1.658-.421l.97-.97a.636.636 0 0 0-.06-.951l-2.162-1.682a.636.636 0 0 0-.544-.115l-2.052.513a1.636 1.636 0 0 1-1.554-.43L5.64 8.058a1.636 1.636 0 0 1-.43-1.554l.513-2.052a.636.636 0 0 0-.115-.544L3.925 1.745zM2.267.98a1.636 1.636 0 0 1 2.448.153l1.681 2.162c.309.396.418.913.296 1.4l-.513 2.053a.636.636 0 0 0 .167.604L8.65 9.654a.636.636 0 0 0 .604.167l2.052-.513a1.636 1.636 0 0 1 1.401.296l2.162 1.681c.777.604.849 1.753.153 2.448l-.97.97c-.693.693-1.73.998-2.697.658a17.471 17.471 0 0 1-6.571-4.144A17.47 17.47 0 0 1 .639 4.646c-.34-.967-.035-2.004.658-2.698l.97-.969zM12.646.646a.5.5 0 0 1 .708 0l2.5 2.5a.5.5 0 0 1 0 .708l-2.5 2.5a.5.5 0 0 1-.708-.708L14.293 4H9.5a.5.5 0 0 1 0-1h4.793l-1.647-1.646a.5.5 0 0 1 0-.708z"/>'); // eslint-disable-next-line
+
+exports.BIconTelephoneForward = BIconTelephoneForward;
+var BIconTelephoneForwardFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('TelephoneForwardFill', '<path fill-rule="evenodd" d="M2.267.98a1.636 1.636 0 0 1 2.448.152l1.681 2.162c.309.396.418.913.296 1.4l-.513 2.053a.636.636 0 0 0 .167.604L8.65 9.654a.636.636 0 0 0 .604.167l2.052-.513a1.636 1.636 0 0 1 1.401.296l2.162 1.681c.777.604.849 1.753.153 2.448l-.97.97c-.693.693-1.73.998-2.697.658a17.471 17.471 0 0 1-6.571-4.144A17.47 17.47 0 0 1 .639 4.646c-.34-.967-.035-2.004.658-2.698l.97-.969zM12.646.646a.5.5 0 0 1 .708 0l2.5 2.5a.5.5 0 0 1 0 .708l-2.5 2.5a.5.5 0 0 1-.708-.708L14.293 4H9.5a.5.5 0 0 1 0-1h4.793l-1.647-1.646a.5.5 0 0 1 0-.708z"/>'); // eslint-disable-next-line
+
+exports.BIconTelephoneForwardFill = BIconTelephoneForwardFill;
+var BIconTelephoneInbound = /*#__PURE__*/(0, _makeIcon.makeIcon)('TelephoneInbound', '<path fill-rule="evenodd" d="M3.925 1.745a.636.636 0 0 0-.951-.059l-.97.97c-.453.453-.62 1.095-.421 1.658A16.47 16.47 0 0 0 5.49 10.51a16.47 16.47 0 0 0 6.196 3.907c.563.198 1.205.032 1.658-.421l.97-.97a.636.636 0 0 0-.06-.951l-2.162-1.682a.636.636 0 0 0-.544-.115l-2.052.513a1.636 1.636 0 0 1-1.554-.43L5.64 8.058a1.636 1.636 0 0 1-.43-1.554l.513-2.052a.636.636 0 0 0-.115-.544L3.925 1.745zM2.267.98a1.636 1.636 0 0 1 2.448.153l1.681 2.162c.309.396.418.913.296 1.4l-.513 2.053a.636.636 0 0 0 .167.604L8.65 9.654a.636.636 0 0 0 .604.167l2.052-.513a1.636 1.636 0 0 1 1.401.296l2.162 1.681c.777.604.849 1.753.153 2.448l-.97.97c-.693.693-1.73.998-2.697.658a17.471 17.471 0 0 1-6.571-4.144A17.47 17.47 0 0 1 .639 4.646c-.34-.967-.035-2.004.658-2.698l.97-.969zM15.854.146a.5.5 0 0 1 0 .708L11.707 5H14.5a.5.5 0 0 1 0 1h-4a.5.5 0 0 1-.5-.5v-4a.5.5 0 0 1 1 0v2.793L15.146.146a.5.5 0 0 1 .708 0z"/>'); // eslint-disable-next-line
+
+exports.BIconTelephoneInbound = BIconTelephoneInbound;
+var BIconTelephoneInboundFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('TelephoneInboundFill', '<path fill-rule="evenodd" d="M2.267.98a1.636 1.636 0 0 1 2.448.152l1.681 2.162c.309.396.418.913.296 1.4l-.513 2.053a.636.636 0 0 0 .167.604L8.65 9.654a.636.636 0 0 0 .604.167l2.052-.513a1.636 1.636 0 0 1 1.401.296l2.162 1.681c.777.604.849 1.753.153 2.448l-.97.97c-.693.693-1.73.998-2.697.658a17.471 17.471 0 0 1-6.571-4.144A17.47 17.47 0 0 1 .639 4.646c-.34-.967-.035-2.004.658-2.698l.97-.969zM15.854.146a.5.5 0 0 1 0 .708L11.707 5H14.5a.5.5 0 0 1 0 1h-4a.5.5 0 0 1-.5-.5v-4a.5.5 0 0 1 1 0v2.793L15.146.146a.5.5 0 0 1 .708 0z"/>'); // eslint-disable-next-line
+
+exports.BIconTelephoneInboundFill = BIconTelephoneInboundFill;
+var BIconTelephoneMinus = /*#__PURE__*/(0, _makeIcon.makeIcon)('TelephoneMinus', '<path fill-rule="evenodd" d="M3.925 1.745a.636.636 0 0 0-.951-.059l-.97.97c-.453.453-.62 1.095-.421 1.658A16.47 16.47 0 0 0 5.49 10.51a16.47 16.47 0 0 0 6.196 3.907c.563.198 1.205.032 1.658-.421l.97-.97a.636.636 0 0 0-.06-.951l-2.162-1.682a.636.636 0 0 0-.544-.115l-2.052.513a1.636 1.636 0 0 1-1.554-.43L5.64 8.058a1.636 1.636 0 0 1-.43-1.554l.513-2.052a.636.636 0 0 0-.115-.544L3.925 1.745zM2.267.98a1.636 1.636 0 0 1 2.448.153l1.681 2.162c.309.396.418.913.296 1.4l-.513 2.053a.636.636 0 0 0 .167.604L8.65 9.654a.636.636 0 0 0 .604.167l2.052-.513a1.636 1.636 0 0 1 1.401.296l2.162 1.681c.777.604.849 1.753.153 2.448l-.97.97c-.693.693-1.73.998-2.697.658a17.471 17.471 0 0 1-6.571-4.144A17.47 17.47 0 0 1 .639 4.646c-.34-.967-.035-2.004.658-2.698l.97-.969zM9 3.5a.5.5 0 0 1 .5-.5h6a.5.5 0 0 1 0 1h-6a.5.5 0 0 1-.5-.5z"/>'); // eslint-disable-next-line
+
+exports.BIconTelephoneMinus = BIconTelephoneMinus;
+var BIconTelephoneMinusFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('TelephoneMinusFill', '<path fill-rule="evenodd" d="M2.267.98a1.636 1.636 0 0 1 2.448.152l1.681 2.162c.309.396.418.913.296 1.4l-.513 2.053a.636.636 0 0 0 .167.604L8.65 9.654a.636.636 0 0 0 .604.167l2.052-.513a1.636 1.636 0 0 1 1.401.296l2.162 1.681c.777.604.849 1.753.153 2.448l-.97.97c-.693.693-1.73.998-2.697.658a17.471 17.471 0 0 1-6.571-4.144A17.47 17.47 0 0 1 .639 4.646c-.34-.967-.035-2.004.658-2.698l.97-.969zM9 3.5a.5.5 0 0 1 .5-.5h6a.5.5 0 0 1 0 1h-6a.5.5 0 0 1-.5-.5z"/>'); // eslint-disable-next-line
+
+exports.BIconTelephoneMinusFill = BIconTelephoneMinusFill;
+var BIconTelephoneOutbound = /*#__PURE__*/(0, _makeIcon.makeIcon)('TelephoneOutbound', '<path fill-rule="evenodd" d="M3.925 1.745a.636.636 0 0 0-.951-.059l-.97.97c-.453.453-.62 1.095-.421 1.658A16.47 16.47 0 0 0 5.49 10.51a16.47 16.47 0 0 0 6.196 3.907c.563.198 1.205.032 1.658-.421l.97-.97a.636.636 0 0 0-.06-.951l-2.162-1.682a.636.636 0 0 0-.544-.115l-2.052.513a1.636 1.636 0 0 1-1.554-.43L5.64 8.058a1.636 1.636 0 0 1-.43-1.554l.513-2.052a.636.636 0 0 0-.115-.544L3.925 1.745zM2.267.98a1.636 1.636 0 0 1 2.448.153l1.681 2.162c.309.396.418.913.296 1.4l-.513 2.053a.636.636 0 0 0 .167.604L8.65 9.654a.636.636 0 0 0 .604.167l2.052-.513a1.636 1.636 0 0 1 1.401.296l2.162 1.681c.777.604.849 1.753.153 2.448l-.97.97c-.693.693-1.73.998-2.697.658a17.471 17.471 0 0 1-6.571-4.144A17.47 17.47 0 0 1 .639 4.646c-.34-.967-.035-2.004.658-2.698l.97-.969zM11 .5a.5.5 0 0 1 .5-.5h4a.5.5 0 0 1 .5.5v4a.5.5 0 0 1-1 0V1.707l-4.146 4.147a.5.5 0 0 1-.708-.708L14.293 1H11.5a.5.5 0 0 1-.5-.5z"/>'); // eslint-disable-next-line
+
+exports.BIconTelephoneOutbound = BIconTelephoneOutbound;
+var BIconTelephoneOutboundFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('TelephoneOutboundFill', '<path fill-rule="evenodd" d="M2.267.98a1.636 1.636 0 0 1 2.448.152l1.681 2.162c.309.396.418.913.296 1.4l-.513 2.053a.636.636 0 0 0 .167.604L8.65 9.654a.636.636 0 0 0 .604.167l2.052-.513a1.636 1.636 0 0 1 1.401.296l2.162 1.681c.777.604.849 1.753.153 2.448l-.97.97c-.693.693-1.73.998-2.697.658a17.471 17.471 0 0 1-6.571-4.144A17.47 17.47 0 0 1 .639 4.646c-.34-.967-.035-2.004.658-2.698l.97-.969zM11 .5a.5.5 0 0 1 .5-.5h4a.5.5 0 0 1 .5.5v4a.5.5 0 0 1-1 0V1.707l-4.146 4.147a.5.5 0 0 1-.708-.708L14.293 1H11.5a.5.5 0 0 1-.5-.5z"/>'); // eslint-disable-next-line
+
+exports.BIconTelephoneOutboundFill = BIconTelephoneOutboundFill;
+var BIconTelephonePlus = /*#__PURE__*/(0, _makeIcon.makeIcon)('TelephonePlus', '<path fill-rule="evenodd" d="M3.925 1.745a.636.636 0 0 0-.951-.059l-.97.97c-.453.453-.62 1.095-.421 1.658A16.47 16.47 0 0 0 5.49 10.51a16.47 16.47 0 0 0 6.196 3.907c.563.198 1.205.032 1.658-.421l.97-.97a.636.636 0 0 0-.06-.951l-2.162-1.682a.636.636 0 0 0-.544-.115l-2.052.513a1.636 1.636 0 0 1-1.554-.43L5.64 8.058a1.636 1.636 0 0 1-.43-1.554l.513-2.052a.636.636 0 0 0-.115-.544L3.925 1.745zM2.267.98a1.636 1.636 0 0 1 2.448.153l1.681 2.162c.309.396.418.913.296 1.4l-.513 2.053a.636.636 0 0 0 .167.604L8.65 9.654a.636.636 0 0 0 .604.167l2.052-.513a1.636 1.636 0 0 1 1.401.296l2.162 1.681c.777.604.849 1.753.153 2.448l-.97.97c-.693.693-1.73.998-2.697.658a17.471 17.471 0 0 1-6.571-4.144A17.47 17.47 0 0 1 .639 4.646c-.34-.967-.035-2.004.658-2.698l.97-.969zM12.5 0a.5.5 0 0 1 .5.5v3a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1 0-1H12V.5a.5.5 0 0 1 .5-.5z"/><path fill-rule="evenodd" d="M12 3.5a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 0 1H13v2.5a.5.5 0 0 1-1 0v-3z"/>'); // eslint-disable-next-line
+
+exports.BIconTelephonePlus = BIconTelephonePlus;
+var BIconTelephonePlusFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('TelephonePlusFill', '<path fill-rule="evenodd" d="M2.267.98a1.636 1.636 0 0 1 2.448.152l1.681 2.162c.309.396.418.913.296 1.4l-.513 2.053a.636.636 0 0 0 .167.604L8.65 9.654a.636.636 0 0 0 .604.167l2.052-.513a1.636 1.636 0 0 1 1.401.296l2.162 1.681c.777.604.849 1.753.153 2.448l-.97.97c-.693.693-1.73.998-2.697.658a17.471 17.471 0 0 1-6.571-4.144A17.47 17.47 0 0 1 .639 4.646c-.34-.967-.035-2.004.658-2.698l.97-.969zM12.5 0a.5.5 0 0 1 .5.5v3a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1 0-1H12V.5a.5.5 0 0 1 .5-.5z"/><path fill-rule="evenodd" d="M12 3.5a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 0 1H13v2.5a.5.5 0 0 1-1 0v-3z"/>'); // eslint-disable-next-line
+
+exports.BIconTelephonePlusFill = BIconTelephonePlusFill;
+var BIconTelephoneX = /*#__PURE__*/(0, _makeIcon.makeIcon)('TelephoneX', '<path fill-rule="evenodd" d="M3.925 1.745a.636.636 0 0 0-.951-.059l-.97.97c-.453.453-.62 1.095-.421 1.658A16.47 16.47 0 0 0 5.49 10.51a16.47 16.47 0 0 0 6.196 3.907c.563.198 1.205.032 1.658-.421l.97-.97a.636.636 0 0 0-.06-.951l-2.162-1.682a.636.636 0 0 0-.544-.115l-2.052.513a1.636 1.636 0 0 1-1.554-.43L5.64 8.058a1.636 1.636 0 0 1-.43-1.554l.513-2.052a.636.636 0 0 0-.115-.544L3.925 1.745zM2.267.98a1.636 1.636 0 0 1 2.448.153l1.681 2.162c.309.396.418.913.296 1.4l-.513 2.053a.636.636 0 0 0 .167.604L8.65 9.654a.636.636 0 0 0 .604.167l2.052-.513a1.636 1.636 0 0 1 1.401.296l2.162 1.681c.777.604.849 1.753.153 2.448l-.97.97c-.693.693-1.73.998-2.697.658a17.471 17.471 0 0 1-6.571-4.144A17.47 17.47 0 0 1 .639 4.646c-.34-.967-.035-2.004.658-2.698l.97-.969zm7.879-.834a.5.5 0 0 1 .708 0L13 2.293 15.146.146a.5.5 0 0 1 .708.708L13.707 3l2.147 2.146a.5.5 0 0 1-.708.708L13 3.707l-2.146 2.147a.5.5 0 0 1-.708-.708L12.293 3 10.146.854a.5.5 0 0 1 0-.708z"/>'); // eslint-disable-next-line
+
+exports.BIconTelephoneX = BIconTelephoneX;
+var BIconTelephoneXFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('TelephoneXFill', '<path fill-rule="evenodd" d="M2.267.98a1.636 1.636 0 0 1 2.448.152l1.681 2.162c.309.396.418.913.296 1.4l-.513 2.053a.636.636 0 0 0 .167.604L8.65 9.654a.636.636 0 0 0 .604.167l2.052-.513a1.636 1.636 0 0 1 1.401.296l2.162 1.681c.777.604.849 1.753.153 2.448l-.97.97c-.693.693-1.73.998-2.697.658a17.471 17.471 0 0 1-6.571-4.144A17.47 17.47 0 0 1 .639 4.646c-.34-.967-.035-2.004.658-2.698l.97-.969zm7.879-.834a.5.5 0 0 1 .708 0L13 2.293 15.146.146a.5.5 0 0 1 .708.708L13.707 3l2.147 2.146a.5.5 0 0 1-.708.708L13 3.707l-2.146 2.147a.5.5 0 0 1-.708-.708L12.293 3 10.146.854a.5.5 0 0 1 0-.708z"/>'); // eslint-disable-next-line
+
+exports.BIconTelephoneXFill = BIconTelephoneXFill;
 var BIconTerminal = /*#__PURE__*/(0, _makeIcon.makeIcon)('Terminal', '<path fill-rule="evenodd" d="M14 2H2a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V3a1 1 0 0 0-1-1zM2 1a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V3a2 2 0 0 0-2-2H2z"/><path fill-rule="evenodd" d="M6 9a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 0 1h-3A.5.5 0 0 1 6 9zM3.146 4.146a.5.5 0 0 1 .708 0l2 2a.5.5 0 0 1 0 .708l-2 2a.5.5 0 1 1-.708-.708L4.793 6.5 3.146 4.854a.5.5 0 0 1 0-.708z"/>'); // eslint-disable-next-line
 
 exports.BIconTerminal = BIconTerminal;
@@ -54857,24 +55989,42 @@ exports.BIconTextRight = BIconTextRight;
 var BIconTextarea = /*#__PURE__*/(0, _makeIcon.makeIcon)('Textarea', '<path fill-rule="evenodd" d="M14 9a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm0 1a2 2 0 1 0 0-4 2 2 0 0 0 0 4zM2 9a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm0 1a2 2 0 1 0 0-4 2 2 0 0 0 0 4z"/><path fill-rule="evenodd" d="M1.5 2.5A1.5 1.5 0 0 1 3 1h10a1.5 1.5 0 0 1 1.5 1.5v4h-1v-4A.5.5 0 0 0 13 2H3a.5.5 0 0 0-.5.5v4h-1v-4zm1 7v4a.5.5 0 0 0 .5.5h10a.5.5 0 0 0 .5-.5v-4h1v4A1.5 1.5 0 0 1 13 15H3a1.5 1.5 0 0 1-1.5-1.5v-4h1z"/>'); // eslint-disable-next-line
 
 exports.BIconTextarea = BIconTextarea;
+var BIconTextareaResize = /*#__PURE__*/(0, _makeIcon.makeIcon)('TextareaResize', '<path fill-rule="evenodd" d="M.5 4A2.5 2.5 0 0 1 3 1.5h12A2.5 2.5 0 0 1 17.5 4v8a2.5 2.5 0 0 1-2.5 2.5H3A2.5 2.5 0 0 1 .5 12V4zM3 2.5A1.5 1.5 0 0 0 1.5 4v8A1.5 1.5 0 0 0 3 13.5h12a1.5 1.5 0 0 0 1.5-1.5V4A1.5 1.5 0 0 0 15 2.5H3zm11.854 5.646a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708l3-3a.5.5 0 0 1 .708 0zm0 2.5a.5.5 0 0 1 0 .708l-.5.5a.5.5 0 0 1-.708-.708l.5-.5a.5.5 0 0 1 .708 0z"/>'); // eslint-disable-next-line
+
+exports.BIconTextareaResize = BIconTextareaResize;
 var BIconTextareaT = /*#__PURE__*/(0, _makeIcon.makeIcon)('TextareaT', '<path fill-rule="evenodd" d="M14 9a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm0 1a2 2 0 1 0 0-4 2 2 0 0 0 0 4zM2 9a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm0 1a2 2 0 1 0 0-4 2 2 0 0 0 0 4z"/><path fill-rule="evenodd" d="M1.5 2.5A1.5 1.5 0 0 1 3 1h10a1.5 1.5 0 0 1 1.5 1.5v4h-1v-4A.5.5 0 0 0 13 2H3a.5.5 0 0 0-.5.5v4h-1v-4zm1 7v4a.5.5 0 0 0 .5.5h10a.5.5 0 0 0 .5-.5v-4h1v4A1.5 1.5 0 0 1 13 15H3a1.5 1.5 0 0 1-1.5-1.5v-4h1z"/><path d="M11.434 4H4.566L4.5 5.994h.386c.21-1.252.612-1.446 2.173-1.495l.343-.011v6.343c0 .537-.116.665-1.049.748V12h3.294v-.421c-.938-.083-1.054-.21-1.054-.748V4.488l.348.01c1.56.05 1.963.244 2.173 1.496h.386L11.434 4z"/>'); // eslint-disable-next-line
 
 exports.BIconTextareaT = BIconTextareaT;
+var BIconThermometer = /*#__PURE__*/(0, _makeIcon.makeIcon)('Thermometer', '<path fill-rule="evenodd" d="M6 2a2 2 0 1 1 4 0v7.627a3.5 3.5 0 1 1-4 0V2zm2-1a1 1 0 0 0-1 1v7.901a.5.5 0 0 1-.25.433A2.499 2.499 0 0 0 8 15a2.5 2.5 0 0 0 1.25-4.666.5.5 0 0 1-.25-.433V2a1 1 0 0 0-1-1z"/><path d="M9.5 12.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/>'); // eslint-disable-next-line
+
+exports.BIconThermometer = BIconThermometer;
+var BIconThermometerHalf = /*#__PURE__*/(0, _makeIcon.makeIcon)('ThermometerHalf', '<path fill-rule="evenodd" d="M6 2a2 2 0 1 1 4 0v7.627a3.5 3.5 0 1 1-4 0V2zm2-1a1 1 0 0 0-1 1v7.901a.5.5 0 0 1-.25.433A2.499 2.499 0 0 0 8 15a2.5 2.5 0 0 0 1.25-4.666.5.5 0 0 1-.25-.433V2a1 1 0 0 0-1-1z"/><path d="M9.5 12.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/><path fill-rule="evenodd" d="M8 1.75a.25.25 0 0 1 .25.25v10a.25.25 0 1 1-.5 0V2A.25.25 0 0 1 8 1.75z"/>'); // eslint-disable-next-line
+
+exports.BIconThermometerHalf = BIconThermometerHalf;
 var BIconThreeDots = /*#__PURE__*/(0, _makeIcon.makeIcon)('ThreeDots', '<path fill-rule="evenodd" d="M3 9.5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm5 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm5 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3z"/>'); // eslint-disable-next-line
 
 exports.BIconThreeDots = BIconThreeDots;
 var BIconThreeDotsVertical = /*#__PURE__*/(0, _makeIcon.makeIcon)('ThreeDotsVertical', '<path fill-rule="evenodd" d="M9.5 13a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/>'); // eslint-disable-next-line
 
 exports.BIconThreeDotsVertical = BIconThreeDotsVertical;
+var BIconToggle2Off = /*#__PURE__*/(0, _makeIcon.makeIcon)('Toggle2Off', '<path d="M9 11c.628-.836 1-1.874 1-3a4.978 4.978 0 0 0-1-3h4a3 3 0 1 1 0 6H9z"/><path fill-rule="evenodd" d="M5 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zm0 1A5 5 0 1 0 5 3a5 5 0 0 0 0 10z"/>'); // eslint-disable-next-line
+
+exports.BIconToggle2Off = BIconToggle2Off;
+var BIconToggle2On = /*#__PURE__*/(0, _makeIcon.makeIcon)('Toggle2On', '<path d="M7 5H3a3 3 0 0 0 0 6h4a4.995 4.995 0 0 1-.584-1H3a2 2 0 1 1 0-4h3.416c.156-.357.352-.692.584-1z"/><path d="M16 8A5 5 0 1 1 6 8a5 5 0 0 1 10 0z"/>'); // eslint-disable-next-line
+
+exports.BIconToggle2On = BIconToggle2On;
 var BIconToggleOff = /*#__PURE__*/(0, _makeIcon.makeIcon)('ToggleOff', '<path fill-rule="evenodd" d="M11 4a4 4 0 0 1 0 8H8a4.992 4.992 0 0 0 2-4 4.992 4.992 0 0 0-2-4h3zm-6 8a4 4 0 1 1 0-8 4 4 0 0 1 0 8zM0 8a5 5 0 0 0 5 5h6a5 5 0 0 0 0-10H5a5 5 0 0 0-5 5z"/>'); // eslint-disable-next-line
 
 exports.BIconToggleOff = BIconToggleOff;
 var BIconToggleOn = /*#__PURE__*/(0, _makeIcon.makeIcon)('ToggleOn', '<path fill-rule="evenodd" d="M5 3a5 5 0 0 0 0 10h6a5 5 0 0 0 0-10H5zm6 9a4 4 0 1 0 0-8 4 4 0 0 0 0 8z"/>'); // eslint-disable-next-line
 
 exports.BIconToggleOn = BIconToggleOn;
-var BIconToggles = /*#__PURE__*/(0, _makeIcon.makeIcon)('Toggles', '<path fill-rule="evenodd" d="M11.5 1h-7a2.5 2.5 0 0 0 0 5h7a2.5 2.5 0 0 0 0-5zm-7-1a3.5 3.5 0 1 0 0 7h7a3.5 3.5 0 1 0 0-7h-7zm0 9a3.5 3.5 0 1 0 0 7h7a3.5 3.5 0 1 0 0-7h-7zm7 6a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z"/><path fill-rule="evenodd" d="M8 3.5a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0zM4.5 6a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z"/>'); // eslint-disable-next-line
+var BIconToggles = /*#__PURE__*/(0, _makeIcon.makeIcon)('Toggles', '<path fill-rule="evenodd" d="M4.5 9a3.5 3.5 0 1 0 0 7h7a3.5 3.5 0 1 0 0-7h-7zm7 6a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5zm-7-14a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zm2.45 0A3.49 3.49 0 0 1 8 3.5 3.49 3.49 0 0 1 6.95 6h4.55a2.5 2.5 0 0 0 0-5H6.95zM4.5 0h7a3.5 3.5 0 1 1 0 7h-7a3.5 3.5 0 1 1 0-7z"/>'); // eslint-disable-next-line
 
 exports.BIconToggles = BIconToggles;
+var BIconToggles2 = /*#__PURE__*/(0, _makeIcon.makeIcon)('Toggles2', '<path fill-rule="evenodd" d="M2 4a2 2 0 0 1 2-2h8a2 2 0 1 1 0 4H4a2 2 0 0 1-2-2zm2-1a1 1 0 0 0 0 2h8a1 1 0 1 0 0-2H4z"/><path d="M14 4a4 4 0 1 1-8 0 4 4 0 0 1 8 0z"/><path fill-rule="evenodd" d="M9.465 10H12a2 2 0 1 1 0 4H9.465c.34-.588.535-1.271.535-2 0-.729-.195-1.412-.535-2z"/><path fill-rule="evenodd" d="M6 15a3 3 0 1 1 0-6 3 3 0 0 1 0 6zm0 1a4 4 0 1 1 0-8 4 4 0 0 1 0 8z"/>'); // eslint-disable-next-line
+
+exports.BIconToggles2 = BIconToggles2;
 var BIconTools = /*#__PURE__*/(0, _makeIcon.makeIcon)('Tools', '<path fill-rule="evenodd" d="M0 1l1-1 3.081 2.2a1 1 0 0 1 .419.815v.07a1 1 0 0 0 .293.708L10.5 9.5l.914-.305a1 1 0 0 1 1.023.242l3.356 3.356a1 1 0 0 1 0 1.414l-1.586 1.586a1 1 0 0 1-1.414 0l-3.356-3.356a1 1 0 0 1-.242-1.023L9.5 10.5 3.793 4.793a1 1 0 0 0-.707-.293h-.071a1 1 0 0 1-.814-.419L0 1zm11.354 9.646a.5.5 0 0 0-.708.708l3 3a.5.5 0 0 0 .708-.708l-3-3z"/><path fill-rule="evenodd" d="M15.898 2.223a3.003 3.003 0 0 1-3.679 3.674L5.878 12.15a3 3 0 1 1-2.027-2.027l6.252-6.341A3 3 0 0 1 13.778.1l-2.142 2.142L12 4l1.757.364 2.141-2.141zm-13.37 9.019L3.001 11l.471.242.529.026.287.445.445.287.026.529L5 13l-.242.471-.026.529-.445.287-.287.445-.529.026L3 15l-.471-.242L2 14.732l-.287-.445L1.268 14l-.026-.529L1 13l.242-.471.026-.529.445-.287.287-.445.529-.026z"/>'); // eslint-disable-next-line
 
 exports.BIconTools = BIconTools;
@@ -54890,6 +56040,12 @@ exports.BIconTrash2Fill = BIconTrash2Fill;
 var BIconTrashFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('TrashFill', '<path fill-rule="evenodd" d="M2.5 1a1 1 0 0 0-1 1v1a1 1 0 0 0 1 1H3v9a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V4h.5a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H10a1 1 0 0 0-1-1H7a1 1 0 0 0-1 1H2.5zm3 4a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-1 0v-7a.5.5 0 0 1 .5-.5zM8 5a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-1 0v-7A.5.5 0 0 1 8 5zm3 .5a.5.5 0 0 0-1 0v7a.5.5 0 0 0 1 0v-7z"/>'); // eslint-disable-next-line
 
 exports.BIconTrashFill = BIconTrashFill;
+var BIconTree = /*#__PURE__*/(0, _makeIcon.makeIcon)('Tree', '<path fill-rule="evenodd" d="M8 0a.5.5 0 0 1 .416.223l3 4.5A.5.5 0 0 1 11 5.5h-.098l2.022 3.235a.5.5 0 0 1-.424.765h-.191l1.638 3.276a.5.5 0 0 1-.447.724h-11a.5.5 0 0 1-.447-.724L3.69 9.5H3.5a.5.5 0 0 1-.424-.765L5.098 5.5H5a.5.5 0 0 1-.416-.777l3-4.5A.5.5 0 0 1 8 0zM5.934 4.5H6a.5.5 0 0 1 .424.765L4.402 8.5H4.5a.5.5 0 0 1 .447.724L3.31 12.5h9.382l-1.638-3.276A.5.5 0 0 1 11.5 8.5h.098L9.576 5.265A.5.5 0 0 1 10 4.5h.066L8 1.401 5.934 4.5z"/><path d="M7 13h2v3H7v-3z"/>'); // eslint-disable-next-line
+
+exports.BIconTree = BIconTree;
+var BIconTreeFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('TreeFill', '<path fill-rule="evenodd" d="M8 0a.5.5 0 0 1 .416.223l3 4.5A.5.5 0 0 1 11 5.5h-.098l2.022 3.235a.5.5 0 0 1-.424.765h-.191l1.638 3.276a.5.5 0 0 1-.447.724h-11a.5.5 0 0 1-.447-.724L3.69 9.5H3.5a.5.5 0 0 1-.424-.765L5.098 5.5H5a.5.5 0 0 1-.416-.777l3-4.5A.5.5 0 0 1 8 0z"/><path d="M7 13h2v3H7v-3z"/>'); // eslint-disable-next-line
+
+exports.BIconTreeFill = BIconTreeFill;
 var BIconTriangle = /*#__PURE__*/(0, _makeIcon.makeIcon)('Triangle', '<path fill-rule="evenodd" d="M7.938 2.016a.146.146 0 0 0-.054.057L1.027 13.74a.176.176 0 0 0-.002.183c.016.03.037.05.054.06.015.01.034.017.066.017h13.713a.12.12 0 0 0 .066-.017.163.163 0 0 0 .055-.06.176.176 0 0 0-.003-.183L8.12 2.073a.146.146 0 0 0-.054-.057A.13.13 0 0 0 8.002 2a.13.13 0 0 0-.064.016zm1.044-.45a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566z"/>'); // eslint-disable-next-line
 
 exports.BIconTriangle = BIconTriangle;
@@ -54938,7 +56094,13 @@ exports.BIconTypeStrikethrough = BIconTypeStrikethrough;
 var BIconTypeUnderline = /*#__PURE__*/(0, _makeIcon.makeIcon)('TypeUnderline', '<path d="M5.313 3.136h-1.23V9.54c0 2.105 1.47 3.623 3.917 3.623s3.917-1.518 3.917-3.623V3.136h-1.23v6.323c0 1.49-.978 2.57-2.687 2.57-1.709 0-2.687-1.08-2.687-2.57V3.136z"/><path fill-rule="evenodd" d="M12.5 15h-9v-1h9v1z"/>'); // eslint-disable-next-line
 
 exports.BIconTypeUnderline = BIconTypeUnderline;
-var BIconUnion = /*#__PURE__*/(0, _makeIcon.makeIcon)('Union', '<path d="M4 5.5A1.5 1.5 0 0 1 5.5 4h9A1.5 1.5 0 0 1 16 5.5v9a1.5 1.5 0 0 1-1.5 1.5h-9A1.5 1.5 0 0 1 4 14.5v-9z"/><path d="M0 1.5A1.5 1.5 0 0 1 1.5 0h9A1.5 1.5 0 0 1 12 1.5v9a1.5 1.5 0 0 1-1.5 1.5h-9A1.5 1.5 0 0 1 0 10.5v-9z"/>'); // eslint-disable-next-line
+var BIconUiChecks = /*#__PURE__*/(0, _makeIcon.makeIcon)('UiChecks', '<path d="M7 2.5a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-7a.5.5 0 0 1-.5-.5v-1z"/><path fill-rule="evenodd" d="M2 1a2 2 0 0 0-2 2v2a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2V3a2 2 0 0 0-2-2H2zm0 8a2 2 0 0 0-2 2v2a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2v-2a2 2 0 0 0-2-2H2zm.854-3.646l2-2a.5.5 0 1 0-.708-.708L2.5 4.293l-.646-.647a.5.5 0 1 0-.708.708l1 1a.5.5 0 0 0 .708 0zm0 8l2-2a.5.5 0 0 0-.708-.708L2.5 12.293l-.646-.647a.5.5 0 0 0-.708.708l1 1a.5.5 0 0 0 .708 0z"/><path d="M7 10.5a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-7a.5.5 0 0 1-.5-.5v-1z"/><path fill-rule="evenodd" d="M7 5.5a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5zm0 8a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5z"/>'); // eslint-disable-next-line
+
+exports.BIconUiChecks = BIconUiChecks;
+var BIconUiRadios = /*#__PURE__*/(0, _makeIcon.makeIcon)('UiRadios', '<path d="M7 2.5a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-7a.5.5 0 0 1-.5-.5v-1zM0 12a3 3 0 1 1 6 0 3 3 0 0 1-6 0zm7-1.5a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-7a.5.5 0 0 1-.5-.5v-1z"/><path fill-rule="evenodd" d="M7 5.5a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5zm0 8a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5zM3 1a3 3 0 1 0 0 6 3 3 0 0 0 0-6zm0 4.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z"/>'); // eslint-disable-next-line
+
+exports.BIconUiRadios = BIconUiRadios;
+var BIconUnion = /*#__PURE__*/(0, _makeIcon.makeIcon)('Union', '<path fill-rule="evenodd" d="M0 2a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v2h2a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-2H2a2 2 0 0 1-2-2V2z"/>'); // eslint-disable-next-line
 
 exports.BIconUnion = BIconUnion;
 var BIconUnlock = /*#__PURE__*/(0, _makeIcon.makeIcon)('Unlock', '<path fill-rule="evenodd" d="M9.655 8H2.333c-.264 0-.398.068-.471.121a.73.73 0 0 0-.224.296 1.626 1.626 0 0 0-.138.59V14c0 .342.076.531.14.635.064.106.151.18.256.237a1.122 1.122 0 0 0 .436.127l.013.001h7.322c.264 0 .398-.068.471-.121a.73.73 0 0 0 .224-.296 1.627 1.627 0 0 0 .138-.59V9c0-.342-.076-.531-.14-.635a.658.658 0 0 0-.255-.237A1.122 1.122 0 0 0 9.655 8zm.012-1H2.333C.5 7 .5 9 .5 9v5c0 2 1.833 2 1.833 2h7.334c1.833 0 1.833-2 1.833-2V9c0-2-1.833-2-1.833-2zM8.5 4a3.5 3.5 0 1 1 7 0v3h-1V4a2.5 2.5 0 0 0-5 0v3h-1V4z"/>'); // eslint-disable-next-line
@@ -54962,6 +56124,9 @@ exports.BIconViewList = BIconViewList;
 var BIconViewStacked = /*#__PURE__*/(0, _makeIcon.makeIcon)('ViewStacked', '<path fill-rule="evenodd" d="M3 0h10a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2zm0 1a1 1 0 0 0-1 1v3a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H3zm0 8h10a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2zm0 1a1 1 0 0 0-1 1v3a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1v-3a1 1 0 0 0-1-1H3z"/>'); // eslint-disable-next-line
 
 exports.BIconViewStacked = BIconViewStacked;
+var BIconVoicemail = /*#__PURE__*/(0, _makeIcon.makeIcon)('Voicemail', '<path fill-rule="evenodd" d="M3.5 11a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5zm0 1a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7zm9-1a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5zm0 1a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7z"/><path fill-rule="evenodd" d="M12.5 12h-9v-1h9v1z"/>'); // eslint-disable-next-line
+
+exports.BIconVoicemail = BIconVoicemail;
 var BIconVolumeDown = /*#__PURE__*/(0, _makeIcon.makeIcon)('VolumeDown', '<path fill-rule="evenodd" d="M8.717 3.55A.5.5 0 0 1 9 4v8a.5.5 0 0 1-.812.39L5.825 10.5H3.5A.5.5 0 0 1 3 10V6a.5.5 0 0 1 .5-.5h2.325l2.363-1.89a.5.5 0 0 1 .529-.06zM8 5.04L6.312 6.39A.5.5 0 0 1 6 6.5H4v3h2a.5.5 0 0 1 .312.11L8 10.96V5.04z"/><path d="M10.707 11.182A4.486 4.486 0 0 0 12.025 8a4.486 4.486 0 0 0-1.318-3.182L10 5.525A3.489 3.489 0 0 1 11.025 8c0 .966-.392 1.841-1.025 2.475l.707.707z"/>'); // eslint-disable-next-line
 
 exports.BIconVolumeDown = BIconVolumeDown;
@@ -54971,7 +56136,7 @@ exports.BIconVolumeDownFill = BIconVolumeDownFill;
 var BIconVolumeMute = /*#__PURE__*/(0, _makeIcon.makeIcon)('VolumeMute', '<path fill-rule="evenodd" d="M6.717 3.55A.5.5 0 0 1 7 4v8a.5.5 0 0 1-.812.39L3.825 10.5H1.5A.5.5 0 0 1 1 10V6a.5.5 0 0 1 .5-.5h2.325l2.363-1.89a.5.5 0 0 1 .529-.06zM6 5.04L4.312 6.39A.5.5 0 0 1 4 6.5H2v3h2a.5.5 0 0 1 .312.11L6 10.96V5.04zm7.854.606a.5.5 0 0 1 0 .708l-4 4a.5.5 0 0 1-.708-.708l4-4a.5.5 0 0 1 .708 0z"/><path fill-rule="evenodd" d="M9.146 5.646a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708l-4-4a.5.5 0 0 0-.708 0z"/>'); // eslint-disable-next-line
 
 exports.BIconVolumeMute = BIconVolumeMute;
-var BIconVolumeMuteFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('VolumeMuteFill', '<path fill-rule="evenodd" d="M6.717 3.55A.5.5 0 0 1 7 4v8a.5.5 0 0 1-.812.39L3.825 10.5H1.5A.5.5 0 0 1 1 10V6a.5.5 0 0 1 .5-.5h2.325l2.363-1.89a.5.5 0 0 1 .529-.06zm7.137 1.596a.5.5 0 0 1 0 .708l-4 4a.5.5 0 0 1-.708-.708l4-4a.5.5 0 0 1 .708 0z"/><path fill-rule="evenodd" d="M9.146 5.146a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708l-4-4a.5.5 0 0 0-.708 0z"/>'); // eslint-disable-next-line
+var BIconVolumeMuteFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('VolumeMuteFill', '<path fill-rule="evenodd" d="M6.717 3.55A.5.5 0 0 1 7 4v8a.5.5 0 0 1-.812.39L3.825 10.5H1.5A.5.5 0 0 1 1 10V6a.5.5 0 0 1 .5-.5h2.325l2.363-1.89a.5.5 0 0 1 .529-.06zm7.137 2.096a.5.5 0 0 1 0 .708l-4 4a.5.5 0 0 1-.708-.708l4-4a.5.5 0 0 1 .708 0z"/><path fill-rule="evenodd" d="M9.146 5.646a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708l-4-4a.5.5 0 0 0-.708 0z"/>'); // eslint-disable-next-line
 
 exports.BIconVolumeMuteFill = BIconVolumeMuteFill;
 var BIconVolumeOff = /*#__PURE__*/(0, _makeIcon.makeIcon)('VolumeOff', '<path fill-rule="evenodd" d="M10.717 3.55A.5.5 0 0 1 11 4v8a.5.5 0 0 1-.812.39L7.825 10.5H5.5A.5.5 0 0 1 5 10V6a.5.5 0 0 1 .5-.5h2.325l2.363-1.89a.5.5 0 0 1 .529-.06zM10 5.04L8.312 6.39A.5.5 0 0 1 8 6.5H6v3h2a.5.5 0 0 1 .312.11L10 10.96V5.04z"/>'); // eslint-disable-next-line
@@ -54995,12 +56160,24 @@ exports.BIconWallet = BIconWallet;
 var BIconWallet2 = /*#__PURE__*/(0, _makeIcon.makeIcon)('Wallet2', '<path d="M2.5 4l10-3A1.5 1.5 0 0 1 14 2.5v2h-1v-2a.5.5 0 0 0-.5-.5L5.833 4H2.5z"/><path fill-rule="evenodd" d="M1 5.5A1.5 1.5 0 0 1 2.5 4h11A1.5 1.5 0 0 1 15 5.5v8a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 1 13.5v-8zM2.5 5a.5.5 0 0 0-.5.5v8a.5.5 0 0 0 .5.5h11a.5.5 0 0 0 .5-.5v-8a.5.5 0 0 0-.5-.5h-11z"/>'); // eslint-disable-next-line
 
 exports.BIconWallet2 = BIconWallet2;
-var BIconWatch = /*#__PURE__*/(0, _makeIcon.makeIcon)('Watch', '<path fill-rule="evenodd" d="M4 14.333v-1.86A5.985 5.985 0 0 1 2 8c0-1.777.772-3.374 2-4.472V1.667C4 .747 4.746 0 5.667 0h4.666C11.253 0 12 .746 12 1.667v1.86A5.985 5.985 0 0 1 14 8a5.985 5.985 0 0 1-2 4.472v1.861c0 .92-.746 1.667-1.667 1.667H5.667C4.747 16 4 15.254 4 14.333zM13 8A5 5 0 1 0 3 8a5 5 0 0 0 10 0z"/><rect width="1" height="2" x="13.5" y="7" rx=".5"/><path fill-rule="evenodd" d="M8 4.5a.5.5 0 0 1 .5.5v3a.5.5 0 0 1-.5.5H6a.5.5 0 0 1 0-1h1.5V5a.5.5 0 0 1 .5-.5z"/>'); // eslint-disable-next-line
+var BIconWalletFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('WalletFill', '<path d="M1.5 2A1.5 1.5 0 0 0 0 3.5v2h6a.5.5 0 0 1 .5.5c0 .253.08.644.306.958.207.288.557.542 1.194.542.637 0 .987-.254 1.194-.542.226-.314.306-.705.306-.958a.5.5 0 0 1 .5-.5h6v-2A1.5 1.5 0 0 0 14.5 2h-13z"/><path d="M16 6.5h-5.551a2.678 2.678 0 0 1-.443 1.042C9.613 8.088 8.963 8.5 8 8.5c-.963 0-1.613-.412-2.006-.958A2.679 2.679 0 0 1 5.551 6.5H0v6A1.5 1.5 0 0 0 1.5 14h13a1.5 1.5 0 0 0 1.5-1.5v-6z"/>'); // eslint-disable-next-line
+
+exports.BIconWalletFill = BIconWalletFill;
+var BIconWatch = /*#__PURE__*/(0, _makeIcon.makeIcon)('Watch', '<path fill-rule="evenodd" d="M4 14.333v-1.86A5.985 5.985 0 0 1 2 8c0-1.777.772-3.374 2-4.472V1.667C4 .747 4.746 0 5.667 0h4.666C11.253 0 12 .746 12 1.667v1.86A5.985 5.985 0 0 1 14 8a5.985 5.985 0 0 1-2 4.472v1.861c0 .92-.746 1.667-1.667 1.667H5.667C4.747 16 4 15.254 4 14.333zM13 8A5 5 0 1 0 3 8a5 5 0 0 0 10 0z"/><path d="M13.918 8.993A.502.502 0 0 0 14.5 8.5v-1a.5.5 0 0 0-.582-.493 6.044 6.044 0 0 1 0 1.986z"/><path fill-rule="evenodd" d="M8 4.5a.5.5 0 0 1 .5.5v3a.5.5 0 0 1-.5.5H6a.5.5 0 0 1 0-1h1.5V5a.5.5 0 0 1 .5-.5z"/>'); // eslint-disable-next-line
 
 exports.BIconWatch = BIconWatch;
-var BIconWifi = /*#__PURE__*/(0, _makeIcon.makeIcon)('Wifi', '<path fill-rule="evenodd" d="M6.858 11.858A1.991 1.991 0 0 1 8 11.5c.425 0 .818.132 1.142.358L8 13l-1.142-1.142z"/><path fill-rule="evenodd" d="M7.731 12.024l.269.269.269-.269a1.507 1.507 0 0 0-.538 0zm-1.159-.576A2.49 2.49 0 0 1 8 11c.53 0 1.023.165 1.428.448a.5.5 0 0 1 .068.763l-1.142 1.143a.5.5 0 0 1-.708 0L6.504 12.21a.5.5 0 0 1 .354-.853v.5l-.286-.41zM8 9.5a4.478 4.478 0 0 0-2.7.9.5.5 0 0 1-.6-.8c.919-.69 2.062-1.1 3.3-1.1s2.381.41 3.3 1.1a.5.5 0 0 1-.6.8A4.478 4.478 0 0 0 8 9.5zm0-3c-1.833 0-3.51.657-4.814 1.748a.5.5 0 0 1-.642-.766A8.468 8.468 0 0 1 8 5.5c2.076 0 3.98.745 5.456 1.982a.5.5 0 1 1-.642.766A7.468 7.468 0 0 0 8 6.5z"/><path fill-rule="evenodd" d="M8 3.5c-2.657 0-5.082.986-6.932 2.613a.5.5 0 1 1-.66-.75A11.458 11.458 0 0 1 8 2.5c2.91 0 5.567 1.081 7.592 2.862a.5.5 0 1 1-.66.751A10.458 10.458 0 0 0 8 3.5z"/>'); // eslint-disable-next-line
+var BIconWifi = /*#__PURE__*/(0, _makeIcon.makeIcon)('Wifi', '<path d="M15.385 6.115a.485.485 0 0 0-.048-.736A12.443 12.443 0 0 0 8 3 12.44 12.44 0 0 0 .663 5.379a.485.485 0 0 0-.048.736.518.518 0 0 0 .668.05A11.448 11.448 0 0 1 8 4c2.507 0 4.827.802 6.717 2.164.204.148.489.13.668-.049z"/><path d="M13.229 8.271c.216-.216.194-.578-.063-.745A9.456 9.456 0 0 0 8 6c-1.905 0-3.68.56-5.166 1.526a.48.48 0 0 0-.063.745.525.525 0 0 0 .652.065A8.46 8.46 0 0 1 8 7a8.46 8.46 0 0 1 4.577 1.336c.205.132.48.108.652-.065zm-2.183 2.183c.226-.226.185-.605-.1-.75A6.472 6.472 0 0 0 8 9c-1.06 0-2.062.254-2.946.704-.285.145-.326.524-.1.75l.015.015c.16.16.408.19.611.09A5.478 5.478 0 0 1 8 10c.868 0 1.69.201 2.42.56.203.1.45.07.611-.091l.015-.015zM9.06 12.44c.196-.196.198-.52-.04-.66A1.99 1.99 0 0 0 8 11.5a1.99 1.99 0 0 0-1.02.28c-.238.14-.236.464-.04.66l.706.706a.5.5 0 0 0 .708 0l.707-.707z"/>'); // eslint-disable-next-line
 
 exports.BIconWifi = BIconWifi;
+var BIconWifi1 = /*#__PURE__*/(0, _makeIcon.makeIcon)('Wifi1', '<path d="M11.046 10.454c.226-.226.185-.605-.1-.75A6.473 6.473 0 0 0 8 9c-1.06 0-2.062.254-2.946.704-.285.145-.326.524-.1.75l.015.015c.16.16.407.19.611.09A5.478 5.478 0 0 1 8 10c.868 0 1.69.201 2.42.56.203.1.45.07.611-.091l.015-.015zM9.06 12.44c.196-.196.198-.52-.04-.66A1.99 1.99 0 0 0 8 11.5a1.99 1.99 0 0 0-1.02.28c-.238.14-.236.464-.04.66l.706.706a.5.5 0 0 0 .707 0l.708-.707z"/>'); // eslint-disable-next-line
+
+exports.BIconWifi1 = BIconWifi1;
+var BIconWifi2 = /*#__PURE__*/(0, _makeIcon.makeIcon)('Wifi2', '<path d="M13.229 8.271c.216-.216.194-.578-.063-.745A9.456 9.456 0 0 0 8 6c-1.905 0-3.68.56-5.166 1.526a.48.48 0 0 0-.063.745.525.525 0 0 0 .652.065A8.46 8.46 0 0 1 8 7a8.46 8.46 0 0 1 4.577 1.336c.205.132.48.108.652-.065zm-2.183 2.183c.226-.226.185-.605-.1-.75A6.473 6.473 0 0 0 8 9c-1.06 0-2.062.254-2.946.704-.285.145-.326.524-.1.75l.015.015c.16.16.408.19.611.09A5.478 5.478 0 0 1 8 10c.868 0 1.69.201 2.42.56.203.1.45.07.611-.091l.015-.015zM9.06 12.44c.196-.196.198-.52-.04-.66A1.99 1.99 0 0 0 8 11.5a1.99 1.99 0 0 0-1.02.28c-.238.14-.236.464-.04.66l.706.706a.5.5 0 0 0 .708 0l.707-.707z"/>'); // eslint-disable-next-line
+
+exports.BIconWifi2 = BIconWifi2;
+var BIconWifiOff = /*#__PURE__*/(0, _makeIcon.makeIcon)('WifiOff', '<path d="M10.706 3.294A12.545 12.545 0 0 0 8 3 12.44 12.44 0 0 0 .663 5.379a.485.485 0 0 0-.048.736.518.518 0 0 0 .668.05A11.448 11.448 0 0 1 8 4c.63 0 1.249.05 1.852.148l.854-.854zM8 6c-1.905 0-3.68.56-5.166 1.526a.48.48 0 0 0-.063.745.525.525 0 0 0 .652.065 8.448 8.448 0 0 1 3.51-1.27L8 6zm2.596 1.404l.785-.785c.63.24 1.228.545 1.785.907a.482.482 0 0 1 .063.745.525.525 0 0 1-.652.065 8.462 8.462 0 0 0-1.98-.932zM8 10l.934-.933a6.454 6.454 0 0 1 2.012.637c.285.145.326.524.1.75l-.015.015a.532.532 0 0 1-.611.09A5.478 5.478 0 0 0 8 10zm4.905-4.905l.747-.747c.59.3 1.153.645 1.685 1.03a.485.485 0 0 1 .048.737.518.518 0 0 1-.668.05 11.496 11.496 0 0 0-1.812-1.07zM9.02 11.78c.238.14.236.464.04.66l-.706.706a.5.5 0 0 1-.708 0l-.707-.707c-.195-.195-.197-.518.04-.66A1.99 1.99 0 0 1 8 11.5c.373 0 .722.102 1.02.28zm4.355-9.905a.53.53 0 1 1 .75.75l-10.75 10.75a.53.53 0 0 1-.75-.75l10.75-10.75z"/>'); // eslint-disable-next-line
+
+exports.BIconWifiOff = BIconWifiOff;
 var BIconWindow = /*#__PURE__*/(0, _makeIcon.makeIcon)('Window', '<path fill-rule="evenodd" d="M14 2H2a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V3a1 1 0 0 0-1-1zM2 1a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V3a2 2 0 0 0-2-2H2z"/><path fill-rule="evenodd" d="M15 6H1V5h14v1z"/><path d="M3 3.5a.5.5 0 1 1-1 0 .5.5 0 0 1 1 0zm1.5 0a.5.5 0 1 1-1 0 .5.5 0 0 1 1 0zm1.5 0a.5.5 0 1 1-1 0 .5.5 0 0 1 1 0z"/>'); // eslint-disable-next-line
 
 exports.BIconWindow = BIconWindow;
@@ -55016,7 +56193,7 @@ exports.BIconXCircle = BIconXCircle;
 var BIconXCircleFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('XCircleFill', '<path fill-rule="evenodd" d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-4.146-3.146a.5.5 0 0 0-.708-.708L8 7.293 4.854 4.146a.5.5 0 1 0-.708.708L7.293 8l-3.147 3.146a.5.5 0 0 0 .708.708L8 8.707l3.146 3.147a.5.5 0 0 0 .708-.708L8.707 8l3.147-3.146z"/>'); // eslint-disable-next-line
 
 exports.BIconXCircleFill = BIconXCircleFill;
-var BIconXDiamond = /*#__PURE__*/(0, _makeIcon.makeIcon)('XDiamond', '<path fill-rule="evenodd" d="M6.95.435c.58-.58 1.52-.58 2.1 0l6.515 6.516c.58.58.58 1.519 0 2.098L9.05 15.565c-.58.58-1.519.58-2.098 0L.435 9.05a1.482 1.482 0 0 1 0-2.098L6.95.435zm1.4.7a.495.495 0 0 0-.7 0L1.134 7.65a.495.495 0 0 0 0 .7l6.516 6.516a.495.495 0 0 0 .7 0l6.516-6.516a.495.495 0 0 0 0-.7L8.35 1.134z"/><path fill-rule="evenodd" d="M11.854 4.146a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708-.708l7-7a.5.5 0 0 1 .708 0z"/><path fill-rule="evenodd" d="M4.146 4.146a.5.5 0 0 0 0 .708l7 7a.5.5 0 0 0 .708-.708l-7-7a.5.5 0 0 0-.708 0z"/>'); // eslint-disable-next-line
+var BIconXDiamond = /*#__PURE__*/(0, _makeIcon.makeIcon)('XDiamond', '<path fill-rule="evenodd" d="M8.361 1.17a.51.51 0 0 0-.722 0L4.766 4.044 8 7.278l3.234-3.234L8.361 1.17zm3.595 3.596L8.722 8l3.234 3.234 2.873-2.873c.2-.2.2-.523 0-.722l-2.873-2.873zm-.722 7.19L8 8.722l-3.234 3.234 2.873 2.873c.2.2.523.2.722 0l2.873-2.873zm-7.19-.722L7.278 8 4.044 4.766 1.17 7.639a.511.511 0 0 0 0 .722l2.874 2.873zM6.917.45a1.531 1.531 0 0 1 2.166 0l6.469 6.468a1.532 1.532 0 0 1 0 2.166l-6.47 6.469a1.532 1.532 0 0 1-2.165 0L.45 9.082a1.531 1.531 0 0 1 0-2.165L6.917.45z"/>'); // eslint-disable-next-line
 
 exports.BIconXDiamond = BIconXDiamond;
 var BIconXDiamondFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('XDiamondFill', '<path fill-rule="evenodd" d="M9.05.435c-.58-.58-1.52-.58-2.1 0L4.047 3.339 8 7.293l3.954-3.954L9.049.435zm3.61 3.611L8.708 8l3.954 3.954 2.904-2.905c.58-.58.58-1.519 0-2.098l-2.904-2.905zm-.706 8.615L8 8.707l-3.954 3.954 2.905 2.904c.58.58 1.519.58 2.098 0l2.905-2.904zm-8.615-.707L7.293 8 3.339 4.046.435 6.951c-.58.58-.58 1.519 0 2.098l2.904 2.905z"/>'); // eslint-disable-next-line
@@ -55031,9 +56208,15 @@ exports.BIconXOctagonFill = BIconXOctagonFill;
 var BIconXSquare = /*#__PURE__*/(0, _makeIcon.makeIcon)('XSquare', '<path fill-rule="evenodd" d="M14 1H2a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1zM2 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2H2z"/><path fill-rule="evenodd" d="M11.854 4.146a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708-.708l7-7a.5.5 0 0 1 .708 0z"/><path fill-rule="evenodd" d="M4.146 4.146a.5.5 0 0 0 0 .708l7 7a.5.5 0 0 0 .708-.708l-7-7a.5.5 0 0 0-.708 0z"/>'); // eslint-disable-next-line
 
 exports.BIconXSquare = BIconXSquare;
-var BIconXSquareFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('XSquareFill', '<path fill-rule="evenodd" d="M2 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2H2zm9.854 4.854a.5.5 0 0 0-.708-.708L8 7.293 4.854 4.146a.5.5 0 1 0-.708.708L7.293 8l-3.147 3.146a.5.5 0 0 0 .708.708L8 8.707l3.146 3.147a.5.5 0 0 0 .708-.708L8.707 8l3.147-3.146z"/>'); // --- END AUTO-GENERATED FILE ---
+var BIconXSquareFill = /*#__PURE__*/(0, _makeIcon.makeIcon)('XSquareFill', '<path fill-rule="evenodd" d="M2 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2H2zm9.854 4.854a.5.5 0 0 0-.708-.708L8 7.293 4.854 4.146a.5.5 0 1 0-.708.708L7.293 8l-3.147 3.146a.5.5 0 0 0 .708.708L8 8.707l3.146 3.147a.5.5 0 0 0 .708-.708L8.707 8l3.147-3.146z"/>'); // eslint-disable-next-line
 
 exports.BIconXSquareFill = BIconXSquareFill;
+var BIconZoomIn = /*#__PURE__*/(0, _makeIcon.makeIcon)('ZoomIn', '<path fill-rule="evenodd" d="M6.5 12a5.5 5.5 0 1 0 0-11 5.5 5.5 0 0 0 0 11zM13 6.5a6.5 6.5 0 1 1-13 0 6.5 6.5 0 0 1 13 0z"/><path d="M10.344 11.742c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1 6.538 6.538 0 0 1-1.398 1.4z"/><path fill-rule="evenodd" d="M6.5 3a.5.5 0 0 1 .5.5V6h2.5a.5.5 0 0 1 0 1H7v2.5a.5.5 0 0 1-1 0V7H3.5a.5.5 0 0 1 0-1H6V3.5a.5.5 0 0 1 .5-.5z"/>'); // eslint-disable-next-line
+
+exports.BIconZoomIn = BIconZoomIn;
+var BIconZoomOut = /*#__PURE__*/(0, _makeIcon.makeIcon)('ZoomOut', '<path fill-rule="evenodd" d="M6.5 12a5.5 5.5 0 1 0 0-11 5.5 5.5 0 0 0 0 11zM13 6.5a6.5 6.5 0 1 1-13 0 6.5 6.5 0 0 1 13 0z"/><path d="M10.344 11.742c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1 6.538 6.538 0 0 1-1.398 1.4z"/><path fill-rule="evenodd" d="M3 6.5a.5.5 0 0 1 .5-.5h6a.5.5 0 0 1 0 1h-6a.5.5 0 0 1-.5-.5z"/>'); // --- END AUTO-GENERATED FILE ---
+
+exports.BIconZoomOut = BIconZoomOut;
 },{"./helpers/make-icon":"node_modules/bootstrap-vue/esm/icons/helpers/make-icon.js"}],"node_modules/bootstrap-vue/esm/icons/icon.js":[function(require,module,exports) {
 "use strict";
 
@@ -55421,7 +56604,7 @@ var BAvatar = /*#__PURE__*/_vue.default.extend({
         badgeStyle = this.badgeStyle;
     var link = !button && (0, _router.isLink)(this);
     var tag = button ? _button.BButton : link ? _link.BLink : 'span';
-    var alt = this.alt || null;
+    var alt = this.alt;
     var ariaLabel = this.ariaLabel || null;
     var $content = null;
 
@@ -56484,10 +57667,8 @@ var looseEqual = function looseEqual(a, b) {
     }
 
     for (var key in a) {
-      // eslint-disable-next-line no-prototype-builtins
-      var aHasKey = a.hasOwnProperty(key); // eslint-disable-next-line no-prototype-builtins
-
-      var bHasKey = b.hasOwnProperty(key);
+      var aHasKey = (0, _object.hasOwnProperty)(a, key);
+      var bHasKey = (0, _object.hasOwnProperty)(b, key);
 
       if (aHasKey && !bHasKey || !aHasKey && bHasKey || !looseEqual(a[key], b[key])) {
         return false;
@@ -58662,8 +59843,8 @@ var props = {
     required: true
   },
   alt: {
-    type: String // default: null
-
+    type: String,
+    default: null
   },
   top: {
     type: Boolean,
@@ -58726,7 +59907,7 @@ var BCardImg = /*#__PURE__*/_vue.default.extend({
       class: [baseClass],
       attrs: {
         src: props.src || null,
-        alt: props.alt || null,
+        alt: props.alt,
         height: props.height || null,
         width: props.width || null
       }
@@ -59212,8 +60393,8 @@ var props = {
 
   },
   alt: {
-    type: String // default: null
-
+    type: String,
+    default: null
   },
   width: {
     type: [Number, String] // default: null
@@ -59333,7 +60514,7 @@ var BImg = /*#__PURE__*/_vue.default.extend({
     return h('img', (0, _vueFunctionalDataMerge.mergeData)(data, {
       attrs: {
         src: src,
-        alt: props.alt || null,
+        alt: props.alt,
         width: width ? (0, _string.toString)(width) : null,
         height: height ? (0, _string.toString)(height) : null,
         srcset: srcset || null,
@@ -60561,7 +61742,7 @@ var BCarousel = /*#__PURE__*/_vue.default.extend({
             var events = _this2.transitionEndEvent.split(/\s+/);
 
             events.forEach(function (evt) {
-              return (0, _events.eventOff)(currentSlide, evt, onceTransEnd, _events.EVENT_OPTIONS_NO_CAPTURE);
+              return (0, _events.eventOff)(nextSlide, evt, onceTransEnd, _events.EVENT_OPTIONS_NO_CAPTURE);
             });
           }
 
@@ -60591,7 +61772,7 @@ var BCarousel = /*#__PURE__*/_vue.default.extend({
         if (this.transitionEndEvent) {
           var events = this.transitionEndEvent.split(/\s+/);
           events.forEach(function (event) {
-            return (0, _events.eventOn)(currentSlide, event, onceTransEnd, _events.EVENT_OPTIONS_NO_CAPTURE);
+            return (0, _events.eventOn)(nextSlide, event, onceTransEnd, _events.EVENT_OPTIONS_NO_CAPTURE);
           });
         } // Fallback to setTimeout()
 
@@ -67889,6 +69070,8 @@ exports.default = void 0;
 
 var _html = require("../utils/html");
 
+var _looseEqual = _interopRequireDefault(require("../utils/loose-equal"));
+
 var _normalizeSlot = _interopRequireDefault(require("./normalize-slot"));
 
 var _formCheckbox = require("../components/form-checkbox/form-checkbox");
@@ -67962,8 +69145,10 @@ var _default = {
     checked: function checked(newVal) {
       this.localChecked = newVal;
     },
-    localChecked: function localChecked(newVal) {
-      this.$emit('input', newVal);
+    localChecked: function localChecked(newVal, oldVal) {
+      if (!(0, _looseEqual.default)(newVal, oldVal)) {
+        this.$emit('input', newVal);
+      }
     }
   },
   render: function render(h) {
@@ -68001,7 +69186,7 @@ var _default = {
   }
 };
 exports.default = _default;
-},{"../utils/html":"node_modules/bootstrap-vue/esm/utils/html.js","./normalize-slot":"node_modules/bootstrap-vue/esm/mixins/normalize-slot.js","../components/form-checkbox/form-checkbox":"node_modules/bootstrap-vue/esm/components/form-checkbox/form-checkbox.js","../components/form-radio/form-radio":"node_modules/bootstrap-vue/esm/components/form-radio/form-radio.js"}],"node_modules/bootstrap-vue/esm/components/form-checkbox/form-checkbox-group.js":[function(require,module,exports) {
+},{"../utils/html":"node_modules/bootstrap-vue/esm/utils/html.js","../utils/loose-equal":"node_modules/bootstrap-vue/esm/utils/loose-equal.js","./normalize-slot":"node_modules/bootstrap-vue/esm/mixins/normalize-slot.js","../components/form-checkbox/form-checkbox":"node_modules/bootstrap-vue/esm/components/form-checkbox/form-checkbox.js","../components/form-radio/form-radio":"node_modules/bootstrap-vue/esm/components/form-radio/form-radio.js"}],"node_modules/bootstrap-vue/esm/components/form-checkbox/form-checkbox-group.js":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -69696,7 +70881,74 @@ var FormFilePlugin = /*#__PURE__*/(0, _plugins.pluginFactory)({
   }
 });
 exports.FormFilePlugin = FormFilePlugin;
-},{"./form-file":"node_modules/bootstrap-vue/esm/components/form-file/form-file.js","../../utils/plugins":"node_modules/bootstrap-vue/esm/utils/plugins.js"}],"node_modules/bootstrap-vue/esm/components/layout/col.js":[function(require,module,exports) {
+},{"./form-file":"node_modules/bootstrap-vue/esm/components/form-file/form-file.js","../../utils/plugins":"node_modules/bootstrap-vue/esm/utils/plugins.js"}],"node_modules/bootstrap-vue/esm/utils/css-escape.js":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = void 0;
+
+var _string = require("./string");
+
+var escapeChar = function escapeChar(value) {
+  return '\\' + value;
+}; // The `cssEscape()` util is based on this `CSS.escape()` polyfill:
+// https://github.com/mathiasbynens/CSS.escape
+
+
+var cssEscape = function cssEscape(value) {
+  value = (0, _string.toString)(value);
+  var length = value.length;
+  var firstCharCode = value.charCodeAt(0);
+  return value.split('').reduce(function (result, char, index) {
+    var charCode = value.charCodeAt(index); // If the character is NULL (U+0000), use (U+FFFD) as replacement
+
+    if (charCode === 0x0000) {
+      return result + "\uFFFD";
+    } // If the character ...
+
+
+    if ( // ... is U+007F OR
+    charCode === 0x007f || // ... is in the range [\1-\1F] (U+0001 to U+001F) OR ...
+    charCode >= 0x0001 && charCode <= 0x001f || // ... is the first character and is in the range [0-9] (U+0030 to U+0039) OR ...
+    index === 0 && charCode >= 0x0030 && charCode <= 0x0039 || // ... is the second character and is in the range [0-9] (U+0030 to U+0039)
+    // and the first character is a `-` (U+002D) ...
+    index === 1 && charCode >= 0x0030 && charCode <= 0x0039 && firstCharCode === 0x002d) {
+      // ... https://drafts.csswg.org/cssom/#escape-a-character-as-code-point
+      return result + escapeChar("".concat(charCode.toString(16), " "));
+    } // If the character ...
+
+
+    if ( // ... is the first character AND ...
+    index === 0 && // ... is a `-` (U+002D) AND ...
+    charCode === 0x002d && // ... there is no second character ...
+    length === 1) {
+      // ... use the escaped character
+      return result + escapeChar(char);
+    } // If the character ...
+
+
+    if ( // ... is greater than or equal to U+0080 OR ...
+    charCode >= 0x0080 || // ... is `-` (U+002D) OR ...
+    charCode === 0x002d || // ... is `_` (U+005F) OR ...
+    charCode === 0x005f || // ... is in the range [0-9] (U+0030 to U+0039) OR ...
+    charCode >= 0x0030 && charCode <= 0x0039 || // ... is in the range [A-Z] (U+0041 to U+005A) OR ...
+    charCode >= 0x0041 && charCode <= 0x005a || // ... is in the range [a-z] (U+0061 to U+007A) ...
+    charCode >= 0x0061 && charCode <= 0x007a) {
+      // ... use the character itself
+      return result + char;
+    } // Otherwise use the escaped character
+    // See: https://drafts.csswg.org/cssom/#escape-a-character
+
+
+    return result + escapeChar(char);
+  }, '');
+};
+
+var _default = cssEscape;
+exports.default = _default;
+},{"./string":"node_modules/bootstrap-vue/esm/utils/string.js"}],"node_modules/bootstrap-vue/esm/components/layout/col.js":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -69937,6 +71189,8 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.BFormGroup = void 0;
+
+var _cssEscape = _interopRequireDefault(require("../../utils/css-escape"));
 
 var _memoize = _interopRequireDefault(require("../../utils/memoize"));
 
@@ -70370,7 +71624,8 @@ var BFormGroup = {
       // Optionally accepts a string of IDs to remove as the second parameter.
       // Preserves any aria-describedby value(s) user may have on input.
       if (this.labelFor && _env.isBrowser) {
-        var input = (0, _dom.select)("#".concat(this.labelFor), this.$refs.content);
+        // We need to escape `labelFor` since it can be user-provided
+        var input = (0, _dom.select)("#".concat((0, _cssEscape.default)(this.labelFor)), this.$refs.content);
 
         if (input) {
           var adb = 'aria-describedby';
@@ -70436,7 +71691,7 @@ var BFormGroup = {
   }
 };
 exports.BFormGroup = BFormGroup;
-},{"../../utils/memoize":"node_modules/bootstrap-vue/esm/utils/memoize.js","../../utils/array":"node_modules/bootstrap-vue/esm/utils/array.js","../../utils/config":"node_modules/bootstrap-vue/esm/utils/config.js","../../utils/dom":"node_modules/bootstrap-vue/esm/utils/dom.js","../../utils/env":"node_modules/bootstrap-vue/esm/utils/env.js","../../utils/inspect":"node_modules/bootstrap-vue/esm/utils/inspect.js","../../utils/number":"node_modules/bootstrap-vue/esm/utils/number.js","../../utils/object":"node_modules/bootstrap-vue/esm/utils/object.js","../../utils/string":"node_modules/bootstrap-vue/esm/utils/string.js","../../mixins/form-state":"node_modules/bootstrap-vue/esm/mixins/form-state.js","../../mixins/id":"node_modules/bootstrap-vue/esm/mixins/id.js","../../mixins/normalize-slot":"node_modules/bootstrap-vue/esm/mixins/normalize-slot.js","../layout/col":"node_modules/bootstrap-vue/esm/components/layout/col.js","../layout/form-row":"node_modules/bootstrap-vue/esm/components/layout/form-row.js","../form/form-text":"node_modules/bootstrap-vue/esm/components/form/form-text.js","../form/form-invalid-feedback":"node_modules/bootstrap-vue/esm/components/form/form-invalid-feedback.js","../form/form-valid-feedback":"node_modules/bootstrap-vue/esm/components/form/form-valid-feedback.js"}],"node_modules/bootstrap-vue/esm/components/form-group/index.js":[function(require,module,exports) {
+},{"../../utils/css-escape":"node_modules/bootstrap-vue/esm/utils/css-escape.js","../../utils/memoize":"node_modules/bootstrap-vue/esm/utils/memoize.js","../../utils/array":"node_modules/bootstrap-vue/esm/utils/array.js","../../utils/config":"node_modules/bootstrap-vue/esm/utils/config.js","../../utils/dom":"node_modules/bootstrap-vue/esm/utils/dom.js","../../utils/env":"node_modules/bootstrap-vue/esm/utils/env.js","../../utils/inspect":"node_modules/bootstrap-vue/esm/utils/inspect.js","../../utils/number":"node_modules/bootstrap-vue/esm/utils/number.js","../../utils/object":"node_modules/bootstrap-vue/esm/utils/object.js","../../utils/string":"node_modules/bootstrap-vue/esm/utils/string.js","../../mixins/form-state":"node_modules/bootstrap-vue/esm/mixins/form-state.js","../../mixins/id":"node_modules/bootstrap-vue/esm/mixins/id.js","../../mixins/normalize-slot":"node_modules/bootstrap-vue/esm/mixins/normalize-slot.js","../layout/col":"node_modules/bootstrap-vue/esm/components/layout/col.js","../layout/form-row":"node_modules/bootstrap-vue/esm/components/layout/form-row.js","../form/form-text":"node_modules/bootstrap-vue/esm/components/form/form-text.js","../form/form-invalid-feedback":"node_modules/bootstrap-vue/esm/components/form/form-invalid-feedback.js","../form/form-valid-feedback":"node_modules/bootstrap-vue/esm/components/form/form-valid-feedback.js"}],"node_modules/bootstrap-vue/esm/components/form-group/index.js":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -72962,7 +74217,7 @@ var BFormTag = /*#__PURE__*/_vue.default.extend({
 
     if (!this.disabled) {
       $remove = h(_buttonClose.BButtonClose, {
-        staticClass: 'b-form-tag-remove ml-1',
+        staticClass: 'b-form-tag-remove',
         props: {
           ariaLabel: this.removeLabel
         },
@@ -73015,6 +74270,8 @@ exports.BFormTags = void 0;
 var _vue = _interopRequireDefault(require("../../utils/vue"));
 
 var _keyCodes = _interopRequireDefault(require("../../utils/key-codes"));
+
+var _cssEscape = _interopRequireDefault(require("../../utils/css-escape"));
 
 var _identity = _interopRequireDefault(require("../../utils/identity"));
 
@@ -73316,6 +74573,14 @@ var BFormTags = /*#__PURE__*/_vue.default.extend({
       type: Boolean,
       default: false
     },
+    ignoreInputFocusSelector: {
+      // Disable the input focus behavior when clicking
+      // on element matching the selector (or selectors)
+      type: [Array, String],
+      default: function _default() {
+        return ['.b-form-tag', 'button', 'input', 'select'];
+      }
+    },
     value: {
       // The v-model prop
       type: Array,
@@ -73379,6 +74644,10 @@ var BFormTags = /*#__PURE__*/_vue.default.extend({
       // We append a space if the first separator is not a space
       var joiner = this.computedSeparator.charAt(0);
       return joiner !== ' ' ? "".concat(joiner, " ") : joiner;
+    },
+    computeIgnoreInputFocusSelector: function computeIgnoreInputFocusSelector() {
+      // Normalize to an single selector with selectors separated by `,`
+      return (0, _array.concat)(this.ignoreInputFocusSelector).filter(_identity.default).join(',').trim();
     },
     disableAddButton: function disableAddButton() {
       var _this = this; // If 'Add' button should be disabled
@@ -73575,7 +74844,10 @@ var BFormTags = /*#__PURE__*/_vue.default.extend({
     onClick: function onClick(evt) {
       var _this3 = this;
 
-      if (!this.disabled && (0, _inspect.isEvent)(evt) && evt.target === evt.currentTarget) {
+      var ignoreFocusSelector = this.computeIgnoreInputFocusSelector;
+      var target = evt.target;
+
+      if (!this.disabled && !(0, _dom.isActiveElement)(target) && (!ignoreFocusSelector || !(0, _dom.closest)(ignoreFocusSelector, target, true))) {
         this.$nextTick(function () {
           _this3.focus();
         });
@@ -73659,7 +74931,8 @@ var BFormTags = /*#__PURE__*/_vue.default.extend({
     },
     getInput: function getInput() {
       // Returns the input element reference (or null if not found)
-      return (0, _dom.select)("#".concat(this.computedInputId), this.$el);
+      // We need to escape `computedInputId` since it can be user-provided
+      return (0, _dom.select)("#".concat((0, _cssEscape.default)(this.computedInputId)), this.$el);
     },
     // Default User Interface render
     defaultRender: function defaultRender(_ref) {
@@ -73689,7 +74962,6 @@ var BFormTags = /*#__PURE__*/_vue.default.extend({
         tag = (0, _string.toString)(tag);
         return h(_formTag.BFormTag, {
           key: "li-tag__".concat(tag),
-          staticClass: 'mt-1 mr-1',
           class: tagClass,
           props: {
             // `BFormTag` will auto generate an ID
@@ -73769,7 +75041,7 @@ var BFormTags = /*#__PURE__*/_vue.default.extend({
       var tagListId = this.safeId('__TAG__LIST__');
       var $field = h('li', {
         key: '__li-input__',
-        staticClass: 'flex-grow-1 mt-1',
+        staticClass: 'flex-grow-1',
         attrs: {
           role: 'none',
           'aria-live': 'off',
@@ -73784,12 +75056,11 @@ var BFormTags = /*#__PURE__*/_vue.default.extend({
 
       var $ul = h('ul', {
         key: '_tags_list_',
-        staticClass: 'list-unstyled mt-n1 mb-0 d-flex flex-wrap align-items-center',
+        staticClass: 'b-form-tags-list list-unstyled mb-0 d-flex flex-wrap align-items-center',
         attrs: {
           id: tagListId
         }
-      }, // `concat()` is faster than array spread when args are known to be arrays
-      (0, _array.concat)($tags, $field)); // Assemble the feedback
+      }, [$tags, $field]); // Assemble the feedback
 
       var $feedback = h();
 
@@ -73935,16 +75206,16 @@ var BFormTags = /*#__PURE__*/_vue.default.extend({
         'aria-describedby': this.safeId('_selected_')
       },
       on: {
+        click: this.onClick,
         focusin: this.onFocusin,
-        focusout: this.onFocusout,
-        click: this.onClick
+        focusout: this.onFocusout
       }
-    }, (0, _array.concat)($output, $removed, $content, $hidden));
+    }, [$output, $removed, $content, $hidden]);
   }
 });
 
 exports.BFormTags = BFormTags;
-},{"../../utils/vue":"node_modules/bootstrap-vue/esm/utils/vue.js","../../utils/key-codes":"node_modules/bootstrap-vue/esm/utils/key-codes.js","../../utils/identity":"node_modules/bootstrap-vue/esm/utils/identity.js","../../utils/loose-equal":"node_modules/bootstrap-vue/esm/utils/loose-equal.js","../../utils/array":"node_modules/bootstrap-vue/esm/utils/array.js","../../utils/config":"node_modules/bootstrap-vue/esm/utils/config.js","../../utils/dom":"node_modules/bootstrap-vue/esm/utils/dom.js","../../utils/inspect":"node_modules/bootstrap-vue/esm/utils/inspect.js","../../utils/string":"node_modules/bootstrap-vue/esm/utils/string.js","../../mixins/id":"node_modules/bootstrap-vue/esm/mixins/id.js","../../mixins/normalize-slot":"node_modules/bootstrap-vue/esm/mixins/normalize-slot.js","../button/button":"node_modules/bootstrap-vue/esm/components/button/button.js","../form/form-invalid-feedback":"node_modules/bootstrap-vue/esm/components/form/form-invalid-feedback.js","../form/form-text":"node_modules/bootstrap-vue/esm/components/form/form-text.js","./form-tag":"node_modules/bootstrap-vue/esm/components/form-tags/form-tag.js"}],"node_modules/bootstrap-vue/esm/components/form-tags/index.js":[function(require,module,exports) {
+},{"../../utils/vue":"node_modules/bootstrap-vue/esm/utils/vue.js","../../utils/key-codes":"node_modules/bootstrap-vue/esm/utils/key-codes.js","../../utils/css-escape":"node_modules/bootstrap-vue/esm/utils/css-escape.js","../../utils/identity":"node_modules/bootstrap-vue/esm/utils/identity.js","../../utils/loose-equal":"node_modules/bootstrap-vue/esm/utils/loose-equal.js","../../utils/array":"node_modules/bootstrap-vue/esm/utils/array.js","../../utils/config":"node_modules/bootstrap-vue/esm/utils/config.js","../../utils/dom":"node_modules/bootstrap-vue/esm/utils/dom.js","../../utils/inspect":"node_modules/bootstrap-vue/esm/utils/inspect.js","../../utils/string":"node_modules/bootstrap-vue/esm/utils/string.js","../../mixins/id":"node_modules/bootstrap-vue/esm/mixins/id.js","../../mixins/normalize-slot":"node_modules/bootstrap-vue/esm/mixins/normalize-slot.js","../button/button":"node_modules/bootstrap-vue/esm/components/button/button.js","../form/form-invalid-feedback":"node_modules/bootstrap-vue/esm/components/form/form-invalid-feedback.js","../form/form-text":"node_modules/bootstrap-vue/esm/components/form/form-text.js","./form-tag":"node_modules/bootstrap-vue/esm/components/form-tags/form-tag.js"}],"node_modules/bootstrap-vue/esm/components/form-tags/index.js":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -78021,7 +79292,7 @@ function _setPrototypeOf(o, p) {
 function _createSuper(Derived) {
   var hasNativeReflectConstruct = _isNativeReflectConstruct();
 
-  return function () {
+  return function _createSuperInternal() {
     var Super = _getPrototypeOf(Derived),
         result;
 
@@ -86296,8 +87567,10 @@ var _default2 = {
       }
     },
     // Watch for changes on `computedItems` and update the `v-model`
-    computedItems: function computedItems(newVal) {
-      this.$emit('input', newVal);
+    computedItems: function computedItems(newVal, oldVal) {
+      if (!(0, _looseEqual.default)(newVal, oldVal)) {
+        this.$emit('input', newVal);
+      }
     },
     // Watch for context changes
     context: function context(newVal, oldVal) {
@@ -95041,8 +96314,8 @@ var _icons = require("./icons");
 
 // --- BEGIN AUTO-GENERATED FILE ---
 //
-// @IconsVersion: 1.0.0-alpha4
-// @Generated: 2020-05-22T20:50:38.778Z
+// @IconsVersion: 1.0.0-alpha5
+// @Generated: 2020-07-28T21:51:51.502Z
 //
 // This file is generated on each build. Do not edit this file!
 // Icon helper component
@@ -95050,7 +96323,7 @@ var _icons = require("./icons");
 // Icon component names for used in the docs
 var iconNames = [// BootstrapVue custom icon component names
 'BIconBlank', // Bootstrap icon component names
-'BIconAlarm', 'BIconAlarmFill', 'BIconAlt', 'BIconApp', 'BIconAppIndicator', 'BIconArchive', 'BIconArchiveFill', 'BIconArrow90degDown', 'BIconArrow90degLeft', 'BIconArrow90degRight', 'BIconArrow90degUp', 'BIconArrowBarDown', 'BIconArrowBarLeft', 'BIconArrowBarRight', 'BIconArrowBarUp', 'BIconArrowClockwise', 'BIconArrowCounterclockwise', 'BIconArrowDown', 'BIconArrowDownCircle', 'BIconArrowDownCircleFill', 'BIconArrowDownLeft', 'BIconArrowDownLeftCircle', 'BIconArrowDownLeftCircleFill', 'BIconArrowDownLeftSquare', 'BIconArrowDownLeftSquareFill', 'BIconArrowDownRight', 'BIconArrowDownRightCircle', 'BIconArrowDownRightCircleFill', 'BIconArrowDownRightSquare', 'BIconArrowDownRightSquareFill', 'BIconArrowDownShort', 'BIconArrowDownSquare', 'BIconArrowDownSquareFill', 'BIconArrowDownUp', 'BIconArrowLeft', 'BIconArrowLeftCircle', 'BIconArrowLeftCircleFill', 'BIconArrowLeftRight', 'BIconArrowLeftShort', 'BIconArrowLeftSquare', 'BIconArrowLeftSquareFill', 'BIconArrowRepeat', 'BIconArrowReturnLeft', 'BIconArrowReturnRight', 'BIconArrowRight', 'BIconArrowRightCircle', 'BIconArrowRightCircleFill', 'BIconArrowRightShort', 'BIconArrowRightSquare', 'BIconArrowRightSquareFill', 'BIconArrowUp', 'BIconArrowUpCircle', 'BIconArrowUpCircleFill', 'BIconArrowUpLeft', 'BIconArrowUpLeftCircle', 'BIconArrowUpLeftCircleFill', 'BIconArrowUpLeftSquare', 'BIconArrowUpLeftSquareFill', 'BIconArrowUpRight', 'BIconArrowUpRightCircle', 'BIconArrowUpRightCircleFill', 'BIconArrowUpRightSquare', 'BIconArrowUpRightSquareFill', 'BIconArrowUpShort', 'BIconArrowUpSquare', 'BIconArrowUpSquareFill', 'BIconArrowsAngleContract', 'BIconArrowsAngleExpand', 'BIconArrowsCollapse', 'BIconArrowsExpand', 'BIconArrowsFullscreen', 'BIconArrowsMove', 'BIconAspectRatio', 'BIconAspectRatioFill', 'BIconAsterisk', 'BIconAt', 'BIconAward', 'BIconAwardFill', 'BIconBackspace', 'BIconBackspaceFill', 'BIconBackspaceReverse', 'BIconBackspaceReverseFill', 'BIconBag', 'BIconBagCheck', 'BIconBagDash', 'BIconBagFill', 'BIconBagPlus', 'BIconBarChart', 'BIconBarChartFill', 'BIconBasket', 'BIconBasket2', 'BIconBasket2Fill', 'BIconBasket3', 'BIconBasket3Fill', 'BIconBasketFill', 'BIconBattery', 'BIconBatteryCharging', 'BIconBatteryFull', 'BIconBatteryHalf', 'BIconBell', 'BIconBellFill', 'BIconBlockquoteLeft', 'BIconBlockquoteRight', 'BIconBook', 'BIconBookHalf', 'BIconBookmark', 'BIconBookmarkCheck', 'BIconBookmarkDash', 'BIconBookmarkFill', 'BIconBookmarkPlus', 'BIconBookmarks', 'BIconBookmarksFill', 'BIconBootstrap', 'BIconBootstrapFill', 'BIconBootstrapReboot', 'BIconBoundingBox', 'BIconBoundingBoxCircles', 'BIconBox', 'BIconBoxArrowDown', 'BIconBoxArrowDownLeft', 'BIconBoxArrowDownRight', 'BIconBoxArrowInDown', 'BIconBoxArrowInDownLeft', 'BIconBoxArrowInDownRight', 'BIconBoxArrowInLeft', 'BIconBoxArrowInRight', 'BIconBoxArrowInUp', 'BIconBoxArrowInUpLeft', 'BIconBoxArrowInUpRight', 'BIconBoxArrowLeft', 'BIconBoxArrowRight', 'BIconBoxArrowUp', 'BIconBoxArrowUpLeft', 'BIconBoxArrowUpRight', 'BIconBoxSeam', 'BIconBraces', 'BIconBriefcase', 'BIconBriefcaseFill', 'BIconBrightnessAltHigh', 'BIconBrightnessAltHighFill', 'BIconBrightnessAltLow', 'BIconBrightnessAltLowFill', 'BIconBrightnessHigh', 'BIconBrightnessHighFill', 'BIconBrightnessLow', 'BIconBrightnessLowFill', 'BIconBrush', 'BIconBucket', 'BIconBucketFill', 'BIconBuilding', 'BIconBullseye', 'BIconCalendar', 'BIconCalendar2', 'BIconCalendar2Check', 'BIconCalendar2CheckFill', 'BIconCalendar2Date', 'BIconCalendar2DateFill', 'BIconCalendar2Day', 'BIconCalendar2DayFill', 'BIconCalendar2Fill', 'BIconCalendar2Minus', 'BIconCalendar2MinusFill', 'BIconCalendar2Month', 'BIconCalendar2MonthFill', 'BIconCalendar2Plus', 'BIconCalendar2PlusFill', 'BIconCalendar3', 'BIconCalendar3Fill', 'BIconCalendar4', 'BIconCalendarCheck', 'BIconCalendarCheckFill', 'BIconCalendarDate', 'BIconCalendarDateFill', 'BIconCalendarDay', 'BIconCalendarDayFill', 'BIconCalendarFill', 'BIconCalendarMinus', 'BIconCalendarMinusFill', 'BIconCalendarMonth', 'BIconCalendarMonthFill', 'BIconCalendarPlus', 'BIconCalendarPlusFill', 'BIconCamera', 'BIconCameraVideo', 'BIconCameraVideoFill', 'BIconCameraVideoOff', 'BIconCameraVideoOffFill', 'BIconCapslock', 'BIconCapslockFill', 'BIconCardChecklist', 'BIconCardHeading', 'BIconCardImage', 'BIconCardList', 'BIconCardText', 'BIconCaretDown', 'BIconCaretDownFill', 'BIconCaretDownSquare', 'BIconCaretDownSquareFill', 'BIconCaretLeft', 'BIconCaretLeftFill', 'BIconCaretLeftSquare', 'BIconCaretLeftSquareFill', 'BIconCaretRight', 'BIconCaretRightFill', 'BIconCaretRightSquare', 'BIconCaretRightSquareFill', 'BIconCaretUp', 'BIconCaretUpFill', 'BIconCaretUpSquare', 'BIconCaretUpSquareFill', 'BIconCart', 'BIconCart2', 'BIconCart3', 'BIconCart4', 'BIconCartCheck', 'BIconCartDash', 'BIconCartFill', 'BIconCartPlus', 'BIconChat', 'BIconChatDots', 'BIconChatDotsFill', 'BIconChatFill', 'BIconChatQuote', 'BIconChatQuoteFill', 'BIconChatSquare', 'BIconChatSquareDots', 'BIconChatSquareDotsFill', 'BIconChatSquareFill', 'BIconChatSquareQuote', 'BIconChatSquareQuoteFill', 'BIconCheck', 'BIconCheck2', 'BIconCheck2All', 'BIconCheck2Circle', 'BIconCheck2Square', 'BIconCheckAll', 'BIconCheckCircle', 'BIconCheckCircleFill', 'BIconCheckSquare', 'BIconCheckSquareFill', 'BIconChevronBarContract', 'BIconChevronBarDown', 'BIconChevronBarExpand', 'BIconChevronBarLeft', 'BIconChevronBarRight', 'BIconChevronBarUp', 'BIconChevronCompactDown', 'BIconChevronCompactLeft', 'BIconChevronCompactRight', 'BIconChevronCompactUp', 'BIconChevronContract', 'BIconChevronDoubleDown', 'BIconChevronDoubleLeft', 'BIconChevronDoubleRight', 'BIconChevronDoubleUp', 'BIconChevronDown', 'BIconChevronExpand', 'BIconChevronLeft', 'BIconChevronRight', 'BIconChevronUp', 'BIconCircle', 'BIconCircleFill', 'BIconCircleHalf', 'BIconCircleSquare', 'BIconClipboard', 'BIconClipboardData', 'BIconClock', 'BIconClockFill', 'BIconClockHistory', 'BIconCloud', 'BIconCloudDownload', 'BIconCloudFill', 'BIconCloudSlash', 'BIconCloudSlashFill', 'BIconCloudUpload', 'BIconCode', 'BIconCodeSlash', 'BIconCollection', 'BIconCollectionFill', 'BIconCollectionPlay', 'BIconCollectionPlayFill', 'BIconColumns', 'BIconColumnsGap', 'BIconCommand', 'BIconCompass', 'BIconCone', 'BIconConeStriped', 'BIconController', 'BIconCreditCard', 'BIconCrop', 'BIconCup', 'BIconCursor', 'BIconCursorFill', 'BIconCursorText', 'BIconDash', 'BIconDashCircle', 'BIconDashCircleFill', 'BIconDashSquare', 'BIconDashSquareFill', 'BIconDiamond', 'BIconDiamondFill', 'BIconDiamondHalf', 'BIconDisplay', 'BIconDisplayFill', 'BIconDoorClosed', 'BIconDoorClosedFill', 'BIconDot', 'BIconDownload', 'BIconDroplet', 'BIconDropletFill', 'BIconDropletHalf', 'BIconEgg', 'BIconEggFill', 'BIconEggFried', 'BIconEject', 'BIconEjectFill', 'BIconEmojiAngry', 'BIconEmojiDizzy', 'BIconEmojiFrown', 'BIconEmojiLaughing', 'BIconEmojiNeutral', 'BIconEmojiSmile', 'BIconEmojiSmileUpsideDown', 'BIconEmojiSunglasses', 'BIconEnvelope', 'BIconEnvelopeFill', 'BIconEnvelopeOpen', 'BIconEnvelopeOpenFill', 'BIconExclamation', 'BIconExclamationCircle', 'BIconExclamationCircleFill', 'BIconExclamationDiamond', 'BIconExclamationDiamondFill', 'BIconExclamationOctagon', 'BIconExclamationOctagonFill', 'BIconExclamationSquare', 'BIconExclamationSquareFill', 'BIconExclamationTriangle', 'BIconExclamationTriangleFill', 'BIconExclude', 'BIconEye', 'BIconEyeFill', 'BIconEyeSlash', 'BIconEyeSlashFill', 'BIconFile', 'BIconFileArrowDown', 'BIconFileArrowUp', 'BIconFileBreak', 'BIconFileCheck', 'BIconFileCode', 'BIconFileDiff', 'BIconFileEarmark', 'BIconFileEarmarkArrowDown', 'BIconFileEarmarkArrowUp', 'BIconFileEarmarkBreak', 'BIconFileEarmarkCheck', 'BIconFileEarmarkCode', 'BIconFileEarmarkDiff', 'BIconFileEarmarkMinus', 'BIconFileEarmarkPlus', 'BIconFileEarmarkRuled', 'BIconFileEarmarkSpreadsheet', 'BIconFileEarmarkText', 'BIconFileEarmarkZip', 'BIconFileMinus', 'BIconFilePlus', 'BIconFilePost', 'BIconFileRichtext', 'BIconFileRuled', 'BIconFileSpreadsheet', 'BIconFileText', 'BIconFileZip', 'BIconFiles', 'BIconFilesAlt', 'BIconFilm', 'BIconFilter', 'BIconFilterLeft', 'BIconFilterRight', 'BIconFlag', 'BIconFlagFill', 'BIconFolder', 'BIconFolderCheck', 'BIconFolderFill', 'BIconFolderMinus', 'BIconFolderPlus', 'BIconFolderSymlink', 'BIconFolderSymlinkFill', 'BIconFonts', 'BIconForward', 'BIconForwardFill', 'BIconFullscreen', 'BIconFullscreenExit', 'BIconFunnel', 'BIconFunnelFill', 'BIconGear', 'BIconGearFill', 'BIconGearWide', 'BIconGearWideConnected', 'BIconGem', 'BIconGeo', 'BIconGeoAlt', 'BIconGift', 'BIconGiftFill', 'BIconGraphDown', 'BIconGraphUp', 'BIconGrid', 'BIconGrid1x2', 'BIconGrid1x2Fill', 'BIconGrid3x2', 'BIconGrid3x2Gap', 'BIconGrid3x2GapFill', 'BIconGrid3x3', 'BIconGrid3x3Gap', 'BIconGrid3x3GapFill', 'BIconGridFill', 'BIconGripHorizontal', 'BIconGripVertical', 'BIconHammer', 'BIconHandIndex', 'BIconHandIndexThumb', 'BIconHandThumbsDown', 'BIconHandThumbsUp', 'BIconHandbag', 'BIconHandbagFill', 'BIconHash', 'BIconHeadphones', 'BIconHeart', 'BIconHeartFill', 'BIconHeartHalf', 'BIconHexagon', 'BIconHexagonFill', 'BIconHexagonHalf', 'BIconHouse', 'BIconHouseDoor', 'BIconHouseDoorFill', 'BIconHouseFill', 'BIconHr', 'BIconImage', 'BIconImageAlt', 'BIconImageFill', 'BIconImages', 'BIconInbox', 'BIconInboxFill', 'BIconInboxes', 'BIconInboxesFill', 'BIconInfo', 'BIconInfoCircle', 'BIconInfoCircleFill', 'BIconInfoSquare', 'BIconInfoSquareFill', 'BIconIntersect', 'BIconJustify', 'BIconJustifyLeft', 'BIconJustifyRight', 'BIconKanban', 'BIconKanbanFill', 'BIconLaptop', 'BIconLayers', 'BIconLayersFill', 'BIconLayersHalf', 'BIconLayoutSidebar', 'BIconLayoutSidebarInset', 'BIconLayoutSidebarInsetReverse', 'BIconLayoutSidebarReverse', 'BIconLayoutSplit', 'BIconLayoutTextSidebar', 'BIconLayoutTextSidebarReverse', 'BIconLayoutTextWindow', 'BIconLayoutTextWindowReverse', 'BIconLayoutThreeColumns', 'BIconLayoutWtf', 'BIconLifePreserver', 'BIconLightning', 'BIconLightningFill', 'BIconLink', 'BIconLink45deg', 'BIconList', 'BIconListCheck', 'BIconListNested', 'BIconListOl', 'BIconListTask', 'BIconListUl', 'BIconLock', 'BIconLockFill', 'BIconMap', 'BIconMic', 'BIconMicFill', 'BIconMicMute', 'BIconMicMuteFill', 'BIconMinecart', 'BIconMinecartLoaded', 'BIconMoon', 'BIconMusicNote', 'BIconMusicNoteBeamed', 'BIconMusicNoteList', 'BIconMusicPlayer', 'BIconMusicPlayerFill', 'BIconNewspaper', 'BIconOctagon', 'BIconOctagonFill', 'BIconOctagonHalf', 'BIconOption', 'BIconOutlet', 'BIconPaperclip', 'BIconPause', 'BIconPauseFill', 'BIconPen', 'BIconPencil', 'BIconPencilSquare', 'BIconPentagon', 'BIconPentagonFill', 'BIconPentagonHalf', 'BIconPeople', 'BIconPeopleFill', 'BIconPerson', 'BIconPersonBoundingBox', 'BIconPersonCheck', 'BIconPersonCheckFill', 'BIconPersonCircle', 'BIconPersonDash', 'BIconPersonDashFill', 'BIconPersonFill', 'BIconPersonLinesFill', 'BIconPersonPlus', 'BIconPersonPlusFill', 'BIconPersonSquare', 'BIconPhone', 'BIconPhoneLandscape', 'BIconPieChart', 'BIconPieChartFill', 'BIconPip', 'BIconPipFill', 'BIconPlay', 'BIconPlayFill', 'BIconPlug', 'BIconPlus', 'BIconPlusCircle', 'BIconPlusCircleFill', 'BIconPlusSquare', 'BIconPlusSquareFill', 'BIconPower', 'BIconPuzzle', 'BIconPuzzleFill', 'BIconQuestion', 'BIconQuestionCircle', 'BIconQuestionCircleFill', 'BIconQuestionDiamond', 'BIconQuestionDiamondFill', 'BIconQuestionOctagon', 'BIconQuestionOctagonFill', 'BIconQuestionSquare', 'BIconQuestionSquareFill', 'BIconReceipt', 'BIconReceiptCutoff', 'BIconReply', 'BIconReplyAll', 'BIconReplyAllFill', 'BIconReplyFill', 'BIconScrewdriver', 'BIconSearch', 'BIconServer', 'BIconShield', 'BIconShieldFill', 'BIconShieldLock', 'BIconShieldLockFill', 'BIconShieldShaded', 'BIconShieldSlash', 'BIconShieldSlashFill', 'BIconShift', 'BIconShiftFill', 'BIconShop', 'BIconShopWindow', 'BIconShuffle', 'BIconSkipBackward', 'BIconSkipBackwardFill', 'BIconSkipEnd', 'BIconSkipEndFill', 'BIconSkipForward', 'BIconSkipForwardFill', 'BIconSkipStart', 'BIconSkipStartFill', 'BIconSlash', 'BIconSlashCircle', 'BIconSlashCircleFill', 'BIconSlashSquare', 'BIconSlashSquareFill', 'BIconSliders', 'BIconSoundwave', 'BIconSpeaker', 'BIconSquare', 'BIconSquareFill', 'BIconSquareHalf', 'BIconStar', 'BIconStarFill', 'BIconStarHalf', 'BIconStop', 'BIconStopFill', 'BIconStopwatch', 'BIconStopwatchFill', 'BIconSubtract', 'BIconSun', 'BIconTable', 'BIconTablet', 'BIconTabletLandscape', 'BIconTag', 'BIconTagFill', 'BIconTerminal', 'BIconTerminalFill', 'BIconTextCenter', 'BIconTextIndentLeft', 'BIconTextIndentRight', 'BIconTextLeft', 'BIconTextRight', 'BIconTextarea', 'BIconTextareaT', 'BIconThreeDots', 'BIconThreeDotsVertical', 'BIconToggleOff', 'BIconToggleOn', 'BIconToggles', 'BIconTools', 'BIconTrash', 'BIconTrash2', 'BIconTrash2Fill', 'BIconTrashFill', 'BIconTriangle', 'BIconTriangleFill', 'BIconTriangleHalf', 'BIconTrophy', 'BIconTruck', 'BIconTruckFlatbed', 'BIconTv', 'BIconTvFill', 'BIconType', 'BIconTypeBold', 'BIconTypeH1', 'BIconTypeH2', 'BIconTypeH3', 'BIconTypeItalic', 'BIconTypeStrikethrough', 'BIconTypeUnderline', 'BIconUnion', 'BIconUnlock', 'BIconUnlockFill', 'BIconUpc', 'BIconUpcScan', 'BIconUpload', 'BIconViewList', 'BIconViewStacked', 'BIconVolumeDown', 'BIconVolumeDownFill', 'BIconVolumeMute', 'BIconVolumeMuteFill', 'BIconVolumeOff', 'BIconVolumeOffFill', 'BIconVolumeUp', 'BIconVolumeUpFill', 'BIconVr', 'BIconWallet', 'BIconWallet2', 'BIconWatch', 'BIconWifi', 'BIconWindow', 'BIconWrench', 'BIconX', 'BIconXCircle', 'BIconXCircleFill', 'BIconXDiamond', 'BIconXDiamondFill', 'BIconXOctagon', 'BIconXOctagonFill', 'BIconXSquare', 'BIconXSquareFill']; // Export the icons plugin
+'BIconAlarm', 'BIconAlarmFill', 'BIconAlignBottom', 'BIconAlignCenter', 'BIconAlignEnd', 'BIconAlignMiddle', 'BIconAlignStart', 'BIconAlignTop', 'BIconAlt', 'BIconApp', 'BIconAppIndicator', 'BIconArchive', 'BIconArchiveFill', 'BIconArrow90degDown', 'BIconArrow90degLeft', 'BIconArrow90degRight', 'BIconArrow90degUp', 'BIconArrowBarDown', 'BIconArrowBarLeft', 'BIconArrowBarRight', 'BIconArrowBarUp', 'BIconArrowClockwise', 'BIconArrowCounterclockwise', 'BIconArrowDown', 'BIconArrowDownCircle', 'BIconArrowDownCircleFill', 'BIconArrowDownLeft', 'BIconArrowDownLeftCircle', 'BIconArrowDownLeftCircleFill', 'BIconArrowDownLeftSquare', 'BIconArrowDownLeftSquareFill', 'BIconArrowDownRight', 'BIconArrowDownRightCircle', 'BIconArrowDownRightCircleFill', 'BIconArrowDownRightSquare', 'BIconArrowDownRightSquareFill', 'BIconArrowDownShort', 'BIconArrowDownSquare', 'BIconArrowDownSquareFill', 'BIconArrowDownUp', 'BIconArrowLeft', 'BIconArrowLeftCircle', 'BIconArrowLeftCircleFill', 'BIconArrowLeftRight', 'BIconArrowLeftShort', 'BIconArrowLeftSquare', 'BIconArrowLeftSquareFill', 'BIconArrowRepeat', 'BIconArrowReturnLeft', 'BIconArrowReturnRight', 'BIconArrowRight', 'BIconArrowRightCircle', 'BIconArrowRightCircleFill', 'BIconArrowRightShort', 'BIconArrowRightSquare', 'BIconArrowRightSquareFill', 'BIconArrowUp', 'BIconArrowUpCircle', 'BIconArrowUpCircleFill', 'BIconArrowUpLeft', 'BIconArrowUpLeftCircle', 'BIconArrowUpLeftCircleFill', 'BIconArrowUpLeftSquare', 'BIconArrowUpLeftSquareFill', 'BIconArrowUpRight', 'BIconArrowUpRightCircle', 'BIconArrowUpRightCircleFill', 'BIconArrowUpRightSquare', 'BIconArrowUpRightSquareFill', 'BIconArrowUpShort', 'BIconArrowUpSquare', 'BIconArrowUpSquareFill', 'BIconArrowsAngleContract', 'BIconArrowsAngleExpand', 'BIconArrowsCollapse', 'BIconArrowsExpand', 'BIconArrowsFullscreen', 'BIconArrowsMove', 'BIconAspectRatio', 'BIconAspectRatioFill', 'BIconAsterisk', 'BIconAt', 'BIconAward', 'BIconAwardFill', 'BIconBack', 'BIconBackspace', 'BIconBackspaceFill', 'BIconBackspaceReverse', 'BIconBackspaceReverseFill', 'BIconBadge4k', 'BIconBadge4kFill', 'BIconBadge8k', 'BIconBadge8kFill', 'BIconBadgeCc', 'BIconBadgeCcFill', 'BIconBadgeHd', 'BIconBadgeHdFill', 'BIconBadgeTm', 'BIconBadgeTmFill', 'BIconBadgeVo', 'BIconBadgeVoFill', 'BIconBag', 'BIconBagCheck', 'BIconBagDash', 'BIconBagFill', 'BIconBagPlus', 'BIconBarChart', 'BIconBarChartFill', 'BIconBarChartLine', 'BIconBarChartLineFill', 'BIconBarChartSteps', 'BIconBasket', 'BIconBasket2', 'BIconBasket2Fill', 'BIconBasket3', 'BIconBasket3Fill', 'BIconBasketFill', 'BIconBattery', 'BIconBatteryCharging', 'BIconBatteryFull', 'BIconBatteryHalf', 'BIconBell', 'BIconBellFill', 'BIconBezier', 'BIconBezier2', 'BIconBicycle', 'BIconBinoculars', 'BIconBinocularsFill', 'BIconBlockquoteLeft', 'BIconBlockquoteRight', 'BIconBook', 'BIconBookFill', 'BIconBookHalf', 'BIconBookmark', 'BIconBookmarkCheck', 'BIconBookmarkDash', 'BIconBookmarkFill', 'BIconBookmarkPlus', 'BIconBookmarks', 'BIconBookmarksFill', 'BIconBookshelf', 'BIconBootstrap', 'BIconBootstrapFill', 'BIconBootstrapReboot', 'BIconBorderStyle', 'BIconBorderWidth', 'BIconBoundingBox', 'BIconBoundingBoxCircles', 'BIconBox', 'BIconBoxArrowDown', 'BIconBoxArrowDownLeft', 'BIconBoxArrowDownRight', 'BIconBoxArrowInDown', 'BIconBoxArrowInDownLeft', 'BIconBoxArrowInDownRight', 'BIconBoxArrowInLeft', 'BIconBoxArrowInRight', 'BIconBoxArrowInUp', 'BIconBoxArrowInUpLeft', 'BIconBoxArrowInUpRight', 'BIconBoxArrowLeft', 'BIconBoxArrowRight', 'BIconBoxArrowUp', 'BIconBoxArrowUpLeft', 'BIconBoxArrowUpRight', 'BIconBoxSeam', 'BIconBraces', 'BIconBricks', 'BIconBriefcase', 'BIconBriefcaseFill', 'BIconBrightnessAltHigh', 'BIconBrightnessAltHighFill', 'BIconBrightnessAltLow', 'BIconBrightnessAltLowFill', 'BIconBrightnessHigh', 'BIconBrightnessHighFill', 'BIconBrightnessLow', 'BIconBrightnessLowFill', 'BIconBroadcast', 'BIconBroadcastPin', 'BIconBrush', 'BIconBucket', 'BIconBucketFill', 'BIconBug', 'BIconBugFill', 'BIconBuilding', 'BIconBullseye', 'BIconCalculator', 'BIconCalculatorFill', 'BIconCalendar', 'BIconCalendar2', 'BIconCalendar2Check', 'BIconCalendar2CheckFill', 'BIconCalendar2Date', 'BIconCalendar2DateFill', 'BIconCalendar2Day', 'BIconCalendar2DayFill', 'BIconCalendar2Event', 'BIconCalendar2EventFill', 'BIconCalendar2Fill', 'BIconCalendar2Minus', 'BIconCalendar2MinusFill', 'BIconCalendar2Month', 'BIconCalendar2MonthFill', 'BIconCalendar2Plus', 'BIconCalendar2PlusFill', 'BIconCalendar2Range', 'BIconCalendar2RangeFill', 'BIconCalendar2Week', 'BIconCalendar2WeekFill', 'BIconCalendar3', 'BIconCalendar3Event', 'BIconCalendar3EventFill', 'BIconCalendar3Fill', 'BIconCalendar3Range', 'BIconCalendar3RangeFill', 'BIconCalendar3Week', 'BIconCalendar3WeekFill', 'BIconCalendar4', 'BIconCalendar4Event', 'BIconCalendar4Range', 'BIconCalendar4Week', 'BIconCalendarCheck', 'BIconCalendarCheckFill', 'BIconCalendarDate', 'BIconCalendarDateFill', 'BIconCalendarDay', 'BIconCalendarDayFill', 'BIconCalendarEvent', 'BIconCalendarEventFill', 'BIconCalendarFill', 'BIconCalendarMinus', 'BIconCalendarMinusFill', 'BIconCalendarMonth', 'BIconCalendarMonthFill', 'BIconCalendarPlus', 'BIconCalendarPlusFill', 'BIconCalendarRange', 'BIconCalendarRangeFill', 'BIconCalendarWeek', 'BIconCalendarWeekFill', 'BIconCamera', 'BIconCamera2', 'BIconCameraFill', 'BIconCameraReels', 'BIconCameraReelsFill', 'BIconCameraVideo', 'BIconCameraVideoFill', 'BIconCameraVideoOff', 'BIconCameraVideoOffFill', 'BIconCapslock', 'BIconCapslockFill', 'BIconCardChecklist', 'BIconCardHeading', 'BIconCardImage', 'BIconCardList', 'BIconCardText', 'BIconCaretDown', 'BIconCaretDownFill', 'BIconCaretDownSquare', 'BIconCaretDownSquareFill', 'BIconCaretLeft', 'BIconCaretLeftFill', 'BIconCaretLeftSquare', 'BIconCaretLeftSquareFill', 'BIconCaretRight', 'BIconCaretRightFill', 'BIconCaretRightSquare', 'BIconCaretRightSquareFill', 'BIconCaretUp', 'BIconCaretUpFill', 'BIconCaretUpSquare', 'BIconCaretUpSquareFill', 'BIconCart', 'BIconCart2', 'BIconCart3', 'BIconCart4', 'BIconCartCheck', 'BIconCartDash', 'BIconCartFill', 'BIconCartPlus', 'BIconCash', 'BIconCashStack', 'BIconCast', 'BIconChat', 'BIconChatDots', 'BIconChatDotsFill', 'BIconChatFill', 'BIconChatLeft', 'BIconChatLeftDots', 'BIconChatLeftDotsFill', 'BIconChatLeftFill', 'BIconChatLeftQuote', 'BIconChatLeftQuoteFill', 'BIconChatLeftText', 'BIconChatLeftTextFill', 'BIconChatQuote', 'BIconChatQuoteFill', 'BIconChatRight', 'BIconChatRightDots', 'BIconChatRightDotsFill', 'BIconChatRightFill', 'BIconChatRightQuote', 'BIconChatRightQuoteFill', 'BIconChatRightText', 'BIconChatRightTextFill', 'BIconChatSquare', 'BIconChatSquareDots', 'BIconChatSquareDotsFill', 'BIconChatSquareFill', 'BIconChatSquareQuote', 'BIconChatSquareQuoteFill', 'BIconChatSquareText', 'BIconChatSquareTextFill', 'BIconChatText', 'BIconChatTextFill', 'BIconCheck', 'BIconCheck2', 'BIconCheck2All', 'BIconCheck2Circle', 'BIconCheck2Square', 'BIconCheckAll', 'BIconCheckCircle', 'BIconCheckCircleFill', 'BIconCheckSquare', 'BIconCheckSquareFill', 'BIconChevronBarContract', 'BIconChevronBarDown', 'BIconChevronBarExpand', 'BIconChevronBarLeft', 'BIconChevronBarRight', 'BIconChevronBarUp', 'BIconChevronCompactDown', 'BIconChevronCompactLeft', 'BIconChevronCompactRight', 'BIconChevronCompactUp', 'BIconChevronContract', 'BIconChevronDoubleDown', 'BIconChevronDoubleLeft', 'BIconChevronDoubleRight', 'BIconChevronDoubleUp', 'BIconChevronDown', 'BIconChevronExpand', 'BIconChevronLeft', 'BIconChevronRight', 'BIconChevronUp', 'BIconCircle', 'BIconCircleFill', 'BIconCircleHalf', 'BIconCircleSquare', 'BIconClipboard', 'BIconClipboardCheck', 'BIconClipboardData', 'BIconClipboardMinus', 'BIconClipboardPlus', 'BIconClock', 'BIconClockFill', 'BIconClockHistory', 'BIconCloud', 'BIconCloudArrowDown', 'BIconCloudArrowDownFill', 'BIconCloudArrowUp', 'BIconCloudArrowUpFill', 'BIconCloudCheck', 'BIconCloudCheckFill', 'BIconCloudDownload', 'BIconCloudDownloadFill', 'BIconCloudFill', 'BIconCloudMinus', 'BIconCloudMinusFill', 'BIconCloudPlus', 'BIconCloudPlusFill', 'BIconCloudSlash', 'BIconCloudSlashFill', 'BIconCloudUpload', 'BIconCloudUploadFill', 'BIconCode', 'BIconCodeSlash', 'BIconCodeSquare', 'BIconCollection', 'BIconCollectionFill', 'BIconCollectionPlay', 'BIconCollectionPlayFill', 'BIconColumns', 'BIconColumnsGap', 'BIconCommand', 'BIconCompass', 'BIconCone', 'BIconConeStriped', 'BIconController', 'BIconCpu', 'BIconCpuFill', 'BIconCreditCard', 'BIconCreditCard2Back', 'BIconCreditCard2BackFill', 'BIconCreditCard2Front', 'BIconCreditCard2FrontFill', 'BIconCreditCardFill', 'BIconCrop', 'BIconCup', 'BIconCupStraw', 'BIconCursor', 'BIconCursorFill', 'BIconCursorText', 'BIconDash', 'BIconDashCircle', 'BIconDashCircleFill', 'BIconDashSquare', 'BIconDashSquareFill', 'BIconDiagram2', 'BIconDiagram2Fill', 'BIconDiagram3', 'BIconDiagram3Fill', 'BIconDiamond', 'BIconDiamondFill', 'BIconDiamondHalf', 'BIconDice1', 'BIconDice1Fill', 'BIconDice2', 'BIconDice2Fill', 'BIconDice3', 'BIconDice3Fill', 'BIconDice4', 'BIconDice4Fill', 'BIconDice5', 'BIconDice5Fill', 'BIconDice6', 'BIconDice6Fill', 'BIconDisplay', 'BIconDisplayFill', 'BIconDistributeHorizontal', 'BIconDistributeVertical', 'BIconDoorClosed', 'BIconDoorClosedFill', 'BIconDoorOpen', 'BIconDoorOpenFill', 'BIconDot', 'BIconDownload', 'BIconDroplet', 'BIconDropletFill', 'BIconDropletHalf', 'BIconEarbuds', 'BIconEasel', 'BIconEaselFill', 'BIconEgg', 'BIconEggFill', 'BIconEggFried', 'BIconEject', 'BIconEjectFill', 'BIconEmojiAngry', 'BIconEmojiDizzy', 'BIconEmojiExpressionless', 'BIconEmojiFrown', 'BIconEmojiLaughing', 'BIconEmojiNeutral', 'BIconEmojiSmile', 'BIconEmojiSmileUpsideDown', 'BIconEmojiSunglasses', 'BIconEnvelope', 'BIconEnvelopeFill', 'BIconEnvelopeOpen', 'BIconEnvelopeOpenFill', 'BIconExclamation', 'BIconExclamationCircle', 'BIconExclamationCircleFill', 'BIconExclamationDiamond', 'BIconExclamationDiamondFill', 'BIconExclamationOctagon', 'BIconExclamationOctagonFill', 'BIconExclamationSquare', 'BIconExclamationSquareFill', 'BIconExclamationTriangle', 'BIconExclamationTriangleFill', 'BIconExclude', 'BIconEye', 'BIconEyeFill', 'BIconEyeSlash', 'BIconEyeSlashFill', 'BIconEyeglasses', 'BIconFile', 'BIconFileArrowDown', 'BIconFileArrowDownFill', 'BIconFileArrowUp', 'BIconFileArrowUpFill', 'BIconFileBinary', 'BIconFileBinaryFill', 'BIconFileBreak', 'BIconFileBreakFill', 'BIconFileCheck', 'BIconFileCheckFill', 'BIconFileCode', 'BIconFileCodeFill', 'BIconFileDiff', 'BIconFileDiffFill', 'BIconFileEarmark', 'BIconFileEarmarkArrowDown', 'BIconFileEarmarkArrowUp', 'BIconFileEarmarkArrowUpFill', 'BIconFileEarmarkBinary', 'BIconFileEarmarkBinaryFill', 'BIconFileEarmarkBreak', 'BIconFileEarmarkBreakFill', 'BIconFileEarmarkCheck', 'BIconFileEarmarkCheckFill', 'BIconFileEarmarkCode', 'BIconFileEarmarkCodeFill', 'BIconFileEarmarkDiff', 'BIconFileEarmarkDiffFill', 'BIconFileEarmarkFill', 'BIconFileEarmarkMedical', 'BIconFileEarmarkMedicalFill', 'BIconFileEarmarkMinus', 'BIconFileEarmarkMinusFill', 'BIconFileEarmarkPlus', 'BIconFileEarmarkPlusFill', 'BIconFileEarmarkRuled', 'BIconFileEarmarkRuledFill', 'BIconFileEarmarkSpreadsheet', 'BIconFileEarmarkSpreadsheetFill', 'BIconFileEarmarkText', 'BIconFileEarmarkTextFill', 'BIconFileEarmarkZip', 'BIconFileEarmarkZipFill', 'BIconFileFill', 'BIconFileMedical', 'BIconFileMedicalFill', 'BIconFileMinus', 'BIconFileMinusFill', 'BIconFileMusic', 'BIconFileMusicFill', 'BIconFilePerson', 'BIconFilePersonFill', 'BIconFilePlus', 'BIconFilePlusFill', 'BIconFilePost', 'BIconFilePostFill', 'BIconFileRichtext', 'BIconFileRichtextFill', 'BIconFileRuled', 'BIconFileRuledFill', 'BIconFileSpreadsheet', 'BIconFileSpreadsheetFill', 'BIconFileText', 'BIconFileTextFill', 'BIconFileZip', 'BIconFileZipFill', 'BIconFiles', 'BIconFilesAlt', 'BIconFilm', 'BIconFilter', 'BIconFilterCircle', 'BIconFilterCircleFill', 'BIconFilterLeft', 'BIconFilterRight', 'BIconFilterSquare', 'BIconFilterSquareFill', 'BIconFlag', 'BIconFlagFill', 'BIconFlower1', 'BIconFlower2', 'BIconFlower3', 'BIconFolder', 'BIconFolder2', 'BIconFolder2Open', 'BIconFolderCheck', 'BIconFolderFill', 'BIconFolderMinus', 'BIconFolderPlus', 'BIconFolderSymlink', 'BIconFolderSymlinkFill', 'BIconFonts', 'BIconForward', 'BIconForwardFill', 'BIconFront', 'BIconFullscreen', 'BIconFullscreenExit', 'BIconFunnel', 'BIconFunnelFill', 'BIconGear', 'BIconGearFill', 'BIconGearWide', 'BIconGearWideConnected', 'BIconGem', 'BIconGeo', 'BIconGeoAlt', 'BIconGift', 'BIconGiftFill', 'BIconGlobe', 'BIconGlobe2', 'BIconGraphDown', 'BIconGraphUp', 'BIconGrid', 'BIconGrid1x2', 'BIconGrid1x2Fill', 'BIconGrid3x2', 'BIconGrid3x2Gap', 'BIconGrid3x2GapFill', 'BIconGrid3x3', 'BIconGrid3x3Gap', 'BIconGrid3x3GapFill', 'BIconGridFill', 'BIconGripHorizontal', 'BIconGripVertical', 'BIconHammer', 'BIconHandIndex', 'BIconHandIndexThumb', 'BIconHandThumbsDown', 'BIconHandThumbsUp', 'BIconHandbag', 'BIconHandbagFill', 'BIconHash', 'BIconHdd', 'BIconHddFill', 'BIconHddNetwork', 'BIconHddNetworkFill', 'BIconHddRack', 'BIconHddRackFill', 'BIconHddStack', 'BIconHddStackFill', 'BIconHeadphones', 'BIconHeadset', 'BIconHeart', 'BIconHeartFill', 'BIconHeartHalf', 'BIconHeptagon', 'BIconHeptagonFill', 'BIconHeptagonHalf', 'BIconHexagon', 'BIconHexagonFill', 'BIconHexagonHalf', 'BIconHourglass', 'BIconHourglassBottom', 'BIconHourglassSplit', 'BIconHourglassTop', 'BIconHouse', 'BIconHouseDoor', 'BIconHouseDoorFill', 'BIconHouseFill', 'BIconHr', 'BIconImage', 'BIconImageAlt', 'BIconImageFill', 'BIconImages', 'BIconInbox', 'BIconInboxFill', 'BIconInboxes', 'BIconInboxesFill', 'BIconInfo', 'BIconInfoCircle', 'BIconInfoCircleFill', 'BIconInfoSquare', 'BIconInfoSquareFill', 'BIconInputCursor', 'BIconInputCursorText', 'BIconIntersect', 'BIconJournal', 'BIconJournalAlbum', 'BIconJournalArrowDown', 'BIconJournalArrowUp', 'BIconJournalCheck', 'BIconJournalCode', 'BIconJournalMedical', 'BIconJournalMinus', 'BIconJournalPlus', 'BIconJournalRichtext', 'BIconJournalText', 'BIconJournals', 'BIconJoystick', 'BIconJustify', 'BIconJustifyLeft', 'BIconJustifyRight', 'BIconKanban', 'BIconKanbanFill', 'BIconKey', 'BIconKeyFill', 'BIconKeyboard', 'BIconKeyboardFill', 'BIconLadder', 'BIconLamp', 'BIconLampFill', 'BIconLaptop', 'BIconLaptopFill', 'BIconLayers', 'BIconLayersFill', 'BIconLayersHalf', 'BIconLayoutSidebar', 'BIconLayoutSidebarInset', 'BIconLayoutSidebarInsetReverse', 'BIconLayoutSidebarReverse', 'BIconLayoutSplit', 'BIconLayoutTextSidebar', 'BIconLayoutTextSidebarReverse', 'BIconLayoutTextWindow', 'BIconLayoutTextWindowReverse', 'BIconLayoutThreeColumns', 'BIconLayoutWtf', 'BIconLifePreserver', 'BIconLightning', 'BIconLightningFill', 'BIconLink', 'BIconLink45deg', 'BIconList', 'BIconListCheck', 'BIconListNested', 'BIconListOl', 'BIconListStars', 'BIconListTask', 'BIconListUl', 'BIconLock', 'BIconLockFill', 'BIconMailbox', 'BIconMailbox2', 'BIconMap', 'BIconMarkdown', 'BIconMarkdownFill', 'BIconMenuApp', 'BIconMenuAppFill', 'BIconMenuButton', 'BIconMenuButtonFill', 'BIconMenuButtonWide', 'BIconMenuButtonWideFill', 'BIconMenuDown', 'BIconMenuUp', 'BIconMic', 'BIconMicFill', 'BIconMicMute', 'BIconMicMuteFill', 'BIconMinecart', 'BIconMinecartLoaded', 'BIconMoon', 'BIconMouse', 'BIconMouse2', 'BIconMouse3', 'BIconMusicNote', 'BIconMusicNoteBeamed', 'BIconMusicNoteList', 'BIconMusicPlayer', 'BIconMusicPlayerFill', 'BIconNewspaper', 'BIconNodeMinus', 'BIconNodeMinusFill', 'BIconNodePlus', 'BIconNodePlusFill', 'BIconNut', 'BIconNutFill', 'BIconOctagon', 'BIconOctagonFill', 'BIconOctagonHalf', 'BIconOption', 'BIconOutlet', 'BIconPaperclip', 'BIconParagraph', 'BIconPatchCheck', 'BIconPatchCheckFll', 'BIconPatchExclamation', 'BIconPatchExclamationFll', 'BIconPatchMinus', 'BIconPatchMinusFll', 'BIconPatchPlus', 'BIconPatchPlusFll', 'BIconPatchQuestion', 'BIconPatchQuestionFll', 'BIconPause', 'BIconPauseFill', 'BIconPeace', 'BIconPeaceFill', 'BIconPen', 'BIconPencil', 'BIconPencilSquare', 'BIconPentagon', 'BIconPentagonFill', 'BIconPentagonHalf', 'BIconPeople', 'BIconPeopleFill', 'BIconPercent', 'BIconPerson', 'BIconPersonBadge', 'BIconPersonBadgeFill', 'BIconPersonBoundingBox', 'BIconPersonCheck', 'BIconPersonCheckFill', 'BIconPersonCircle', 'BIconPersonDash', 'BIconPersonDashFill', 'BIconPersonFill', 'BIconPersonLinesFill', 'BIconPersonPlus', 'BIconPersonPlusFill', 'BIconPersonSquare', 'BIconPhone', 'BIconPhoneFill', 'BIconPhoneLandscape', 'BIconPhoneLandscapeFill', 'BIconPieChart', 'BIconPieChartFill', 'BIconPip', 'BIconPipFill', 'BIconPlay', 'BIconPlayFill', 'BIconPlug', 'BIconPlus', 'BIconPlusCircle', 'BIconPlusCircleFill', 'BIconPlusSquare', 'BIconPlusSquareFill', 'BIconPower', 'BIconPrinter', 'BIconPrinterFill', 'BIconPuzzle', 'BIconPuzzleFill', 'BIconQuestion', 'BIconQuestionCircle', 'BIconQuestionCircleFill', 'BIconQuestionDiamond', 'BIconQuestionDiamondFill', 'BIconQuestionOctagon', 'BIconQuestionOctagonFill', 'BIconQuestionSquare', 'BIconQuestionSquareFill', 'BIconReceipt', 'BIconReceiptCutoff', 'BIconReception0', 'BIconReception1', 'BIconReception2', 'BIconReception3', 'BIconReception4', 'BIconReply', 'BIconReplyAll', 'BIconReplyAllFill', 'BIconReplyFill', 'BIconRss', 'BIconRssFill', 'BIconScrewdriver', 'BIconSearch', 'BIconSegmentedNav', 'BIconServer', 'BIconShare', 'BIconShareFill', 'BIconShield', 'BIconShieldCheck', 'BIconShieldExclamation', 'BIconShieldFill', 'BIconShieldFillCheck', 'BIconShieldFillExclamation', 'BIconShieldFillMinus', 'BIconShieldFillPlus', 'BIconShieldLock', 'BIconShieldLockFill', 'BIconShieldMinus', 'BIconShieldPlus', 'BIconShieldShaded', 'BIconShieldSlash', 'BIconShieldSlashFill', 'BIconShift', 'BIconShiftFill', 'BIconShop', 'BIconShopWindow', 'BIconShuffle', 'BIconSignpost', 'BIconSignpost2', 'BIconSignpost2Fill', 'BIconSignpostFill', 'BIconSignpostSplit', 'BIconSignpostSplitFill', 'BIconSim', 'BIconSimFill', 'BIconSkipBackward', 'BIconSkipBackwardFill', 'BIconSkipEnd', 'BIconSkipEndFill', 'BIconSkipForward', 'BIconSkipForwardFill', 'BIconSkipStart', 'BIconSkipStartFill', 'BIconSlash', 'BIconSlashCircle', 'BIconSlashCircleFill', 'BIconSlashSquare', 'BIconSlashSquareFill', 'BIconSliders', 'BIconSmartwatch', 'BIconSortAlphaDown', 'BIconSortAlphaDownAlt', 'BIconSortAlphaUp', 'BIconSortAlphaUpAlt', 'BIconSortDown', 'BIconSortDownAlt', 'BIconSortNumericDown', 'BIconSortNumericDownAlt', 'BIconSortNumericUp', 'BIconSortNumericUpAlt', 'BIconSortUp', 'BIconSortUpAlt', 'BIconSoundwave', 'BIconSpeaker', 'BIconSpellcheck', 'BIconSquare', 'BIconSquareFill', 'BIconSquareHalf', 'BIconStar', 'BIconStarFill', 'BIconStarHalf', 'BIconStickies', 'BIconStickiesFill', 'BIconSticky', 'BIconStickyFill', 'BIconStop', 'BIconStopFill', 'BIconStoplights', 'BIconStoplightsFill', 'BIconStopwatch', 'BIconStopwatchFill', 'BIconSubtract', 'BIconSuitClub', 'BIconSuitClubFill', 'BIconSuitDiamond', 'BIconSuitDiamondFill', 'BIconSuitHeart', 'BIconSuitHeartFill', 'BIconSuitSpade', 'BIconSuitSpadeFill', 'BIconSun', 'BIconSunglasses', 'BIconTable', 'BIconTablet', 'BIconTabletFill', 'BIconTabletLandscape', 'BIconTabletLandscapeFill', 'BIconTag', 'BIconTagFill', 'BIconTags', 'BIconTagsFill', 'BIconTelephone', 'BIconTelephoneFill', 'BIconTelephoneForward', 'BIconTelephoneForwardFill', 'BIconTelephoneInbound', 'BIconTelephoneInboundFill', 'BIconTelephoneMinus', 'BIconTelephoneMinusFill', 'BIconTelephoneOutbound', 'BIconTelephoneOutboundFill', 'BIconTelephonePlus', 'BIconTelephonePlusFill', 'BIconTelephoneX', 'BIconTelephoneXFill', 'BIconTerminal', 'BIconTerminalFill', 'BIconTextCenter', 'BIconTextIndentLeft', 'BIconTextIndentRight', 'BIconTextLeft', 'BIconTextRight', 'BIconTextarea', 'BIconTextareaResize', 'BIconTextareaT', 'BIconThermometer', 'BIconThermometerHalf', 'BIconThreeDots', 'BIconThreeDotsVertical', 'BIconToggle2Off', 'BIconToggle2On', 'BIconToggleOff', 'BIconToggleOn', 'BIconToggles', 'BIconToggles2', 'BIconTools', 'BIconTrash', 'BIconTrash2', 'BIconTrash2Fill', 'BIconTrashFill', 'BIconTree', 'BIconTreeFill', 'BIconTriangle', 'BIconTriangleFill', 'BIconTriangleHalf', 'BIconTrophy', 'BIconTruck', 'BIconTruckFlatbed', 'BIconTv', 'BIconTvFill', 'BIconType', 'BIconTypeBold', 'BIconTypeH1', 'BIconTypeH2', 'BIconTypeH3', 'BIconTypeItalic', 'BIconTypeStrikethrough', 'BIconTypeUnderline', 'BIconUiChecks', 'BIconUiRadios', 'BIconUnion', 'BIconUnlock', 'BIconUnlockFill', 'BIconUpc', 'BIconUpcScan', 'BIconUpload', 'BIconViewList', 'BIconViewStacked', 'BIconVoicemail', 'BIconVolumeDown', 'BIconVolumeDownFill', 'BIconVolumeMute', 'BIconVolumeMuteFill', 'BIconVolumeOff', 'BIconVolumeOffFill', 'BIconVolumeUp', 'BIconVolumeUpFill', 'BIconVr', 'BIconWallet', 'BIconWallet2', 'BIconWalletFill', 'BIconWatch', 'BIconWifi', 'BIconWifi1', 'BIconWifi2', 'BIconWifiOff', 'BIconWindow', 'BIconWrench', 'BIconX', 'BIconXCircle', 'BIconXCircleFill', 'BIconXDiamond', 'BIconXDiamondFill', 'BIconXOctagon', 'BIconXOctagonFill', 'BIconXSquare', 'BIconXSquareFill', 'BIconZoomIn', 'BIconZoomOut']; // Export the icons plugin
 
 exports.iconNames = iconNames;
 var IconsPlugin = /*#__PURE__*/(0, _plugins.pluginFactoryNoConfig)({
@@ -95064,6 +96337,12 @@ var IconsPlugin = /*#__PURE__*/(0, _plugins.pluginFactoryNoConfig)({
     // Bootstrap icon components
     BIconAlarm: _icons.BIconAlarm,
     BIconAlarmFill: _icons.BIconAlarmFill,
+    BIconAlignBottom: _icons.BIconAlignBottom,
+    BIconAlignCenter: _icons.BIconAlignCenter,
+    BIconAlignEnd: _icons.BIconAlignEnd,
+    BIconAlignMiddle: _icons.BIconAlignMiddle,
+    BIconAlignStart: _icons.BIconAlignStart,
+    BIconAlignTop: _icons.BIconAlignTop,
     BIconAlt: _icons.BIconAlt,
     BIconApp: _icons.BIconApp,
     BIconAppIndicator: _icons.BIconAppIndicator,
@@ -95140,10 +96419,23 @@ var IconsPlugin = /*#__PURE__*/(0, _plugins.pluginFactoryNoConfig)({
     BIconAt: _icons.BIconAt,
     BIconAward: _icons.BIconAward,
     BIconAwardFill: _icons.BIconAwardFill,
+    BIconBack: _icons.BIconBack,
     BIconBackspace: _icons.BIconBackspace,
     BIconBackspaceFill: _icons.BIconBackspaceFill,
     BIconBackspaceReverse: _icons.BIconBackspaceReverse,
     BIconBackspaceReverseFill: _icons.BIconBackspaceReverseFill,
+    BIconBadge4k: _icons.BIconBadge4k,
+    BIconBadge4kFill: _icons.BIconBadge4kFill,
+    BIconBadge8k: _icons.BIconBadge8k,
+    BIconBadge8kFill: _icons.BIconBadge8kFill,
+    BIconBadgeCc: _icons.BIconBadgeCc,
+    BIconBadgeCcFill: _icons.BIconBadgeCcFill,
+    BIconBadgeHd: _icons.BIconBadgeHd,
+    BIconBadgeHdFill: _icons.BIconBadgeHdFill,
+    BIconBadgeTm: _icons.BIconBadgeTm,
+    BIconBadgeTmFill: _icons.BIconBadgeTmFill,
+    BIconBadgeVo: _icons.BIconBadgeVo,
+    BIconBadgeVoFill: _icons.BIconBadgeVoFill,
     BIconBag: _icons.BIconBag,
     BIconBagCheck: _icons.BIconBagCheck,
     BIconBagDash: _icons.BIconBagDash,
@@ -95151,6 +96443,9 @@ var IconsPlugin = /*#__PURE__*/(0, _plugins.pluginFactoryNoConfig)({
     BIconBagPlus: _icons.BIconBagPlus,
     BIconBarChart: _icons.BIconBarChart,
     BIconBarChartFill: _icons.BIconBarChartFill,
+    BIconBarChartLine: _icons.BIconBarChartLine,
+    BIconBarChartLineFill: _icons.BIconBarChartLineFill,
+    BIconBarChartSteps: _icons.BIconBarChartSteps,
     BIconBasket: _icons.BIconBasket,
     BIconBasket2: _icons.BIconBasket2,
     BIconBasket2Fill: _icons.BIconBasket2Fill,
@@ -95163,9 +96458,15 @@ var IconsPlugin = /*#__PURE__*/(0, _plugins.pluginFactoryNoConfig)({
     BIconBatteryHalf: _icons.BIconBatteryHalf,
     BIconBell: _icons.BIconBell,
     BIconBellFill: _icons.BIconBellFill,
+    BIconBezier: _icons.BIconBezier,
+    BIconBezier2: _icons.BIconBezier2,
+    BIconBicycle: _icons.BIconBicycle,
+    BIconBinoculars: _icons.BIconBinoculars,
+    BIconBinocularsFill: _icons.BIconBinocularsFill,
     BIconBlockquoteLeft: _icons.BIconBlockquoteLeft,
     BIconBlockquoteRight: _icons.BIconBlockquoteRight,
     BIconBook: _icons.BIconBook,
+    BIconBookFill: _icons.BIconBookFill,
     BIconBookHalf: _icons.BIconBookHalf,
     BIconBookmark: _icons.BIconBookmark,
     BIconBookmarkCheck: _icons.BIconBookmarkCheck,
@@ -95174,9 +96475,12 @@ var IconsPlugin = /*#__PURE__*/(0, _plugins.pluginFactoryNoConfig)({
     BIconBookmarkPlus: _icons.BIconBookmarkPlus,
     BIconBookmarks: _icons.BIconBookmarks,
     BIconBookmarksFill: _icons.BIconBookmarksFill,
+    BIconBookshelf: _icons.BIconBookshelf,
     BIconBootstrap: _icons.BIconBootstrap,
     BIconBootstrapFill: _icons.BIconBootstrapFill,
     BIconBootstrapReboot: _icons.BIconBootstrapReboot,
+    BIconBorderStyle: _icons.BIconBorderStyle,
+    BIconBorderWidth: _icons.BIconBorderWidth,
     BIconBoundingBox: _icons.BIconBoundingBox,
     BIconBoundingBoxCircles: _icons.BIconBoundingBoxCircles,
     BIconBox: _icons.BIconBox,
@@ -95198,6 +96502,7 @@ var IconsPlugin = /*#__PURE__*/(0, _plugins.pluginFactoryNoConfig)({
     BIconBoxArrowUpRight: _icons.BIconBoxArrowUpRight,
     BIconBoxSeam: _icons.BIconBoxSeam,
     BIconBraces: _icons.BIconBraces,
+    BIconBricks: _icons.BIconBricks,
     BIconBriefcase: _icons.BIconBriefcase,
     BIconBriefcaseFill: _icons.BIconBriefcaseFill,
     BIconBrightnessAltHigh: _icons.BIconBrightnessAltHigh,
@@ -95208,11 +96513,17 @@ var IconsPlugin = /*#__PURE__*/(0, _plugins.pluginFactoryNoConfig)({
     BIconBrightnessHighFill: _icons.BIconBrightnessHighFill,
     BIconBrightnessLow: _icons.BIconBrightnessLow,
     BIconBrightnessLowFill: _icons.BIconBrightnessLowFill,
+    BIconBroadcast: _icons.BIconBroadcast,
+    BIconBroadcastPin: _icons.BIconBroadcastPin,
     BIconBrush: _icons.BIconBrush,
     BIconBucket: _icons.BIconBucket,
     BIconBucketFill: _icons.BIconBucketFill,
+    BIconBug: _icons.BIconBug,
+    BIconBugFill: _icons.BIconBugFill,
     BIconBuilding: _icons.BIconBuilding,
     BIconBullseye: _icons.BIconBullseye,
+    BIconCalculator: _icons.BIconCalculator,
+    BIconCalculatorFill: _icons.BIconCalculatorFill,
     BIconCalendar: _icons.BIconCalendar,
     BIconCalendar2: _icons.BIconCalendar2,
     BIconCalendar2Check: _icons.BIconCalendar2Check,
@@ -95221,6 +96532,8 @@ var IconsPlugin = /*#__PURE__*/(0, _plugins.pluginFactoryNoConfig)({
     BIconCalendar2DateFill: _icons.BIconCalendar2DateFill,
     BIconCalendar2Day: _icons.BIconCalendar2Day,
     BIconCalendar2DayFill: _icons.BIconCalendar2DayFill,
+    BIconCalendar2Event: _icons.BIconCalendar2Event,
+    BIconCalendar2EventFill: _icons.BIconCalendar2EventFill,
     BIconCalendar2Fill: _icons.BIconCalendar2Fill,
     BIconCalendar2Minus: _icons.BIconCalendar2Minus,
     BIconCalendar2MinusFill: _icons.BIconCalendar2MinusFill,
@@ -95228,15 +96541,30 @@ var IconsPlugin = /*#__PURE__*/(0, _plugins.pluginFactoryNoConfig)({
     BIconCalendar2MonthFill: _icons.BIconCalendar2MonthFill,
     BIconCalendar2Plus: _icons.BIconCalendar2Plus,
     BIconCalendar2PlusFill: _icons.BIconCalendar2PlusFill,
+    BIconCalendar2Range: _icons.BIconCalendar2Range,
+    BIconCalendar2RangeFill: _icons.BIconCalendar2RangeFill,
+    BIconCalendar2Week: _icons.BIconCalendar2Week,
+    BIconCalendar2WeekFill: _icons.BIconCalendar2WeekFill,
     BIconCalendar3: _icons.BIconCalendar3,
+    BIconCalendar3Event: _icons.BIconCalendar3Event,
+    BIconCalendar3EventFill: _icons.BIconCalendar3EventFill,
     BIconCalendar3Fill: _icons.BIconCalendar3Fill,
+    BIconCalendar3Range: _icons.BIconCalendar3Range,
+    BIconCalendar3RangeFill: _icons.BIconCalendar3RangeFill,
+    BIconCalendar3Week: _icons.BIconCalendar3Week,
+    BIconCalendar3WeekFill: _icons.BIconCalendar3WeekFill,
     BIconCalendar4: _icons.BIconCalendar4,
+    BIconCalendar4Event: _icons.BIconCalendar4Event,
+    BIconCalendar4Range: _icons.BIconCalendar4Range,
+    BIconCalendar4Week: _icons.BIconCalendar4Week,
     BIconCalendarCheck: _icons.BIconCalendarCheck,
     BIconCalendarCheckFill: _icons.BIconCalendarCheckFill,
     BIconCalendarDate: _icons.BIconCalendarDate,
     BIconCalendarDateFill: _icons.BIconCalendarDateFill,
     BIconCalendarDay: _icons.BIconCalendarDay,
     BIconCalendarDayFill: _icons.BIconCalendarDayFill,
+    BIconCalendarEvent: _icons.BIconCalendarEvent,
+    BIconCalendarEventFill: _icons.BIconCalendarEventFill,
     BIconCalendarFill: _icons.BIconCalendarFill,
     BIconCalendarMinus: _icons.BIconCalendarMinus,
     BIconCalendarMinusFill: _icons.BIconCalendarMinusFill,
@@ -95244,7 +96572,15 @@ var IconsPlugin = /*#__PURE__*/(0, _plugins.pluginFactoryNoConfig)({
     BIconCalendarMonthFill: _icons.BIconCalendarMonthFill,
     BIconCalendarPlus: _icons.BIconCalendarPlus,
     BIconCalendarPlusFill: _icons.BIconCalendarPlusFill,
+    BIconCalendarRange: _icons.BIconCalendarRange,
+    BIconCalendarRangeFill: _icons.BIconCalendarRangeFill,
+    BIconCalendarWeek: _icons.BIconCalendarWeek,
+    BIconCalendarWeekFill: _icons.BIconCalendarWeekFill,
     BIconCamera: _icons.BIconCamera,
+    BIconCamera2: _icons.BIconCamera2,
+    BIconCameraFill: _icons.BIconCameraFill,
+    BIconCameraReels: _icons.BIconCameraReels,
+    BIconCameraReelsFill: _icons.BIconCameraReelsFill,
     BIconCameraVideo: _icons.BIconCameraVideo,
     BIconCameraVideoFill: _icons.BIconCameraVideoFill,
     BIconCameraVideoOff: _icons.BIconCameraVideoOff,
@@ -95280,18 +96616,41 @@ var IconsPlugin = /*#__PURE__*/(0, _plugins.pluginFactoryNoConfig)({
     BIconCartDash: _icons.BIconCartDash,
     BIconCartFill: _icons.BIconCartFill,
     BIconCartPlus: _icons.BIconCartPlus,
+    BIconCash: _icons.BIconCash,
+    BIconCashStack: _icons.BIconCashStack,
+    BIconCast: _icons.BIconCast,
     BIconChat: _icons.BIconChat,
     BIconChatDots: _icons.BIconChatDots,
     BIconChatDotsFill: _icons.BIconChatDotsFill,
     BIconChatFill: _icons.BIconChatFill,
+    BIconChatLeft: _icons.BIconChatLeft,
+    BIconChatLeftDots: _icons.BIconChatLeftDots,
+    BIconChatLeftDotsFill: _icons.BIconChatLeftDotsFill,
+    BIconChatLeftFill: _icons.BIconChatLeftFill,
+    BIconChatLeftQuote: _icons.BIconChatLeftQuote,
+    BIconChatLeftQuoteFill: _icons.BIconChatLeftQuoteFill,
+    BIconChatLeftText: _icons.BIconChatLeftText,
+    BIconChatLeftTextFill: _icons.BIconChatLeftTextFill,
     BIconChatQuote: _icons.BIconChatQuote,
     BIconChatQuoteFill: _icons.BIconChatQuoteFill,
+    BIconChatRight: _icons.BIconChatRight,
+    BIconChatRightDots: _icons.BIconChatRightDots,
+    BIconChatRightDotsFill: _icons.BIconChatRightDotsFill,
+    BIconChatRightFill: _icons.BIconChatRightFill,
+    BIconChatRightQuote: _icons.BIconChatRightQuote,
+    BIconChatRightQuoteFill: _icons.BIconChatRightQuoteFill,
+    BIconChatRightText: _icons.BIconChatRightText,
+    BIconChatRightTextFill: _icons.BIconChatRightTextFill,
     BIconChatSquare: _icons.BIconChatSquare,
     BIconChatSquareDots: _icons.BIconChatSquareDots,
     BIconChatSquareDotsFill: _icons.BIconChatSquareDotsFill,
     BIconChatSquareFill: _icons.BIconChatSquareFill,
     BIconChatSquareQuote: _icons.BIconChatSquareQuote,
     BIconChatSquareQuoteFill: _icons.BIconChatSquareQuoteFill,
+    BIconChatSquareText: _icons.BIconChatSquareText,
+    BIconChatSquareTextFill: _icons.BIconChatSquareTextFill,
+    BIconChatText: _icons.BIconChatText,
+    BIconChatTextFill: _icons.BIconChatTextFill,
     BIconCheck: _icons.BIconCheck,
     BIconCheck2: _icons.BIconCheck2,
     BIconCheck2All: _icons.BIconCheck2All,
@@ -95327,18 +96686,34 @@ var IconsPlugin = /*#__PURE__*/(0, _plugins.pluginFactoryNoConfig)({
     BIconCircleHalf: _icons.BIconCircleHalf,
     BIconCircleSquare: _icons.BIconCircleSquare,
     BIconClipboard: _icons.BIconClipboard,
+    BIconClipboardCheck: _icons.BIconClipboardCheck,
     BIconClipboardData: _icons.BIconClipboardData,
+    BIconClipboardMinus: _icons.BIconClipboardMinus,
+    BIconClipboardPlus: _icons.BIconClipboardPlus,
     BIconClock: _icons.BIconClock,
     BIconClockFill: _icons.BIconClockFill,
     BIconClockHistory: _icons.BIconClockHistory,
     BIconCloud: _icons.BIconCloud,
+    BIconCloudArrowDown: _icons.BIconCloudArrowDown,
+    BIconCloudArrowDownFill: _icons.BIconCloudArrowDownFill,
+    BIconCloudArrowUp: _icons.BIconCloudArrowUp,
+    BIconCloudArrowUpFill: _icons.BIconCloudArrowUpFill,
+    BIconCloudCheck: _icons.BIconCloudCheck,
+    BIconCloudCheckFill: _icons.BIconCloudCheckFill,
     BIconCloudDownload: _icons.BIconCloudDownload,
+    BIconCloudDownloadFill: _icons.BIconCloudDownloadFill,
     BIconCloudFill: _icons.BIconCloudFill,
+    BIconCloudMinus: _icons.BIconCloudMinus,
+    BIconCloudMinusFill: _icons.BIconCloudMinusFill,
+    BIconCloudPlus: _icons.BIconCloudPlus,
+    BIconCloudPlusFill: _icons.BIconCloudPlusFill,
     BIconCloudSlash: _icons.BIconCloudSlash,
     BIconCloudSlashFill: _icons.BIconCloudSlashFill,
     BIconCloudUpload: _icons.BIconCloudUpload,
+    BIconCloudUploadFill: _icons.BIconCloudUploadFill,
     BIconCode: _icons.BIconCode,
     BIconCodeSlash: _icons.BIconCodeSlash,
+    BIconCodeSquare: _icons.BIconCodeSquare,
     BIconCollection: _icons.BIconCollection,
     BIconCollectionFill: _icons.BIconCollectionFill,
     BIconCollectionPlay: _icons.BIconCollectionPlay,
@@ -95350,9 +96725,17 @@ var IconsPlugin = /*#__PURE__*/(0, _plugins.pluginFactoryNoConfig)({
     BIconCone: _icons.BIconCone,
     BIconConeStriped: _icons.BIconConeStriped,
     BIconController: _icons.BIconController,
+    BIconCpu: _icons.BIconCpu,
+    BIconCpuFill: _icons.BIconCpuFill,
     BIconCreditCard: _icons.BIconCreditCard,
+    BIconCreditCard2Back: _icons.BIconCreditCard2Back,
+    BIconCreditCard2BackFill: _icons.BIconCreditCard2BackFill,
+    BIconCreditCard2Front: _icons.BIconCreditCard2Front,
+    BIconCreditCard2FrontFill: _icons.BIconCreditCard2FrontFill,
+    BIconCreditCardFill: _icons.BIconCreditCardFill,
     BIconCrop: _icons.BIconCrop,
     BIconCup: _icons.BIconCup,
+    BIconCupStraw: _icons.BIconCupStraw,
     BIconCursor: _icons.BIconCursor,
     BIconCursorFill: _icons.BIconCursorFill,
     BIconCursorText: _icons.BIconCursorText,
@@ -95361,18 +96744,41 @@ var IconsPlugin = /*#__PURE__*/(0, _plugins.pluginFactoryNoConfig)({
     BIconDashCircleFill: _icons.BIconDashCircleFill,
     BIconDashSquare: _icons.BIconDashSquare,
     BIconDashSquareFill: _icons.BIconDashSquareFill,
+    BIconDiagram2: _icons.BIconDiagram2,
+    BIconDiagram2Fill: _icons.BIconDiagram2Fill,
+    BIconDiagram3: _icons.BIconDiagram3,
+    BIconDiagram3Fill: _icons.BIconDiagram3Fill,
     BIconDiamond: _icons.BIconDiamond,
     BIconDiamondFill: _icons.BIconDiamondFill,
     BIconDiamondHalf: _icons.BIconDiamondHalf,
+    BIconDice1: _icons.BIconDice1,
+    BIconDice1Fill: _icons.BIconDice1Fill,
+    BIconDice2: _icons.BIconDice2,
+    BIconDice2Fill: _icons.BIconDice2Fill,
+    BIconDice3: _icons.BIconDice3,
+    BIconDice3Fill: _icons.BIconDice3Fill,
+    BIconDice4: _icons.BIconDice4,
+    BIconDice4Fill: _icons.BIconDice4Fill,
+    BIconDice5: _icons.BIconDice5,
+    BIconDice5Fill: _icons.BIconDice5Fill,
+    BIconDice6: _icons.BIconDice6,
+    BIconDice6Fill: _icons.BIconDice6Fill,
     BIconDisplay: _icons.BIconDisplay,
     BIconDisplayFill: _icons.BIconDisplayFill,
+    BIconDistributeHorizontal: _icons.BIconDistributeHorizontal,
+    BIconDistributeVertical: _icons.BIconDistributeVertical,
     BIconDoorClosed: _icons.BIconDoorClosed,
     BIconDoorClosedFill: _icons.BIconDoorClosedFill,
+    BIconDoorOpen: _icons.BIconDoorOpen,
+    BIconDoorOpenFill: _icons.BIconDoorOpenFill,
     BIconDot: _icons.BIconDot,
     BIconDownload: _icons.BIconDownload,
     BIconDroplet: _icons.BIconDroplet,
     BIconDropletFill: _icons.BIconDropletFill,
     BIconDropletHalf: _icons.BIconDropletHalf,
+    BIconEarbuds: _icons.BIconEarbuds,
+    BIconEasel: _icons.BIconEasel,
+    BIconEaselFill: _icons.BIconEaselFill,
     BIconEgg: _icons.BIconEgg,
     BIconEggFill: _icons.BIconEggFill,
     BIconEggFried: _icons.BIconEggFried,
@@ -95380,6 +96786,7 @@ var IconsPlugin = /*#__PURE__*/(0, _plugins.pluginFactoryNoConfig)({
     BIconEjectFill: _icons.BIconEjectFill,
     BIconEmojiAngry: _icons.BIconEmojiAngry,
     BIconEmojiDizzy: _icons.BIconEmojiDizzy,
+    BIconEmojiExpressionless: _icons.BIconEmojiExpressionless,
     BIconEmojiFrown: _icons.BIconEmojiFrown,
     BIconEmojiLaughing: _icons.BIconEmojiLaughing,
     BIconEmojiNeutral: _icons.BIconEmojiNeutral,
@@ -95406,43 +96813,92 @@ var IconsPlugin = /*#__PURE__*/(0, _plugins.pluginFactoryNoConfig)({
     BIconEyeFill: _icons.BIconEyeFill,
     BIconEyeSlash: _icons.BIconEyeSlash,
     BIconEyeSlashFill: _icons.BIconEyeSlashFill,
+    BIconEyeglasses: _icons.BIconEyeglasses,
     BIconFile: _icons.BIconFile,
     BIconFileArrowDown: _icons.BIconFileArrowDown,
+    BIconFileArrowDownFill: _icons.BIconFileArrowDownFill,
     BIconFileArrowUp: _icons.BIconFileArrowUp,
+    BIconFileArrowUpFill: _icons.BIconFileArrowUpFill,
+    BIconFileBinary: _icons.BIconFileBinary,
+    BIconFileBinaryFill: _icons.BIconFileBinaryFill,
     BIconFileBreak: _icons.BIconFileBreak,
+    BIconFileBreakFill: _icons.BIconFileBreakFill,
     BIconFileCheck: _icons.BIconFileCheck,
+    BIconFileCheckFill: _icons.BIconFileCheckFill,
     BIconFileCode: _icons.BIconFileCode,
+    BIconFileCodeFill: _icons.BIconFileCodeFill,
     BIconFileDiff: _icons.BIconFileDiff,
+    BIconFileDiffFill: _icons.BIconFileDiffFill,
     BIconFileEarmark: _icons.BIconFileEarmark,
     BIconFileEarmarkArrowDown: _icons.BIconFileEarmarkArrowDown,
     BIconFileEarmarkArrowUp: _icons.BIconFileEarmarkArrowUp,
+    BIconFileEarmarkArrowUpFill: _icons.BIconFileEarmarkArrowUpFill,
+    BIconFileEarmarkBinary: _icons.BIconFileEarmarkBinary,
+    BIconFileEarmarkBinaryFill: _icons.BIconFileEarmarkBinaryFill,
     BIconFileEarmarkBreak: _icons.BIconFileEarmarkBreak,
+    BIconFileEarmarkBreakFill: _icons.BIconFileEarmarkBreakFill,
     BIconFileEarmarkCheck: _icons.BIconFileEarmarkCheck,
+    BIconFileEarmarkCheckFill: _icons.BIconFileEarmarkCheckFill,
     BIconFileEarmarkCode: _icons.BIconFileEarmarkCode,
+    BIconFileEarmarkCodeFill: _icons.BIconFileEarmarkCodeFill,
     BIconFileEarmarkDiff: _icons.BIconFileEarmarkDiff,
+    BIconFileEarmarkDiffFill: _icons.BIconFileEarmarkDiffFill,
+    BIconFileEarmarkFill: _icons.BIconFileEarmarkFill,
+    BIconFileEarmarkMedical: _icons.BIconFileEarmarkMedical,
+    BIconFileEarmarkMedicalFill: _icons.BIconFileEarmarkMedicalFill,
     BIconFileEarmarkMinus: _icons.BIconFileEarmarkMinus,
+    BIconFileEarmarkMinusFill: _icons.BIconFileEarmarkMinusFill,
     BIconFileEarmarkPlus: _icons.BIconFileEarmarkPlus,
+    BIconFileEarmarkPlusFill: _icons.BIconFileEarmarkPlusFill,
     BIconFileEarmarkRuled: _icons.BIconFileEarmarkRuled,
+    BIconFileEarmarkRuledFill: _icons.BIconFileEarmarkRuledFill,
     BIconFileEarmarkSpreadsheet: _icons.BIconFileEarmarkSpreadsheet,
+    BIconFileEarmarkSpreadsheetFill: _icons.BIconFileEarmarkSpreadsheetFill,
     BIconFileEarmarkText: _icons.BIconFileEarmarkText,
+    BIconFileEarmarkTextFill: _icons.BIconFileEarmarkTextFill,
     BIconFileEarmarkZip: _icons.BIconFileEarmarkZip,
+    BIconFileEarmarkZipFill: _icons.BIconFileEarmarkZipFill,
+    BIconFileFill: _icons.BIconFileFill,
+    BIconFileMedical: _icons.BIconFileMedical,
+    BIconFileMedicalFill: _icons.BIconFileMedicalFill,
     BIconFileMinus: _icons.BIconFileMinus,
+    BIconFileMinusFill: _icons.BIconFileMinusFill,
+    BIconFileMusic: _icons.BIconFileMusic,
+    BIconFileMusicFill: _icons.BIconFileMusicFill,
+    BIconFilePerson: _icons.BIconFilePerson,
+    BIconFilePersonFill: _icons.BIconFilePersonFill,
     BIconFilePlus: _icons.BIconFilePlus,
+    BIconFilePlusFill: _icons.BIconFilePlusFill,
     BIconFilePost: _icons.BIconFilePost,
+    BIconFilePostFill: _icons.BIconFilePostFill,
     BIconFileRichtext: _icons.BIconFileRichtext,
+    BIconFileRichtextFill: _icons.BIconFileRichtextFill,
     BIconFileRuled: _icons.BIconFileRuled,
+    BIconFileRuledFill: _icons.BIconFileRuledFill,
     BIconFileSpreadsheet: _icons.BIconFileSpreadsheet,
+    BIconFileSpreadsheetFill: _icons.BIconFileSpreadsheetFill,
     BIconFileText: _icons.BIconFileText,
+    BIconFileTextFill: _icons.BIconFileTextFill,
     BIconFileZip: _icons.BIconFileZip,
+    BIconFileZipFill: _icons.BIconFileZipFill,
     BIconFiles: _icons.BIconFiles,
     BIconFilesAlt: _icons.BIconFilesAlt,
     BIconFilm: _icons.BIconFilm,
     BIconFilter: _icons.BIconFilter,
+    BIconFilterCircle: _icons.BIconFilterCircle,
+    BIconFilterCircleFill: _icons.BIconFilterCircleFill,
     BIconFilterLeft: _icons.BIconFilterLeft,
     BIconFilterRight: _icons.BIconFilterRight,
+    BIconFilterSquare: _icons.BIconFilterSquare,
+    BIconFilterSquareFill: _icons.BIconFilterSquareFill,
     BIconFlag: _icons.BIconFlag,
     BIconFlagFill: _icons.BIconFlagFill,
+    BIconFlower1: _icons.BIconFlower1,
+    BIconFlower2: _icons.BIconFlower2,
+    BIconFlower3: _icons.BIconFlower3,
     BIconFolder: _icons.BIconFolder,
+    BIconFolder2: _icons.BIconFolder2,
+    BIconFolder2Open: _icons.BIconFolder2Open,
     BIconFolderCheck: _icons.BIconFolderCheck,
     BIconFolderFill: _icons.BIconFolderFill,
     BIconFolderMinus: _icons.BIconFolderMinus,
@@ -95452,6 +96908,7 @@ var IconsPlugin = /*#__PURE__*/(0, _plugins.pluginFactoryNoConfig)({
     BIconFonts: _icons.BIconFonts,
     BIconForward: _icons.BIconForward,
     BIconForwardFill: _icons.BIconForwardFill,
+    BIconFront: _icons.BIconFront,
     BIconFullscreen: _icons.BIconFullscreen,
     BIconFullscreenExit: _icons.BIconFullscreenExit,
     BIconFunnel: _icons.BIconFunnel,
@@ -95465,6 +96922,8 @@ var IconsPlugin = /*#__PURE__*/(0, _plugins.pluginFactoryNoConfig)({
     BIconGeoAlt: _icons.BIconGeoAlt,
     BIconGift: _icons.BIconGift,
     BIconGiftFill: _icons.BIconGiftFill,
+    BIconGlobe: _icons.BIconGlobe,
+    BIconGlobe2: _icons.BIconGlobe2,
     BIconGraphDown: _icons.BIconGraphDown,
     BIconGraphUp: _icons.BIconGraphUp,
     BIconGrid: _icons.BIconGrid,
@@ -95487,13 +96946,29 @@ var IconsPlugin = /*#__PURE__*/(0, _plugins.pluginFactoryNoConfig)({
     BIconHandbag: _icons.BIconHandbag,
     BIconHandbagFill: _icons.BIconHandbagFill,
     BIconHash: _icons.BIconHash,
+    BIconHdd: _icons.BIconHdd,
+    BIconHddFill: _icons.BIconHddFill,
+    BIconHddNetwork: _icons.BIconHddNetwork,
+    BIconHddNetworkFill: _icons.BIconHddNetworkFill,
+    BIconHddRack: _icons.BIconHddRack,
+    BIconHddRackFill: _icons.BIconHddRackFill,
+    BIconHddStack: _icons.BIconHddStack,
+    BIconHddStackFill: _icons.BIconHddStackFill,
     BIconHeadphones: _icons.BIconHeadphones,
+    BIconHeadset: _icons.BIconHeadset,
     BIconHeart: _icons.BIconHeart,
     BIconHeartFill: _icons.BIconHeartFill,
     BIconHeartHalf: _icons.BIconHeartHalf,
+    BIconHeptagon: _icons.BIconHeptagon,
+    BIconHeptagonFill: _icons.BIconHeptagonFill,
+    BIconHeptagonHalf: _icons.BIconHeptagonHalf,
     BIconHexagon: _icons.BIconHexagon,
     BIconHexagonFill: _icons.BIconHexagonFill,
     BIconHexagonHalf: _icons.BIconHexagonHalf,
+    BIconHourglass: _icons.BIconHourglass,
+    BIconHourglassBottom: _icons.BIconHourglassBottom,
+    BIconHourglassSplit: _icons.BIconHourglassSplit,
+    BIconHourglassTop: _icons.BIconHourglassTop,
     BIconHouse: _icons.BIconHouse,
     BIconHouseDoor: _icons.BIconHouseDoor,
     BIconHouseDoorFill: _icons.BIconHouseDoorFill,
@@ -95512,13 +96987,36 @@ var IconsPlugin = /*#__PURE__*/(0, _plugins.pluginFactoryNoConfig)({
     BIconInfoCircleFill: _icons.BIconInfoCircleFill,
     BIconInfoSquare: _icons.BIconInfoSquare,
     BIconInfoSquareFill: _icons.BIconInfoSquareFill,
+    BIconInputCursor: _icons.BIconInputCursor,
+    BIconInputCursorText: _icons.BIconInputCursorText,
     BIconIntersect: _icons.BIconIntersect,
+    BIconJournal: _icons.BIconJournal,
+    BIconJournalAlbum: _icons.BIconJournalAlbum,
+    BIconJournalArrowDown: _icons.BIconJournalArrowDown,
+    BIconJournalArrowUp: _icons.BIconJournalArrowUp,
+    BIconJournalCheck: _icons.BIconJournalCheck,
+    BIconJournalCode: _icons.BIconJournalCode,
+    BIconJournalMedical: _icons.BIconJournalMedical,
+    BIconJournalMinus: _icons.BIconJournalMinus,
+    BIconJournalPlus: _icons.BIconJournalPlus,
+    BIconJournalRichtext: _icons.BIconJournalRichtext,
+    BIconJournalText: _icons.BIconJournalText,
+    BIconJournals: _icons.BIconJournals,
+    BIconJoystick: _icons.BIconJoystick,
     BIconJustify: _icons.BIconJustify,
     BIconJustifyLeft: _icons.BIconJustifyLeft,
     BIconJustifyRight: _icons.BIconJustifyRight,
     BIconKanban: _icons.BIconKanban,
     BIconKanbanFill: _icons.BIconKanbanFill,
+    BIconKey: _icons.BIconKey,
+    BIconKeyFill: _icons.BIconKeyFill,
+    BIconKeyboard: _icons.BIconKeyboard,
+    BIconKeyboardFill: _icons.BIconKeyboardFill,
+    BIconLadder: _icons.BIconLadder,
+    BIconLamp: _icons.BIconLamp,
+    BIconLampFill: _icons.BIconLampFill,
     BIconLaptop: _icons.BIconLaptop,
+    BIconLaptopFill: _icons.BIconLaptopFill,
     BIconLayers: _icons.BIconLayers,
     BIconLayersFill: _icons.BIconLayersFill,
     BIconLayersHalf: _icons.BIconLayersHalf,
@@ -95542,11 +97040,24 @@ var IconsPlugin = /*#__PURE__*/(0, _plugins.pluginFactoryNoConfig)({
     BIconListCheck: _icons.BIconListCheck,
     BIconListNested: _icons.BIconListNested,
     BIconListOl: _icons.BIconListOl,
+    BIconListStars: _icons.BIconListStars,
     BIconListTask: _icons.BIconListTask,
     BIconListUl: _icons.BIconListUl,
     BIconLock: _icons.BIconLock,
     BIconLockFill: _icons.BIconLockFill,
+    BIconMailbox: _icons.BIconMailbox,
+    BIconMailbox2: _icons.BIconMailbox2,
     BIconMap: _icons.BIconMap,
+    BIconMarkdown: _icons.BIconMarkdown,
+    BIconMarkdownFill: _icons.BIconMarkdownFill,
+    BIconMenuApp: _icons.BIconMenuApp,
+    BIconMenuAppFill: _icons.BIconMenuAppFill,
+    BIconMenuButton: _icons.BIconMenuButton,
+    BIconMenuButtonFill: _icons.BIconMenuButtonFill,
+    BIconMenuButtonWide: _icons.BIconMenuButtonWide,
+    BIconMenuButtonWideFill: _icons.BIconMenuButtonWideFill,
+    BIconMenuDown: _icons.BIconMenuDown,
+    BIconMenuUp: _icons.BIconMenuUp,
     BIconMic: _icons.BIconMic,
     BIconMicFill: _icons.BIconMicFill,
     BIconMicMute: _icons.BIconMicMute,
@@ -95554,20 +97065,42 @@ var IconsPlugin = /*#__PURE__*/(0, _plugins.pluginFactoryNoConfig)({
     BIconMinecart: _icons.BIconMinecart,
     BIconMinecartLoaded: _icons.BIconMinecartLoaded,
     BIconMoon: _icons.BIconMoon,
+    BIconMouse: _icons.BIconMouse,
+    BIconMouse2: _icons.BIconMouse2,
+    BIconMouse3: _icons.BIconMouse3,
     BIconMusicNote: _icons.BIconMusicNote,
     BIconMusicNoteBeamed: _icons.BIconMusicNoteBeamed,
     BIconMusicNoteList: _icons.BIconMusicNoteList,
     BIconMusicPlayer: _icons.BIconMusicPlayer,
     BIconMusicPlayerFill: _icons.BIconMusicPlayerFill,
     BIconNewspaper: _icons.BIconNewspaper,
+    BIconNodeMinus: _icons.BIconNodeMinus,
+    BIconNodeMinusFill: _icons.BIconNodeMinusFill,
+    BIconNodePlus: _icons.BIconNodePlus,
+    BIconNodePlusFill: _icons.BIconNodePlusFill,
+    BIconNut: _icons.BIconNut,
+    BIconNutFill: _icons.BIconNutFill,
     BIconOctagon: _icons.BIconOctagon,
     BIconOctagonFill: _icons.BIconOctagonFill,
     BIconOctagonHalf: _icons.BIconOctagonHalf,
     BIconOption: _icons.BIconOption,
     BIconOutlet: _icons.BIconOutlet,
     BIconPaperclip: _icons.BIconPaperclip,
+    BIconParagraph: _icons.BIconParagraph,
+    BIconPatchCheck: _icons.BIconPatchCheck,
+    BIconPatchCheckFll: _icons.BIconPatchCheckFll,
+    BIconPatchExclamation: _icons.BIconPatchExclamation,
+    BIconPatchExclamationFll: _icons.BIconPatchExclamationFll,
+    BIconPatchMinus: _icons.BIconPatchMinus,
+    BIconPatchMinusFll: _icons.BIconPatchMinusFll,
+    BIconPatchPlus: _icons.BIconPatchPlus,
+    BIconPatchPlusFll: _icons.BIconPatchPlusFll,
+    BIconPatchQuestion: _icons.BIconPatchQuestion,
+    BIconPatchQuestionFll: _icons.BIconPatchQuestionFll,
     BIconPause: _icons.BIconPause,
     BIconPauseFill: _icons.BIconPauseFill,
+    BIconPeace: _icons.BIconPeace,
+    BIconPeaceFill: _icons.BIconPeaceFill,
     BIconPen: _icons.BIconPen,
     BIconPencil: _icons.BIconPencil,
     BIconPencilSquare: _icons.BIconPencilSquare,
@@ -95576,7 +97109,10 @@ var IconsPlugin = /*#__PURE__*/(0, _plugins.pluginFactoryNoConfig)({
     BIconPentagonHalf: _icons.BIconPentagonHalf,
     BIconPeople: _icons.BIconPeople,
     BIconPeopleFill: _icons.BIconPeopleFill,
+    BIconPercent: _icons.BIconPercent,
     BIconPerson: _icons.BIconPerson,
+    BIconPersonBadge: _icons.BIconPersonBadge,
+    BIconPersonBadgeFill: _icons.BIconPersonBadgeFill,
     BIconPersonBoundingBox: _icons.BIconPersonBoundingBox,
     BIconPersonCheck: _icons.BIconPersonCheck,
     BIconPersonCheckFill: _icons.BIconPersonCheckFill,
@@ -95589,7 +97125,9 @@ var IconsPlugin = /*#__PURE__*/(0, _plugins.pluginFactoryNoConfig)({
     BIconPersonPlusFill: _icons.BIconPersonPlusFill,
     BIconPersonSquare: _icons.BIconPersonSquare,
     BIconPhone: _icons.BIconPhone,
+    BIconPhoneFill: _icons.BIconPhoneFill,
     BIconPhoneLandscape: _icons.BIconPhoneLandscape,
+    BIconPhoneLandscapeFill: _icons.BIconPhoneLandscapeFill,
     BIconPieChart: _icons.BIconPieChart,
     BIconPieChartFill: _icons.BIconPieChartFill,
     BIconPip: _icons.BIconPip,
@@ -95603,6 +97141,8 @@ var IconsPlugin = /*#__PURE__*/(0, _plugins.pluginFactoryNoConfig)({
     BIconPlusSquare: _icons.BIconPlusSquare,
     BIconPlusSquareFill: _icons.BIconPlusSquareFill,
     BIconPower: _icons.BIconPower,
+    BIconPrinter: _icons.BIconPrinter,
+    BIconPrinterFill: _icons.BIconPrinterFill,
     BIconPuzzle: _icons.BIconPuzzle,
     BIconPuzzleFill: _icons.BIconPuzzleFill,
     BIconQuestion: _icons.BIconQuestion,
@@ -95616,17 +97156,35 @@ var IconsPlugin = /*#__PURE__*/(0, _plugins.pluginFactoryNoConfig)({
     BIconQuestionSquareFill: _icons.BIconQuestionSquareFill,
     BIconReceipt: _icons.BIconReceipt,
     BIconReceiptCutoff: _icons.BIconReceiptCutoff,
+    BIconReception0: _icons.BIconReception0,
+    BIconReception1: _icons.BIconReception1,
+    BIconReception2: _icons.BIconReception2,
+    BIconReception3: _icons.BIconReception3,
+    BIconReception4: _icons.BIconReception4,
     BIconReply: _icons.BIconReply,
     BIconReplyAll: _icons.BIconReplyAll,
     BIconReplyAllFill: _icons.BIconReplyAllFill,
     BIconReplyFill: _icons.BIconReplyFill,
+    BIconRss: _icons.BIconRss,
+    BIconRssFill: _icons.BIconRssFill,
     BIconScrewdriver: _icons.BIconScrewdriver,
     BIconSearch: _icons.BIconSearch,
+    BIconSegmentedNav: _icons.BIconSegmentedNav,
     BIconServer: _icons.BIconServer,
+    BIconShare: _icons.BIconShare,
+    BIconShareFill: _icons.BIconShareFill,
     BIconShield: _icons.BIconShield,
+    BIconShieldCheck: _icons.BIconShieldCheck,
+    BIconShieldExclamation: _icons.BIconShieldExclamation,
     BIconShieldFill: _icons.BIconShieldFill,
+    BIconShieldFillCheck: _icons.BIconShieldFillCheck,
+    BIconShieldFillExclamation: _icons.BIconShieldFillExclamation,
+    BIconShieldFillMinus: _icons.BIconShieldFillMinus,
+    BIconShieldFillPlus: _icons.BIconShieldFillPlus,
     BIconShieldLock: _icons.BIconShieldLock,
     BIconShieldLockFill: _icons.BIconShieldLockFill,
+    BIconShieldMinus: _icons.BIconShieldMinus,
+    BIconShieldPlus: _icons.BIconShieldPlus,
     BIconShieldShaded: _icons.BIconShieldShaded,
     BIconShieldSlash: _icons.BIconShieldSlash,
     BIconShieldSlashFill: _icons.BIconShieldSlashFill,
@@ -95635,6 +97193,14 @@ var IconsPlugin = /*#__PURE__*/(0, _plugins.pluginFactoryNoConfig)({
     BIconShop: _icons.BIconShop,
     BIconShopWindow: _icons.BIconShopWindow,
     BIconShuffle: _icons.BIconShuffle,
+    BIconSignpost: _icons.BIconSignpost,
+    BIconSignpost2: _icons.BIconSignpost2,
+    BIconSignpost2Fill: _icons.BIconSignpost2Fill,
+    BIconSignpostFill: _icons.BIconSignpostFill,
+    BIconSignpostSplit: _icons.BIconSignpostSplit,
+    BIconSignpostSplitFill: _icons.BIconSignpostSplitFill,
+    BIconSim: _icons.BIconSim,
+    BIconSimFill: _icons.BIconSimFill,
     BIconSkipBackward: _icons.BIconSkipBackward,
     BIconSkipBackwardFill: _icons.BIconSkipBackwardFill,
     BIconSkipEnd: _icons.BIconSkipEnd,
@@ -95649,25 +97215,72 @@ var IconsPlugin = /*#__PURE__*/(0, _plugins.pluginFactoryNoConfig)({
     BIconSlashSquare: _icons.BIconSlashSquare,
     BIconSlashSquareFill: _icons.BIconSlashSquareFill,
     BIconSliders: _icons.BIconSliders,
+    BIconSmartwatch: _icons.BIconSmartwatch,
+    BIconSortAlphaDown: _icons.BIconSortAlphaDown,
+    BIconSortAlphaDownAlt: _icons.BIconSortAlphaDownAlt,
+    BIconSortAlphaUp: _icons.BIconSortAlphaUp,
+    BIconSortAlphaUpAlt: _icons.BIconSortAlphaUpAlt,
+    BIconSortDown: _icons.BIconSortDown,
+    BIconSortDownAlt: _icons.BIconSortDownAlt,
+    BIconSortNumericDown: _icons.BIconSortNumericDown,
+    BIconSortNumericDownAlt: _icons.BIconSortNumericDownAlt,
+    BIconSortNumericUp: _icons.BIconSortNumericUp,
+    BIconSortNumericUpAlt: _icons.BIconSortNumericUpAlt,
+    BIconSortUp: _icons.BIconSortUp,
+    BIconSortUpAlt: _icons.BIconSortUpAlt,
     BIconSoundwave: _icons.BIconSoundwave,
     BIconSpeaker: _icons.BIconSpeaker,
+    BIconSpellcheck: _icons.BIconSpellcheck,
     BIconSquare: _icons.BIconSquare,
     BIconSquareFill: _icons.BIconSquareFill,
     BIconSquareHalf: _icons.BIconSquareHalf,
     BIconStar: _icons.BIconStar,
     BIconStarFill: _icons.BIconStarFill,
     BIconStarHalf: _icons.BIconStarHalf,
+    BIconStickies: _icons.BIconStickies,
+    BIconStickiesFill: _icons.BIconStickiesFill,
+    BIconSticky: _icons.BIconSticky,
+    BIconStickyFill: _icons.BIconStickyFill,
     BIconStop: _icons.BIconStop,
     BIconStopFill: _icons.BIconStopFill,
+    BIconStoplights: _icons.BIconStoplights,
+    BIconStoplightsFill: _icons.BIconStoplightsFill,
     BIconStopwatch: _icons.BIconStopwatch,
     BIconStopwatchFill: _icons.BIconStopwatchFill,
     BIconSubtract: _icons.BIconSubtract,
+    BIconSuitClub: _icons.BIconSuitClub,
+    BIconSuitClubFill: _icons.BIconSuitClubFill,
+    BIconSuitDiamond: _icons.BIconSuitDiamond,
+    BIconSuitDiamondFill: _icons.BIconSuitDiamondFill,
+    BIconSuitHeart: _icons.BIconSuitHeart,
+    BIconSuitHeartFill: _icons.BIconSuitHeartFill,
+    BIconSuitSpade: _icons.BIconSuitSpade,
+    BIconSuitSpadeFill: _icons.BIconSuitSpadeFill,
     BIconSun: _icons.BIconSun,
+    BIconSunglasses: _icons.BIconSunglasses,
     BIconTable: _icons.BIconTable,
     BIconTablet: _icons.BIconTablet,
+    BIconTabletFill: _icons.BIconTabletFill,
     BIconTabletLandscape: _icons.BIconTabletLandscape,
+    BIconTabletLandscapeFill: _icons.BIconTabletLandscapeFill,
     BIconTag: _icons.BIconTag,
     BIconTagFill: _icons.BIconTagFill,
+    BIconTags: _icons.BIconTags,
+    BIconTagsFill: _icons.BIconTagsFill,
+    BIconTelephone: _icons.BIconTelephone,
+    BIconTelephoneFill: _icons.BIconTelephoneFill,
+    BIconTelephoneForward: _icons.BIconTelephoneForward,
+    BIconTelephoneForwardFill: _icons.BIconTelephoneForwardFill,
+    BIconTelephoneInbound: _icons.BIconTelephoneInbound,
+    BIconTelephoneInboundFill: _icons.BIconTelephoneInboundFill,
+    BIconTelephoneMinus: _icons.BIconTelephoneMinus,
+    BIconTelephoneMinusFill: _icons.BIconTelephoneMinusFill,
+    BIconTelephoneOutbound: _icons.BIconTelephoneOutbound,
+    BIconTelephoneOutboundFill: _icons.BIconTelephoneOutboundFill,
+    BIconTelephonePlus: _icons.BIconTelephonePlus,
+    BIconTelephonePlusFill: _icons.BIconTelephonePlusFill,
+    BIconTelephoneX: _icons.BIconTelephoneX,
+    BIconTelephoneXFill: _icons.BIconTelephoneXFill,
     BIconTerminal: _icons.BIconTerminal,
     BIconTerminalFill: _icons.BIconTerminalFill,
     BIconTextCenter: _icons.BIconTextCenter,
@@ -95676,17 +97289,25 @@ var IconsPlugin = /*#__PURE__*/(0, _plugins.pluginFactoryNoConfig)({
     BIconTextLeft: _icons.BIconTextLeft,
     BIconTextRight: _icons.BIconTextRight,
     BIconTextarea: _icons.BIconTextarea,
+    BIconTextareaResize: _icons.BIconTextareaResize,
     BIconTextareaT: _icons.BIconTextareaT,
+    BIconThermometer: _icons.BIconThermometer,
+    BIconThermometerHalf: _icons.BIconThermometerHalf,
     BIconThreeDots: _icons.BIconThreeDots,
     BIconThreeDotsVertical: _icons.BIconThreeDotsVertical,
+    BIconToggle2Off: _icons.BIconToggle2Off,
+    BIconToggle2On: _icons.BIconToggle2On,
     BIconToggleOff: _icons.BIconToggleOff,
     BIconToggleOn: _icons.BIconToggleOn,
     BIconToggles: _icons.BIconToggles,
+    BIconToggles2: _icons.BIconToggles2,
     BIconTools: _icons.BIconTools,
     BIconTrash: _icons.BIconTrash,
     BIconTrash2: _icons.BIconTrash2,
     BIconTrash2Fill: _icons.BIconTrash2Fill,
     BIconTrashFill: _icons.BIconTrashFill,
+    BIconTree: _icons.BIconTree,
+    BIconTreeFill: _icons.BIconTreeFill,
     BIconTriangle: _icons.BIconTriangle,
     BIconTriangleFill: _icons.BIconTriangleFill,
     BIconTriangleHalf: _icons.BIconTriangleHalf,
@@ -95703,6 +97324,8 @@ var IconsPlugin = /*#__PURE__*/(0, _plugins.pluginFactoryNoConfig)({
     BIconTypeItalic: _icons.BIconTypeItalic,
     BIconTypeStrikethrough: _icons.BIconTypeStrikethrough,
     BIconTypeUnderline: _icons.BIconTypeUnderline,
+    BIconUiChecks: _icons.BIconUiChecks,
+    BIconUiRadios: _icons.BIconUiRadios,
     BIconUnion: _icons.BIconUnion,
     BIconUnlock: _icons.BIconUnlock,
     BIconUnlockFill: _icons.BIconUnlockFill,
@@ -95711,6 +97334,7 @@ var IconsPlugin = /*#__PURE__*/(0, _plugins.pluginFactoryNoConfig)({
     BIconUpload: _icons.BIconUpload,
     BIconViewList: _icons.BIconViewList,
     BIconViewStacked: _icons.BIconViewStacked,
+    BIconVoicemail: _icons.BIconVoicemail,
     BIconVolumeDown: _icons.BIconVolumeDown,
     BIconVolumeDownFill: _icons.BIconVolumeDownFill,
     BIconVolumeMute: _icons.BIconVolumeMute,
@@ -95722,8 +97346,12 @@ var IconsPlugin = /*#__PURE__*/(0, _plugins.pluginFactoryNoConfig)({
     BIconVr: _icons.BIconVr,
     BIconWallet: _icons.BIconWallet,
     BIconWallet2: _icons.BIconWallet2,
+    BIconWalletFill: _icons.BIconWalletFill,
     BIconWatch: _icons.BIconWatch,
     BIconWifi: _icons.BIconWifi,
+    BIconWifi1: _icons.BIconWifi1,
+    BIconWifi2: _icons.BIconWifi2,
+    BIconWifiOff: _icons.BIconWifiOff,
     BIconWindow: _icons.BIconWindow,
     BIconWrench: _icons.BIconWrench,
     BIconX: _icons.BIconX,
@@ -95734,7 +97362,9 @@ var IconsPlugin = /*#__PURE__*/(0, _plugins.pluginFactoryNoConfig)({
     BIconXOctagon: _icons.BIconXOctagon,
     BIconXOctagonFill: _icons.BIconXOctagonFill,
     BIconXSquare: _icons.BIconXSquare,
-    BIconXSquareFill: _icons.BIconXSquareFill
+    BIconXSquareFill: _icons.BIconXSquareFill,
+    BIconZoomIn: _icons.BIconZoomIn,
+    BIconZoomOut: _icons.BIconZoomOut
   }
 }); // Export the BootstrapVueIcons plugin installer
 // Mainly for the stand-alone bootstrap-vue-icons.xxx.js builds
@@ -97394,7 +99024,7 @@ var _visible = require("./directives/visible");
 var _visible2 = require("./directives/visible/visible");
 
 /*!
- * BootstrapVue 2.15.0
+ * BootstrapVue 2.16.0
  *
  * @link https://bootstrap-vue.org
  * @source https://github.com/bootstrap-vue/bootstrap-vue
@@ -97515,7 +99145,11 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
+<<<<<<< HEAD
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "59071" + '/');
+=======
   var ws = new WebSocket(protocol + '://' + hostname + ':' + "57502" + '/');
+>>>>>>> master
 
   ws.onmessage = function (event) {
     checkedAssets = {};

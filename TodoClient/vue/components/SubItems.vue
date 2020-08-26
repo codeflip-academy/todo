@@ -1,5 +1,7 @@
 <template>
   <div class="sub-items-wrapper">
+    <AddSubItemForm :todoListItem="todoListItem" @add-sub-item="dispatchAddSubItem"></AddSubItemForm>
+
     <b-list-group v-if="!loadingSubItems">
       <Draggable
         handle=".sub-item-handle"
@@ -18,7 +20,6 @@
         <b-list-group-item v-if="subItems.length < 1">There are no sub-items.</b-list-group-item>
       </Draggable>
     </b-list-group>
-    <AddSubItemForm :todoListItem="todoListItem" @add-sub-item="dispatchAddSubItem"></AddSubItemForm>
   </div>
 </template>
 
@@ -227,9 +228,9 @@ export default {
     },
     triggerSubItemCountChangedEvent() {
       if (this.subItems.length > 0) {
-        this.$emit("sub-item-count-changed", { disabled: true });
+        this.$emit("sub-item-count-changed", { hasSubItems: true });
       } else {
-        this.$emit("sub-item-count-changed", { disabled: false });
+        this.$emit("sub-item-count-changed", { hasSubItems: false });
       }
     },
     subItemsBelongToItem(itemId) {
