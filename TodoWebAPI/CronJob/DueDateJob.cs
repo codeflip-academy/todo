@@ -42,15 +42,16 @@ namespace TodoWebAPI.CronJob
         public override async Task DoWork(CancellationToken cancellationToken, IServiceProvider serviceProvider)
         {
             var accountRepository = serviceProvider.GetRequiredService<IAccountRepository>();
+            var listRepository = serviceProvider.GetRequiredService<ITodoListRepository>();
             var items = await _dapperQuery.GetItemsFromListItemsAsync();
 
             foreach (var item in items)
             {
                 if (item.DueDate?.Date == DateTime.Now.Date && item.DueDate?.Year == DateTime.Now.Year)
                 {
-                    var contributors = await _dapperQuery.GetContributorsByListIdAsync(item.ListId.GetValueOrDefault());
+                    var list = await listRepository.FindTodoListIdByIdAsync(item.ListId.GetValueOrDefault());
 
-                    foreach (var contributor in contributors)
+                    foreach (var contributor in list.Contributors)
                     {
                         var account = await accountRepository.FindAccountByEmailAsync(contributor);
 

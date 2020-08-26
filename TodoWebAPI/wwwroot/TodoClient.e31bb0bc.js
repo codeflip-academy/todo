@@ -47834,7 +47834,7 @@ exports.default = _default;
                               expression: "emailDueDate"
                             }
                           },
-                          [_vm._v("Items Due Today")]
+                          [_vm._v("List items Due Today")]
                         ),
                         _vm._v(" "),
                         _c(

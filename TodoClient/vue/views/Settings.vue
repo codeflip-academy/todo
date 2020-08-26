@@ -16,7 +16,7 @@
           <p class="text-muted">Send notifications when:</p>
           <b-form class="notifications-form">
             <strong>
-              <b-form-checkbox inline v-model="emailDueDate">Items Due Today</b-form-checkbox>
+              <b-form-checkbox inline v-model="emailDueDate">List items Due Today</b-form-checkbox>
               <b-form-checkbox inline v-model="emailCompleted">List Completed</b-form-checkbox>
             </strong>
           </b-form>
