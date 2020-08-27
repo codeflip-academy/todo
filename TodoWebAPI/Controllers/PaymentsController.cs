@@ -93,7 +93,7 @@ namespace TodoWebAPI.Controllers
 
             var paymentMethodAdded = await _mediator.Send(addPayment);
 
-            if (account.HasSubscription())
+            if (account.SubscriptionId != null)
             {
                 var updateSubscription = new UpdateSubscriptionPaymentMethod
                 {

@@ -41,7 +41,7 @@ namespace TodoWebAPI.UserStories
                 var createSubscriptionRequest = new SubscriptionRequest
                 {
                     PaymentMethodToken = account.PaymentMethodId,
-                    PlanId = account.PaymentMethodDeletedPlan,
+                    PlanId = SubscriptionHelper.ConvertPlanToBrainTreeType(account.PaymentMethodDeletedPlan),
                     Id = subscriptionId,
                 };
 

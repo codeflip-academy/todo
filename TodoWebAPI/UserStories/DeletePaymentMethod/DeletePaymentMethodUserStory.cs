@@ -38,7 +38,6 @@ namespace TodoWebAPI.UserStories.DeletePaymentMethod
             }
 
             account.RemovePaymentMethodId();
-            account.RemoveSubscriptionId();
 
             gateway.PaymentMethod.Delete(request.PaymentMethodId);
 

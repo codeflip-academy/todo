@@ -39914,6 +39914,13 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.default = void 0;
+
+var _axios = _interopRequireDefault(require("axios"));
+
+var _vuex = require("vuex");
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
 //
 //
 //
@@ -39929,8 +39936,25 @@ var _default = {
   methods: {
     updatePaymentInfo() {
       this.$emit("updatePaymentInfo");
+    },
+
+    async removePaymentMethod() {
+      await (0, _axios.default)({
+        method: "DELETE",
+        url: "api/payments/paymentMethod/delete",
+        headers: {
+          "content-type": "application/json"
+        },
+        data: JSON.stringify({
+          plan: this.plan
+        })
+      });
     }
 
+  },
+  computed: { ...(0, _vuex.mapState)({
+      plan: state => state.plan.name
+    })
   }
 };
 exports.default = _default;
@@ -39966,9 +39990,15 @@ exports.default = _default;
       }
     },
     [
-      _c("b-link", { staticClass: "card-link mt-3 d-block" }, [
-        _vm._v("Remove card")
-      ])
+      _c(
+        "b-button",
+        {
+          staticClass: "card-link mt-3 d-block",
+          attrs: { variant: "link" },
+          on: { click: _vm.removePaymentMethod }
+        },
+        [_vm._v("Remove card")]
+      )
     ],
     1
   )
@@ -40002,7 +40032,7 @@ render._withStripped = true
         
       }
     })();
-},{"vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"node_modules/braintree-web/lib/enumerate.js":[function(require,module,exports) {
+},{"axios":"node_modules/axios/index.js","vuex":"node_modules/vuex/dist/vuex.esm.js","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"node_modules/braintree-web/lib/enumerate.js":[function(require,module,exports) {
 'use strict';
 
 function enumerate(values, prefix) {
@@ -48273,7 +48303,7 @@ exports.default = _default;
               _vm._v(" "),
               _c(
                 "b-tab",
-                { attrs: { title: "Notifications", active: "" } },
+                { attrs: { title: "Notifications" } },
                 [
                   _c("h2", [_vm._v("Notifications")]),
                   _vm._v(" "),
@@ -97907,7 +97937,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "54711" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "55412" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};
