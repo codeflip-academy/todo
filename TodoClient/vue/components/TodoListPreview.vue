@@ -1,12 +1,14 @@
 <template>
-  <b-button
-    class="sidebar-list"
-    :to="{ path: `/lists/${todoList.id}` }"
-    :class="{ 'selected': $route.params.todoListId == todoList.id, 'completed': todoList.completed }"
-  >
-    {{ todoList.listTitle }}
-    <div class="sidebar-list-completed-state">{{ todoList.incompleteCount }}</div>
-  </b-button>
+  <div v-if="todoList.role === 2 || todoList.role === 3" class="sidebar-list-wrapper">
+    <b-button
+      class="sidebar-list"
+      :to="{ path: `/lists/${todoList.id}` }"
+      :class="{ 'selected': $route.params.todoListId == todoList.id, 'completed': todoList.completed }"
+    >
+      {{ todoList.listTitle }}
+      <div class="sidebar-list-completed-state">{{ todoList.incompleteCount }}</div>
+    </b-button>
+  </div>
 </template>
 
 <script>
@@ -17,25 +19,6 @@ export default {
   methods: {
     deleteTodoList() {
       this.$emit("delete-todo-list", this.todoList.id);
-    },
-    async acceptInvitation() {
-      await axios({
-        method: "POST",
-        url: `api/lists/${this.todoList.id}/accept`,
-      });
-
-      this.$store.commit("changeUserRoleByListId", {
-        todoListId: this.todoList.id,
-        role: 2,
-      });
-    },
-    async declineInvitation() {
-      await axios({
-        method: "POST",
-        url: `api/lists/${this.todoList.id}/decline`,
-      });
-
-      this.$store.commit("deleteTodoList", this.todoList.id);
     },
     async leaveTodoList() {
       await axios({
@@ -56,6 +39,12 @@ $blue: #1e88e5;
 $orange: #ff7043;
 $green: #4caf50;
 $red: #b71c1c;
+
+.sidebar-list-wrapper {
+  &:not(:last-child) {
+    margin-bottom: 10px;
+  }
+}
 
 .sidebar-list {
   display: flex;
@@ -80,10 +69,6 @@ $red: #b71c1c;
     &.completed {
       background: transparentize($green, 0.8) !important;
     }
-  }
-
-  &:not(:last-child) {
-    margin-bottom: 10px;
   }
 
   &.selected {
