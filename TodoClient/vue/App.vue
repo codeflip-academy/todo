@@ -1,19 +1,20 @@
 <template>
-  <div id="content" class="mt-4">
-    <Header></Header>
-    <RouterView></RouterView>
-  </div>
+  <RouterView></RouterView>
 </template>
 
 <script>
-import Header from "./components/Header";
+import axios from "axios";
 
 export default {
   name: "App",
-  components: {
-    Header,
+  data() {
+    return {
+      test: false,
+    };
   },
   async created() {
+    await this.checkAuthState();
+    await this.getPlan();
     await this.$store.dispatch("getTodoLists");
   },
   mounted() {
@@ -60,44 +61,175 @@ export default {
       async () => await this.$store.dispatch("getTodoLists")
     );
   },
+  methods: {
+    async checkAuthState() {
+      try {
+        const user = await axios({
+          method: "GET",
+          url: "api/accounts",
+        });
+        this.$store.commit("setUserData", user.data);
+      } catch (error) {
+        console.error(error);
+      }
+    },
+    async getPlan() {
+      await this.$store.dispatch("getPlan");
+    },
+    logout() {
+      this.user = {};
+      axios({
+        method: "GET",
+        url: "api/accounts/logout",
+      }).then(() => {
+        this.$router.push("/login");
+      });
+    },
+  },
 };
 </script>
 
 <style lang="scss">
+$light-gray: #f5f6f7;
+$gray: #455a64;
+$blue: #1e88e5;
+$orange: #ff7043;
+$green: #4caf50;
+$red: #b71c1c;
+
 * {
   box-sizing: border-box;
 }
 
-#content {
-  padding: 85px 20px;
-  height: 100vh;
+body {
+  font-family: "Poppins", sans-serif !important;
+  font-weight: 300;
+  font-size: 16px;
+}
 
-  @media screen and (min-width: 768px) {
-    padding: 100px 20px;
+.account-options {
+  background: $light-gray;
+  border-bottom: 1px solid darken($light-gray, 5%);
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
 
-    h1 {
-      font-size: 50px;
+  .account-dropdown {
+    display: flex;
+    align-items: center;
+    padding: 12px 25px;
+    text-decoration: none;
+    background-color: $light-gray;
+    border-left: 1px solid darken($light-gray, 5%);
+    transition: background-color 0.3s ease;
+
+    &:hover {
+      background-color: darken($light-gray, 2%);
+    }
+
+    &:active,
+    &:focus {
+      background-color: darken($light-gray, 4%);
+    }
+
+    .profile-picture {
+      margin-right: 12px;
+
+      img {
+        width: 100%;
+        max-width: 32px;
+        height: auto;
+        border-radius: 4px;
+      }
+    }
+
+    .profile-name {
+      color: $gray;
+      margin-right: 12px;
+    }
+
+    .dropdown-toggler {
+      color: lighten($gray, 20%);
+      font-size: 14px;
+    }
+  }
+}
+
+.sidebar {
+  min-height: 100vh;
+  border-right: 1px solid darken($light-gray, 5%);
+
+  .sidebar-header {
+    font-size: 22px;
+
+    .sidebar-brand {
+      display: block;
+      padding: 20px 30px;
+      font-weight: 300;
+      text-transform: uppercase;
+      color: $orange;
+      transition: color 0.3s ease;
+
+      svg {
+        margin-right: 7px;
+      }
+
+      &:hover {
+        text-decoration: none;
+        color: darken($orange, 10%);
+      }
     }
   }
 
-  h1,
-  h2,
-  h3,
-  h4 {
-    font-family: "Nunito", sans-serif;
-    font-weight: bold;
+  .sidebar-lists {
+    padding-right: 15px;
   }
 }
 
-h1 {
-  font-size: 40px;
+.list-wrapper {
+  height: 100vh;
+  border-right: 1px solid darken($light-gray, 5%);
+
+  .list-header {
+    padding: 20px 30px;
+    border-bottom: solid 4px $blue;
+
+    .list-title {
+      font-size: 18px;
+      color: $gray;
+      text-transform: uppercase;
+      margin: 0;
+    }
+  }
 }
 
-.modal-footer {
-  display: none !important;
-}
+.modal {
+  .modal-title {
+    font-size: 18px;
+    font-weight: bold;
+    text-transform: uppercase;
+    color: $gray;
+  }
 
-#confetti-canvas {
-  z-index: 100;
+  .modal-content {
+    border-radius: 0 !important;
+    border: none !important;
+  }
+
+  .modal-footer {
+    display: none !important;
+  }
+
+  .form-group {
+    color: $gray;
+
+    .form-control {
+      border-radius: 0;
+    }
+  }
+
+  .btn {
+    border-radius: 0;
+  }
 }
 </style>

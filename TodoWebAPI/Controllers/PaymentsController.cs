@@ -93,7 +93,7 @@ namespace TodoWebAPI.Controllers
 
             var paymentMethodAdded = await _mediator.Send(addPayment);
 
-            if (account.SubscriptionId != null)
+            if (account.HasSubscription())
             {
                 var updateSubscription = new UpdateSubscriptionPaymentMethod
                 {
@@ -120,31 +120,39 @@ namespace TodoWebAPI.Controllers
         }
 
         [HttpPost, Route("subscription/change")]
-        public async Task<IActionResult> ChangePaymentSubscription([FromBody] ChangePaymentSubscription changePayment)
+        public async Task<IActionResult> ChangeSubscription([FromBody] ChangeSubscription changeSubscriptionCommand)
         {
-            changePayment.AccountId = Guid.Parse(User.FindFirst(c => c.Type == "urn:codefliptodo:accountid").Value);
+            var accountId = User.ReadClaimAsGuidValue("urn:codefliptodo:accountid");
 
-            var createSubscription = new CreateSubscription
+            var createSubscriptionCommand = new CreateSubscription
             {
-                AccountId = changePayment.AccountId,
-                Plan = changePayment.Plan
+                AccountId = accountId,
+                Plan = "Free",
             };
 
-            var result = await _mediator.Send(createSubscription);
+            var createSubscriptionResult = await _mediator.Send(createSubscriptionCommand);
 
-            if (result)
+            if (createSubscriptionResult)
             {
-                await _mediator.Send(changePayment);
+                changeSubscriptionCommand.AccountId = accountId;
 
-                var planChange = new ChangePlan
+                var changeSubscriptionResult = await _mediator.Send(changeSubscriptionCommand);
+
+                if (changeSubscriptionResult)
                 {
-                    AccountId = changePayment.AccountId,
-                    Plan = changePayment.Plan
-                };
+                    var changePlanCommand = new ChangePlan
+                    {
+                        AccountId = changeSubscriptionCommand.AccountId,
+                        Plan = changeSubscriptionCommand.Plan
+                    };
 
-                await _mediator.Send(planChange);
+                    var changePlanResult = await _mediator.Send(changePlanCommand);
 
-                return Ok();
+                    if (changePlanResult)
+                    {
+                        return Ok();
+                    }
+                }
             }
 
             return BadRequest();
@@ -153,10 +161,10 @@ namespace TodoWebAPI.Controllers
         [HttpDelete, Route("paymentMethod/delete")]
         public async Task<IActionResult> DeletePayment(DeletePaymentMethod deletePaymentMethod)
         {
-            var accountId = Guid.Parse(User.FindFirst(c => c.Type == "urn:codefliptodo:accountid").Value);
-            var account = await _accountRepository.FindAccountByIdAsync(accountId);
+            var account = await _accountRepository.FindAccountByIdAsync(User.ReadClaimAsGuidValue("urn:codefliptodo:accountid"));
+
             deletePaymentMethod.PaymentMethodId = account.PaymentMethodId;
-            deletePaymentMethod.AccountId = accountId;
+            deletePaymentMethod.AccountId = account.Id;
 
             await _mediator.Send(deletePaymentMethod);
 
@@ -172,14 +180,14 @@ namespace TodoWebAPI.Controllers
                 CouponCode = redeemCouponViewModel.CouponCode
             };
 
-            var codeRedeemed = await _mediator.Send(redeemCouponCommand);
+            var redeemed = await _mediator.Send(redeemCouponCommand);
 
-            if (codeRedeemed)
+            if (redeemed)
             {
-                return Ok("A free month has been applied.");
+                return Ok("Coupon has been successfully applied to your account!");
             }
 
-            return BadRequest("Unable to apply coupon.");
+            return BadRequest("Unable to apply the coupon code.");
         }
     }
 }

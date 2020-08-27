@@ -1,6 +1,10 @@
 <template>
   <div id="add-todo-list-item">
-    <b-button @click="$bvModal.show('modal-add-todo-list-item')">Add item</b-button>
+    <div class="item item-add" @click="$bvModal.show('modal-add-todo-list-item')">
+      <b-button class="btn-add">
+        <b-icon-plus></b-icon-plus>
+      </b-button>Add item
+    </div>
 
     <b-modal id="modal-add-todo-list-item" title="Add item" @shown="focusOnForm">
       <b-form @submit.prevent="addItemRequest">
@@ -61,3 +65,40 @@ export default {
   },
 };
 </script>
+
+<style lang="scss" scoped>
+$light-gray: #f5f6f7;
+$gray: #455a64;
+$blue: #1e88e5;
+$orange: #ff7043;
+$green: #4caf50;
+$red: #b71c1c;
+
+.btn-add.btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 100px;
+  background-color: $green;
+  border: none;
+  margin-bottom: 0;
+  margin-right: 16px;
+  font-size: 36px;
+  color: #fff;
+  box-shadow: 0 10px 30px transparentize($green, 0.7);
+  transition: all 0.2s ease;
+
+  &:hover {
+    background-color: darken($green, 5%);
+    box-shadow: 0 10px 30px transparentize($green, 0.7);
+  }
+
+  &:active,
+  &focus {
+    box-shadow: 0 10px 30px transparentize($green, 0.7) !important;
+    background-color: darken($green, 10%) !important;
+  }
+}
+</style>
