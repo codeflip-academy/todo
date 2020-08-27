@@ -17,6 +17,13 @@
                 ></Contributors>
                 <div class="list-settings">
                   <InviteContributorsForm :todoList="todoList"></InviteContributorsForm>
+                  <b-dropdown class="list-settings-dropdown" right>
+                    <template v-slot:button-content>
+                      <b-icon-three-dots-vertical font-scale="1"></b-icon-three-dots-vertical>
+                    </template>
+                    <b-dropdown-item v-if="todoList.role === 2" @click="leaveTodoList">Leave</b-dropdown-item>
+                    <b-dropdown-item v-if="todoList.role === 3" @click="deleteTodoList">Delete</b-dropdown-item>
+                  </b-dropdown>
                 </div>
               </div>
             </b-col>
@@ -106,6 +113,13 @@ export default {
     },
     selectItem(item) {
       this.selectedItem = item;
+    },
+    async deleteTodoList() {
+      await this.$store.dispatch("deleteTodoList", {
+        todoListId: this.todoList.id,
+      });
+
+      this.$router.push("/");
     },
     async dispatchGetItemsAndLayout() {
       await this.dispatchGetItemsLayout();
@@ -199,6 +213,14 @@ export default {
       });
 
       return response.data;
+    },
+    async leaveTodoList() {
+      await axios({
+        method: "POST",
+        url: `api/lists/${this.todoList.id}/removeself`,
+      });
+      this.$store.commit("deleteTodoList", this.todoList.id);
+      this.$router.push("/");
     },
     commitSetLoadingItemsState(state) {
       this.loadingItems = state;
@@ -345,7 +367,54 @@ export default {
 };
 </script>
 
-<style lang="scss" scoped>
+<style lang="scss">
+$light-gray: #f5f6f7;
+$gray: #455a64;
+$blue: #1e88e5;
+$orange: #ff7043;
+$green: #4caf50;
+$red: #b71c1c;
+
+.list-settings {
+  display: flex;
+  align-items: center;
+}
+
+.list-settings-dropdown {
+  .dropdown-menu {
+    border-radius: 0;
+  }
+
+  &.show .btn.dropdown-toggle {
+    background: transparent;
+    color: $gray;
+  }
+
+  .btn {
+    font-size: 18px;
+    line-height: 1;
+    margin-left: 10px;
+    background: transparent;
+    color: $gray;
+    padding: 0;
+    border: none;
+    border-radius: 0;
+
+    &:focus,
+    &:hover,
+    &:active {
+      color: $gray !important;
+      border: none;
+      box-shadow: none !important;
+      background: transparent !important;
+    }
+
+    &::after {
+      display: none;
+    }
+  }
+}
+
 .contributors-wrapper {
   display: flex;
   align-items: center;

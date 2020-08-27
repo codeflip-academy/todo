@@ -160,7 +160,39 @@ h3[data-v-3f1240] {
 .btn {
   border-radius: 0;
 }
-.contributors-wrapper[data-v-98e7b1] {
+.list-settings {
+  display: flex;
+  align-items: center;
+}
+
+.list-settings-dropdown .dropdown-menu {
+  border-radius: 0;
+}
+.list-settings-dropdown.show .btn.dropdown-toggle {
+  background: transparent;
+  color: #455a64;
+}
+.list-settings-dropdown .btn {
+  font-size: 18px;
+  line-height: 1;
+  margin-left: 10px;
+  background: transparent;
+  color: #455a64;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+}
+.list-settings-dropdown .btn:focus, .list-settings-dropdown .btn:hover, .list-settings-dropdown .btn:active {
+  color: #455a64 !important;
+  border: none;
+  box-shadow: none !important;
+  background: transparent !important;
+}
+.list-settings-dropdown .btn::after {
+  display: none;
+}
+
+.contributors-wrapper {
   display: flex;
   align-items: center;
   justify-content: flex-end;

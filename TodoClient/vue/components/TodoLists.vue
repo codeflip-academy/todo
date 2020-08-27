@@ -1,12 +1,7 @@
 <template>
   <div>
     <div v-if="!loadingTodoLists">
-      <todo-list-preview
-        v-for="todoList in todoLists"
-        :key="todoList.id"
-        :todoList="todoList"
-        @delete-todo-list="deleteTodoList"
-      ></todo-list-preview>
+      <todo-list-preview v-for="todoList in todoLists" :key="todoList.id" :todoList="todoList"></todo-list-preview>
     </div>
     <AddTodoListForm @add-todo-list="addTodoList"></AddTodoListForm>
   </div>
@@ -32,9 +27,6 @@ export default {
   methods: {
     async addTodoList(listTitle) {
       await this.$store.dispatch("addTodoList", { listTitle });
-    },
-    async deleteTodoList(todoListId) {
-      await this.$store.dispatch("deleteTodoList", { todoListId });
     },
   },
 };

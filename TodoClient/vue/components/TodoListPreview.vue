@@ -17,9 +17,6 @@ import axios from "axios";
 export default {
   props: ["todoList"],
   methods: {
-    deleteTodoList() {
-      this.$emit("delete-todo-list", this.todoList.id);
-    },
     async leaveTodoList() {
       await axios({
         method: "POST",

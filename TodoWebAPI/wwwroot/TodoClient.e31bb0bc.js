@@ -30261,10 +30261,6 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 var _default = {
   props: ["todoList"],
   methods: {
-    deleteTodoList() {
-      this.$emit("delete-todo-list", this.todoList.id);
-    },
-
     async leaveTodoList() {
       await (0, _axios.default)({
         method: "POST",
@@ -30542,11 +30538,6 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 //
 //
 //
-//
-//
-//
-//
-//
 var _default = {
   components: {
     TodoListPreview: _TodoListPreview.default,
@@ -30561,12 +30552,6 @@ var _default = {
     async addTodoList(listTitle) {
       await this.$store.dispatch("addTodoList", {
         listTitle
-      });
-    },
-
-    async deleteTodoList(todoListId) {
-      await this.$store.dispatch("deleteTodoList", {
-        todoListId
       });
     }
 
@@ -30594,8 +30579,7 @@ exports.default = _default;
             _vm._l(_vm.todoLists, function(todoList) {
               return _c("todo-list-preview", {
                 key: todoList.id,
-                attrs: { todoList: todoList },
-                on: { "delete-todo-list": _vm.deleteTodoList }
+                attrs: { todoList: todoList }
               })
             }),
             1
@@ -38983,6 +38967,13 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
 var _default = {
   name: "TodoList",
   props: ["todoListId"],
@@ -39039,6 +39030,13 @@ var _default = {
 
     selectItem(item) {
       this.selectedItem = item;
+    },
+
+    async deleteTodoList() {
+      await this.$store.dispatch("deleteTodoList", {
+        todoListId: this.todoList.id
+      });
+      this.$router.push("/");
     },
 
     async dispatchGetItemsAndLayout() {
@@ -39139,6 +39137,15 @@ var _default = {
         url: "api/lists/".concat(this.todoListId, "/todos/").concat(itemId)
       });
       return response.data;
+    },
+
+    async leaveTodoList() {
+      await (0, _axios.default)({
+        method: "POST",
+        url: "api/lists/".concat(this.todoList.id, "/removeself")
+      });
+      this.$store.commit("deleteTodoList", this.todoList.id);
+      this.$router.push("/");
     },
 
     commitSetLoadingItemsState(state) {
@@ -39335,7 +39342,47 @@ exports.default = _default;
                             [
                               _c("InviteContributorsForm", {
                                 attrs: { todoList: _vm.todoList }
-                              })
+                              }),
+                              _vm._v(" "),
+                              _c(
+                                "b-dropdown",
+                                {
+                                  staticClass: "list-settings-dropdown",
+                                  attrs: { right: "" },
+                                  scopedSlots: _vm._u([
+                                    {
+                                      key: "button-content",
+                                      fn: function() {
+                                        return [
+                                          _c("b-icon-three-dots-vertical", {
+                                            attrs: { "font-scale": "1" }
+                                          })
+                                        ]
+                                      },
+                                      proxy: true
+                                    }
+                                  ])
+                                },
+                                [
+                                  _vm._v(" "),
+                                  _vm.todoList.role === 2
+                                    ? _c(
+                                        "b-dropdown-item",
+                                        { on: { click: _vm.leaveTodoList } },
+                                        [_vm._v("Leave")]
+                                      )
+                                    : _vm._e(),
+                                  _vm._v(" "),
+                                  _vm.todoList.role === 3
+                                    ? _c(
+                                        "b-dropdown-item",
+                                        { on: { click: _vm.deleteTodoList } },
+                                        [_vm._v("Delete")]
+                                      )
+                                    : _vm._e()
+                                ],
+                                1
+                              )
                             ],
                             1
                           )
@@ -39393,7 +39440,7 @@ render._withStripped = true
             render: render,
             staticRenderFns: staticRenderFns,
             _compiled: true,
-            _scopeId: "data-v-98e7b1",
+            _scopeId: null,
             functional: undefined
           };
         })());
