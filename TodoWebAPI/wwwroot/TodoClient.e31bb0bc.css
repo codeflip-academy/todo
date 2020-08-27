@@ -1,3 +1,6 @@
+.sidebar-list-wrapper[data-v-2d7314]:not(:last-child) {
+  margin-bottom: 10px;
+}
 .sidebar-list[data-v-2d7314] {
   display: flex;
   align-items: center;
@@ -18,9 +21,6 @@
 }
 .sidebar-list:hover.completed[data-v-2d7314], .sidebar-list:focus.completed[data-v-2d7314], .sidebar-list:active.completed[data-v-2d7314] {
   background: rgba(76, 175, 80, 0.2) !important;
-}
-.sidebar-list[data-v-2d7314]:not(:last-child) {
-  margin-bottom: 10px;
 }
 .sidebar-list.selected[data-v-2d7314] {
   background: rgba(30, 136, 229, 0.2);
@@ -79,10 +79,12 @@
 }
 .contributors[data-v-370f63] {
   display: flex;
-  justify-content: flex-end;
   list-style: none;
   padding: 0;
   margin: 0;
+}
+.contributors.align-right[data-v-370f63] {
+  justify-content: flex-end;
 }
 .contributors .contributor[data-v-370f63] {
   position: relative;
@@ -311,6 +313,61 @@ h3[data-v-3f1240] {
 .btn-add.btn[data-v-aa59c0]:active, .btn-add.btnfocus[data-v-aa59c0] {
   box-shadow: 0 10px 30px rgba(76, 175, 80, 0.3) !important;
   background-color: #3d8b40 !important;
+}
+#invitations-dropdown {
+  background: transparent;
+}
+#invitations-dropdown .dropdown-toggle {
+  height: 57px;
+  padding: 12px 20px;
+  color: #455a64;
+  border: none !important;
+  border-left: 1px solid #e7e9ec !important;
+  background: transparent;
+}
+#invitations-dropdown .dropdown-toggle:hover {
+  background-color: #eff1f2;
+  box-shadow: none !important;
+}
+#invitations-dropdown .dropdown-toggle:active, #invitations-dropdown .dropdown-toggle:focus {
+  background-color: #eaecee;
+  box-shadow: none !important;
+}
+#invitations-dropdown .dropdown-toggle::after {
+  display: none;
+}
+#invitations-dropdown .dropdown-menu {
+  min-width: 250px;
+  padding: 0px !important;
+  border-radius: 0px;
+}
+#invitations-dropdown .btn {
+  border-radius: 0;
+}
+#invitations-dropdown .notification-icon {
+  position: relative;
+}
+#invitations-dropdown .notification-icon .notification-icon-badge {
+  position: absolute;
+  top: 4px;
+  right: 1px;
+  display: block;
+  width: 6px;
+  height: 6px;
+  background: #b71c1c;
+  border-radius: 100px;
+}
+
+.invitation {
+  padding: 18px;
+}
+.invitation .invitation-title {
+  font-size: 20px;
+  font-weight: bold;
+  margin-bottom: 8px;
+}
+.invitation:not(:last-child) {
+  border-bottom: 1px solid #e7e9ec;
 }
 #login .title {
   font-size: 60px;

@@ -1,5 +1,5 @@
 <template>
-  <ul class="contributors">
+  <ul class="contributors" :class="{ 'align-right': align === 'right' }">
     <li v-for="contributor in todoListContributors" :key="contributor" class="contributor">
       <img
         :src="accountContributors[contributor].pictureUrl"
@@ -14,7 +14,7 @@
 <script>
 export default {
   name: "Contributors",
-  props: ["todoListContributors", "accountContributors"],
+  props: ["todoListContributors", "accountContributors", "align"],
 };
 </script>
 
@@ -27,10 +27,13 @@ export default {
 
 .contributors {
   display: flex;
-  justify-content: flex-end;
   list-style: none;
   padding: 0;
   margin: 0;
+
+  &.align-right {
+    justify-content: flex-end;
+  }
 
   .contributor {
     position: relative;
