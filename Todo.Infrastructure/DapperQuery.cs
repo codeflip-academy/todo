@@ -118,7 +118,7 @@ namespace TodoWebAPI
             {
                 await connection.OpenAsync();
                 var result = await connection.QueryAsync<TodoListItemDto>(@"
-                   SELECT t.ID, t.Notes, t.Completed, t.Name, t.ListID, t.DueDate, t.HasSubItems FROM TodoListItems AS t
+                   SELECT t.ID, t.Notes, t.Completed, t.Name, t.ListID, t.DueDate, t.HasSubItems, t.Important FROM TodoListItems AS t
                     INNER JOIN AccountsLists AS a on t.ListID = a.ListID
                     WHERE a.AccountID = @accountId AND DueDate = @date", new { accountId = accountId, date = date });
                 return result.ToList();
@@ -131,7 +131,7 @@ namespace TodoWebAPI
             {
                 await connection.OpenAsync();
                 var result = await connection.QueryAsync<TodoListItemDto>(@"
-                  SELECT t.ID, t.Notes, t.Completed, t.Name, t.ListID, t.DueDate, t.HasSubItems FROM TodoListItems AS t
+                  SELECT t.ID, t.Notes, t.Completed, t.Name, t.ListID, t.DueDate, t.HasSubItems, t.Important FROM TodoListItems AS t
                     INNER JOIN AccountsLists AS a on t.ListID = a.ListID
                     WHERE a.AccountID = @accountId and t.DueDate IS NOT NULL ORDER BY DueDate DESC
                     ", new { accountId = accountId });

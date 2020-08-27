@@ -38,7 +38,7 @@ namespace TodoWebAPI.UserStories.CreateItem
 
             var todoListAuthorization = new TodoListAuthorizationValidator(list.Contributors, request.Email);
 
-            if(todoListAuthorization.IsUserAuthorized())
+            if (todoListAuthorization.IsUserAuthorized())
             {
                 if (list == null)
                     return null;
@@ -47,7 +47,7 @@ namespace TodoWebAPI.UserStories.CreateItem
 
                 var id = _todoListItemRepository.NextId();
 
-                var todoItem = list.CreateListItem(id, request.Name, request.Notes, dueDate);
+                var todoItem = list.CreateListItem(id, request.Name, request.Notes, dueDate, request.Important);
 
                 await _todoListItemRepository.AddTodoListItemAsync(todoItem);
 
