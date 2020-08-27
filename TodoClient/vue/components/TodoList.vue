@@ -16,7 +16,7 @@
                   :accountContributors="contributors"
                 ></Contributors>
                 <div class="list-settings">
-                  <InviteContributorsForm :listId="todoList.id"></InviteContributorsForm>
+                  <InviteContributorsForm :todoList="todoList"></InviteContributorsForm>
                 </div>
               </div>
             </b-col>
