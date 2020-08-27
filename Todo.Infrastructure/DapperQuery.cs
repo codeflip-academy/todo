@@ -139,6 +139,19 @@ namespace TodoWebAPI
             }
         }
 
+        public async Task<List<TodoListItemDto>> GetAllItemsUnderAccount(Guid accountId)
+        {
+            using (var connection = new SqlConnection(_connectionString))
+            {
+                await connection.OpenAsync();
+                var result = await connection.QueryAsync<TodoListItemDto>(@"
+                    SELECT t.ID, t.Notes, t.Completed, t.Name, t.ListID, t.DueDate, t.HasSubItems FROM TodoListItems AS t
+                INNER JOIN AccountsLists AS a ON t.ListID = a.ListID
+                WHERE a.AccountID = @accountId", new { accountId = accountId });
+                return result.ToList();
+            }
+        }
+
         public async Task<TodoListLayoutDto> GetTodoListLayoutAsync(Guid listId)
         {
             using (var connection = new SqlConnection(_connectionString))
