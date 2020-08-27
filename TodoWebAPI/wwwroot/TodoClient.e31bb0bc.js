@@ -19053,6 +19053,13 @@ const store = new _vuex.default.Store({
       role
     }) {
       state.todoLists[state.todoLists.findIndex(t => t.id === todoListId)].role = role;
+    },
+
+    updateTodoListUncompletedItems(state, {
+      listId,
+      uncompletedItems
+    }) {
+      state.todoLists[state.todoLists.findIndex(t => t.id === listId)].incompleteCount = uncompletedItems;
     }
 
   },
@@ -19163,7 +19170,12 @@ const store = new _vuex.default.Store({
 
     getTodoListById: state => todoListId => {
       return state.todoLists.find(t => t.id === todoListId);
+    },
+
+    invitedTodoLists(state) {
+      return state.todoLists.filter(t => t.role === 0);
     }
+
   }
 });
 var _default = store;
@@ -22056,1104 +22068,7 @@ if (inBrowser && window.Vue) {
 
 var _default = VueRouter;
 exports.default = _default;
-},{}],"node_modules/parcel-bundler/src/builtins/bundle-url.js":[function(require,module,exports) {
-var bundleURL = null;
-
-function getBundleURLCached() {
-  if (!bundleURL) {
-    bundleURL = getBundleURL();
-  }
-
-  return bundleURL;
-}
-
-function getBundleURL() {
-  // Attempt to find the URL of the current script and use that as the base URL
-  try {
-    throw new Error();
-  } catch (err) {
-    var matches = ('' + err.stack).match(/(https?|file|ftp|chrome-extension|moz-extension):\/\/[^)\n]+/g);
-
-    if (matches) {
-      return getBaseURL(matches[0]);
-    }
-  }
-
-  return '/';
-}
-
-function getBaseURL(url) {
-  return ('' + url).replace(/^((?:https?|file|ftp|chrome-extension|moz-extension):\/\/.+)\/[^/]+$/, '$1') + '/';
-}
-
-exports.getBundleURL = getBundleURLCached;
-exports.getBaseURL = getBaseURL;
-},{}],"node_modules/parcel-bundler/src/builtins/css-loader.js":[function(require,module,exports) {
-var bundle = require('./bundle-url');
-
-function updateLink(link) {
-  var newLink = link.cloneNode();
-
-  newLink.onload = function () {
-    link.remove();
-  };
-
-  newLink.href = link.href.split('?')[0] + '?' + Date.now();
-  link.parentNode.insertBefore(newLink, link.nextSibling);
-}
-
-var cssTimeout = null;
-
-function reloadCSS() {
-  if (cssTimeout) {
-    return;
-  }
-
-  cssTimeout = setTimeout(function () {
-    var links = document.querySelectorAll('link[rel="stylesheet"]');
-
-    for (var i = 0; i < links.length; i++) {
-      if (bundle.getBaseURL(links[i].href) === bundle.getBundleURL()) {
-        updateLink(links[i]);
-      }
-    }
-
-    cssTimeout = null;
-  }, 50);
-}
-
-module.exports = reloadCSS;
-},{"./bundle-url":"node_modules/parcel-bundler/src/builtins/bundle-url.js"}],"node_modules/vue-hot-reload-api/dist/index.js":[function(require,module,exports) {
-var Vue // late bind
-var version
-var map = Object.create(null)
-if (typeof window !== 'undefined') {
-  window.__VUE_HOT_MAP__ = map
-}
-var installed = false
-var isBrowserify = false
-var initHookName = 'beforeCreate'
-
-exports.install = function (vue, browserify) {
-  if (installed) { return }
-  installed = true
-
-  Vue = vue.__esModule ? vue.default : vue
-  version = Vue.version.split('.').map(Number)
-  isBrowserify = browserify
-
-  // compat with < 2.0.0-alpha.7
-  if (Vue.config._lifecycleHooks.indexOf('init') > -1) {
-    initHookName = 'init'
-  }
-
-  exports.compatible = version[0] >= 2
-  if (!exports.compatible) {
-    console.warn(
-      '[HMR] You are using a version of vue-hot-reload-api that is ' +
-        'only compatible with Vue.js core ^2.0.0.'
-    )
-    return
-  }
-}
-
-/**
- * Create a record for a hot module, which keeps track of its constructor
- * and instances
- *
- * @param {String} id
- * @param {Object} options
- */
-
-exports.createRecord = function (id, options) {
-  if(map[id]) { return }
-
-  var Ctor = null
-  if (typeof options === 'function') {
-    Ctor = options
-    options = Ctor.options
-  }
-  makeOptionsHot(id, options)
-  map[id] = {
-    Ctor: Ctor,
-    options: options,
-    instances: []
-  }
-}
-
-/**
- * Check if module is recorded
- *
- * @param {String} id
- */
-
-exports.isRecorded = function (id) {
-  return typeof map[id] !== 'undefined'
-}
-
-/**
- * Make a Component options object hot.
- *
- * @param {String} id
- * @param {Object} options
- */
-
-function makeOptionsHot(id, options) {
-  if (options.functional) {
-    var render = options.render
-    options.render = function (h, ctx) {
-      var instances = map[id].instances
-      if (ctx && instances.indexOf(ctx.parent) < 0) {
-        instances.push(ctx.parent)
-      }
-      return render(h, ctx)
-    }
-  } else {
-    injectHook(options, initHookName, function() {
-      var record = map[id]
-      if (!record.Ctor) {
-        record.Ctor = this.constructor
-      }
-      record.instances.push(this)
-    })
-    injectHook(options, 'beforeDestroy', function() {
-      var instances = map[id].instances
-      instances.splice(instances.indexOf(this), 1)
-    })
-  }
-}
-
-/**
- * Inject a hook to a hot reloadable component so that
- * we can keep track of it.
- *
- * @param {Object} options
- * @param {String} name
- * @param {Function} hook
- */
-
-function injectHook(options, name, hook) {
-  var existing = options[name]
-  options[name] = existing
-    ? Array.isArray(existing) ? existing.concat(hook) : [existing, hook]
-    : [hook]
-}
-
-function tryWrap(fn) {
-  return function (id, arg) {
-    try {
-      fn(id, arg)
-    } catch (e) {
-      console.error(e)
-      console.warn(
-        'Something went wrong during Vue component hot-reload. Full reload required.'
-      )
-    }
-  }
-}
-
-function updateOptions (oldOptions, newOptions) {
-  for (var key in oldOptions) {
-    if (!(key in newOptions)) {
-      delete oldOptions[key]
-    }
-  }
-  for (var key$1 in newOptions) {
-    oldOptions[key$1] = newOptions[key$1]
-  }
-}
-
-exports.rerender = tryWrap(function (id, options) {
-  var record = map[id]
-  if (!options) {
-    record.instances.slice().forEach(function (instance) {
-      instance.$forceUpdate()
-    })
-    return
-  }
-  if (typeof options === 'function') {
-    options = options.options
-  }
-  if (record.Ctor) {
-    record.Ctor.options.render = options.render
-    record.Ctor.options.staticRenderFns = options.staticRenderFns
-    record.instances.slice().forEach(function (instance) {
-      instance.$options.render = options.render
-      instance.$options.staticRenderFns = options.staticRenderFns
-      // reset static trees
-      // pre 2.5, all static trees are cached together on the instance
-      if (instance._staticTrees) {
-        instance._staticTrees = []
-      }
-      // 2.5.0
-      if (Array.isArray(record.Ctor.options.cached)) {
-        record.Ctor.options.cached = []
-      }
-      // 2.5.3
-      if (Array.isArray(instance.$options.cached)) {
-        instance.$options.cached = []
-      }
-
-      // post 2.5.4: v-once trees are cached on instance._staticTrees.
-      // Pure static trees are cached on the staticRenderFns array
-      // (both already reset above)
-
-      // 2.6: temporarily mark rendered scoped slots as unstable so that
-      // child components can be forced to update
-      var restore = patchScopedSlots(instance)
-      instance.$forceUpdate()
-      instance.$nextTick(restore)
-    })
-  } else {
-    // functional or no instance created yet
-    record.options.render = options.render
-    record.options.staticRenderFns = options.staticRenderFns
-
-    // handle functional component re-render
-    if (record.options.functional) {
-      // rerender with full options
-      if (Object.keys(options).length > 2) {
-        updateOptions(record.options, options)
-      } else {
-        // template-only rerender.
-        // need to inject the style injection code for CSS modules
-        // to work properly.
-        var injectStyles = record.options._injectStyles
-        if (injectStyles) {
-          var render = options.render
-          record.options.render = function (h, ctx) {
-            injectStyles.call(ctx)
-            return render(h, ctx)
-          }
-        }
-      }
-      record.options._Ctor = null
-      // 2.5.3
-      if (Array.isArray(record.options.cached)) {
-        record.options.cached = []
-      }
-      record.instances.slice().forEach(function (instance) {
-        instance.$forceUpdate()
-      })
-    }
-  }
-})
-
-exports.reload = tryWrap(function (id, options) {
-  var record = map[id]
-  if (options) {
-    if (typeof options === 'function') {
-      options = options.options
-    }
-    makeOptionsHot(id, options)
-    if (record.Ctor) {
-      if (version[1] < 2) {
-        // preserve pre 2.2 behavior for global mixin handling
-        record.Ctor.extendOptions = options
-      }
-      var newCtor = record.Ctor.super.extend(options)
-      // prevent record.options._Ctor from being overwritten accidentally
-      newCtor.options._Ctor = record.options._Ctor
-      record.Ctor.options = newCtor.options
-      record.Ctor.cid = newCtor.cid
-      record.Ctor.prototype = newCtor.prototype
-      if (newCtor.release) {
-        // temporary global mixin strategy used in < 2.0.0-alpha.6
-        newCtor.release()
-      }
-    } else {
-      updateOptions(record.options, options)
-    }
-  }
-  record.instances.slice().forEach(function (instance) {
-    if (instance.$vnode && instance.$vnode.context) {
-      instance.$vnode.context.$forceUpdate()
-    } else {
-      console.warn(
-        'Root or manually mounted instance modified. Full reload required.'
-      )
-    }
-  })
-})
-
-// 2.6 optimizes template-compiled scoped slots and skips updates if child
-// only uses scoped slots. We need to patch the scoped slots resolving helper
-// to temporarily mark all scoped slots as unstable in order to force child
-// updates.
-function patchScopedSlots (instance) {
-  if (!instance._u) { return }
-  // https://github.com/vuejs/vue/blob/dev/src/core/instance/render-helpers/resolve-scoped-slots.js
-  var original = instance._u
-  instance._u = function (slots) {
-    try {
-      // 2.6.4 ~ 2.6.6
-      return original(slots, true)
-    } catch (e) {
-      // 2.5 / >= 2.6.7
-      return original(slots, null, true)
-    }
-  }
-  return function () {
-    instance._u = original
-  }
-}
-
-},{}],"vue/components/Contributors.vue":[function(require,module,exports) {
-"use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.default = void 0;
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-var _default = {
-  name: "Contributors",
-  props: ['todoListContributors', 'accountContributors']
-};
-exports.default = _default;
-        var $370f63 = exports.default || module.exports;
-      
-      if (typeof $370f63 === 'function') {
-        $370f63 = $370f63.options;
-      }
-    
-        /* template */
-        Object.assign($370f63, (function () {
-          var render = function() {
-  var _vm = this
-  var _h = _vm.$createElement
-  var _c = _vm._self._c || _h
-  return _c(
-    "ul",
-    { staticClass: "contributors" },
-    _vm._l(_vm.todoListContributors, function(contributor) {
-      return _c("li", { key: contributor, staticClass: "contributor" }, [
-        _c("img", {
-          directives: [
-            {
-              name: "b-tooltip",
-              rawName: "v-b-tooltip.hover",
-              modifiers: { hover: true }
-            }
-          ],
-          attrs: {
-            src: _vm.accountContributors[contributor].pictureUrl,
-            alt: _vm.accountContributors[contributor].fullName,
-            title: _vm.accountContributors[contributor].fullName
-          }
-        })
-      ])
-    }),
-    0
-  )
-}
-var staticRenderFns = []
-render._withStripped = true
-
-          return {
-            render: render,
-            staticRenderFns: staticRenderFns,
-            _compiled: true,
-            _scopeId: "data-v-370f63",
-            functional: undefined
-          };
-        })());
-      
-    /* hot reload */
-    (function () {
-      if (module.hot) {
-        var api = require('vue-hot-reload-api');
-        api.install(require('vue'));
-        if (api.compatible) {
-          module.hot.accept();
-          if (!module.hot.data) {
-            api.createRecord('$370f63', $370f63);
-          } else {
-            api.reload('$370f63', $370f63);
-          }
-        }
-
-        
-        var reloadCSS = require('_css_loader');
-        module.hot.dispose(reloadCSS);
-        module.hot.accept(reloadCSS);
-      
-      }
-    })();
-},{"_css_loader":"node_modules/parcel-bundler/src/builtins/css-loader.js","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/components/TodoListPreview.vue":[function(require,module,exports) {
-"use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.default = void 0;
-
-var _axios = _interopRequireDefault(require("axios"));
-
-var _Contributors = _interopRequireDefault(require("./Contributors"));
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-var _default = {
-  props: ["todoList", "contributors"],
-  components: {
-    Contributors: _Contributors.default
-  },
-  methods: {
-    deleteTodoList() {
-      this.$emit("delete-todo-list", this.todoList.id);
-    },
-
-    async acceptInvitation() {
-      await (0, _axios.default)({
-        method: "POST",
-        url: "api/lists/".concat(this.todoList.id, "/accept")
-      });
-      this.$store.commit("changeUserRoleByListId", {
-        todoListId: this.todoList.id,
-        role: 2
-      });
-    },
-
-    async declineInvitation() {
-      await (0, _axios.default)({
-        method: "POST",
-        url: "api/lists/".concat(this.todoList.id, "/decline")
-      });
-      this.$store.commit("deleteTodoList", this.todoList.id);
-    },
-
-    async leaveTodoList() {
-      await (0, _axios.default)({
-        method: "POST",
-        url: "api/lists/".concat(this.todoList.id, "/removeself")
-      });
-      this.$store.commit("deleteTodoList", this.todoList.id);
-    }
-
-  }
-};
-exports.default = _default;
-        var $2d7314 = exports.default || module.exports;
-      
-      if (typeof $2d7314 === 'function') {
-        $2d7314 = $2d7314.options;
-      }
-    
-        /* template */
-        Object.assign($2d7314, (function () {
-          var render = function() {
-  var _vm = this
-  var _h = _vm.$createElement
-  var _c = _vm._self._c || _h
-  return _vm.todoList.role != 1 && _vm.todoList.role != 4
-    ? _c(
-        "b-card",
-        { staticClass: "todo-list-preview bg-light", attrs: { "no-body": "" } },
-        [
-          _c(
-            "b-card-body",
-            { staticClass: "todo-list-preview-content" },
-            [
-              _c("b-card-title", { staticClass: "todo-list-preview-title" }, [
-                _vm._v(_vm._s(_vm.todoList.listTitle))
-              ]),
-              _vm._v(" "),
-              _vm.todoList.role == 2 || _vm.todoList.role == 3
-                ? _c(
-                    "b-badge",
-                    {
-                      staticClass: "todo-list-preview-status",
-                      class: {
-                        "badge-success": _vm.todoList.completed,
-                        "badge-secondary": !_vm.todoList.completed
-                      },
-                      attrs: { pill: "" }
-                    },
-                    [
-                      _vm._v(
-                        _vm._s(
-                          _vm.todoList.completed ? "Completed" : "In Progress"
-                        )
-                      )
-                    ]
-                  )
-                : _vm._e(),
-              _vm._v(" "),
-              _c("Contributors", {
-                staticClass: "todo-list-preview-contributors",
-                attrs: {
-                  todoListContributors: _vm.todoList.contributors,
-                  accountContributors: _vm.contributors
-                }
-              }),
-              _vm._v(" "),
-              _c(
-                "div",
-                { staticClass: "todo-list-preview-options" },
-                [
-                  _vm.todoList.role == 0
-                    ? _c(
-                        "b-button-group",
-                        [
-                          _c(
-                            "b-button",
-                            {
-                              attrs: { variant: "success" },
-                              on: { click: _vm.acceptInvitation }
-                            },
-                            [_vm._v("Accept")]
-                          ),
-                          _vm._v(" "),
-                          _c(
-                            "b-button",
-                            {
-                              attrs: { variant: "danger" },
-                              on: { click: _vm.declineInvitation }
-                            },
-                            [_vm._v("Decline")]
-                          )
-                        ],
-                        1
-                      )
-                    : _vm._e(),
-                  _vm._v(" "),
-                  _vm.todoList.role == 2
-                    ? _c(
-                        "b-button-group",
-                        [
-                          _c(
-                            "b-button",
-                            {
-                              attrs: { variant: "info" },
-                              on: {
-                                click: function($event) {
-                                  return _vm.$router.push(
-                                    "/lists/" + _vm.todoList.id
-                                  )
-                                }
-                              }
-                            },
-                            [_vm._v("View")]
-                          ),
-                          _vm._v(" "),
-                          _c(
-                            "b-button",
-                            {
-                              attrs: { variant: "secondary" },
-                              on: { click: _vm.leaveTodoList }
-                            },
-                            [_vm._v("Leave")]
-                          )
-                        ],
-                        1
-                      )
-                    : _vm._e(),
-                  _vm._v(" "),
-                  _vm.todoList.role == 3
-                    ? _c(
-                        "b-button-group",
-                        [
-                          _c(
-                            "b-button",
-                            {
-                              attrs: { variant: "info" },
-                              on: {
-                                click: function($event) {
-                                  return _vm.$router.push(
-                                    "/lists/" + _vm.todoList.id
-                                  )
-                                }
-                              }
-                            },
-                            [_vm._v("View")]
-                          ),
-                          _vm._v(" "),
-                          _c(
-                            "b-button",
-                            {
-                              attrs: { variant: "danger" },
-                              on: { click: _vm.deleteTodoList }
-                            },
-                            [_vm._v("Delete")]
-                          )
-                        ],
-                        1
-                      )
-                    : _vm._e()
-                ],
-                1
-              )
-            ],
-            1
-          )
-        ],
-        1
-      )
-    : _vm._e()
-}
-var staticRenderFns = []
-render._withStripped = true
-
-          return {
-            render: render,
-            staticRenderFns: staticRenderFns,
-            _compiled: true,
-            _scopeId: "data-v-2d7314",
-            functional: undefined
-          };
-        })());
-      
-    /* hot reload */
-    (function () {
-      if (module.hot) {
-        var api = require('vue-hot-reload-api');
-        api.install(require('vue'));
-        if (api.compatible) {
-          module.hot.accept();
-          if (!module.hot.data) {
-            api.createRecord('$2d7314', $2d7314);
-          } else {
-            api.reload('$2d7314', $2d7314);
-          }
-        }
-
-        
-        var reloadCSS = require('_css_loader');
-        module.hot.dispose(reloadCSS);
-        module.hot.accept(reloadCSS);
-      
-      }
-    })();
-},{"axios":"node_modules/axios/index.js","./Contributors":"vue/components/Contributors.vue","_css_loader":"node_modules/parcel-bundler/src/builtins/css-loader.js","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/components/AddTodoListForm.vue":[function(require,module,exports) {
-"use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.default = void 0;
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-var _default = {
-  name: "AddTodoListForm",
-
-  data() {
-    return {
-      form: {
-        listTitle: ""
-      }
-    };
-  },
-
-  methods: {
-    focusOnForm() {
-      this.$refs.listTitle.focus();
-    },
-
-    addTodoListRequest() {
-      this.$emit("add-todo-list", this.form.listTitle);
-      this.form.listTitle = "";
-      this.$bvModal.hide("modal-add-todo-list");
-    }
-
-  }
-};
-exports.default = _default;
-        var $baacd1 = exports.default || module.exports;
-      
-      if (typeof $baacd1 === 'function') {
-        $baacd1 = $baacd1.options;
-      }
-    
-        /* template */
-        Object.assign($baacd1, (function () {
-          var render = function() {
-  var _vm = this
-  var _h = _vm.$createElement
-  var _c = _vm._self._c || _h
-  return _c(
-    "div",
-    { attrs: { id: "add-todo-list-controls" } },
-    [
-      _c(
-        "b-button",
-        {
-          on: {
-            click: function($event) {
-              return _vm.$bvModal.show("modal-add-todo-list")
-            }
-          }
-        },
-        [_vm._v("Add list")]
-      ),
-      _vm._v(" "),
-      _c(
-        "b-modal",
-        {
-          attrs: { id: "modal-add-todo-list", title: "Add list" },
-          on: { shown: _vm.focusOnForm }
-        },
-        [
-          _c(
-            "b-form",
-            {
-              on: {
-                submit: function($event) {
-                  $event.preventDefault()
-                  return _vm.addTodoListRequest($event)
-                }
-              }
-            },
-            [
-              _c(
-                "b-form-group",
-                { attrs: { label: "List Title" } },
-                [
-                  _c("b-form-input", {
-                    ref: "listTitle",
-                    model: {
-                      value: _vm.form.listTitle,
-                      callback: function($$v) {
-                        _vm.$set(_vm.form, "listTitle", $$v)
-                      },
-                      expression: "form.listTitle"
-                    }
-                  })
-                ],
-                1
-              ),
-              _vm._v(" "),
-              _c(
-                "b-button",
-                {
-                  staticClass: "ml-auto d-block",
-                  attrs: { type: "submit", variant: "success" }
-                },
-                [_vm._v("Add")]
-              )
-            ],
-            1
-          )
-        ],
-        1
-      )
-    ],
-    1
-  )
-}
-var staticRenderFns = []
-render._withStripped = true
-
-          return {
-            render: render,
-            staticRenderFns: staticRenderFns,
-            _compiled: true,
-            _scopeId: null,
-            functional: undefined
-          };
-        })());
-      
-    /* hot reload */
-    (function () {
-      if (module.hot) {
-        var api = require('vue-hot-reload-api');
-        api.install(require('vue'));
-        if (api.compatible) {
-          module.hot.accept();
-          if (!module.hot.data) {
-            api.createRecord('$baacd1', $baacd1);
-          } else {
-            api.reload('$baacd1', $baacd1);
-          }
-        }
-
-        
-      }
-    })();
-},{"vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/components/TodoLists.vue":[function(require,module,exports) {
-"use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.default = void 0;
-
-var _axios = _interopRequireDefault(require("axios"));
-
-var _vuex = require("vuex");
-
-var _TodoListPreview = _interopRequireDefault(require("./TodoListPreview"));
-
-var _AddTodoListForm = _interopRequireDefault(require("../components/AddTodoListForm"));
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-var _default = {
-  components: {
-    TodoListPreview: _TodoListPreview.default,
-    AddTodoListForm: _AddTodoListForm.default
-  },
-  computed: (0, _vuex.mapState)({
-    todoLists: state => state.todoLists,
-    contributors: state => state.contributors,
-    loadingTodoLists: state => state.loadingTodoLists
-  }),
-  methods: {
-    async addTodoList(listTitle) {
-      await this.$store.dispatch("addTodoList", {
-        listTitle
-      });
-    },
-
-    async deleteTodoList(todoListId) {
-      await this.$store.dispatch("deleteTodoList", {
-        todoListId
-      });
-    }
-
-  }
-};
-exports.default = _default;
-        var $f31e3f = exports.default || module.exports;
-      
-      if (typeof $f31e3f === 'function') {
-        $f31e3f = $f31e3f.options;
-      }
-    
-        /* template */
-        Object.assign($f31e3f, (function () {
-          var render = function() {
-  var _vm = this
-  var _h = _vm.$createElement
-  var _c = _vm._self._c || _h
-  return _c(
-    "div",
-    [
-      !_vm.loadingTodoLists
-        ? _c(
-            "div",
-            _vm._l(_vm.todoLists, function(todoList) {
-              return _c("todo-list-preview", {
-                key: todoList.id,
-                attrs: { todoList: todoList, contributors: _vm.contributors },
-                on: { "delete-todo-list": _vm.deleteTodoList }
-              })
-            }),
-            1
-          )
-        : _vm._e(),
-      _vm._v(" "),
-      _c("AddTodoListForm", { on: { "add-todo-list": _vm.addTodoList } })
-    ],
-    1
-  )
-}
-var staticRenderFns = []
-render._withStripped = true
-
-          return {
-            render: render,
-            staticRenderFns: staticRenderFns,
-            _compiled: true,
-            _scopeId: null,
-            functional: undefined
-          };
-        })());
-      
-    /* hot reload */
-    (function () {
-      if (module.hot) {
-        var api = require('vue-hot-reload-api');
-        api.install(require('vue'));
-        if (api.compatible) {
-          module.hot.accept();
-          if (!module.hot.data) {
-            api.createRecord('$f31e3f', $f31e3f);
-          } else {
-            api.reload('$f31e3f', $f31e3f);
-          }
-        }
-
-        
-      }
-    })();
-},{"axios":"node_modules/axios/index.js","vuex":"node_modules/vuex/dist/vuex.esm.js","./TodoListPreview":"vue/components/TodoListPreview.vue","../components/AddTodoListForm":"vue/components/AddTodoListForm.vue","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/views/Home.vue":[function(require,module,exports) {
-"use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.default = void 0;
-
-var _TodoLists = _interopRequireDefault(require("../components/TodoLists"));
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-//
-//
-//
-//
-//
-//
-//
-var _default = {
-  name: "Home",
-  computed: {
-    user() {
-      return this.$store.getters.user;
-    },
-
-    firstName() {
-      const fullName = this.user.fullName.split(" ");
-      return fullName[0];
-    }
-
-  },
-  components: {
-    TodoLists: _TodoLists.default
-  }
-};
-exports.default = _default;
-        var $254769 = exports.default || module.exports;
-      
-      if (typeof $254769 === 'function') {
-        $254769 = $254769.options;
-      }
-    
-        /* template */
-        Object.assign($254769, (function () {
-          var render = function() {
-  var _vm = this
-  var _h = _vm.$createElement
-  var _c = _vm._self._c || _h
-  return _vm.user.email
-    ? _c(
-        "b-container",
-        [
-          _c("h1", { staticClass: "mb-4" }, [_vm._v("My Lists")]),
-          _vm._v(" "),
-          _c("TodoLists")
-        ],
-        1
-      )
-    : _vm._e()
-}
-var staticRenderFns = []
-render._withStripped = true
-
-          return {
-            render: render,
-            staticRenderFns: staticRenderFns,
-            _compiled: true,
-            _scopeId: null,
-            functional: undefined
-          };
-        })());
-      
-    /* hot reload */
-    (function () {
-      if (module.hot) {
-        var api = require('vue-hot-reload-api');
-        api.install(require('vue'));
-        if (api.compatible) {
-          module.hot.accept();
-          if (!module.hot.data) {
-            api.createRecord('$254769', $254769);
-          } else {
-            api.reload('$254769', $254769);
-          }
-        }
-
-        
-      }
-    })();
-},{"../components/TodoLists":"vue/components/TodoLists.vue","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"node_modules/sortablejs/modular/sortable.esm.js":[function(require,module,exports) {
+},{}],"node_modules/sortablejs/modular/sortable.esm.js":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -30781,7 +29696,1146 @@ function (modules) {
   /******/
 
 })["default"];
-},{"sortablejs":"node_modules/sortablejs/modular/sortable.esm.js"}],"node_modules/moment/moment.js":[function(require,module,exports) {
+},{"sortablejs":"node_modules/sortablejs/modular/sortable.esm.js"}],"node_modules/parcel-bundler/src/builtins/bundle-url.js":[function(require,module,exports) {
+var bundleURL = null;
+
+function getBundleURLCached() {
+  if (!bundleURL) {
+    bundleURL = getBundleURL();
+  }
+
+  return bundleURL;
+}
+
+function getBundleURL() {
+  // Attempt to find the URL of the current script and use that as the base URL
+  try {
+    throw new Error();
+  } catch (err) {
+    var matches = ('' + err.stack).match(/(https?|file|ftp|chrome-extension|moz-extension):\/\/[^)\n]+/g);
+
+    if (matches) {
+      return getBaseURL(matches[0]);
+    }
+  }
+
+  return '/';
+}
+
+function getBaseURL(url) {
+  return ('' + url).replace(/^((?:https?|file|ftp|chrome-extension|moz-extension):\/\/.+)\/[^/]+$/, '$1') + '/';
+}
+
+exports.getBundleURL = getBundleURLCached;
+exports.getBaseURL = getBaseURL;
+},{}],"node_modules/parcel-bundler/src/builtins/css-loader.js":[function(require,module,exports) {
+var bundle = require('./bundle-url');
+
+function updateLink(link) {
+  var newLink = link.cloneNode();
+
+  newLink.onload = function () {
+    link.remove();
+  };
+
+  newLink.href = link.href.split('?')[0] + '?' + Date.now();
+  link.parentNode.insertBefore(newLink, link.nextSibling);
+}
+
+var cssTimeout = null;
+
+function reloadCSS() {
+  if (cssTimeout) {
+    return;
+  }
+
+  cssTimeout = setTimeout(function () {
+    var links = document.querySelectorAll('link[rel="stylesheet"]');
+
+    for (var i = 0; i < links.length; i++) {
+      if (bundle.getBaseURL(links[i].href) === bundle.getBundleURL()) {
+        updateLink(links[i]);
+      }
+    }
+
+    cssTimeout = null;
+  }, 50);
+}
+
+module.exports = reloadCSS;
+},{"./bundle-url":"node_modules/parcel-bundler/src/builtins/bundle-url.js"}],"node_modules/vue-hot-reload-api/dist/index.js":[function(require,module,exports) {
+var Vue // late bind
+var version
+var map = Object.create(null)
+if (typeof window !== 'undefined') {
+  window.__VUE_HOT_MAP__ = map
+}
+var installed = false
+var isBrowserify = false
+var initHookName = 'beforeCreate'
+
+exports.install = function (vue, browserify) {
+  if (installed) { return }
+  installed = true
+
+  Vue = vue.__esModule ? vue.default : vue
+  version = Vue.version.split('.').map(Number)
+  isBrowserify = browserify
+
+  // compat with < 2.0.0-alpha.7
+  if (Vue.config._lifecycleHooks.indexOf('init') > -1) {
+    initHookName = 'init'
+  }
+
+  exports.compatible = version[0] >= 2
+  if (!exports.compatible) {
+    console.warn(
+      '[HMR] You are using a version of vue-hot-reload-api that is ' +
+        'only compatible with Vue.js core ^2.0.0.'
+    )
+    return
+  }
+}
+
+/**
+ * Create a record for a hot module, which keeps track of its constructor
+ * and instances
+ *
+ * @param {String} id
+ * @param {Object} options
+ */
+
+exports.createRecord = function (id, options) {
+  if(map[id]) { return }
+
+  var Ctor = null
+  if (typeof options === 'function') {
+    Ctor = options
+    options = Ctor.options
+  }
+  makeOptionsHot(id, options)
+  map[id] = {
+    Ctor: Ctor,
+    options: options,
+    instances: []
+  }
+}
+
+/**
+ * Check if module is recorded
+ *
+ * @param {String} id
+ */
+
+exports.isRecorded = function (id) {
+  return typeof map[id] !== 'undefined'
+}
+
+/**
+ * Make a Component options object hot.
+ *
+ * @param {String} id
+ * @param {Object} options
+ */
+
+function makeOptionsHot(id, options) {
+  if (options.functional) {
+    var render = options.render
+    options.render = function (h, ctx) {
+      var instances = map[id].instances
+      if (ctx && instances.indexOf(ctx.parent) < 0) {
+        instances.push(ctx.parent)
+      }
+      return render(h, ctx)
+    }
+  } else {
+    injectHook(options, initHookName, function() {
+      var record = map[id]
+      if (!record.Ctor) {
+        record.Ctor = this.constructor
+      }
+      record.instances.push(this)
+    })
+    injectHook(options, 'beforeDestroy', function() {
+      var instances = map[id].instances
+      instances.splice(instances.indexOf(this), 1)
+    })
+  }
+}
+
+/**
+ * Inject a hook to a hot reloadable component so that
+ * we can keep track of it.
+ *
+ * @param {Object} options
+ * @param {String} name
+ * @param {Function} hook
+ */
+
+function injectHook(options, name, hook) {
+  var existing = options[name]
+  options[name] = existing
+    ? Array.isArray(existing) ? existing.concat(hook) : [existing, hook]
+    : [hook]
+}
+
+function tryWrap(fn) {
+  return function (id, arg) {
+    try {
+      fn(id, arg)
+    } catch (e) {
+      console.error(e)
+      console.warn(
+        'Something went wrong during Vue component hot-reload. Full reload required.'
+      )
+    }
+  }
+}
+
+function updateOptions (oldOptions, newOptions) {
+  for (var key in oldOptions) {
+    if (!(key in newOptions)) {
+      delete oldOptions[key]
+    }
+  }
+  for (var key$1 in newOptions) {
+    oldOptions[key$1] = newOptions[key$1]
+  }
+}
+
+exports.rerender = tryWrap(function (id, options) {
+  var record = map[id]
+  if (!options) {
+    record.instances.slice().forEach(function (instance) {
+      instance.$forceUpdate()
+    })
+    return
+  }
+  if (typeof options === 'function') {
+    options = options.options
+  }
+  if (record.Ctor) {
+    record.Ctor.options.render = options.render
+    record.Ctor.options.staticRenderFns = options.staticRenderFns
+    record.instances.slice().forEach(function (instance) {
+      instance.$options.render = options.render
+      instance.$options.staticRenderFns = options.staticRenderFns
+      // reset static trees
+      // pre 2.5, all static trees are cached together on the instance
+      if (instance._staticTrees) {
+        instance._staticTrees = []
+      }
+      // 2.5.0
+      if (Array.isArray(record.Ctor.options.cached)) {
+        record.Ctor.options.cached = []
+      }
+      // 2.5.3
+      if (Array.isArray(instance.$options.cached)) {
+        instance.$options.cached = []
+      }
+
+      // post 2.5.4: v-once trees are cached on instance._staticTrees.
+      // Pure static trees are cached on the staticRenderFns array
+      // (both already reset above)
+
+      // 2.6: temporarily mark rendered scoped slots as unstable so that
+      // child components can be forced to update
+      var restore = patchScopedSlots(instance)
+      instance.$forceUpdate()
+      instance.$nextTick(restore)
+    })
+  } else {
+    // functional or no instance created yet
+    record.options.render = options.render
+    record.options.staticRenderFns = options.staticRenderFns
+
+    // handle functional component re-render
+    if (record.options.functional) {
+      // rerender with full options
+      if (Object.keys(options).length > 2) {
+        updateOptions(record.options, options)
+      } else {
+        // template-only rerender.
+        // need to inject the style injection code for CSS modules
+        // to work properly.
+        var injectStyles = record.options._injectStyles
+        if (injectStyles) {
+          var render = options.render
+          record.options.render = function (h, ctx) {
+            injectStyles.call(ctx)
+            return render(h, ctx)
+          }
+        }
+      }
+      record.options._Ctor = null
+      // 2.5.3
+      if (Array.isArray(record.options.cached)) {
+        record.options.cached = []
+      }
+      record.instances.slice().forEach(function (instance) {
+        instance.$forceUpdate()
+      })
+    }
+  }
+})
+
+exports.reload = tryWrap(function (id, options) {
+  var record = map[id]
+  if (options) {
+    if (typeof options === 'function') {
+      options = options.options
+    }
+    makeOptionsHot(id, options)
+    if (record.Ctor) {
+      if (version[1] < 2) {
+        // preserve pre 2.2 behavior for global mixin handling
+        record.Ctor.extendOptions = options
+      }
+      var newCtor = record.Ctor.super.extend(options)
+      // prevent record.options._Ctor from being overwritten accidentally
+      newCtor.options._Ctor = record.options._Ctor
+      record.Ctor.options = newCtor.options
+      record.Ctor.cid = newCtor.cid
+      record.Ctor.prototype = newCtor.prototype
+      if (newCtor.release) {
+        // temporary global mixin strategy used in < 2.0.0-alpha.6
+        newCtor.release()
+      }
+    } else {
+      updateOptions(record.options, options)
+    }
+  }
+  record.instances.slice().forEach(function (instance) {
+    if (instance.$vnode && instance.$vnode.context) {
+      instance.$vnode.context.$forceUpdate()
+    } else {
+      console.warn(
+        'Root or manually mounted instance modified. Full reload required.'
+      )
+    }
+  })
+})
+
+// 2.6 optimizes template-compiled scoped slots and skips updates if child
+// only uses scoped slots. We need to patch the scoped slots resolving helper
+// to temporarily mark all scoped slots as unstable in order to force child
+// updates.
+function patchScopedSlots (instance) {
+  if (!instance._u) { return }
+  // https://github.com/vuejs/vue/blob/dev/src/core/instance/render-helpers/resolve-scoped-slots.js
+  var original = instance._u
+  instance._u = function (slots) {
+    try {
+      // 2.6.4 ~ 2.6.6
+      return original(slots, true)
+    } catch (e) {
+      // 2.5 / >= 2.6.7
+      return original(slots, null, true)
+    }
+  }
+  return function () {
+    instance._u = original
+  }
+}
+
+},{}],"vue/components/TodoListPreview.vue":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = void 0;
+
+var _axios = _interopRequireDefault(require("axios"));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+var _default = {
+  props: ["todoList"],
+  methods: {
+    async leaveTodoList() {
+      await (0, _axios.default)({
+        method: "POST",
+        url: "api/lists/".concat(this.todoList.id, "/removeself")
+      });
+      this.$store.commit("deleteTodoList", this.todoList.id);
+    }
+
+  }
+};
+exports.default = _default;
+        var $77e2d2 = exports.default || module.exports;
+      
+      if (typeof $77e2d2 === 'function') {
+        $77e2d2 = $77e2d2.options;
+      }
+    
+        /* template */
+        Object.assign($77e2d2, (function () {
+          var render = function() {
+  var _vm = this
+  var _h = _vm.$createElement
+  var _c = _vm._self._c || _h
+  return _vm.todoList.role === 2 || _vm.todoList.role === 3
+    ? _c(
+        "div",
+        { staticClass: "sidebar-list-wrapper" },
+        [
+          _c(
+            "b-button",
+            {
+              staticClass: "sidebar-list",
+              class: {
+                selected: _vm.$route.params.todoListId == _vm.todoList.id,
+                completed: _vm.todoList.completed
+              },
+              attrs: { to: { path: "/lists/" + _vm.todoList.id } }
+            },
+            [
+              _vm._v("\n    " + _vm._s(_vm.todoList.listTitle) + "\n    "),
+              _c("div", { staticClass: "sidebar-list-completed-state" }, [
+                _vm._v(_vm._s(_vm.todoList.incompleteCount))
+              ])
+            ]
+          )
+        ],
+        1
+      )
+    : _vm._e()
+}
+var staticRenderFns = []
+render._withStripped = true
+
+          return {
+            render: render,
+            staticRenderFns: staticRenderFns,
+            _compiled: true,
+            _scopeId: "data-v-77e2d2",
+            functional: undefined
+          };
+        })());
+      
+    /* hot reload */
+    (function () {
+      if (module.hot) {
+        var api = require('vue-hot-reload-api');
+        api.install(require('vue'));
+        if (api.compatible) {
+          module.hot.accept();
+          if (!module.hot.data) {
+            api.createRecord('$77e2d2', $77e2d2);
+          } else {
+            api.reload('$77e2d2', $77e2d2);
+          }
+        }
+
+        
+        var reloadCSS = require('_css_loader');
+        module.hot.dispose(reloadCSS);
+        module.hot.accept(reloadCSS);
+      
+      }
+    })();
+},{"axios":"node_modules/axios/index.js","_css_loader":"node_modules/parcel-bundler/src/builtins/css-loader.js","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/components/AddTodoListForm.vue":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = void 0;
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+var _default = {
+  name: "AddTodoListForm",
+
+  data() {
+    return {
+      form: {
+        listTitle: ""
+      }
+    };
+  },
+
+  methods: {
+    focusOnForm() {
+      this.$refs.listTitle.focus();
+    },
+
+    addTodoListRequest() {
+      this.$emit("add-todo-list", this.form.listTitle);
+      this.form.listTitle = "";
+      this.$bvModal.hide("modal-add-todo-list");
+    }
+
+  }
+};
+exports.default = _default;
+        var $999c84 = exports.default || module.exports;
+      
+      if (typeof $999c84 === 'function') {
+        $999c84 = $999c84.options;
+      }
+    
+        /* template */
+        Object.assign($999c84, (function () {
+          var render = function() {
+  var _vm = this
+  var _h = _vm.$createElement
+  var _c = _vm._self._c || _h
+  return _c(
+    "div",
+    { attrs: { id: "add-todo-list-controls" } },
+    [
+      _c(
+        "b-button",
+        {
+          staticClass: "add-list-btn",
+          on: {
+            click: function($event) {
+              return _vm.$bvModal.show("modal-add-todo-list")
+            }
+          }
+        },
+        [_c("b-icon-plus")],
+        1
+      ),
+      _vm._v(" "),
+      _c(
+        "b-modal",
+        {
+          attrs: { id: "modal-add-todo-list", title: "Add list" },
+          on: { shown: _vm.focusOnForm }
+        },
+        [
+          _c(
+            "b-form",
+            {
+              on: {
+                submit: function($event) {
+                  $event.preventDefault()
+                  return _vm.addTodoListRequest($event)
+                }
+              }
+            },
+            [
+              _c(
+                "b-form-group",
+                { attrs: { label: "List Title" } },
+                [
+                  _c("b-form-input", {
+                    ref: "listTitle",
+                    model: {
+                      value: _vm.form.listTitle,
+                      callback: function($$v) {
+                        _vm.$set(_vm.form, "listTitle", $$v)
+                      },
+                      expression: "form.listTitle"
+                    }
+                  })
+                ],
+                1
+              ),
+              _vm._v(" "),
+              _c(
+                "b-button",
+                {
+                  staticClass: "ml-auto d-block",
+                  attrs: { type: "submit", variant: "success" }
+                },
+                [_vm._v("Add")]
+              )
+            ],
+            1
+          )
+        ],
+        1
+      )
+    ],
+    1
+  )
+}
+var staticRenderFns = []
+render._withStripped = true
+
+          return {
+            render: render,
+            staticRenderFns: staticRenderFns,
+            _compiled: true,
+            _scopeId: "data-v-999c84",
+            functional: undefined
+          };
+        })());
+      
+    /* hot reload */
+    (function () {
+      if (module.hot) {
+        var api = require('vue-hot-reload-api');
+        api.install(require('vue'));
+        if (api.compatible) {
+          module.hot.accept();
+          if (!module.hot.data) {
+            api.createRecord('$999c84', $999c84);
+          } else {
+            api.reload('$999c84', $999c84);
+          }
+        }
+
+        
+        var reloadCSS = require('_css_loader');
+        module.hot.dispose(reloadCSS);
+        module.hot.accept(reloadCSS);
+      
+      }
+    })();
+},{"_css_loader":"node_modules/parcel-bundler/src/builtins/css-loader.js","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/components/TodoLists.vue":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = void 0;
+
+var _axios = _interopRequireDefault(require("axios"));
+
+var _vuex = require("vuex");
+
+var _TodoListPreview = _interopRequireDefault(require("./TodoListPreview"));
+
+var _AddTodoListForm = _interopRequireDefault(require("../components/AddTodoListForm"));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+//
+//
+//
+//
+//
+//
+//
+//
+//
+var _default = {
+  components: {
+    TodoListPreview: _TodoListPreview.default,
+    AddTodoListForm: _AddTodoListForm.default
+  },
+  computed: (0, _vuex.mapState)({
+    todoLists: state => state.todoLists,
+    contributors: state => state.contributors,
+    loadingTodoLists: state => state.loadingTodoLists
+  }),
+  methods: {
+    async addTodoList(listTitle) {
+      await this.$store.dispatch("addTodoList", {
+        listTitle
+      });
+    }
+
+  }
+};
+exports.default = _default;
+        var $b12203 = exports.default || module.exports;
+      
+      if (typeof $b12203 === 'function') {
+        $b12203 = $b12203.options;
+      }
+    
+        /* template */
+        Object.assign($b12203, (function () {
+          var render = function() {
+  var _vm = this
+  var _h = _vm.$createElement
+  var _c = _vm._self._c || _h
+  return _c(
+    "div",
+    [
+      !_vm.loadingTodoLists
+        ? _c(
+            "div",
+            _vm._l(_vm.todoLists, function(todoList) {
+              return _c("todo-list-preview", {
+                key: todoList.id,
+                attrs: { todoList: todoList }
+              })
+            }),
+            1
+          )
+        : _vm._e(),
+      _vm._v(" "),
+      _c("AddTodoListForm", { on: { "add-todo-list": _vm.addTodoList } })
+    ],
+    1
+  )
+}
+var staticRenderFns = []
+render._withStripped = true
+
+          return {
+            render: render,
+            staticRenderFns: staticRenderFns,
+            _compiled: true,
+            _scopeId: null,
+            functional: undefined
+          };
+        })());
+      
+    /* hot reload */
+    (function () {
+      if (module.hot) {
+        var api = require('vue-hot-reload-api');
+        api.install(require('vue'));
+        if (api.compatible) {
+          module.hot.accept();
+          if (!module.hot.data) {
+            api.createRecord('$b12203', $b12203);
+          } else {
+            api.reload('$b12203', $b12203);
+          }
+        }
+
+        
+      }
+    })();
+},{"axios":"node_modules/axios/index.js","vuex":"node_modules/vuex/dist/vuex.esm.js","./TodoListPreview":"vue/components/TodoListPreview.vue","../components/AddTodoListForm":"vue/components/AddTodoListForm.vue","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"node_modules/vue-confetti/dist/vue-confetti.js":[function(require,module,exports) {
+var define;
+!function(t,e){"object"==typeof exports&&"object"==typeof module?module.exports=e():"function"==typeof define&&define.amd?define([],e):"object"==typeof exports?exports["vue-confetti"]=e():t["vue-confetti"]=e()}(window,(function(){return function(t){var e={};function n(i){if(e[i])return e[i].exports;var r=e[i]={i:i,l:!1,exports:{}};return t[i].call(r.exports,r,r.exports,n),r.l=!0,r.exports}return n.m=t,n.c=e,n.d=function(t,e,i){n.o(t,e)||Object.defineProperty(t,e,{enumerable:!0,get:i})},n.r=function(t){"undefined"!=typeof Symbol&&Symbol.toStringTag&&Object.defineProperty(t,Symbol.toStringTag,{value:"Module"}),Object.defineProperty(t,"__esModule",{value:!0})},n.t=function(t,e){if(1&e&&(t=n(t)),8&e)return t;if(4&e&&"object"==typeof t&&t&&t.__esModule)return t;var i=Object.create(null);if(n.r(i),Object.defineProperty(i,"default",{enumerable:!0,value:t}),2&e&&"string"!=typeof t)for(var r in t)n.d(i,r,function(e){return t[e]}.bind(null,r));return i},n.n=function(t){var e=t&&t.__esModule?function(){return t.default}:function(){return t};return n.d(e,"a",e),e},n.o=function(t,e){return Object.prototype.hasOwnProperty.call(t,e)},n.p="",n(n.s=3)}([function(t,e,n){"use strict";n.r(e);var i=function(){var t=arguments.length>0&&void 0!==arguments[0]?arguments[0]:1,e=arguments.length>1&&void 0!==arguments[1]?arguments[1]:t+1,n=arguments.length>2&&void 0!==arguments[2]&&arguments[2],i=parseFloat(t),r=parseFloat(e),o=Math.random()*(r-i)+i;return n?Math.round(o):o};function r(t,e){for(var n=0;n<e.length;n++){var i=e[n];i.enumerable=i.enumerable||!1,i.configurable=!0,"value"in i&&(i.writable=!0),Object.defineProperty(t,i.key,i)}}var o=function(){function t(){var e=arguments.length>0&&void 0!==arguments[0]?arguments[0]:{},n=e.color,i=void 0===n?"blue":n,r=e.size,o=void 0===r?10:r,a=e.dropRate,c=void 0===a?10:a;!function(t,e){if(!(t instanceof e))throw new TypeError("Cannot call a class as a function")}(this,t),this.color=i,this.size=o,this.dropRate=c}var e,n,o;return e=t,(n=[{key:"setup",value:function(t){var e=t.canvas,n=t.wind,r=t.windPosCoef,o=t.windSpeedMax,a=t.count;return this.canvas=e,this.wind=n,this.windPosCoef=r,this.windSpeedMax=o,this.x=i(-35,this.canvas.width+35),this.y=i(-30,-35),this.d=i(150)+10,this.particleSize=i(this.size,2*this.size),this.tilt=i(10),this.tiltAngleIncremental=(i(0,.08)+.04)*(i()<.5?-1:1),this.tiltAngle=0,this.angle=i(2*Math.PI),this.count=a+1,this.remove=!1,this}},{key:"update",value:function(){this.tiltAngle+=this.tiltAngleIncremental*(.2*Math.cos(this.wind+(this.d+this.x+this.y)*this.windPosCoef)+1),this.y+=(Math.cos(this.angle+this.d)+parseInt(this.dropRate,10))/2,this.x+=Math.sin(this.angle),this.x+=Math.cos(this.wind+(this.d+this.x+this.y)*this.windPosCoef)*this.windSpeedMax,this.y+=Math.sin(this.wind+(this.d+this.x+this.y)*this.windPosCoef)*this.windSpeedMax,this.tilt=15*Math.sin(this.tiltAngle-this.count/3)}},{key:"pastBottom",value:function(){return this.y>this.canvas.height}},{key:"draw",value:function(){this.canvas.ctx.fillStyle=this.color,this.canvas.ctx.beginPath(),this.canvas.ctx.setTransform(Math.cos(this.tiltAngle),Math.sin(this.tiltAngle),0,1,this.x,this.y)}},{key:"kill",value:function(){this.remove=!0}}])&&r(e.prototype,n),o&&r(e,o),t}();function a(t){return(a="function"==typeof Symbol&&"symbol"==typeof Symbol.iterator?function(t){return typeof t}:function(t){return t&&"function"==typeof Symbol&&t.constructor===Symbol&&t!==Symbol.prototype?"symbol":typeof t})(t)}function c(t,e){for(var n=0;n<e.length;n++){var i=e[n];i.enumerable=i.enumerable||!1,i.configurable=!0,"value"in i&&(i.writable=!0),Object.defineProperty(t,i.key,i)}}function s(t,e){return!e||"object"!==a(e)&&"function"!=typeof e?function(t){if(void 0===t)throw new ReferenceError("this hasn't been initialised - super() hasn't been called");return t}(t):e}function l(t,e,n){return(l="undefined"!=typeof Reflect&&Reflect.get?Reflect.get:function(t,e,n){var i=function(t,e){for(;!Object.prototype.hasOwnProperty.call(t,e)&&null!==(t=u(t)););return t}(t,e);if(i){var r=Object.getOwnPropertyDescriptor(i,e);return r.get?r.get.call(n):r.value}})(t,e,n||t)}function u(t){return(u=Object.setPrototypeOf?Object.getPrototypeOf:function(t){return t.__proto__||Object.getPrototypeOf(t)})(t)}function f(t,e){return(f=Object.setPrototypeOf||function(t,e){return t.__proto__=e,t})(t,e)}var h=function(t){function e(){return function(t,e){if(!(t instanceof e))throw new TypeError("Cannot call a class as a function")}(this,e),s(this,u(e).apply(this,arguments))}var n,i,r;return function(t,e){if("function"!=typeof e&&null!==e)throw new TypeError("Super expression must either be null or a function");t.prototype=Object.create(e&&e.prototype,{constructor:{value:t,writable:!0,configurable:!0}}),e&&f(t,e)}(e,t),n=e,(i=[{key:"draw",value:function(){l(u(e.prototype),"draw",this).call(this),this.canvas.ctx.arc(0,0,this.particleSize/2,0,2*Math.PI,!1),this.canvas.ctx.fill()}}])&&c(n.prototype,i),r&&c(n,r),e}(o);function p(t){return(p="function"==typeof Symbol&&"symbol"==typeof Symbol.iterator?function(t){return typeof t}:function(t){return t&&"function"==typeof Symbol&&t.constructor===Symbol&&t!==Symbol.prototype?"symbol":typeof t})(t)}function y(t,e){for(var n=0;n<e.length;n++){var i=e[n];i.enumerable=i.enumerable||!1,i.configurable=!0,"value"in i&&(i.writable=!0),Object.defineProperty(t,i.key,i)}}function d(t,e){return!e||"object"!==p(e)&&"function"!=typeof e?function(t){if(void 0===t)throw new ReferenceError("this hasn't been initialised - super() hasn't been called");return t}(t):e}function v(t,e,n){return(v="undefined"!=typeof Reflect&&Reflect.get?Reflect.get:function(t,e,n){var i=function(t,e){for(;!Object.prototype.hasOwnProperty.call(t,e)&&null!==(t=b(t)););return t}(t,e);if(i){var r=Object.getOwnPropertyDescriptor(i,e);return r.get?r.get.call(n):r.value}})(t,e,n||t)}function b(t){return(b=Object.setPrototypeOf?Object.getPrototypeOf:function(t){return t.__proto__||Object.getPrototypeOf(t)})(t)}function m(t,e){return(m=Object.setPrototypeOf||function(t,e){return t.__proto__=e,t})(t,e)}var w=function(t){function e(){return function(t,e){if(!(t instanceof e))throw new TypeError("Cannot call a class as a function")}(this,e),d(this,b(e).apply(this,arguments))}var n,i,r;return function(t,e){if("function"!=typeof e&&null!==e)throw new TypeError("Super expression must either be null or a function");t.prototype=Object.create(e&&e.prototype,{constructor:{value:t,writable:!0,configurable:!0}}),e&&m(t,e)}(e,t),n=e,(i=[{key:"draw",value:function(){v(b(e.prototype),"draw",this).call(this),this.canvas.ctx.fillRect(0,0,this.particleSize,this.particleSize/2)}}])&&y(n.prototype,i),r&&y(n,r),e}(o);function g(t){return(g="function"==typeof Symbol&&"symbol"==typeof Symbol.iterator?function(t){return typeof t}:function(t){return t&&"function"==typeof Symbol&&t.constructor===Symbol&&t!==Symbol.prototype?"symbol":typeof t})(t)}function O(t,e){for(var n=0;n<e.length;n++){var i=e[n];i.enumerable=i.enumerable||!1,i.configurable=!0,"value"in i&&(i.writable=!0),Object.defineProperty(t,i.key,i)}}function P(t,e){return!e||"object"!==g(e)&&"function"!=typeof e?function(t){if(void 0===t)throw new ReferenceError("this hasn't been initialised - super() hasn't been called");return t}(t):e}function S(t,e,n){return(S="undefined"!=typeof Reflect&&Reflect.get?Reflect.get:function(t,e,n){var i=function(t,e){for(;!Object.prototype.hasOwnProperty.call(t,e)&&null!==(t=j(t)););return t}(t,e);if(i){var r=Object.getOwnPropertyDescriptor(i,e);return r.get?r.get.call(n):r.value}})(t,e,n||t)}function j(t){return(j=Object.setPrototypeOf?Object.getPrototypeOf:function(t){return t.__proto__||Object.getPrototypeOf(t)})(t)}function k(t,e){return(k=Object.setPrototypeOf||function(t,e){return t.__proto__=e,t})(t,e)}var x=function(t){function e(){return function(t,e){if(!(t instanceof e))throw new TypeError("Cannot call a class as a function")}(this,e),P(this,j(e).apply(this,arguments))}var n,i,r;return function(t,e){if("function"!=typeof e&&null!==e)throw new TypeError("Super expression must either be null or a function");t.prototype=Object.create(e&&e.prototype,{constructor:{value:t,writable:!0,configurable:!0}}),e&&k(t,e)}(e,t),n=e,(i=[{key:"draw",value:function(){var t=this;S(j(e.prototype),"draw",this).call(this);var n=function(e,n,i,r,o,a){t.canvas.ctx.bezierCurveTo(e*(t.particleSize/200),n*(t.particleSize/200),i*(t.particleSize/200),r*(t.particleSize/200),o*(t.particleSize/200),a*(t.particleSize/200))};this.canvas.ctx.moveTo(37.5/this.particleSize,20/this.particleSize),n(75,37,70,25,50,25),n(20,25,20,62.5,20,62.5),n(20,80,40,102,75,120),n(110,102,130,80,130,62.5),n(130,62.5,130,25,100,25),n(85,25,75,37,75,40),this.canvas.ctx.fill()}}])&&O(n.prototype,i),r&&O(n,r),e}(o);function M(t){return(M="function"==typeof Symbol&&"symbol"==typeof Symbol.iterator?function(t){return typeof t}:function(t){return t&&"function"==typeof Symbol&&t.constructor===Symbol&&t!==Symbol.prototype?"symbol":typeof t})(t)}function _(t,e){for(var n=0;n<e.length;n++){var i=e[n];i.enumerable=i.enumerable||!1,i.configurable=!0,"value"in i&&(i.writable=!0),Object.defineProperty(t,i.key,i)}}function E(t,e){return!e||"object"!==M(e)&&"function"!=typeof e?function(t){if(void 0===t)throw new ReferenceError("this hasn't been initialised - super() hasn't been called");return t}(t):e}function I(t,e,n){return(I="undefined"!=typeof Reflect&&Reflect.get?Reflect.get:function(t,e,n){var i=function(t,e){for(;!Object.prototype.hasOwnProperty.call(t,e)&&null!==(t=C(t)););return t}(t,e);if(i){var r=Object.getOwnPropertyDescriptor(i,e);return r.get?r.get.call(n):r.value}})(t,e,n||t)}function C(t){return(C=Object.setPrototypeOf?Object.getPrototypeOf:function(t){return t.__proto__||Object.getPrototypeOf(t)})(t)}function D(t,e){return(D=Object.setPrototypeOf||function(t,e){return t.__proto__=e,t})(t,e)}var R=function(t){function e(t,n){var i;return function(t,e){if(!(t instanceof e))throw new TypeError("Cannot call a class as a function")}(this,e),(i=E(this,C(e).call(this,t))).imgEl=n,i}var n,i,r;return function(t,e){if("function"!=typeof e&&null!==e)throw new TypeError("Super expression must either be null or a function");t.prototype=Object.create(e&&e.prototype,{constructor:{value:t,writable:!0,configurable:!0}}),e&&D(t,e)}(e,t),n=e,(i=[{key:"draw",value:function(){I(C(e.prototype),"draw",this).call(this),this.canvas.ctx.drawImage(this.imgEl,0,0,this.particleSize,this.particleSize)}}])&&_(n.prototype,i),r&&_(n,r),e}(o);function T(t,e){for(var n=0;n<e.length;n++){var i=e[n];i.enumerable=i.enumerable||!1,i.configurable=!0,"value"in i&&(i.writable=!0),Object.defineProperty(t,i.key,i)}}var z=function(){function t(){!function(t,e){if(!(t instanceof e))throw new TypeError("Cannot call a class as a function")}(this,t),this.cachedImage=null}var e,n,r;return e=t,(n=[{key:"createImageElement",value:function(t){var e=document.createElement("img");return e.setAttribute("src",t),e}},{key:"getImageElement",value:function(t){return this.cachedImage&&t===this.cachedImage.getAttribute("src")||(this.cachedImage=this.createImageElement(t)),this.cachedImage}},{key:"getRandomParticle",value:function(){var t=arguments.length>0&&void 0!==arguments[0]?arguments[0]:{},e=t.particles||[];return e.length<1?{}:e[Math.floor(Math.random()*e.length)]}},{key:"getDefaults",value:function(){var t=arguments.length>0&&void 0!==arguments[0]?arguments[0]:{};return{type:t.defaultType||"circle",size:t.defaultSize||10,dropRate:t.defaultDropRate||10,colors:t.defaultColors||["DodgerBlue","OliveDrab","Gold","pink","SlateBlue","lightblue","Violet","PaleGreen","SteelBlue","SandyBrown","Chocolate","Crimson"],url:null}}},{key:"create",value:function(t){var e=this.getDefaults(t),n=this.getRandomParticle(t),r=Object.assign(e,n),o=i(0,r.colors.length-1,!0);if(r.color=r.colors[o],"circle"===r.type)return new h(r);if("rect"===r.type)return new w(r);if("heart"===r.type)return new x(r);if("image"===r.type)return new R(r,this.getImageElement(r.url));throw Error('Unknown particle type: "'.concat(r.type,'"'))}}])&&T(e.prototype,n),r&&T(e,r),t}();function F(t,e){for(var n=0;n<e.length;n++){var i=e[n];i.enumerable=i.enumerable||!1,i.configurable=!0,"value"in i&&(i.writable=!0),Object.defineProperty(t,i.key,i)}}var A=function(){function t(e){!function(t,e){if(!(t instanceof e))throw new TypeError("Cannot call a class as a function")}(this,t),this.items=[],this.pool=[],this.particleOptions=e,this.particleFactory=new z}var e,n,i;return e=t,(n=[{key:"update",value:function(){var t,e=this,n=[],i=[];this.items.forEach((function(t){t.update(),t.pastBottom()?t.remove||(t.setup(e.particleOptions),n.push(t)):i.push(t)})),(t=this.pool).push.apply(t,n),this.items=i}},{key:"draw",value:function(){this.items.forEach((function(t){return t.draw()}))}},{key:"add",value:function(){this.pool.length>0?this.items.push(this.pool.pop().setup(this.particleOptions)):this.items.push(this.particleFactory.create(this.particleOptions).setup(this.particleOptions))}},{key:"refresh",value:function(){this.items.forEach((function(t){t.kill()})),this.pool=[]}}])&&F(e.prototype,n),i&&F(e,i),t}();function B(t,e){for(var n=0;n<e.length;n++){var i=e[n];i.enumerable=i.enumerable||!1,i.configurable=!0,"value"in i&&(i.writable=!0),Object.defineProperty(t,i.key,i)}}var H=function(){function t(e){!function(t,e){if(!(t instanceof e))throw new TypeError("Cannot call a class as a function")}(this,t);var n=document.getElementById(e);if(this.isDefault=null==e,!this.isDefault&&!n)throw new Error('No element found with ID "'.concat(e,'"'));if(this.canvas=n||t.createDefaultCanvas("confetti-canvas"),!(this.canvas instanceof HTMLCanvasElement))throw new Error('Element with ID "'.concat("confetti-canvas",'" is not a valid HTMLCanvasElement'));this.ctx=this.canvas.getContext("2d")}var e,n,i;return e=t,i=[{key:"createDefaultCanvas",value:function(t){var e=document.createElement("canvas");return e.style.display="block",e.style.position="fixed",e.style.pointerEvents="none",e.style.top=0,e.style.width="100vw",e.style.height="100vh",e.id=t,document.querySelector("body").appendChild(e),e}}],(n=[{key:"clear",value:function(){this.ctx.setTransform(1,0,0,1,0,0),this.ctx.clearRect(0,0,this.width,this.height)}},{key:"updateDimensions",value:function(){this.isDefault&&(this.width===window.innerWidth&&this.height===window.innerHeight||(this.canvas.width=window.innerWidth,this.canvas.height=window.innerHeight))}},{key:"width",get:function(){return this.canvas.width}},{key:"height",get:function(){return this.canvas.height}}])&&B(e.prototype,n),i&&B(e,i),t}();function L(t,e){for(var n=0;n<e.length;n++){var i=e[n];i.enumerable=i.enumerable||!1,i.configurable=!0,"value"in i&&(i.writable=!0),Object.defineProperty(t,i.key,i)}}var W=function(){function t(){!function(t,e){if(!(t instanceof e))throw new TypeError("Cannot call a class as a function")}(this,t),this.setDefaults()}var e,n,i;return e=t,(n=[{key:"setDefaults",value:function(){this.killed=!1,this.framesSinceDrop=0,this.canvas=null,this.canvasId=null,this.W=0,this.H=0,this.particleManager=null,this.particlesPerFrame=0,this.wind=0,this.windSpeed=1,this.windSpeedMax=1,this.windChange=.01,this.windPosCoef=.002,this.animationId=null}},{key:"getParticleOptions",value:function(t){var e={canvas:this.canvas,W:this.W,H:this.H,wind:this.wind,windPosCoef:this.windPosCoef,windSpeedMax:this.windSpeedMax,count:0};return Object.assign(e,t),e}},{key:"createParticles",value:function(){var t=arguments.length>0&&void 0!==arguments[0]?arguments[0]:{},e=this.getParticleOptions(t);this.particleManager=new A(e)}},{key:"start",value:function(){var t=arguments.length>0&&void 0!==arguments[0]?arguments[0]:{};this.canvas&&t.canvasId===this.canvasId||(this.canvas=new H(t.canvasId),this.canvasId=t.canvasId),this.animationId&&cancelAnimationFrame(this.animationId),this.createParticles(t),this.canvas.updateDimensions(),this.setParticlesPerFrame(t),this.animationId=requestAnimationFrame(this.mainLoop.bind(this))}},{key:"setParticlesPerFrame",value:function(t){this.particlesPerFrame=t.particlesPerFrame||2}},{key:"stop",value:function(){this.killed=!0,this.particlesPerFrame=0}},{key:"update",value:function(t){this.canvas&&t.canvasId!==this.canvasId&&(this.stop(),this.canvas.clear(),this.start(t)),this.setParticlesPerFrame(t),this.particleManager&&(this.particleManager.particleOptions=this.getParticleOptions(t),this.particleManager.refresh())}},{key:"remove",value:function(){this.stop(),this.animationId&&cancelAnimationFrame(this.animationId),this.canvas.clear(),this.setDefaults()}},{key:"mainLoop",value:function(t){this.canvas.updateDimensions(),this.canvas.clear(),this.windSpeed=Math.sin(t/8e3)*this.windSpeedMax,this.wind=this.particleManager.particleOptions.wind+=this.windChange;for(var e=this.framesSinceDrop*this.particlesPerFrame;e>=1;)this.particleManager.add(),e-=1,this.framesSinceDrop=0;this.particleManager.update(),this.particleManager.draw(),this.killed&&!this.particleManager.items.length||(this.animationId=requestAnimationFrame(this.mainLoop.bind(this))),this.framesSinceDrop+=1}}])&&L(e.prototype,n),i&&L(e,i),t}();n.d(e,"Confetti",(function(){return W}));e.default={install:function(t,e){this.installed||(this.installed=!0,t.prototype.$confetti=new W(e))}}},,,function(t,e,n){t.exports=n(0)}])}));
+},{}],"vue/components/Confetti.vue":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = void 0;
+
+var _vue = _interopRequireDefault(require("vue"));
+
+var _vueConfetti = _interopRequireDefault(require("vue-confetti"));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+//
+//
+_vue.default.use(_vueConfetti.default);
+
+var _default = {
+  name: "Confetti",
+
+  mounted() {
+    this.$nextTick(() => {
+      this.$confetti.start({
+        particles: [{
+          type: "rect"
+        }],
+        particlesPerFrame: 0.4,
+        dropRate: 8
+      });
+    });
+  },
+
+  beforeDestroy() {
+    this.$confetti.stop();
+  }
+
+};
+exports.default = _default;
+        var $5ee40d = exports.default || module.exports;
+      
+      if (typeof $5ee40d === 'function') {
+        $5ee40d = $5ee40d.options;
+      }
+    
+        /* template */
+        Object.assign($5ee40d, (function () {
+          var render = function() {
+  var _vm = this
+  var _h = _vm.$createElement
+  var _c = _vm._self._c || _h
+  return _c("div")
+}
+var staticRenderFns = []
+render._withStripped = true
+
+          return {
+            render: render,
+            staticRenderFns: staticRenderFns,
+            _compiled: true,
+            _scopeId: null,
+            functional: undefined
+          };
+        })());
+      
+    /* hot reload */
+    (function () {
+      if (module.hot) {
+        var api = require('vue-hot-reload-api');
+        api.install(require('vue'));
+        if (api.compatible) {
+          module.hot.accept();
+          if (!module.hot.data) {
+            api.createRecord('$5ee40d', $5ee40d);
+          } else {
+            api.reload('$5ee40d', $5ee40d);
+          }
+        }
+
+        
+      }
+    })();
+},{"vue":"node_modules/vue/dist/vue.runtime.esm.js","vue-confetti":"node_modules/vue-confetti/dist/vue-confetti.js","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js"}],"vue/components/Contributors.vue":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = void 0;
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+var _default = {
+  name: "Contributors",
+  props: ["todoListContributors", "accountContributors", "align"]
+};
+exports.default = _default;
+        var $c44f16 = exports.default || module.exports;
+      
+      if (typeof $c44f16 === 'function') {
+        $c44f16 = $c44f16.options;
+      }
+    
+        /* template */
+        Object.assign($c44f16, (function () {
+          var render = function() {
+  var _vm = this
+  var _h = _vm.$createElement
+  var _c = _vm._self._c || _h
+  return _c(
+    "ul",
+    {
+      staticClass: "contributors",
+      class: { "align-right": _vm.align === "right" }
+    },
+    _vm._l(_vm.todoListContributors, function(contributor) {
+      return _c("li", { key: contributor, staticClass: "contributor" }, [
+        _c("img", {
+          directives: [
+            {
+              name: "b-tooltip",
+              rawName: "v-b-tooltip.hover",
+              modifiers: { hover: true }
+            }
+          ],
+          attrs: {
+            src: _vm.accountContributors[contributor].pictureUrl,
+            alt: _vm.accountContributors[contributor].fullName,
+            title: _vm.accountContributors[contributor].fullName
+          }
+        })
+      ])
+    }),
+    0
+  )
+}
+var staticRenderFns = []
+render._withStripped = true
+
+          return {
+            render: render,
+            staticRenderFns: staticRenderFns,
+            _compiled: true,
+            _scopeId: "data-v-c44f16",
+            functional: undefined
+          };
+        })());
+      
+    /* hot reload */
+    (function () {
+      if (module.hot) {
+        var api = require('vue-hot-reload-api');
+        api.install(require('vue'));
+        if (api.compatible) {
+          module.hot.accept();
+          if (!module.hot.data) {
+            api.createRecord('$c44f16', $c44f16);
+          } else {
+            api.reload('$c44f16', $c44f16);
+          }
+        }
+
+        
+        var reloadCSS = require('_css_loader');
+        module.hot.dispose(reloadCSS);
+        module.hot.accept(reloadCSS);
+      
+      }
+    })();
+},{"_css_loader":"node_modules/parcel-bundler/src/builtins/css-loader.js","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/components/InviteContributorsForm.vue":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = void 0;
+
+var _axios = _interopRequireDefault(require("axios"));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+var _default = {
+  props: ["todoList"],
+
+  data() {
+    return {
+      form: {
+        email: ""
+      },
+      invitationSent: false,
+      dismissSecs: 5,
+      dismissCountDown: 0
+    };
+  },
+
+  methods: {
+    async invite() {
+      await (0, _axios.default)({
+        method: "POST",
+        url: "api/lists/".concat(this.todoList.id, "/email"),
+        data: JSON.stringify({
+          email: this.form.email
+        }),
+        headers: {
+          "content-type": "application/json"
+        }
+      });
+      this.form.email = "";
+      this.showAlert();
+    },
+
+    countDownChanged(dismissCountDown) {
+      this.dismissCountDown = dismissCountDown;
+    },
+
+    showAlert() {
+      this.dismissCountDown = this.dismissSecs;
+    }
+
+  }
+};
+exports.default = _default;
+        var $e8e650 = exports.default || module.exports;
+      
+      if (typeof $e8e650 === 'function') {
+        $e8e650 = $e8e650.options;
+      }
+    
+        /* template */
+        Object.assign($e8e650, (function () {
+          var render = function() {
+  var _vm = this
+  var _h = _vm.$createElement
+  var _c = _vm._self._c || _h
+  return _vm.todoList.role === 3
+    ? _c(
+        "div",
+        [
+          _c(
+            "b-button",
+            {
+              staticClass: "invitation-btn",
+              attrs: { size: "sm" },
+              on: {
+                click: function($event) {
+                  return _vm.$bvModal.show("invitation-modal")
+                }
+              }
+            },
+            [
+              _c("span", { staticClass: "sr-only" }, [_vm._v("Invite")]),
+              _vm._v(" "),
+              _c("b-icon-plus")
+            ],
+            1
+          ),
+          _vm._v(" "),
+          _c(
+            "b-modal",
+            { attrs: { title: "Send Invitation", id: "invitation-modal" } },
+            [
+              _c(
+                "b-form",
+                {
+                  staticClass: "invitation-form",
+                  on: {
+                    submit: function($event) {
+                      $event.preventDefault()
+                      return _vm.invite($event)
+                    }
+                  }
+                },
+                [
+                  _c(
+                    "b-form-group",
+                    {
+                      staticClass: "email-group text-secondary",
+                      attrs: { label: "Email" }
+                    },
+                    [
+                      _c("b-form-input", {
+                        attrs: { type: "email", required: "" },
+                        model: {
+                          value: _vm.form.email,
+                          callback: function($$v) {
+                            _vm.$set(_vm.form, "email", $$v)
+                          },
+                          expression: "form.email"
+                        }
+                      })
+                    ],
+                    1
+                  ),
+                  _vm._v(" "),
+                  _c(
+                    "div",
+                    { staticClass: "text-right" },
+                    [
+                      _c("b-button", { attrs: { type: "submit" } }, [
+                        _vm._v("Send")
+                      ])
+                    ],
+                    1
+                  ),
+                  _vm._v(" "),
+                  _c(
+                    "b-alert",
+                    {
+                      staticClass: "mb-0 mt-3",
+                      attrs: {
+                        variant: "success",
+                        show: _vm.dismissCountDown,
+                        dismissable: "",
+                        fade: ""
+                      },
+                      on: {
+                        dismissed: function($event) {
+                          _vm.dismissCountDown = 0
+                        },
+                        "dismiss-count-down": _vm.countDownChanged
+                      }
+                    },
+                    [_vm._v("Invitation sent!")]
+                  )
+                ],
+                1
+              )
+            ],
+            1
+          )
+        ],
+        1
+      )
+    : _vm._e()
+}
+var staticRenderFns = []
+render._withStripped = true
+
+          return {
+            render: render,
+            staticRenderFns: staticRenderFns,
+            _compiled: true,
+            _scopeId: "data-v-e8e650",
+            functional: undefined
+          };
+        })());
+      
+    /* hot reload */
+    (function () {
+      if (module.hot) {
+        var api = require('vue-hot-reload-api');
+        api.install(require('vue'));
+        if (api.compatible) {
+          module.hot.accept();
+          if (!module.hot.data) {
+            api.createRecord('$e8e650', $e8e650);
+          } else {
+            api.reload('$e8e650', $e8e650);
+          }
+        }
+
+        
+        var reloadCSS = require('_css_loader');
+        module.hot.dispose(reloadCSS);
+        module.hot.accept(reloadCSS);
+      
+      }
+    })();
+},{"axios":"node_modules/axios/index.js","_css_loader":"node_modules/parcel-bundler/src/builtins/css-loader.js","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"node_modules/moment/moment.js":[function(require,module,exports) {
 var define;
 var global = arguments[3];
 //! moment.js
@@ -36559,14 +36613,14 @@ var _default = {
   }
 };
 exports.default = _default;
-        var $7b87e9 = exports.default || module.exports;
+        var $2fc84d = exports.default || module.exports;
       
-      if (typeof $7b87e9 === 'function') {
-        $7b87e9 = $7b87e9.options;
+      if (typeof $2fc84d === 'function') {
+        $2fc84d = $2fc84d.options;
       }
     
         /* template */
-        Object.assign($7b87e9, (function () {
+        Object.assign($2fc84d, (function () {
           var render = function() {
   var _vm = this
   var _h = _vm.$createElement
@@ -36705,7 +36759,7 @@ render._withStripped = true
             render: render,
             staticRenderFns: staticRenderFns,
             _compiled: true,
-            _scopeId: null,
+            _scopeId: "data-v-2fc84d",
             functional: undefined
           };
         })());
@@ -36718,9 +36772,9 @@ render._withStripped = true
         if (api.compatible) {
           module.hot.accept();
           if (!module.hot.data) {
-            api.createRecord('$7b87e9', $7b87e9);
+            api.createRecord('$2fc84d', $2fc84d);
           } else {
-            api.reload('$7b87e9', $7b87e9);
+            api.reload('$2fc84d', $2fc84d);
           }
         }
 
@@ -36738,6 +36792,9 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.default = void 0;
+//
+//
+//
 //
 //
 //
@@ -36797,14 +36854,14 @@ var _default = {
   }
 };
 exports.default = _default;
-        var $efb0d1 = exports.default || module.exports;
+        var $fab093 = exports.default || module.exports;
       
-      if (typeof $efb0d1 === 'function') {
-        $efb0d1 = $efb0d1.options;
+      if (typeof $fab093 === 'function') {
+        $fab093 = $fab093.options;
       }
     
         /* template */
-        Object.assign($efb0d1, (function () {
+        Object.assign($fab093, (function () {
           var render = function() {
   var _vm = this
   var _h = _vm.$createElement
@@ -36826,11 +36883,15 @@ exports.default = _default;
             "b-button",
             {
               ref: "addItemBtn",
-              staticClass: "mt-3",
-              attrs: { size: "sm" },
+              staticClass: "mb-3 p-0 add-sub-item-btn",
+              attrs: { size: "sm", variant: "link" },
               on: { click: _vm.focusForm }
             },
-            [_vm._v("Add an item")]
+            [
+              _c("b-icon-plus", { staticClass: "add-item-btn-icon" }),
+              _vm._v("Add item\n  ")
+            ],
+            1
           )
         : _vm._e(),
       _vm._v(" "),
@@ -36884,7 +36945,7 @@ render._withStripped = true
             render: render,
             staticRenderFns: staticRenderFns,
             _compiled: true,
-            _scopeId: null,
+            _scopeId: "data-v-fab093",
             functional: undefined
           };
         })());
@@ -36897,16 +36958,20 @@ render._withStripped = true
         if (api.compatible) {
           module.hot.accept();
           if (!module.hot.data) {
-            api.createRecord('$efb0d1', $efb0d1);
+            api.createRecord('$fab093', $fab093);
           } else {
-            api.reload('$efb0d1', $efb0d1);
+            api.reload('$fab093', $fab093);
           }
         }
 
         
+        var reloadCSS = require('_css_loader');
+        module.hot.dispose(reloadCSS);
+        module.hot.accept(reloadCSS);
+      
       }
     })();
-},{"vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/components/SubItems.vue":[function(require,module,exports) {
+},{"_css_loader":"node_modules/parcel-bundler/src/builtins/css-loader.js","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/components/SubItems.vue":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -36924,6 +36989,7 @@ var _AddSubItemForm = _interopRequireDefault(require("./AddSubItemForm"));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
+//
 //
 //
 //
@@ -37153,11 +37219,11 @@ var _default = {
     triggerSubItemCountChangedEvent() {
       if (this.subItems.length > 0) {
         this.$emit("sub-item-count-changed", {
-          disabled: true
+          hasSubItems: true
         });
       } else {
         this.$emit("sub-item-count-changed", {
-          disabled: false
+          hasSubItems: false
         });
       }
     },
@@ -37175,14 +37241,14 @@ var _default = {
   }
 };
 exports.default = _default;
-        var $9ad823 = exports.default || module.exports;
+        var $4fbb86 = exports.default || module.exports;
       
-      if (typeof $9ad823 === 'function') {
-        $9ad823 = $9ad823.options;
+      if (typeof $4fbb86 === 'function') {
+        $4fbb86 = $4fbb86.options;
       }
     
         /* template */
-        Object.assign($9ad823, (function () {
+        Object.assign($4fbb86, (function () {
           var render = function() {
   var _vm = this
   var _h = _vm.$createElement
@@ -37191,6 +37257,11 @@ exports.default = _default;
     "div",
     { staticClass: "sub-items-wrapper" },
     [
+      _c("AddSubItemForm", {
+        attrs: { todoListItem: _vm.todoListItem },
+        on: { "add-sub-item": _vm.dispatchAddSubItem }
+      }),
+      _vm._v(" "),
       !_vm.loadingSubItems
         ? _c(
             "b-list-group",
@@ -37238,12 +37309,7 @@ exports.default = _default;
             ],
             1
           )
-        : _vm._e(),
-      _vm._v(" "),
-      _c("AddSubItemForm", {
-        attrs: { todoListItem: _vm.todoListItem },
-        on: { "add-sub-item": _vm.dispatchAddSubItem }
-      })
+        : _vm._e()
     ],
     1
   )
@@ -37268,9 +37334,9 @@ render._withStripped = true
         if (api.compatible) {
           module.hot.accept();
           if (!module.hot.data) {
-            api.createRecord('$9ad823', $9ad823);
+            api.createRecord('$4fbb86', $4fbb86);
           } else {
-            api.reload('$9ad823', $9ad823);
+            api.reload('$4fbb86', $4fbb86);
           }
         }
 
@@ -37435,14 +37501,14 @@ var _default = {
   }
 };
 exports.default = _default;
-        var $1d8a45 = exports.default || module.exports;
+        var $ec928f = exports.default || module.exports;
       
-      if (typeof $1d8a45 === 'function') {
-        $1d8a45 = $1d8a45.options;
+      if (typeof $ec928f === 'function') {
+        $ec928f = $ec928f.options;
       }
     
         /* template */
-        Object.assign($1d8a45, (function () {
+        Object.assign($ec928f, (function () {
           var render = function() {
   var _vm = this
   var _h = _vm.$createElement
@@ -37647,7 +37713,7 @@ render._withStripped = true
             render: render,
             staticRenderFns: staticRenderFns,
             _compiled: true,
-            _scopeId: "data-v-1d8a45",
+            _scopeId: "data-v-ec928f",
             functional: undefined
           };
         })());
@@ -37660,9 +37726,9 @@ render._withStripped = true
         if (api.compatible) {
           module.hot.accept();
           if (!module.hot.data) {
-            api.createRecord('$1d8a45', $1d8a45);
+            api.createRecord('$ec928f', $ec928f);
           } else {
-            api.reload('$1d8a45', $1d8a45);
+            api.reload('$ec928f', $ec928f);
           }
         }
 
@@ -37728,9 +37794,6 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 //
 //
 //
-//
-//
-//
 var _default = {
   name: "TodoListItem",
   props: ["item"],
@@ -37753,7 +37816,7 @@ var _default = {
   },
   filters: {
     formatDate: function (value) {
-      return (0, _moment.default)(value).format("MM/D/YYYY");
+      return (0, _moment.default)(value).format("dddd, MMMM Do, YYYY");
     },
     truncate: function (text, length, suffix) {
       return text.substring(0, length) + suffix;
@@ -37783,134 +37846,151 @@ var _default = {
   }
 };
 exports.default = _default;
-        var $71ea3c = exports.default || module.exports;
+        var $b8ebde = exports.default || module.exports;
       
-      if (typeof $71ea3c === 'function') {
-        $71ea3c = $71ea3c.options;
+      if (typeof $b8ebde === 'function') {
+        $b8ebde = $b8ebde.options;
       }
     
         /* template */
-        Object.assign($71ea3c, (function () {
+        Object.assign($b8ebde, (function () {
           var render = function() {
   var _vm = this
   var _h = _vm.$createElement
   var _c = _vm._self._c || _h
   return _c(
-    "b-list-group-item",
-    {
-      staticClass: "todo-item bg-light",
-      class: { "align-items-center": !_vm.item.dueDate && !_vm.item.notes },
-      attrs: { "data-id": _vm.item.id }
-    },
+    "div",
+    { attrs: { "data-id": _vm.item.id } },
     [
-      _c("div", { staticClass: "item-handle mr-2" }, [_c("b-icon-list")], 1),
-      _vm._v(" "),
-      _c("b-form-checkbox", {
-        staticClass: "todo-item-checkbox",
-        attrs: { disabled: _vm.item.hasSubItems },
-        model: {
-          value: _vm.itemCompletedState,
-          callback: function($$v) {
-            _vm.itemCompletedState = $$v
-          },
-          expression: "itemCompletedState"
+      _c("EditTodoItemForm", {
+        attrs: { todoListItem: _vm.item },
+        on: {
+          "item-edited": _vm.sendItemEditedEvent,
+          "sub-item-count-changed": _vm.sendSubItemCountChangedEvent
         }
       }),
       _vm._v(" "),
-      _c("div", { staticClass: "todo-item-details" }, [
-        _c(
-          "div",
-          {
-            staticClass: "todo-item-name",
-            class: { "mb-0": !_vm.item.dueDate && !_vm.item.notes }
-          },
-          [_vm._v(_vm._s(_vm.item.name))]
-        ),
-        _vm._v(" "),
-        _vm.item.dueDate
-          ? _c(
-              "div",
-              { staticClass: "todo-item-due-date" },
-              [
-                _c("b-icon-calendar"),
-                _vm._v(
-                  "\n      " +
-                    _vm._s(_vm._f("formatDate")(_vm.item.dueDate)) +
-                    "\n    "
-                )
-              ],
-              1
-            )
-          : _vm._e(),
-        _vm._v(" "),
-        _vm.item.notes
-          ? _c(
-              "div",
-              { staticClass: "todo-item-notes" },
-              [
-                _c("b-icon-text-left"),
-                _vm._v(
-                  "\n      " +
-                    _vm._s(_vm._f("truncate")(_vm.item.notes, 30, "...")) +
-                    "\n    "
-                )
-              ],
-              1
-            )
-          : _vm._e()
-      ]),
-      _vm._v(" "),
       _c(
         "div",
-        { staticClass: "todo-item-options" },
+        {
+          staticClass: "item",
+          on: {
+            click: function($event) {
+              return _vm.$emit("item-selected", _vm.item)
+            }
+          }
+        },
         [
+          _c("div", { staticClass: "item-checkbox" }, [
+            _c(
+              "label",
+              {
+                staticClass: "custom-checkbox",
+                class: { checked: _vm.itemCompletedState },
+                attrs: { for: _vm.item.id, disabled: _vm.item.hasSubItems }
+              },
+              [
+                _c("b-icon-check"),
+                _vm._v(" "),
+                _c("input", {
+                  directives: [
+                    {
+                      name: "model",
+                      rawName: "v-model",
+                      value: _vm.itemCompletedState,
+                      expression: "itemCompletedState"
+                    }
+                  ],
+                  staticClass: "sr-only",
+                  attrs: { id: _vm.item.id, type: "checkbox" },
+                  domProps: {
+                    checked: Array.isArray(_vm.itemCompletedState)
+                      ? _vm._i(_vm.itemCompletedState, null) > -1
+                      : _vm.itemCompletedState
+                  },
+                  on: {
+                    change: function($event) {
+                      var $$a = _vm.itemCompletedState,
+                        $$el = $event.target,
+                        $$c = $$el.checked ? true : false
+                      if (Array.isArray($$a)) {
+                        var $$v = null,
+                          $$i = _vm._i($$a, $$v)
+                        if ($$el.checked) {
+                          $$i < 0 &&
+                            (_vm.itemCompletedState = $$a.concat([$$v]))
+                        } else {
+                          $$i > -1 &&
+                            (_vm.itemCompletedState = $$a
+                              .slice(0, $$i)
+                              .concat($$a.slice($$i + 1)))
+                        }
+                      } else {
+                        _vm.itemCompletedState = $$c
+                      }
+                    }
+                  }
+                })
+              ],
+              1
+            )
+          ]),
+          _vm._v(" "),
+          _c("div", { staticClass: "item-details" }, [
+            _c("div", { staticClass: "item-name" }, [
+              _vm._v(_vm._s(_vm.item.name))
+            ]),
+            _vm._v(" "),
+            _c("div", { staticClass: "item-content-preview" }, [
+              _vm.item.dueDate
+                ? _c(
+                    "div",
+                    { staticClass: "item-due-date" },
+                    [
+                      _c("b-icon-calendar"),
+                      _vm._v(
+                        "\n          " +
+                          _vm._s(_vm._f("formatDate")(_vm.item.dueDate)) +
+                          "\n        "
+                      )
+                    ],
+                    1
+                  )
+                : _vm._e(),
+              _vm._v(" "),
+              _vm.item.notes
+                ? _c(
+                    "div",
+                    { staticClass: "item-notes" },
+                    [_c("b-icon-file-earmark-text")],
+                    1
+                  )
+                : _vm._e()
+            ])
+          ]),
+          _vm._v(" "),
           _c(
-            "b-button-group",
+            "div",
+            { staticClass: "item-controls" },
             [
               _c(
                 "b-button",
                 {
-                  attrs: { variant: "info" },
-                  on: {
-                    click: function($event) {
-                      return _vm.$bvModal.show("modal-" + _vm.item.id)
-                    }
-                  }
-                },
-                [_vm._v("View")]
-              ),
-              _vm._v(" "),
-              _c(
-                "b-button",
-                {
-                  attrs: { variant: "danger" },
+                  staticClass: "btn-trash",
+                  attrs: { variant: "link" },
                   on: {
                     click: function($event) {
                       return _vm.$emit("delete-item", _vm.item.id)
                     }
                   }
                 },
-                [_vm._v("Delete")]
+                [_c("b-icon-trash")],
+                1
               )
             ],
             1
-          ),
-          _vm._v(" "),
-          _c("EditTodoItemForm", {
-            attrs: { todoListItem: _vm.item },
-            on: {
-              "item-edited": _vm.sendItemEditedEvent,
-              "sub-items-completed": function($event) {
-                return _vm.sendCheckboxClickedEvent(true)
-              },
-              "sub-items-uncompleted": function($event) {
-                return _vm.sendCheckboxClickedEvent(false)
-              },
-              "sub-item-count-changed": _vm.sendSubItemCountChangedEvent
-            }
-          })
-        ],
-        1
+          )
+        ]
       )
     ],
     1
@@ -37923,7 +38003,7 @@ render._withStripped = true
             render: render,
             staticRenderFns: staticRenderFns,
             _compiled: true,
-            _scopeId: "data-v-71ea3c",
+            _scopeId: null,
             functional: undefined
           };
         })());
@@ -37936,9 +38016,9 @@ render._withStripped = true
         if (api.compatible) {
           module.hot.accept();
           if (!module.hot.data) {
-            api.createRecord('$71ea3c', $71ea3c);
+            api.createRecord('$b8ebde', $b8ebde);
           } else {
-            api.reload('$71ea3c', $71ea3c);
+            api.reload('$b8ebde', $b8ebde);
           }
         }
 
@@ -37956,6 +38036,10 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.default = void 0;
+//
+//
+//
+//
 //
 //
 //
@@ -38022,14 +38106,14 @@ var _default = {
   }
 };
 exports.default = _default;
-        var $aa59c0 = exports.default || module.exports;
+        var $38fd75 = exports.default || module.exports;
       
-      if (typeof $aa59c0 === 'function') {
-        $aa59c0 = $aa59c0.options;
+      if (typeof $38fd75 === 'function') {
+        $38fd75 = $38fd75.options;
       }
     
         /* template */
-        Object.assign($aa59c0, (function () {
+        Object.assign($38fd75, (function () {
           var render = function() {
   var _vm = this
   var _h = _vm.$createElement
@@ -38039,15 +38123,20 @@ exports.default = _default;
     { attrs: { id: "add-todo-list-item" } },
     [
       _c(
-        "b-button",
+        "div",
         {
+          staticClass: "item item-add",
           on: {
             click: function($event) {
               return _vm.$bvModal.show("modal-add-todo-list-item")
             }
           }
         },
-        [_vm._v("Add item")]
+        [
+          _c("b-button", { staticClass: "btn-add" }, [_c("b-icon-plus")], 1),
+          _vm._v("Add item\n  ")
+        ],
+        1
       ),
       _vm._v(" "),
       _c(
@@ -38149,7 +38238,7 @@ render._withStripped = true
             render: render,
             staticRenderFns: staticRenderFns,
             _compiled: true,
-            _scopeId: null,
+            _scopeId: "data-v-38fd75",
             functional: undefined
           };
         })());
@@ -38162,16 +38251,20 @@ render._withStripped = true
         if (api.compatible) {
           module.hot.accept();
           if (!module.hot.data) {
-            api.createRecord('$aa59c0', $aa59c0);
+            api.createRecord('$38fd75', $38fd75);
           } else {
-            api.reload('$aa59c0', $aa59c0);
+            api.reload('$38fd75', $38fd75);
           }
         }
 
         
+        var reloadCSS = require('_css_loader');
+        module.hot.dispose(reloadCSS);
+        module.hot.accept(reloadCSS);
+      
       }
     })();
-},{"vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/components/TodoListItems.vue":[function(require,module,exports) {
+},{"_css_loader":"node_modules/parcel-bundler/src/builtins/css-loader.js","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/components/TodoListItems.vue":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -38210,6 +38303,198 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 //
 //
 //
+var _default = {
+  name: "TodoListItems",
+  props: ["todoListId", "items", "itemsLayout"],
+  components: {
+    Draggable: _vuedraggable.default,
+    TodoListItem: _TodoListItem.default,
+    AddTodoListItemForm: _AddTodoListItemForm.default
+  },
+  methods: {
+    sendItemSelectedEventToList(item) {
+      this.$emit("item-selected", item);
+    },
+
+    sendAddItemEvent(item) {
+      this.$emit("add-item", item);
+    },
+
+    sendUpdateItemPositionEvent(event) {
+      this.$emit("update-item-position", event);
+    },
+
+    sendCheckboxClickedEvent({
+      itemId,
+      completed
+    }) {
+      this.$emit("checkbox-clicked", {
+        itemId,
+        completed
+      });
+    },
+
+    sendItemEditedEvent(item) {
+      this.$emit("item-edited", item);
+    },
+
+    sendDeleteItemEvent(itemId) {
+      this.$emit("delete-item", itemId);
+    },
+
+    sendSubItemCountChangedEvent({
+      itemId,
+      hasSubItems
+    }) {
+      this.$emit("sub-item-count-changed", {
+        itemId,
+        hasSubItems
+      });
+    }
+
+  }
+};
+exports.default = _default;
+        var $2b69d1 = exports.default || module.exports;
+      
+      if (typeof $2b69d1 === 'function') {
+        $2b69d1 = $2b69d1.options;
+      }
+    
+        /* template */
+        Object.assign($2b69d1, (function () {
+          var render = function() {
+  var _vm = this
+  var _h = _vm.$createElement
+  var _c = _vm._self._c || _h
+  return _c(
+    "div",
+    [
+      _c("AddTodoListItemForm", {
+        attrs: { todoListId: _vm.todoListId },
+        on: { "add-item": _vm.sendAddItemEvent }
+      }),
+      _vm._v(" "),
+      _c(
+        "Draggable",
+        {
+          attrs: { delay: "100" },
+          on: { end: _vm.sendUpdateItemPositionEvent },
+          model: {
+            value: _vm.itemsLayout,
+            callback: function($$v) {
+              _vm.itemsLayout = $$v
+            },
+            expression: "itemsLayout"
+          }
+        },
+        _vm._l(_vm.itemsLayout, function(itemId) {
+          return _c("TodoListItem", {
+            key: itemId,
+            attrs: {
+              item: _vm.items.find(function(i) {
+                return i.id === itemId
+              })
+            },
+            on: {
+              "item-selected": _vm.sendItemSelectedEventToList,
+              "checkbox-clicked": _vm.sendCheckboxClickedEvent,
+              "item-edited": _vm.sendItemEditedEvent,
+              "delete-item": _vm.sendDeleteItemEvent,
+              "sub-item-count-changed": _vm.sendSubItemCountChangedEvent
+            }
+          })
+        }),
+        1
+      )
+    ],
+    1
+  )
+}
+var staticRenderFns = []
+render._withStripped = true
+
+          return {
+            render: render,
+            staticRenderFns: staticRenderFns,
+            _compiled: true,
+            _scopeId: null,
+            functional: undefined
+          };
+        })());
+      
+    /* hot reload */
+    (function () {
+      if (module.hot) {
+        var api = require('vue-hot-reload-api');
+        api.install(require('vue'));
+        if (api.compatible) {
+          module.hot.accept();
+          if (!module.hot.data) {
+            api.createRecord('$2b69d1', $2b69d1);
+          } else {
+            api.reload('$2b69d1', $2b69d1);
+          }
+        }
+
+        
+      }
+    })();
+},{"vue":"node_modules/vue/dist/vue.runtime.esm.js","axios":"node_modules/axios/index.js","vuedraggable":"node_modules/vuedraggable/dist/vuedraggable.common.js","./TodoListItem":"vue/components/TodoListItem.vue","./AddTodoListItemForm.vue":"vue/components/AddTodoListItemForm.vue","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js"}],"vue/components/TodoItemDetails.vue":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = void 0;
+
+var _moment = _interopRequireDefault(require("moment"));
+
+var _vuex = require("vuex");
+
+var _SubItems = _interopRequireDefault(require("./SubItems"));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 //
 //
 //
@@ -38217,23 +38502,348 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 //
 //
 var _default = {
-  name: "TodoListItems",
-  props: ["todoListId"],
+  name: "TodoItemDetails",
+  props: ["item"],
   components: {
-    Draggable: _vuedraggable.default,
-    TodoListItem: _TodoListItem.default,
-    AddTodoListItemForm: _AddTodoListItemForm.default
+    SubItems: _SubItems.default
   },
+
+  data() {
+    return {
+      form: { ...this.item
+      }
+    };
+  },
+
+  methods: {
+    sendSubItemCountChangedEvent({
+      hasSubItems
+    }) {
+      this.$emit("sub-item-count-changed", {
+        itemId: this.item.id,
+        hasSubItems
+      });
+    },
+
+    sendItemEditedEvent() {
+      this.$emit("item-edited", this.form);
+    },
+
+    sendSubItemsCompletedEvent() {
+      this.$emit("sub-items-completed", {
+        itemId: this.item.id,
+        completed: true
+      });
+    },
+
+    sendSubItemsUncompletedEvent() {
+      this.$emit("sub-items-uncompleted", {
+        itemId: this.item.id,
+        completed: false
+      });
+    }
+
+  },
+  computed: (0, _vuex.mapState)({
+    plan: state => state.plan
+  })
+};
+exports.default = _default;
+        var $0f2266 = exports.default || module.exports;
+      
+      if (typeof $0f2266 === 'function') {
+        $0f2266 = $0f2266.options;
+      }
+    
+        /* template */
+        Object.assign($0f2266, (function () {
+          var render = function() {
+  var _vm = this
+  var _h = _vm.$createElement
+  var _c = _vm._self._c || _h
+  return _c("b-col", [
+    _c(
+      "div",
+      { staticClass: "item-content" },
+      [
+        _c(
+          "b-form-group",
+          { staticClass: "mb-0" },
+          [
+            _c("b-input", {
+              staticClass: "item-name item-name-input",
+              attrs: { type: "text" },
+              on: {
+                keyup: function($event) {
+                  if (
+                    !$event.type.indexOf("key") &&
+                    _vm._k($event.keyCode, "enter", 13, $event.key, "Enter")
+                  ) {
+                    return null
+                  }
+                  return $event.target.blur()
+                },
+                change: _vm.sendItemEditedEvent
+              },
+              model: {
+                value: _vm.form.name,
+                callback: function($$v) {
+                  _vm.$set(_vm.form, "name", $$v)
+                },
+                expression: "form.name"
+              }
+            })
+          ],
+          1
+        ),
+        _vm._v(" "),
+        _c(
+          "div",
+          { staticClass: "item-meta mb-3" },
+          [
+            _vm.plan.canAddDueDates
+              ? _c(
+                  "b-form-group",
+                  [
+                    _c("b-form-datepicker", {
+                      staticClass: "item-due-date",
+                      attrs: { id: "due-date" },
+                      on: { input: _vm.sendItemEditedEvent },
+                      model: {
+                        value: _vm.form.dueDate,
+                        callback: function($$v) {
+                          _vm.$set(_vm.form, "dueDate", $$v)
+                        },
+                        expression: "form.dueDate"
+                      }
+                    })
+                  ],
+                  1
+                )
+              : _vm._e()
+          ],
+          1
+        ),
+        _vm._v(" "),
+        _c(
+          "b-form-group",
+          { staticClass: "item-notes" },
+          [
+            _c("b-form-textarea", {
+              attrs: {
+                id: "item-notes",
+                placeholder: "Add notes here...",
+                rows: "1",
+                "max-rows": "12"
+              },
+              on: { input: _vm.sendItemEditedEvent },
+              model: {
+                value: _vm.form.notes,
+                callback: function($$v) {
+                  _vm.$set(_vm.form, "notes", $$v)
+                },
+                expression: "form.notes"
+              }
+            })
+          ],
+          1
+        ),
+        _vm._v(" "),
+        _c("SubItems", {
+          key: _vm.item.id,
+          attrs: { todoListItem: _vm.item },
+          on: {
+            "sub-items-completed": _vm.sendSubItemsCompletedEvent,
+            "sub-items-uncompleted": _vm.sendSubItemsUncompletedEvent,
+            "sub-item-count-changed": _vm.sendSubItemCountChangedEvent
+          }
+        })
+      ],
+      1
+    )
+  ])
+}
+var staticRenderFns = []
+render._withStripped = true
+
+          return {
+            render: render,
+            staticRenderFns: staticRenderFns,
+            _compiled: true,
+            _scopeId: null,
+            functional: undefined
+          };
+        })());
+      
+    /* hot reload */
+    (function () {
+      if (module.hot) {
+        var api = require('vue-hot-reload-api');
+        api.install(require('vue'));
+        if (api.compatible) {
+          module.hot.accept();
+          if (!module.hot.data) {
+            api.createRecord('$0f2266', $0f2266);
+          } else {
+            api.reload('$0f2266', $0f2266);
+          }
+        }
+
+        
+        var reloadCSS = require('_css_loader');
+        module.hot.dispose(reloadCSS);
+        module.hot.accept(reloadCSS);
+      
+      }
+    })();
+},{"moment":"node_modules/moment/moment.js","vuex":"node_modules/vuex/dist/vuex.esm.js","./SubItems":"vue/components/SubItems.vue","_css_loader":"node_modules/parcel-bundler/src/builtins/css-loader.js","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/components/TodoList.vue":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = void 0;
+
+var _axios = _interopRequireDefault(require("axios"));
+
+var _vue = _interopRequireDefault(require("vue"));
+
+var _vuex = require("vuex");
+
+var _vuedraggable = _interopRequireDefault(require("vuedraggable"));
+
+var _Confetti = _interopRequireDefault(require("./Confetti"));
+
+var _Contributors = _interopRequireDefault(require("./Contributors"));
+
+var _InviteContributorsForm = _interopRequireDefault(require("./InviteContributorsForm"));
+
+var _TodoListItems = _interopRequireDefault(require("./TodoListItems"));
+
+var _TodoItemDetails = _interopRequireDefault(require("./TodoItemDetails.vue"));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+var _default = {
+  name: "TodoList",
+  props: ["todoListId"],
 
   data() {
     return {
       items: [],
       itemsLayout: [],
-      loadingItems: true
+      loadingItems: true,
+      selectedItem: null
     };
   },
 
+  computed: { ...(0, _vuex.mapState)({
+      contributors: state => state.contributors
+    }),
+
+    todoList() {
+      return this.$store.getters.getTodoListById(this.todoListId);
+    },
+
+    uncompletedItems() {
+      return this.items.filter(item => item.completed === false).length;
+    }
+
+  },
+  components: {
+    TodoListItems: _TodoListItems.default,
+    Contributors: _Contributors.default,
+    InviteContributorsForm: _InviteContributorsForm.default,
+    Confetti: _Confetti.default,
+    Draggable: _vuedraggable.default,
+    TodoItemDetails: _TodoItemDetails.default
+  },
+
+  async created() {
+    await this.dispatchGetItemsAndLayout();
+  },
+
   methods: {
+    setTodoListCompleted() {
+      this.$store.commit("setTodoListCompletedState", {
+        todoListId: this.todoListId,
+        completed: true
+      });
+    },
+
+    setTodoListUncompleted() {
+      this.$store.commit("setTodoListCompletedState", {
+        todoListId: this.todoListId,
+        completed: false
+      });
+    },
+
+    selectItem(item) {
+      this.selectedItem = item;
+    },
+
+    async deleteTodoList() {
+      await this.$store.dispatch("deleteTodoList", {
+        todoListId: this.todoList.id
+      });
+      this.$router.push("/");
+    },
+
     async dispatchGetItemsAndLayout() {
       await this.dispatchGetItemsLayout();
       await this.dispatchGetItems();
@@ -38334,6 +38944,15 @@ var _default = {
       return response.data;
     },
 
+    async leaveTodoList() {
+      await (0, _axios.default)({
+        method: "POST",
+        url: "api/lists/".concat(this.todoList.id, "/removeself")
+      });
+      this.$store.commit("deleteTodoList", this.todoList.id);
+      this.$router.push("/");
+    },
+
     commitSetLoadingItemsState(state) {
       this.loadingItems = state;
     },
@@ -38353,7 +38972,7 @@ var _default = {
 
     commitSetItemCompletedState(itemId, completed) {
       this.items[this.items.findIndex(i => i.id === itemId)].completed = completed;
-      this.triggerTodoListCompletedEvent();
+      this.triggerTodoListCompleted();
     },
 
     commitUpdateItem(item) {
@@ -38382,13 +39001,13 @@ var _default = {
       this.itemsLayout = itemsLayout;
     },
 
-    triggerTodoListCompletedEvent() {
+    triggerTodoListCompleted() {
       const listCompleted = this.items.length > 0 && this.items.every(item => item.completed);
 
       if (listCompleted) {
-        this.$emit("todo-list-completed");
+        this.setTodoListCompleted();
       } else {
-        this.$emit("todo-list-uncompleted");
+        this.setTodoListUncompleted();
       }
     },
 
@@ -38398,11 +39017,7 @@ var _default = {
 
   },
 
-  async created() {
-    await this.dispatchGetItemsAndLayout();
-  },
-
-  mounted() {
+  async mounted() {
     // Item created
     this.$store.state.connection.on("ItemCreated", (todoListId, item) => {
       if (this.itemsBelongToList(todoListId)) {
@@ -38464,71 +39079,161 @@ var _default = {
 
   watch: {
     items() {
-      this.triggerTodoListCompletedEvent();
+      this.triggerTodoListCompleted();
+    },
+
+    uncompletedItems() {
+      this.$store.commit("updateTodoListUncompletedItems", {
+        listId: this.todoList.id,
+        uncompletedItems: this.uncompletedItems
+      });
     }
 
   }
 };
 exports.default = _default;
-        var $642124 = exports.default || module.exports;
+        var $20d7fb = exports.default || module.exports;
       
-      if (typeof $642124 === 'function') {
-        $642124 = $642124.options;
+      if (typeof $20d7fb === 'function') {
+        $20d7fb = $20d7fb.options;
       }
     
         /* template */
-        Object.assign($642124, (function () {
+        Object.assign($20d7fb, (function () {
           var render = function() {
   var _vm = this
   var _h = _vm.$createElement
   var _c = _vm._self._c || _h
   return _c(
-    "b-list-group",
-    { staticClass: "todo-list-items" },
+    "b-row",
+    { attrs: { "no-gutters": "" } },
     [
-      !_vm.loadingItems
-        ? _c(
-            "Draggable",
-            {
-              attrs: { handle: ".item-handle" },
-              on: { end: _vm.dispatchUpdateItemPosition },
-              model: {
-                value: _vm.itemsLayout,
-                callback: function($$v) {
-                  _vm.itemsLayout = $$v
-                },
-                expression: "itemsLayout"
-              }
-            },
-            _vm._l(_vm.itemsLayout, function(itemId) {
-              return _c("TodoListItem", {
-                key: itemId,
-                attrs: {
-                  item: _vm.items.find(function(i) {
-                    return i.id === itemId
-                  })
-                },
-                on: {
-                  "checkbox-clicked": _vm.dispatchSetItemCompletedState,
-                  "item-edited": _vm.dispatchUpdateItem,
-                  "delete-item": _vm.dispatchDeleteItem,
-                  "sub-item-count-changed": _vm.commitUpdateHasSubItems
-                }
-              })
-            }),
-            1
-          )
-        : _vm._e(),
+      _c("b-col", [
+        _c(
+          "div",
+          { staticClass: "list-wrapper" },
+          [
+            _vm.todoList.completed ? _c("Confetti") : _vm._e(),
+            _vm._v(" "),
+            _c(
+              "header",
+              { staticClass: "list-header" },
+              [
+                _c(
+                  "b-row",
+                  { staticClass: "align-items-center" },
+                  [
+                    _c("b-col", [
+                      _c("h2", { staticClass: "list-title" }, [
+                        _vm._v(_vm._s(_vm.todoList.listTitle))
+                      ])
+                    ]),
+                    _vm._v(" "),
+                    _c("b-col", [
+                      _c(
+                        "div",
+                        { staticClass: "contributors-wrapper" },
+                        [
+                          _c("Contributors", {
+                            attrs: {
+                              todoListContributors: _vm.todoList.contributors,
+                              accountContributors: _vm.contributors
+                            }
+                          }),
+                          _vm._v(" "),
+                          _c(
+                            "div",
+                            { staticClass: "list-settings" },
+                            [
+                              _c("InviteContributorsForm", {
+                                attrs: { todoList: _vm.todoList }
+                              }),
+                              _vm._v(" "),
+                              _c(
+                                "b-dropdown",
+                                {
+                                  staticClass: "list-settings-dropdown",
+                                  attrs: { right: "" },
+                                  scopedSlots: _vm._u([
+                                    {
+                                      key: "button-content",
+                                      fn: function() {
+                                        return [
+                                          _c("b-icon-three-dots-vertical", {
+                                            attrs: { "font-scale": "1" }
+                                          })
+                                        ]
+                                      },
+                                      proxy: true
+                                    }
+                                  ])
+                                },
+                                [
+                                  _vm._v(" "),
+                                  _vm.todoList.role === 2
+                                    ? _c(
+                                        "b-dropdown-item",
+                                        { on: { click: _vm.leaveTodoList } },
+                                        [_vm._v("Leave")]
+                                      )
+                                    : _vm._e(),
+                                  _vm._v(" "),
+                                  _vm.todoList.role === 3
+                                    ? _c(
+                                        "b-dropdown-item",
+                                        { on: { click: _vm.deleteTodoList } },
+                                        [_vm._v("Delete")]
+                                      )
+                                    : _vm._e()
+                                ],
+                                1
+                              )
+                            ],
+                            1
+                          )
+                        ],
+                        1
+                      )
+                    ])
+                  ],
+                  1
+                )
+              ],
+              1
+            ),
+            _vm._v(" "),
+            !_vm.loadingItems
+              ? _c("TodoListItems", {
+                  attrs: {
+                    todoListId: _vm.todoList.id,
+                    items: _vm.items,
+                    itemsLayout: _vm.itemsLayout
+                  },
+                  on: {
+                    "item-selected": _vm.selectItem,
+                    "checkbox-clicked": _vm.dispatchSetItemCompletedState,
+                    "add-item": _vm.dispatchAddItem,
+                    "update-item-position": _vm.dispatchUpdateItemPosition,
+                    "delete-item": _vm.dispatchDeleteItem
+                  }
+                })
+              : _vm._e()
+          ],
+          1
+        )
+      ]),
       _vm._v(" "),
-      _vm.items.length === 0
-        ? _c("b-list-group-item", [_vm._v("Add an item to get started.")])
-        : _vm._e(),
-      _vm._v(" "),
-      _c("AddTodoListItemForm", {
-        staticClass: "mt-3",
-        attrs: { todoListId: _vm.todoListId },
-        on: { "add-item": _vm.dispatchAddItem }
-      })
+      _vm.selectedItem
+        ? _c("TodoItemDetails", {
+            attrs: { item: _vm.selectedItem },
+            on: {
+              "item-edited": _vm.dispatchUpdateItem,
+              "sub-items-completed": _vm.dispatchSetItemCompletedState,
+              "sub-items-uncompleted": _vm.dispatchSetItemCompletedState,
+              "sub-item-count-changed": _vm.commitUpdateHasSubItems
+            }
+          })
+        : _vm._e()
     ],
     1
   )
@@ -38553,190 +39258,9 @@ render._withStripped = true
         if (api.compatible) {
           module.hot.accept();
           if (!module.hot.data) {
-            api.createRecord('$642124', $642124);
+            api.createRecord('$20d7fb', $20d7fb);
           } else {
-            api.reload('$642124', $642124);
-          }
-        }
-
-        
-      }
-    })();
-},{"vue":"node_modules/vue/dist/vue.runtime.esm.js","axios":"node_modules/axios/index.js","vuedraggable":"node_modules/vuedraggable/dist/vuedraggable.common.js","./TodoListItem":"vue/components/TodoListItem.vue","./AddTodoListItemForm.vue":"vue/components/AddTodoListItemForm.vue","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js"}],"vue/components/InviteContributorsForm.vue":[function(require,module,exports) {
-"use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.default = void 0;
-
-var _axios = _interopRequireDefault(require("axios"));
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-var _default = {
-  props: ["listId"],
-
-  data() {
-    return {
-      form: {
-        email: ""
-      },
-      invitationSent: false,
-      dismissSecs: 5,
-      dismissCountDown: 0
-    };
-  },
-
-  methods: {
-    async invite() {
-      await (0, _axios.default)({
-        method: "POST",
-        url: "api/lists/".concat(this.listId, "/email"),
-        data: JSON.stringify({
-          email: this.form.email
-        }),
-        headers: {
-          "content-type": "application/json"
-        }
-      });
-      this.form.email = "";
-      this.showAlert();
-    },
-
-    countDownChanged(dismissCountDown) {
-      this.dismissCountDown = dismissCountDown;
-    },
-
-    showAlert() {
-      this.dismissCountDown = this.dismissSecs;
-    }
-
-  }
-};
-exports.default = _default;
-        var $3f1240 = exports.default || module.exports;
-      
-      if (typeof $3f1240 === 'function') {
-        $3f1240 = $3f1240.options;
-      }
-    
-        /* template */
-        Object.assign($3f1240, (function () {
-          var render = function() {
-  var _vm = this
-  var _h = _vm.$createElement
-  var _c = _vm._self._c || _h
-  return _c(
-    "b-card",
-    { attrs: { title: "Invite" } },
-    [
-      _c(
-        "b-form",
-        {
-          staticClass: "invitation-form",
-          on: {
-            submit: function($event) {
-              $event.preventDefault()
-              return _vm.invite($event)
-            }
-          }
-        },
-        [
-          _c(
-            "b-form-group",
-            {
-              staticClass: "email-group text-secondary",
-              attrs: { label: "Email" }
-            },
-            [
-              _c("b-form-input", {
-                attrs: { type: "email", required: "" },
-                model: {
-                  value: _vm.form.email,
-                  callback: function($$v) {
-                    _vm.$set(_vm.form, "email", $$v)
-                  },
-                  expression: "form.email"
-                }
-              })
-            ],
-            1
-          ),
-          _vm._v(" "),
-          _c("b-button", { attrs: { type: "submit" } }, [_vm._v("Send")]),
-          _vm._v(" "),
-          _c(
-            "b-alert",
-            {
-              staticClass: "mb-0 mt-3",
-              attrs: {
-                variant: "success",
-                show: _vm.dismissCountDown,
-                dismissable: "",
-                fade: ""
-              },
-              on: {
-                dismissed: function($event) {
-                  _vm.dismissCountDown = 0
-                },
-                "dismiss-count-down": _vm.countDownChanged
-              }
-            },
-            [_vm._v("Invitation sent!")]
-          )
-        ],
-        1
-      )
-    ],
-    1
-  )
-}
-var staticRenderFns = []
-render._withStripped = true
-
-          return {
-            render: render,
-            staticRenderFns: staticRenderFns,
-            _compiled: true,
-            _scopeId: "data-v-3f1240",
-            functional: undefined
-          };
-        })());
-      
-    /* hot reload */
-    (function () {
-      if (module.hot) {
-        var api = require('vue-hot-reload-api');
-        api.install(require('vue'));
-        if (api.compatible) {
-          module.hot.accept();
-          if (!module.hot.data) {
-            api.createRecord('$3f1240', $3f1240);
-          } else {
-            api.reload('$3f1240', $3f1240);
+            api.reload('$20d7fb', $20d7fb);
           }
         }
 
@@ -38747,10 +39271,7 @@ render._withStripped = true
       
       }
     })();
-},{"axios":"node_modules/axios/index.js","_css_loader":"node_modules/parcel-bundler/src/builtins/css-loader.js","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"node_modules/vue-confetti/dist/vue-confetti.js":[function(require,module,exports) {
-var define;
-!function(t,e){"object"==typeof exports&&"object"==typeof module?module.exports=e():"function"==typeof define&&define.amd?define([],e):"object"==typeof exports?exports["vue-confetti"]=e():t["vue-confetti"]=e()}(window,(function(){return function(t){var e={};function n(i){if(e[i])return e[i].exports;var r=e[i]={i:i,l:!1,exports:{}};return t[i].call(r.exports,r,r.exports,n),r.l=!0,r.exports}return n.m=t,n.c=e,n.d=function(t,e,i){n.o(t,e)||Object.defineProperty(t,e,{enumerable:!0,get:i})},n.r=function(t){"undefined"!=typeof Symbol&&Symbol.toStringTag&&Object.defineProperty(t,Symbol.toStringTag,{value:"Module"}),Object.defineProperty(t,"__esModule",{value:!0})},n.t=function(t,e){if(1&e&&(t=n(t)),8&e)return t;if(4&e&&"object"==typeof t&&t&&t.__esModule)return t;var i=Object.create(null);if(n.r(i),Object.defineProperty(i,"default",{enumerable:!0,value:t}),2&e&&"string"!=typeof t)for(var r in t)n.d(i,r,function(e){return t[e]}.bind(null,r));return i},n.n=function(t){var e=t&&t.__esModule?function(){return t.default}:function(){return t};return n.d(e,"a",e),e},n.o=function(t,e){return Object.prototype.hasOwnProperty.call(t,e)},n.p="",n(n.s=3)}([function(t,e,n){"use strict";n.r(e);var i=function(){var t=arguments.length>0&&void 0!==arguments[0]?arguments[0]:1,e=arguments.length>1&&void 0!==arguments[1]?arguments[1]:t+1,n=arguments.length>2&&void 0!==arguments[2]&&arguments[2],i=parseFloat(t),r=parseFloat(e),o=Math.random()*(r-i)+i;return n?Math.round(o):o};function r(t,e){for(var n=0;n<e.length;n++){var i=e[n];i.enumerable=i.enumerable||!1,i.configurable=!0,"value"in i&&(i.writable=!0),Object.defineProperty(t,i.key,i)}}var o=function(){function t(){var e=arguments.length>0&&void 0!==arguments[0]?arguments[0]:{},n=e.color,i=void 0===n?"blue":n,r=e.size,o=void 0===r?10:r,a=e.dropRate,c=void 0===a?10:a;!function(t,e){if(!(t instanceof e))throw new TypeError("Cannot call a class as a function")}(this,t),this.color=i,this.size=o,this.dropRate=c}var e,n,o;return e=t,(n=[{key:"setup",value:function(t){var e=t.canvas,n=t.wind,r=t.windPosCoef,o=t.windSpeedMax,a=t.count;return this.canvas=e,this.wind=n,this.windPosCoef=r,this.windSpeedMax=o,this.x=i(-35,this.canvas.width+35),this.y=i(-30,-35),this.d=i(150)+10,this.particleSize=i(this.size,2*this.size),this.tilt=i(10),this.tiltAngleIncremental=(i(0,.08)+.04)*(i()<.5?-1:1),this.tiltAngle=0,this.angle=i(2*Math.PI),this.count=a+1,this.remove=!1,this}},{key:"update",value:function(){this.tiltAngle+=this.tiltAngleIncremental*(.2*Math.cos(this.wind+(this.d+this.x+this.y)*this.windPosCoef)+1),this.y+=(Math.cos(this.angle+this.d)+parseInt(this.dropRate,10))/2,this.x+=Math.sin(this.angle),this.x+=Math.cos(this.wind+(this.d+this.x+this.y)*this.windPosCoef)*this.windSpeedMax,this.y+=Math.sin(this.wind+(this.d+this.x+this.y)*this.windPosCoef)*this.windSpeedMax,this.tilt=15*Math.sin(this.tiltAngle-this.count/3)}},{key:"pastBottom",value:function(){return this.y>this.canvas.height}},{key:"draw",value:function(){this.canvas.ctx.fillStyle=this.color,this.canvas.ctx.beginPath(),this.canvas.ctx.setTransform(Math.cos(this.tiltAngle),Math.sin(this.tiltAngle),0,1,this.x,this.y)}},{key:"kill",value:function(){this.remove=!0}}])&&r(e.prototype,n),o&&r(e,o),t}();function a(t){return(a="function"==typeof Symbol&&"symbol"==typeof Symbol.iterator?function(t){return typeof t}:function(t){return t&&"function"==typeof Symbol&&t.constructor===Symbol&&t!==Symbol.prototype?"symbol":typeof t})(t)}function c(t,e){for(var n=0;n<e.length;n++){var i=e[n];i.enumerable=i.enumerable||!1,i.configurable=!0,"value"in i&&(i.writable=!0),Object.defineProperty(t,i.key,i)}}function s(t,e){return!e||"object"!==a(e)&&"function"!=typeof e?function(t){if(void 0===t)throw new ReferenceError("this hasn't been initialised - super() hasn't been called");return t}(t):e}function l(t,e,n){return(l="undefined"!=typeof Reflect&&Reflect.get?Reflect.get:function(t,e,n){var i=function(t,e){for(;!Object.prototype.hasOwnProperty.call(t,e)&&null!==(t=u(t)););return t}(t,e);if(i){var r=Object.getOwnPropertyDescriptor(i,e);return r.get?r.get.call(n):r.value}})(t,e,n||t)}function u(t){return(u=Object.setPrototypeOf?Object.getPrototypeOf:function(t){return t.__proto__||Object.getPrototypeOf(t)})(t)}function f(t,e){return(f=Object.setPrototypeOf||function(t,e){return t.__proto__=e,t})(t,e)}var h=function(t){function e(){return function(t,e){if(!(t instanceof e))throw new TypeError("Cannot call a class as a function")}(this,e),s(this,u(e).apply(this,arguments))}var n,i,r;return function(t,e){if("function"!=typeof e&&null!==e)throw new TypeError("Super expression must either be null or a function");t.prototype=Object.create(e&&e.prototype,{constructor:{value:t,writable:!0,configurable:!0}}),e&&f(t,e)}(e,t),n=e,(i=[{key:"draw",value:function(){l(u(e.prototype),"draw",this).call(this),this.canvas.ctx.arc(0,0,this.particleSize/2,0,2*Math.PI,!1),this.canvas.ctx.fill()}}])&&c(n.prototype,i),r&&c(n,r),e}(o);function p(t){return(p="function"==typeof Symbol&&"symbol"==typeof Symbol.iterator?function(t){return typeof t}:function(t){return t&&"function"==typeof Symbol&&t.constructor===Symbol&&t!==Symbol.prototype?"symbol":typeof t})(t)}function y(t,e){for(var n=0;n<e.length;n++){var i=e[n];i.enumerable=i.enumerable||!1,i.configurable=!0,"value"in i&&(i.writable=!0),Object.defineProperty(t,i.key,i)}}function d(t,e){return!e||"object"!==p(e)&&"function"!=typeof e?function(t){if(void 0===t)throw new ReferenceError("this hasn't been initialised - super() hasn't been called");return t}(t):e}function v(t,e,n){return(v="undefined"!=typeof Reflect&&Reflect.get?Reflect.get:function(t,e,n){var i=function(t,e){for(;!Object.prototype.hasOwnProperty.call(t,e)&&null!==(t=b(t)););return t}(t,e);if(i){var r=Object.getOwnPropertyDescriptor(i,e);return r.get?r.get.call(n):r.value}})(t,e,n||t)}function b(t){return(b=Object.setPrototypeOf?Object.getPrototypeOf:function(t){return t.__proto__||Object.getPrototypeOf(t)})(t)}function m(t,e){return(m=Object.setPrototypeOf||function(t,e){return t.__proto__=e,t})(t,e)}var w=function(t){function e(){return function(t,e){if(!(t instanceof e))throw new TypeError("Cannot call a class as a function")}(this,e),d(this,b(e).apply(this,arguments))}var n,i,r;return function(t,e){if("function"!=typeof e&&null!==e)throw new TypeError("Super expression must either be null or a function");t.prototype=Object.create(e&&e.prototype,{constructor:{value:t,writable:!0,configurable:!0}}),e&&m(t,e)}(e,t),n=e,(i=[{key:"draw",value:function(){v(b(e.prototype),"draw",this).call(this),this.canvas.ctx.fillRect(0,0,this.particleSize,this.particleSize/2)}}])&&y(n.prototype,i),r&&y(n,r),e}(o);function g(t){return(g="function"==typeof Symbol&&"symbol"==typeof Symbol.iterator?function(t){return typeof t}:function(t){return t&&"function"==typeof Symbol&&t.constructor===Symbol&&t!==Symbol.prototype?"symbol":typeof t})(t)}function O(t,e){for(var n=0;n<e.length;n++){var i=e[n];i.enumerable=i.enumerable||!1,i.configurable=!0,"value"in i&&(i.writable=!0),Object.defineProperty(t,i.key,i)}}function P(t,e){return!e||"object"!==g(e)&&"function"!=typeof e?function(t){if(void 0===t)throw new ReferenceError("this hasn't been initialised - super() hasn't been called");return t}(t):e}function S(t,e,n){return(S="undefined"!=typeof Reflect&&Reflect.get?Reflect.get:function(t,e,n){var i=function(t,e){for(;!Object.prototype.hasOwnProperty.call(t,e)&&null!==(t=j(t)););return t}(t,e);if(i){var r=Object.getOwnPropertyDescriptor(i,e);return r.get?r.get.call(n):r.value}})(t,e,n||t)}function j(t){return(j=Object.setPrototypeOf?Object.getPrototypeOf:function(t){return t.__proto__||Object.getPrototypeOf(t)})(t)}function k(t,e){return(k=Object.setPrototypeOf||function(t,e){return t.__proto__=e,t})(t,e)}var x=function(t){function e(){return function(t,e){if(!(t instanceof e))throw new TypeError("Cannot call a class as a function")}(this,e),P(this,j(e).apply(this,arguments))}var n,i,r;return function(t,e){if("function"!=typeof e&&null!==e)throw new TypeError("Super expression must either be null or a function");t.prototype=Object.create(e&&e.prototype,{constructor:{value:t,writable:!0,configurable:!0}}),e&&k(t,e)}(e,t),n=e,(i=[{key:"draw",value:function(){var t=this;S(j(e.prototype),"draw",this).call(this);var n=function(e,n,i,r,o,a){t.canvas.ctx.bezierCurveTo(e*(t.particleSize/200),n*(t.particleSize/200),i*(t.particleSize/200),r*(t.particleSize/200),o*(t.particleSize/200),a*(t.particleSize/200))};this.canvas.ctx.moveTo(37.5/this.particleSize,20/this.particleSize),n(75,37,70,25,50,25),n(20,25,20,62.5,20,62.5),n(20,80,40,102,75,120),n(110,102,130,80,130,62.5),n(130,62.5,130,25,100,25),n(85,25,75,37,75,40),this.canvas.ctx.fill()}}])&&O(n.prototype,i),r&&O(n,r),e}(o);function M(t){return(M="function"==typeof Symbol&&"symbol"==typeof Symbol.iterator?function(t){return typeof t}:function(t){return t&&"function"==typeof Symbol&&t.constructor===Symbol&&t!==Symbol.prototype?"symbol":typeof t})(t)}function _(t,e){for(var n=0;n<e.length;n++){var i=e[n];i.enumerable=i.enumerable||!1,i.configurable=!0,"value"in i&&(i.writable=!0),Object.defineProperty(t,i.key,i)}}function E(t,e){return!e||"object"!==M(e)&&"function"!=typeof e?function(t){if(void 0===t)throw new ReferenceError("this hasn't been initialised - super() hasn't been called");return t}(t):e}function I(t,e,n){return(I="undefined"!=typeof Reflect&&Reflect.get?Reflect.get:function(t,e,n){var i=function(t,e){for(;!Object.prototype.hasOwnProperty.call(t,e)&&null!==(t=C(t)););return t}(t,e);if(i){var r=Object.getOwnPropertyDescriptor(i,e);return r.get?r.get.call(n):r.value}})(t,e,n||t)}function C(t){return(C=Object.setPrototypeOf?Object.getPrototypeOf:function(t){return t.__proto__||Object.getPrototypeOf(t)})(t)}function D(t,e){return(D=Object.setPrototypeOf||function(t,e){return t.__proto__=e,t})(t,e)}var R=function(t){function e(t,n){var i;return function(t,e){if(!(t instanceof e))throw new TypeError("Cannot call a class as a function")}(this,e),(i=E(this,C(e).call(this,t))).imgEl=n,i}var n,i,r;return function(t,e){if("function"!=typeof e&&null!==e)throw new TypeError("Super expression must either be null or a function");t.prototype=Object.create(e&&e.prototype,{constructor:{value:t,writable:!0,configurable:!0}}),e&&D(t,e)}(e,t),n=e,(i=[{key:"draw",value:function(){I(C(e.prototype),"draw",this).call(this),this.canvas.ctx.drawImage(this.imgEl,0,0,this.particleSize,this.particleSize)}}])&&_(n.prototype,i),r&&_(n,r),e}(o);function T(t,e){for(var n=0;n<e.length;n++){var i=e[n];i.enumerable=i.enumerable||!1,i.configurable=!0,"value"in i&&(i.writable=!0),Object.defineProperty(t,i.key,i)}}var z=function(){function t(){!function(t,e){if(!(t instanceof e))throw new TypeError("Cannot call a class as a function")}(this,t),this.cachedImage=null}var e,n,r;return e=t,(n=[{key:"createImageElement",value:function(t){var e=document.createElement("img");return e.setAttribute("src",t),e}},{key:"getImageElement",value:function(t){return this.cachedImage&&t===this.cachedImage.getAttribute("src")||(this.cachedImage=this.createImageElement(t)),this.cachedImage}},{key:"getRandomParticle",value:function(){var t=arguments.length>0&&void 0!==arguments[0]?arguments[0]:{},e=t.particles||[];return e.length<1?{}:e[Math.floor(Math.random()*e.length)]}},{key:"getDefaults",value:function(){var t=arguments.length>0&&void 0!==arguments[0]?arguments[0]:{};return{type:t.defaultType||"circle",size:t.defaultSize||10,dropRate:t.defaultDropRate||10,colors:t.defaultColors||["DodgerBlue","OliveDrab","Gold","pink","SlateBlue","lightblue","Violet","PaleGreen","SteelBlue","SandyBrown","Chocolate","Crimson"],url:null}}},{key:"create",value:function(t){var e=this.getDefaults(t),n=this.getRandomParticle(t),r=Object.assign(e,n),o=i(0,r.colors.length-1,!0);if(r.color=r.colors[o],"circle"===r.type)return new h(r);if("rect"===r.type)return new w(r);if("heart"===r.type)return new x(r);if("image"===r.type)return new R(r,this.getImageElement(r.url));throw Error('Unknown particle type: "'.concat(r.type,'"'))}}])&&T(e.prototype,n),r&&T(e,r),t}();function F(t,e){for(var n=0;n<e.length;n++){var i=e[n];i.enumerable=i.enumerable||!1,i.configurable=!0,"value"in i&&(i.writable=!0),Object.defineProperty(t,i.key,i)}}var A=function(){function t(e){!function(t,e){if(!(t instanceof e))throw new TypeError("Cannot call a class as a function")}(this,t),this.items=[],this.pool=[],this.particleOptions=e,this.particleFactory=new z}var e,n,i;return e=t,(n=[{key:"update",value:function(){var t,e=this,n=[],i=[];this.items.forEach((function(t){t.update(),t.pastBottom()?t.remove||(t.setup(e.particleOptions),n.push(t)):i.push(t)})),(t=this.pool).push.apply(t,n),this.items=i}},{key:"draw",value:function(){this.items.forEach((function(t){return t.draw()}))}},{key:"add",value:function(){this.pool.length>0?this.items.push(this.pool.pop().setup(this.particleOptions)):this.items.push(this.particleFactory.create(this.particleOptions).setup(this.particleOptions))}},{key:"refresh",value:function(){this.items.forEach((function(t){t.kill()})),this.pool=[]}}])&&F(e.prototype,n),i&&F(e,i),t}();function B(t,e){for(var n=0;n<e.length;n++){var i=e[n];i.enumerable=i.enumerable||!1,i.configurable=!0,"value"in i&&(i.writable=!0),Object.defineProperty(t,i.key,i)}}var H=function(){function t(e){!function(t,e){if(!(t instanceof e))throw new TypeError("Cannot call a class as a function")}(this,t);var n=document.getElementById(e);if(this.isDefault=null==e,!this.isDefault&&!n)throw new Error('No element found with ID "'.concat(e,'"'));if(this.canvas=n||t.createDefaultCanvas("confetti-canvas"),!(this.canvas instanceof HTMLCanvasElement))throw new Error('Element with ID "'.concat("confetti-canvas",'" is not a valid HTMLCanvasElement'));this.ctx=this.canvas.getContext("2d")}var e,n,i;return e=t,i=[{key:"createDefaultCanvas",value:function(t){var e=document.createElement("canvas");return e.style.display="block",e.style.position="fixed",e.style.pointerEvents="none",e.style.top=0,e.style.width="100vw",e.style.height="100vh",e.id=t,document.querySelector("body").appendChild(e),e}}],(n=[{key:"clear",value:function(){this.ctx.setTransform(1,0,0,1,0,0),this.ctx.clearRect(0,0,this.width,this.height)}},{key:"updateDimensions",value:function(){this.isDefault&&(this.width===window.innerWidth&&this.height===window.innerHeight||(this.canvas.width=window.innerWidth,this.canvas.height=window.innerHeight))}},{key:"width",get:function(){return this.canvas.width}},{key:"height",get:function(){return this.canvas.height}}])&&B(e.prototype,n),i&&B(e,i),t}();function L(t,e){for(var n=0;n<e.length;n++){var i=e[n];i.enumerable=i.enumerable||!1,i.configurable=!0,"value"in i&&(i.writable=!0),Object.defineProperty(t,i.key,i)}}var W=function(){function t(){!function(t,e){if(!(t instanceof e))throw new TypeError("Cannot call a class as a function")}(this,t),this.setDefaults()}var e,n,i;return e=t,(n=[{key:"setDefaults",value:function(){this.killed=!1,this.framesSinceDrop=0,this.canvas=null,this.canvasId=null,this.W=0,this.H=0,this.particleManager=null,this.particlesPerFrame=0,this.wind=0,this.windSpeed=1,this.windSpeedMax=1,this.windChange=.01,this.windPosCoef=.002,this.animationId=null}},{key:"getParticleOptions",value:function(t){var e={canvas:this.canvas,W:this.W,H:this.H,wind:this.wind,windPosCoef:this.windPosCoef,windSpeedMax:this.windSpeedMax,count:0};return Object.assign(e,t),e}},{key:"createParticles",value:function(){var t=arguments.length>0&&void 0!==arguments[0]?arguments[0]:{},e=this.getParticleOptions(t);this.particleManager=new A(e)}},{key:"start",value:function(){var t=arguments.length>0&&void 0!==arguments[0]?arguments[0]:{};this.canvas&&t.canvasId===this.canvasId||(this.canvas=new H(t.canvasId),this.canvasId=t.canvasId),this.animationId&&cancelAnimationFrame(this.animationId),this.createParticles(t),this.canvas.updateDimensions(),this.setParticlesPerFrame(t),this.animationId=requestAnimationFrame(this.mainLoop.bind(this))}},{key:"setParticlesPerFrame",value:function(t){this.particlesPerFrame=t.particlesPerFrame||2}},{key:"stop",value:function(){this.killed=!0,this.particlesPerFrame=0}},{key:"update",value:function(t){this.canvas&&t.canvasId!==this.canvasId&&(this.stop(),this.canvas.clear(),this.start(t)),this.setParticlesPerFrame(t),this.particleManager&&(this.particleManager.particleOptions=this.getParticleOptions(t),this.particleManager.refresh())}},{key:"remove",value:function(){this.stop(),this.animationId&&cancelAnimationFrame(this.animationId),this.canvas.clear(),this.setDefaults()}},{key:"mainLoop",value:function(t){this.canvas.updateDimensions(),this.canvas.clear(),this.windSpeed=Math.sin(t/8e3)*this.windSpeedMax,this.wind=this.particleManager.particleOptions.wind+=this.windChange;for(var e=this.framesSinceDrop*this.particlesPerFrame;e>=1;)this.particleManager.add(),e-=1,this.framesSinceDrop=0;this.particleManager.update(),this.particleManager.draw(),this.killed&&!this.particleManager.items.length||(this.animationId=requestAnimationFrame(this.mainLoop.bind(this))),this.framesSinceDrop+=1}}])&&L(e.prototype,n),i&&L(e,i),t}();n.d(e,"Confetti",(function(){return W}));e.default={install:function(t,e){this.installed||(this.installed=!0,t.prototype.$confetti=new W(e))}}},,,function(t,e,n){t.exports=n(0)}])}));
-},{}],"vue/components/Confetti.vue":[function(require,module,exports) {
+},{"axios":"node_modules/axios/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js","vuex":"node_modules/vuex/dist/vuex.esm.js","vuedraggable":"node_modules/vuedraggable/dist/vuedraggable.common.js","./Confetti":"vue/components/Confetti.vue","./Contributors":"vue/components/Contributors.vue","./InviteContributorsForm":"vue/components/InviteContributorsForm.vue","./TodoListItems":"vue/components/TodoListItems.vue","./TodoItemDetails.vue":"vue/components/TodoItemDetails.vue","_css_loader":"node_modules/parcel-bundler/src/builtins/css-loader.js","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js"}],"vue/components/Invitations.vue":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -38758,50 +39279,189 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.default = void 0;
 
-var _vue = _interopRequireDefault(require("vue"));
+var _axios = _interopRequireDefault(require("axios"));
 
-var _vueConfetti = _interopRequireDefault(require("vue-confetti"));
+var _vuex = require("vuex");
+
+var _Contributors = _interopRequireDefault(require("./Contributors"));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 //
 //
-_vue.default.use(_vueConfetti.default);
-
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 var _default = {
-  name: "Confetti",
-
-  mounted() {
-    this.$nextTick(() => {
-      this.$confetti.start({
-        particles: [{
-          type: "rect"
-        }],
-        particlesPerFrame: 0.4,
-        dropRate: 8
-      });
-    });
+  name: "Invitations",
+  components: {
+    Contributors: _Contributors.default
   },
+  computed: {
+    todoLists() {
+      return this.$store.getters.invitedTodoLists;
+    },
 
-  beforeDestroy() {
-    this.$confetti.stop();
+    ...(0, _vuex.mapState)({
+      contributors: state => state.contributors
+    }),
+
+    hasNotifications() {
+      return this.todoLists.length > 0;
+    }
+
+  },
+  methods: {
+    async acceptInvitation(listId) {
+      await (0, _axios.default)({
+        method: "POST",
+        url: "api/lists/".concat(listId, "/accept")
+      });
+      this.$store.commit("changeUserRoleByListId", {
+        todoListId: listId,
+        role: 2
+      });
+    },
+
+    async declineInvitation(listId) {
+      await (0, _axios.default)({
+        method: "POST",
+        url: "api/lists/".concat(listId, "/decline")
+      });
+      this.$store.commit("deleteTodoList", listId);
+    }
+
   }
-
 };
 exports.default = _default;
-        var $1a387c = exports.default || module.exports;
+        var $36639a = exports.default || module.exports;
       
-      if (typeof $1a387c === 'function') {
-        $1a387c = $1a387c.options;
+      if (typeof $36639a === 'function') {
+        $36639a = $36639a.options;
       }
     
         /* template */
-        Object.assign($1a387c, (function () {
+        Object.assign($36639a, (function () {
           var render = function() {
   var _vm = this
   var _h = _vm.$createElement
   var _c = _vm._self._c || _h
-  return _c("div")
+  return _c(
+    "b-dropdown",
+    {
+      attrs: { id: "invitations-dropdown", right: "" },
+      scopedSlots: _vm._u([
+        {
+          key: "button-content",
+          fn: function() {
+            return [
+              _c(
+                "div",
+                { staticClass: "notification-icon" },
+                [
+                  _c("b-icon-bell"),
+                  _vm._v(" "),
+                  _vm.hasNotifications
+                    ? _c("div", { staticClass: "notification-icon-badge" })
+                    : _vm._e()
+                ],
+                1
+              ),
+              _vm._v(" "),
+              _c("span", { staticClass: "sr-only" }, [_vm._v("Invitations")])
+            ]
+          },
+          proxy: true
+        }
+      ])
+    },
+    [
+      _vm._v(" "),
+      _vm._l(_vm.todoLists, function(list) {
+        return _c(
+          "div",
+          { key: list.id, staticClass: "invitation" },
+          [
+            _c("h3", { staticClass: "invitation-title" }, [
+              _vm._v(_vm._s(list.listTitle))
+            ]),
+            _vm._v(" "),
+            _c("Contributors", {
+              staticClass: "mb-2",
+              attrs: {
+                todoListContributors: list.contributors,
+                accountContributors: _vm.contributors
+              }
+            }),
+            _vm._v(" "),
+            _c(
+              "div",
+              { staticClass: "list-controls" },
+              [
+                _c(
+                  "b-button",
+                  {
+                    attrs: { variant: "success", size: "sm" },
+                    on: {
+                      click: function($event) {
+                        return _vm.acceptInvitation(list.id)
+                      }
+                    }
+                  },
+                  [_vm._v("Accept")]
+                ),
+                _vm._v(" "),
+                _c(
+                  "b-button",
+                  {
+                    attrs: { variant: "danger", size: "sm" },
+                    on: {
+                      click: function($event) {
+                        return _vm.declineInvitation(list.id)
+                      }
+                    }
+                  },
+                  [_vm._v("Decline")]
+                )
+              ],
+              1
+            )
+          ],
+          1
+        )
+      }),
+      _vm._v(" "),
+      !_vm.hasNotifications
+        ? _c("div", { staticClass: "invitation text-center" }, [
+            _vm._v("Nothing to see here 😉")
+          ])
+        : _vm._e()
+    ],
+    2
+  )
 }
 var staticRenderFns = []
 render._withStripped = true
@@ -38823,16 +39483,20 @@ render._withStripped = true
         if (api.compatible) {
           module.hot.accept();
           if (!module.hot.data) {
-            api.createRecord('$1a387c', $1a387c);
+            api.createRecord('$36639a', $36639a);
           } else {
-            api.reload('$1a387c', $1a387c);
+            api.reload('$36639a', $36639a);
           }
         }
 
         
+        var reloadCSS = require('_css_loader');
+        module.hot.dispose(reloadCSS);
+        module.hot.accept(reloadCSS);
+      
       }
     })();
-},{"vue":"node_modules/vue/dist/vue.runtime.esm.js","vue-confetti":"node_modules/vue-confetti/dist/vue-confetti.js","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js"}],"vue/components/TodoList.vue":[function(require,module,exports) {
+},{"axios":"node_modules/axios/index.js","vuex":"node_modules/vuex/dist/vuex.esm.js","./Contributors":"vue/components/Contributors.vue","_css_loader":"node_modules/parcel-bundler/src/builtins/css-loader.js","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/views/Home.vue":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -38840,15 +39504,17 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.default = void 0;
 
+var _axios = _interopRequireDefault(require("axios"));
+
 var _vuex = require("vuex");
 
-var _TodoListItems = _interopRequireDefault(require("./TodoListItems"));
+var _vuedraggable = _interopRequireDefault(require("vuedraggable"));
 
-var _Contributors = _interopRequireDefault(require("./Contributors"));
+var _TodoLists = _interopRequireDefault(require("../components/TodoLists"));
 
-var _InviteContributorsForm = _interopRequireDefault(require("./InviteContributorsForm"));
+var _TodoList = _interopRequireDefault(require("../components/TodoList"));
 
-var _Confetti = _interopRequireDefault(require("./Confetti"));
+var _Invitations = _interopRequireDefault(require("../components/Invitations"));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -38886,200 +39552,102 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 //
 //
 //
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
 var _default = {
-  name: "TodoList",
-  props: ["todoListId"],
-
-  data() {
-    return {
-      editingTitle: false,
-      todoListForm: {
-        listTitle: ""
-      }
-    };
-  },
-
+  name: "Home",
   computed: {
-    todoList() {
-      return this.$store.getters.getTodoListById(this.todoListId);
+    user() {
+      return this.$store.getters.user;
+    },
+
+    firstName() {
+      const fullName = this.user.fullName.split(" ");
+      return fullName[0];
     },
 
     ...(0, _vuex.mapState)({
-      contributors: state => state.contributors
+      loadingTodoLists: state => state.loadingTodoLists
     })
   },
   components: {
-    TodoListItems: _TodoListItems.default,
-    Contributors: _Contributors.default,
-    InviteContributorsForm: _InviteContributorsForm.default,
-    Confetti: _Confetti.default
-  },
-  methods: {
-    async updateListTitle() {
-      this.editingTitle = false;
-      await this.$store.dispatch("updateTodoListTitle", {
-        todoListId: this.todoListId,
-        listTitle: this.todoListForm.listTitle
-      });
-      this.todoListForm.listTitle = "";
-    },
-
-    showTitleEditor() {
-      this.editingTitle = true;
-      this.$nextTick(() => {
-        this.$refs.listTitleInput.focus();
-      });
-      this.todoListForm.listTitle = this.todoList.listTitle;
-    },
-
-    setTodoListCompleted() {
-      this.$store.commit("setTodoListCompletedState", {
-        todoListId: this.todoListId,
-        completed: true
-      });
-    },
-
-    setTodoListUncompleted() {
-      this.$store.commit("setTodoListCompletedState", {
-        todoListId: this.todoListId,
-        completed: false
-      });
-    }
-
+    TodoLists: _TodoLists.default,
+    TodoList: _TodoList.default,
+    Draggable: _vuedraggable.default,
+    Invitations: _Invitations.default
   }
 };
 exports.default = _default;
-        var $98e7b1 = exports.default || module.exports;
+        var $5072a3 = exports.default || module.exports;
       
-      if (typeof $98e7b1 === 'function') {
-        $98e7b1 = $98e7b1.options;
+      if (typeof $5072a3 === 'function') {
+        $5072a3 = $5072a3.options;
       }
     
         /* template */
-        Object.assign($98e7b1, (function () {
+        Object.assign($5072a3, (function () {
           var render = function() {
   var _vm = this
   var _h = _vm.$createElement
   var _c = _vm._self._c || _h
   return _c(
     "div",
-    { staticClass: "todo-list-wrapper" },
+    { attrs: { id: "content" } },
     [
-      _vm.todoList.completed ? _c("Confetti") : _vm._e(),
-      _vm._v(" "),
       _c(
-        "div",
-        { staticClass: "todo-list" },
+        "b-row",
+        { attrs: { "no-gutters": "" } },
         [
-          !_vm.editingTitle
-            ? _c(
-                "h1",
-                {
-                  staticClass: "todo-list-title mb-2",
-                  on: { click: _vm.showTitleEditor }
-                },
-                [_vm._v(_vm._s(_vm.todoList.listTitle))]
-              )
-            : _vm._e(),
-          _vm._v(" "),
-          _vm.editingTitle
-            ? _c(
-                "b-form",
-                {
-                  staticClass: "list-title-editor",
-                  on: {
-                    submit: function($event) {
-                      $event.preventDefault()
-                      return _vm.updateListTitle($event)
-                    }
-                  }
-                },
-                [
-                  _c(
-                    "b-form-group",
-                    [
-                      _c("b-form-input", {
-                        ref: "listTitleInput",
-                        attrs: { id: "title", maxlength: "50", required: "" },
-                        model: {
-                          value: _vm.todoListForm.listTitle,
-                          callback: function($$v) {
-                            _vm.$set(_vm.todoListForm, "listTitle", $$v)
-                          },
-                          expression: "todoListForm.listTitle"
-                        }
-                      })
-                    ],
-                    1
-                  ),
-                  _vm._v(" "),
-                  _c(
-                    "b-button",
-                    {
-                      staticClass: "mb-3",
-                      attrs: { variant: "success", type: "submit" }
-                    },
-                    [_vm._v("Save")]
-                  )
-                ],
-                1
-              )
-            : _vm._e(),
-          _vm._v(" "),
-          _c("Contributors", {
-            staticClass: "mb-4",
-            attrs: {
-              todoListContributors: _vm.todoList.contributors,
-              accountContributors: _vm.contributors
-            }
-          }),
+          _c("b-col", { attrs: { md: "4", lg: "4", xl: "2" } }, [
+            _c("div", { staticClass: "sidebar" }, [
+              _c("div", { staticClass: "sidebar-header mb-3" }, [
+                _c(
+                  "a",
+                  { staticClass: "sidebar-brand", attrs: { href: "#" } },
+                  [_c("b-icon-check-all"), _vm._v("Todo\n          ")],
+                  1
+                )
+              ]),
+              _vm._v(" "),
+              _c("div", { staticClass: "sidebar-lists" }, [_c("TodoLists")], 1)
+            ])
+          ]),
           _vm._v(" "),
           _c(
-            "b-row",
+            "b-col",
             [
               _c(
-                "b-col",
-                {
-                  staticClass: "mb-3",
-                  class: { "col-md-8": _vm.todoList.role == 3 }
-                },
+                "div",
+                { staticClass: "account-options" },
                 [
-                  _c("TodoListItems", {
-                    attrs: { todoListId: _vm.todoListId },
-                    on: {
-                      "todo-list-completed": _vm.setTodoListCompleted,
-                      "todo-list-uncompleted": _vm.setTodoListUncompleted
-                    }
-                  })
+                  _c("Invitations"),
+                  _vm._v(" "),
+                  _c(
+                    "a",
+                    { staticClass: "account-dropdown", attrs: { href: "#" } },
+                    [
+                      _c("div", { staticClass: "profile-picture" }, [
+                        _c("img", {
+                          attrs: { src: _vm.user.pictureUrl, alt: "" }
+                        })
+                      ]),
+                      _vm._v(" "),
+                      _c("div", { staticClass: "profile-name" }, [
+                        _vm._v(_vm._s(_vm.user.fullName))
+                      ]),
+                      _vm._v(" "),
+                      _c(
+                        "div",
+                        { staticClass: "dropdown-toggler" },
+                        [_c("b-icon-chevron-down")],
+                        1
+                      )
+                    ]
+                  )
                 ],
                 1
               ),
               _vm._v(" "),
-              _vm.todoList.role == 3
-                ? _c(
-                    "b-col",
-                    { attrs: { md: "4" } },
-                    [
-                      _c("InviteContributorsForm", {
-                        attrs: { listId: this.todoListId }
-                      })
-                    ],
-                    1
-                  )
+              !_vm.loadingTodoLists
+                ? _c("RouterView", { key: _vm.$route.fullPath })
                 : _vm._e()
             ],
             1
@@ -39111,119 +39679,16 @@ render._withStripped = true
         if (api.compatible) {
           module.hot.accept();
           if (!module.hot.data) {
-            api.createRecord('$98e7b1', $98e7b1);
+            api.createRecord('$5072a3', $5072a3);
           } else {
-            api.reload('$98e7b1', $98e7b1);
+            api.reload('$5072a3', $5072a3);
           }
         }
 
         
       }
     })();
-},{"vuex":"node_modules/vuex/dist/vuex.esm.js","./TodoListItems":"vue/components/TodoListItems.vue","./Contributors":"vue/components/Contributors.vue","./InviteContributorsForm":"vue/components/InviteContributorsForm.vue","./Confetti":"vue/components/Confetti.vue","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/views/TodoListView.vue":[function(require,module,exports) {
-"use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.default = void 0;
-
-var _vuex = require("vuex");
-
-var _TodoList = _interopRequireDefault(require("../components/TodoList"));
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-var _default = {
-  name: "TodoListView",
-  props: ["todoListId"],
-  components: {
-    TodoList: _TodoList.default
-  },
-  computed: (0, _vuex.mapState)({
-    loadingTodoLists: state => state.loadingTodoLists
-  })
-};
-exports.default = _default;
-        var $2f27a4 = exports.default || module.exports;
-      
-      if (typeof $2f27a4 === 'function') {
-        $2f27a4 = $2f27a4.options;
-      }
-    
-        /* template */
-        Object.assign($2f27a4, (function () {
-          var render = function() {
-  var _vm = this
-  var _h = _vm.$createElement
-  var _c = _vm._self._c || _h
-  return _c(
-    "b-container",
-    [
-      _c(
-        "b-button",
-        {
-          staticClass: "back-button mb-2",
-          attrs: { variant: "link", to: "/" }
-        },
-        [
-          _c("b-icon", { attrs: { icon: "chevron-left" } }),
-          _vm._v("My Lists\n  ")
-        ],
-        1
-      ),
-      _vm._v(" "),
-      !_vm.loadingTodoLists
-        ? _c("TodoList", { attrs: { todoListId: _vm.todoListId } })
-        : _vm._e()
-    ],
-    1
-  )
-}
-var staticRenderFns = []
-render._withStripped = true
-
-          return {
-            render: render,
-            staticRenderFns: staticRenderFns,
-            _compiled: true,
-            _scopeId: "data-v-2f27a4",
-            functional: undefined
-          };
-        })());
-      
-    /* hot reload */
-    (function () {
-      if (module.hot) {
-        var api = require('vue-hot-reload-api');
-        api.install(require('vue'));
-        if (api.compatible) {
-          module.hot.accept();
-          if (!module.hot.data) {
-            api.createRecord('$2f27a4', $2f27a4);
-          } else {
-            api.reload('$2f27a4', $2f27a4);
-          }
-        }
-
-        
-        var reloadCSS = require('_css_loader');
-        module.hot.dispose(reloadCSS);
-        module.hot.accept(reloadCSS);
-      
-      }
-    })();
-},{"vuex":"node_modules/vuex/dist/vuex.esm.js","../components/TodoList":"vue/components/TodoList.vue","_css_loader":"node_modules/parcel-bundler/src/builtins/css-loader.js","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/views/Login.vue":[function(require,module,exports) {
+},{"axios":"node_modules/axios/index.js","vuex":"node_modules/vuex/dist/vuex.esm.js","vuedraggable":"node_modules/vuedraggable/dist/vuedraggable.common.js","../components/TodoLists":"vue/components/TodoLists.vue","../components/TodoList":"vue/components/TodoList.vue","../components/Invitations":"vue/components/Invitations.vue","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/views/Login.vue":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -39263,14 +39728,14 @@ var _default = {
   }
 };
 exports.default = _default;
-        var $d02f84 = exports.default || module.exports;
+        var $76be99 = exports.default || module.exports;
       
-      if (typeof $d02f84 === 'function') {
-        $d02f84 = $d02f84.options;
+      if (typeof $76be99 === 'function') {
+        $76be99 = $76be99.options;
       }
     
         /* template */
-        Object.assign($d02f84, (function () {
+        Object.assign($76be99, (function () {
           var render = function() {
   var _vm = this
   var _h = _vm.$createElement
@@ -39322,9 +39787,9 @@ render._withStripped = true
         if (api.compatible) {
           module.hot.accept();
           if (!module.hot.data) {
-            api.createRecord('$d02f84', $d02f84);
+            api.createRecord('$76be99', $76be99);
           } else {
-            api.reload('$d02f84', $d02f84);
+            api.reload('$76be99', $76be99);
           }
         }
 
@@ -39366,14 +39831,14 @@ var _default = {
   })
 };
 exports.default = _default;
-        var $6ce1f6 = exports.default || module.exports;
+        var $21ef28 = exports.default || module.exports;
       
-      if (typeof $6ce1f6 === 'function') {
-        $6ce1f6 = $6ce1f6.options;
+      if (typeof $21ef28 === 'function') {
+        $21ef28 = $21ef28.options;
       }
     
         /* template */
-        Object.assign($6ce1f6, (function () {
+        Object.assign($21ef28, (function () {
           var render = function() {
   var _vm = this
   var _h = _vm.$createElement
@@ -39416,7 +39881,7 @@ render._withStripped = true
             render: render,
             staticRenderFns: staticRenderFns,
             _compiled: true,
-            _scopeId: "data-v-6ce1f6",
+            _scopeId: "data-v-21ef28",
             functional: undefined
           };
         })());
@@ -39429,9 +39894,9 @@ render._withStripped = true
         if (api.compatible) {
           module.hot.accept();
           if (!module.hot.data) {
-            api.createRecord('$6ce1f6', $6ce1f6);
+            api.createRecord('$21ef28', $21ef28);
           } else {
-            api.reload('$6ce1f6', $6ce1f6);
+            api.reload('$21ef28', $21ef28);
           }
         }
 
@@ -39469,14 +39934,14 @@ var _default = {
   }
 };
 exports.default = _default;
-        var $5e4d3b = exports.default || module.exports;
+        var $a848c0 = exports.default || module.exports;
       
-      if (typeof $5e4d3b === 'function') {
-        $5e4d3b = $5e4d3b.options;
+      if (typeof $a848c0 === 'function') {
+        $a848c0 = $a848c0.options;
       }
     
         /* template */
-        Object.assign($5e4d3b, (function () {
+        Object.assign($a848c0, (function () {
           var render = function() {
   var _vm = this
   var _h = _vm.$createElement
@@ -39528,9 +39993,9 @@ render._withStripped = true
         if (api.compatible) {
           module.hot.accept();
           if (!module.hot.data) {
-            api.createRecord('$5e4d3b', $5e4d3b);
+            api.createRecord('$a848c0', $a848c0);
           } else {
-            api.reload('$5e4d3b', $5e4d3b);
+            api.reload('$a848c0', $a848c0);
           }
         }
 
@@ -46835,14 +47300,14 @@ var _default = {
   }
 };
 exports.default = _default;
-        var $8dae8a = exports.default || module.exports;
+        var $81fc0e = exports.default || module.exports;
       
-      if (typeof $8dae8a === 'function') {
-        $8dae8a = $8dae8a.options;
+      if (typeof $81fc0e === 'function') {
+        $81fc0e = $81fc0e.options;
       }
     
         /* template */
-        Object.assign($8dae8a, (function () {
+        Object.assign($81fc0e, (function () {
           var render = function() {
   var _vm = this
   var _h = _vm.$createElement
@@ -46942,9 +47407,9 @@ render._withStripped = true
         if (api.compatible) {
           module.hot.accept();
           if (!module.hot.data) {
-            api.createRecord('$8dae8a', $8dae8a);
+            api.createRecord('$81fc0e', $81fc0e);
           } else {
-            api.reload('$8dae8a', $8dae8a);
+            api.reload('$81fc0e', $81fc0e);
           }
         }
 
@@ -47048,14 +47513,14 @@ var _default = {
   }
 };
 exports.default = _default;
-        var $4638de = exports.default || module.exports;
+        var $be781d = exports.default || module.exports;
       
-      if (typeof $4638de === 'function') {
-        $4638de = $4638de.options;
+      if (typeof $be781d === 'function') {
+        $be781d = $be781d.options;
       }
     
         /* template */
-        Object.assign($4638de, (function () {
+        Object.assign($be781d, (function () {
           var render = function() {
   var _vm = this
   var _h = _vm.$createElement
@@ -47216,9 +47681,9 @@ render._withStripped = true
         if (api.compatible) {
           module.hot.accept();
           if (!module.hot.data) {
-            api.createRecord('$4638de', $4638de);
+            api.createRecord('$be781d', $be781d);
           } else {
-            api.reload('$4638de', $4638de);
+            api.reload('$be781d', $be781d);
           }
         }
 
@@ -47329,14 +47794,14 @@ var _default = {
   }
 };
 exports.default = _default;
-        var $96dd18 = exports.default || module.exports;
+        var $77fbb6 = exports.default || module.exports;
       
-      if (typeof $96dd18 === 'function') {
-        $96dd18 = $96dd18.options;
+      if (typeof $77fbb6 === 'function') {
+        $77fbb6 = $77fbb6.options;
       }
     
         /* template */
-        Object.assign($96dd18, (function () {
+        Object.assign($77fbb6, (function () {
           var render = function() {
   var _vm = this
   var _h = _vm.$createElement
@@ -47486,9 +47951,9 @@ render._withStripped = true
         if (api.compatible) {
           module.hot.accept();
           if (!module.hot.data) {
-            api.createRecord('$96dd18', $96dd18);
+            api.createRecord('$77fbb6', $77fbb6);
           } else {
-            api.reload('$96dd18', $96dd18);
+            api.reload('$77fbb6', $77fbb6);
           }
         }
 
@@ -47574,14 +48039,14 @@ var _default = {
   }
 };
 exports.default = _default;
-        var $1c308f = exports.default || module.exports;
+        var $e2b67e = exports.default || module.exports;
       
-      if (typeof $1c308f === 'function') {
-        $1c308f = $1c308f.options;
+      if (typeof $e2b67e === 'function') {
+        $e2b67e = $e2b67e.options;
       }
     
         /* template */
-        Object.assign($1c308f, (function () {
+        Object.assign($e2b67e, (function () {
           var render = function() {
   var _vm = this
   var _h = _vm.$createElement
@@ -47634,7 +48099,7 @@ render._withStripped = true
             render: render,
             staticRenderFns: staticRenderFns,
             _compiled: true,
-            _scopeId: "data-v-1c308f",
+            _scopeId: "data-v-e2b67e",
             functional: undefined
           };
         })());
@@ -47647,9 +48112,9 @@ render._withStripped = true
         if (api.compatible) {
           module.hot.accept();
           if (!module.hot.data) {
-            api.createRecord('$1c308f', $1c308f);
+            api.createRecord('$e2b67e', $e2b67e);
           } else {
-            api.reload('$1c308f', $1c308f);
+            api.reload('$e2b67e', $e2b67e);
           }
         }
 
@@ -47672,6 +48137,10 @@ var _SettingsAccount = _interopRequireDefault(require("../components/SettingsAcc
 
 var _SettingsBilling = _interopRequireDefault(require("../components/SettingsBilling"));
 
+var _axios = _interopRequireDefault(require("axios"));
+
+var _moment = require("moment");
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 //
@@ -47691,22 +48160,80 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 var _default = {
   name: "Settings",
+
+  data() {
+    return {
+      emailDueDate: false,
+      emailCompleted: false
+    };
+  },
+
+  async created() {
+    this.getSettings();
+  },
+
+  methods: {
+    async updateSettings() {
+      await (0, _axios.default)({
+        method: "PUT",
+        url: "api/accounts/emailFilter",
+        headers: {
+          "content-type": "application/json"
+        },
+        data: JSON.stringify({
+          emailDueDate: this.emailDueDate,
+          emailCompleted: this.emailCompleted
+        })
+      });
+    },
+
+    async getSettings() {
+      const response = await (0, _axios.default)({
+        method: "GET",
+        url: "api/accounts/emailFilter"
+      });
+      this.emailDueDate = response.data.emailDueDate;
+      this.emailCompleted = response.data.emailCompleted;
+    }
+
+  },
+  watch: {
+    emailDueDate() {
+      this.updateSettings();
+    },
+
+    emailCompleted() {
+      this.updateSettings();
+    }
+
+  },
   components: {
     SettingsAccount: _SettingsAccount.default,
     SettingsBilling: _SettingsBilling.default
   }
 };
 exports.default = _default;
-        var $a8fd0e = exports.default || module.exports;
+        var $7cc9c9 = exports.default || module.exports;
       
-      if (typeof $a8fd0e === 'function') {
-        $a8fd0e = $a8fd0e.options;
+      if (typeof $7cc9c9 === 'function') {
+        $7cc9c9 = $7cc9c9.options;
       }
     
         /* template */
-        Object.assign($a8fd0e, (function () {
+        Object.assign($7cc9c9, (function () {
           var render = function() {
   var _vm = this
   var _h = _vm.$createElement
@@ -47742,6 +48269,59 @@ exports.default = _default;
                   _c("SettingsBilling")
                 ],
                 1
+              ),
+              _vm._v(" "),
+              _c(
+                "b-tab",
+                { attrs: { title: "Notifications", active: "" } },
+                [
+                  _c("h2", [_vm._v("Notifications")]),
+                  _vm._v(" "),
+                  _c("h3", [_vm._v("Emails:")]),
+                  _vm._v(" "),
+                  _c("p", { staticClass: "text-muted" }, [
+                    _vm._v("Send notifications when:")
+                  ]),
+                  _vm._v(" "),
+                  _c("b-form", { staticClass: "notifications-form" }, [
+                    _c(
+                      "strong",
+                      [
+                        _c(
+                          "b-form-checkbox",
+                          {
+                            attrs: { inline: "" },
+                            model: {
+                              value: _vm.emailDueDate,
+                              callback: function($$v) {
+                                _vm.emailDueDate = $$v
+                              },
+                              expression: "emailDueDate"
+                            }
+                          },
+                          [_vm._v("List items Due Today")]
+                        ),
+                        _vm._v(" "),
+                        _c(
+                          "b-form-checkbox",
+                          {
+                            attrs: { inline: "" },
+                            model: {
+                              value: _vm.emailCompleted,
+                              callback: function($$v) {
+                                _vm.emailCompleted = $$v
+                              },
+                              expression: "emailCompleted"
+                            }
+                          },
+                          [_vm._v("List Completed")]
+                        )
+                      ],
+                      1
+                    )
+                  ])
+                ],
+                1
               )
             ],
             1
@@ -47773,9 +48353,9 @@ render._withStripped = true
         if (api.compatible) {
           module.hot.accept();
           if (!module.hot.data) {
-            api.createRecord('$a8fd0e', $a8fd0e);
+            api.createRecord('$7cc9c9', $7cc9c9);
           } else {
-            api.reload('$a8fd0e', $a8fd0e);
+            api.reload('$7cc9c9', $7cc9c9);
           }
         }
 
@@ -47786,7 +48366,7 @@ render._withStripped = true
       
       }
     })();
-},{"../components/SettingsAccount":"vue/components/SettingsAccount.vue","../components/SettingsBilling":"vue/components/SettingsBilling.vue","_css_loader":"node_modules/parcel-bundler/src/builtins/css-loader.js","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"modules/router.js":[function(require,module,exports) {
+},{"../components/SettingsAccount":"vue/components/SettingsAccount.vue","../components/SettingsBilling":"vue/components/SettingsBilling.vue","axios":"node_modules/axios/index.js","moment":"node_modules/moment/moment.js","_css_loader":"node_modules/parcel-bundler/src/builtins/css-loader.js","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"modules/router.js":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -47804,7 +48384,9 @@ var _store = _interopRequireDefault(require("./store"));
 
 var _Home = _interopRequireDefault(require(".././vue/views/Home"));
 
-var _TodoListView = _interopRequireDefault(require(".././vue/views/TodoListView"));
+var _TodoList = _interopRequireDefault(require(".././vue/components/TodoList"));
+
+var _TodoItemDetails = _interopRequireDefault(require(".././vue/components/TodoItemDetails"));
 
 var _Login = _interopRequireDefault(require(".././vue/views/Login"));
 
@@ -47823,15 +48405,16 @@ const router = new _vueRouter.default({
   }, {
     path: '/',
     component: _Home.default,
-    name: 'Home'
-  }, {
-    path: '/lists',
-    component: _Home.default,
-    name: 'My Lists'
-  }, {
-    path: '/lists/:todoListId',
-    component: _TodoListView.default,
-    props: true
+    name: 'Home',
+    children: [{
+      path: '/lists/:todoListId',
+      component: _TodoList.default,
+      props: true,
+      children: [{
+        path: 'items/:itemId',
+        component: _TodoItemDetails.default
+      }]
+    }]
   }, {
     path: '/settings',
     component: _Settings.default
@@ -47865,7 +48448,7 @@ router.beforeEach(async (to, from, next) => {
 });
 var _default = router;
 exports.default = _default;
-},{"vue":"node_modules/vue/dist/vue.runtime.esm.js","vue-router":"node_modules/vue-router/dist/vue-router.esm.js","axios":"node_modules/axios/index.js","./store":"modules/store.js",".././vue/views/Home":"vue/views/Home.vue",".././vue/views/TodoListView":"vue/views/TodoListView.vue",".././vue/views/Login":"vue/views/Login.vue","../vue/views/Settings":"vue/views/Settings.vue"}],"vue/components/Header.vue":[function(require,module,exports) {
+},{"vue":"node_modules/vue/dist/vue.runtime.esm.js","vue-router":"node_modules/vue-router/dist/vue-router.esm.js","axios":"node_modules/axios/index.js","./store":"modules/store.js",".././vue/views/Home":"vue/views/Home.vue",".././vue/components/TodoList":"vue/components/TodoList.vue",".././vue/components/TodoItemDetails":"vue/components/TodoItemDetails.vue",".././vue/views/Login":"vue/views/Login.vue","../vue/views/Settings":"vue/views/Settings.vue"}],"vue/App.vue":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -47881,43 +48464,40 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 //
 //
 //
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
 var _default = {
-  name: "Header",
+  name: "App",
 
   data() {
     return {
-      user: {}
+      test: false
     };
   },
 
   async created() {
-    try {
-      await this.checkAuthState();
-      await this.getPlan();
-      this.user = this.$store.getters.user;
-    } catch (error) {
-      console.error(error);
-    }
+    await this.checkAuthState();
+    await this.getPlan();
+    await this.$store.dispatch("getTodoLists");
+  },
+
+  mounted() {
+    // Establish connection with SignalR
+    this.$store.state.connection.start().catch(err => console.error(err.toString())); // Todo list completed state changed
+
+    this.$store.state.connection.on("ListCompletedStateChanged", (todoListId, completed) => this.$store.commit("setTodoListCompletedState", {
+      todoListId,
+      completed
+    })); // Todo list name changed
+
+    this.$store.state.connection.on("ListNameUpdated", (todoListId, listTitle) => this.$store.commit("updateTodoListTitle", {
+      todoListId,
+      listTitle
+    })); // Invitation sent
+
+    this.$store.state.connection.on("InvitationSent", async () => await this.$store.dispatch("getTodoLists")); // Invitation accepted
+
+    this.$store.state.connection.on("InvitationAccepted", async () => await this.$store.dispatch("getTodoLists")); // Contributor left
+
+    this.$store.state.connection.on("ContributorLeft", async () => await this.$store.dispatch("getTodoLists"));
   },
 
   methods: {
@@ -47950,103 +48530,19 @@ var _default = {
   }
 };
 exports.default = _default;
-        var $f4778d = exports.default || module.exports;
+        var $06aed4 = exports.default || module.exports;
       
-      if (typeof $f4778d === 'function') {
-        $f4778d = $f4778d.options;
+      if (typeof $06aed4 === 'function') {
+        $06aed4 = $06aed4.options;
       }
     
         /* template */
-        Object.assign($f4778d, (function () {
+        Object.assign($06aed4, (function () {
           var render = function() {
   var _vm = this
   var _h = _vm.$createElement
   var _c = _vm._self._c || _h
-  return _vm.user.email
-    ? _c(
-        "b-navbar",
-        {
-          staticClass: "fixed-top",
-          attrs: { toggleable: "sm", type: "light", id: "navbar" }
-        },
-        [
-          _c(
-            "b-container",
-            [
-              _c("b-navbar-brand", [
-                _c(
-                  "div",
-                  { staticClass: "brand-text" },
-                  [
-                    _c("b-icon-check-circle-fill", {
-                      staticStyle: { "margin-right": "7px" }
-                    }),
-                    _vm._v("Todo\n      ")
-                  ],
-                  1
-                )
-              ]),
-              _vm._v(" "),
-              _vm.user.id
-                ? _c(
-                    "div",
-                    { staticClass: "user-info ml-auto" },
-                    [
-                      _c(
-                        "b-dropdown",
-                        {
-                          staticClass: "account-dropdown",
-                          attrs: { right: "" },
-                          scopedSlots: _vm._u(
-                            [
-                              {
-                                key: "button-content",
-                                fn: function() {
-                                  return [
-                                    _c("b-avatar", {
-                                      attrs: { src: _vm.user.pictureUrl }
-                                    })
-                                  ]
-                                },
-                                proxy: true
-                              }
-                            ],
-                            null,
-                            false,
-                            2889888370
-                          )
-                        },
-                        [
-                          _vm._v(" "),
-                          _c("b-dropdown-item", { attrs: { to: "/lists" } }, [
-                            _vm._v("My Lists")
-                          ]),
-                          _vm._v(" "),
-                          _c("b-dropdown-divider"),
-                          _vm._v(" "),
-                          _c(
-                            "b-dropdown-item",
-                            { attrs: { to: "/settings" } },
-                            [_vm._v("Settings")]
-                          ),
-                          _vm._v(" "),
-                          _c("b-dropdown-item", { on: { click: _vm.logout } }, [
-                            _vm._v("Sign Out")
-                          ])
-                        ],
-                        1
-                      )
-                    ],
-                    1
-                  )
-                : _vm._e()
-            ],
-            1
-          )
-        ],
-        1
-      )
-    : _vm._e()
+  return _c("RouterView")
 }
 var staticRenderFns = []
 render._withStripped = true
@@ -48068,9 +48564,9 @@ render._withStripped = true
         if (api.compatible) {
           module.hot.accept();
           if (!module.hot.data) {
-            api.createRecord('$f4778d', $f4778d);
+            api.createRecord('$06aed4', $06aed4);
           } else {
-            api.reload('$f4778d', $f4778d);
+            api.reload('$06aed4', $06aed4);
           }
         }
 
@@ -48081,111 +48577,7 @@ render._withStripped = true
       
       }
     })();
-},{"axios":"node_modules/axios/index.js","_css_loader":"node_modules/parcel-bundler/src/builtins/css-loader.js","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/App.vue":[function(require,module,exports) {
-"use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.default = void 0;
-
-var _Header = _interopRequireDefault(require("./components/Header"));
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-//
-//
-//
-//
-//
-//
-//
-var _default = {
-  name: "App",
-  components: {
-    Header: _Header.default
-  },
-
-  async created() {
-    await this.$store.dispatch("getTodoLists");
-  },
-
-  mounted() {
-    // Establish connection with SignalR
-    this.$store.state.connection.start().catch(err => console.error(err.toString())); // Todo list completed state changed
-
-    this.$store.state.connection.on("ListCompletedStateChanged", (todoListId, completed) => this.$store.commit("setTodoListCompletedState", {
-      todoListId,
-      completed
-    })); // Todo list name changed
-
-    this.$store.state.connection.on("ListNameUpdated", (todoListId, listTitle) => this.$store.commit("updateTodoListTitle", {
-      todoListId,
-      listTitle
-    })); // Invitation sent
-
-    this.$store.state.connection.on("InvitationSent", async () => await this.$store.dispatch("getTodoLists")); // Invitation accepted
-
-    this.$store.state.connection.on("InvitationAccepted", async () => await this.$store.dispatch("getTodoLists")); // Contributor left
-
-    this.$store.state.connection.on("ContributorLeft", async () => await this.$store.dispatch("getTodoLists"));
-  }
-
-};
-exports.default = _default;
-        var $fcc03e = exports.default || module.exports;
-      
-      if (typeof $fcc03e === 'function') {
-        $fcc03e = $fcc03e.options;
-      }
-    
-        /* template */
-        Object.assign($fcc03e, (function () {
-          var render = function() {
-  var _vm = this
-  var _h = _vm.$createElement
-  var _c = _vm._self._c || _h
-  return _c(
-    "div",
-    { staticClass: "mt-4", attrs: { id: "content" } },
-    [_c("Header"), _vm._v(" "), _c("RouterView")],
-    1
-  )
-}
-var staticRenderFns = []
-render._withStripped = true
-
-          return {
-            render: render,
-            staticRenderFns: staticRenderFns,
-            _compiled: true,
-            _scopeId: null,
-            functional: undefined
-          };
-        })());
-      
-    /* hot reload */
-    (function () {
-      if (module.hot) {
-        var api = require('vue-hot-reload-api');
-        api.install(require('vue'));
-        if (api.compatible) {
-          module.hot.accept();
-          if (!module.hot.data) {
-            api.createRecord('$fcc03e', $fcc03e);
-          } else {
-            api.reload('$fcc03e', $fcc03e);
-          }
-        }
-
-        
-        var reloadCSS = require('_css_loader');
-        module.hot.dispose(reloadCSS);
-        module.hot.accept(reloadCSS);
-      
-      }
-    })();
-},{"./components/Header":"vue/components/Header.vue","_css_loader":"node_modules/parcel-bundler/src/builtins/css-loader.js","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"node_modules/bootstrap-vue/esm/utils/vue.js":[function(require,module,exports) {
+},{"axios":"node_modules/axios/index.js","_css_loader":"node_modules/parcel-bundler/src/builtins/css-loader.js","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"node_modules/bootstrap-vue/esm/utils/vue.js":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -97515,7 +97907,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "57502" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "54711" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};
