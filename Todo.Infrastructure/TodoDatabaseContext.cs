@@ -150,6 +150,9 @@ namespace Todo.Infrastructure
                 entity
                     .Property(e => e.HasSubItems)
                     .HasColumnType("HasSubItems");
+
+                entity
+                    .Property(e => e.Important);
             });
 
             modelBuilder.Entity<TodoListLayout>(entity =>

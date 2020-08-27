@@ -16,5 +16,6 @@ namespace Todo.Infrastructure.Dto
         public Guid? ListId { get; set; }
         public DateTime? DueDate { get; set; }
         public bool HasSubItems { get; set; }
+        public bool Important { get; set; }
     }
 }
