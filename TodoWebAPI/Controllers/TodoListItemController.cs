@@ -243,5 +243,13 @@ namespace TodoWebAPI.Controllers
 
             return Ok();
         }
+
+        [HttpGet("api/lists/importantItems")]
+        public async Task<IActionResult> GetImportantItems()
+        {
+            var accountId = User.ReadClaimAsGuidValue("urn:codefliptodo:accountid");
+
+            return Ok(await _dapperQuery.GetImportantItems(accountId));
+        }
     }
 }

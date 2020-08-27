@@ -145,9 +145,22 @@ namespace TodoWebAPI
             {
                 await connection.OpenAsync();
                 var result = await connection.QueryAsync<TodoListItemDto>(@"
-                    SELECT t.ID, t.Notes, t.Completed, t.Name, t.ListID, t.DueDate, t.HasSubItems FROM TodoListItems AS t
+                    SELECT t.ID, t.Notes, t.Completed, t.Name, t.ListID, t.DueDate, t.HasSubItems, t.Important FROM TodoListItems AS t
                 INNER JOIN AccountsLists AS a ON t.ListID = a.ListID
                 WHERE a.AccountID = @accountId", new { accountId = accountId });
+                return result.ToList();
+            }
+        }
+
+        public async Task<List<TodoListItemDto>> GetImportantItems(Guid accountId)
+        {
+            using (var connection = new SqlConnection(_connectionString))
+            {
+                await connection.OpenAsync();
+                var result = await connection.QueryAsync<TodoListItemDto>(@"
+                     Select t.ID, t.Notes, t.Completed, t.Name, t.ListID, t.DueDate, t.HasSubItems, t.Important From TodoListItems AS t
+                INNER JOIN AccountsLists AS a ON t.ListID = a.LIstId
+                WHERE a.AccountID = @accountId AND Important = 1", new { accountId = accountId });
                 return result.ToList();
             }
         }
