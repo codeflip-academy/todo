@@ -1,13 +1,14 @@
-USE ToDo
+USE [Todo]
 
 GO
 
-Create TABLE [SubItemLayouts](
+CREATE TABLE [SubItemLayouts]
+(
     ID UNIQUEIDENTIFIER PRIMARY KEY,
     ItemId UNIQUEIDENTIFIER,
     Layout VARCHAR(max) NOT NULL,
     FOREIGN KEY (ItemId) REFERENCES TodoListItems (ID) ON DELETE CASCADE,
-     UNIQUE (ItemId)
+    UNIQUE (ItemId)
 )
 
 GO

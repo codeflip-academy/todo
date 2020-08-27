@@ -31,23 +31,24 @@ namespace TodoWebAPI.UserStories
         {
             var accountLists = await _accountsListsRepository.FindAccountsListsByAccountIdAndListIdAsync(request.AccountId, request.ListId);
 
-            if(accountLists.UserIsOwner(request.AccountId))
+            if (accountLists.UserIsOwner(request.AccountId))
             {
                 var list = await _listRepository.FindTodoListIdByIdAsync(request.ListId);
-                await _listRepository.RemoveTodoListAsync(request.ListId);
 
                 var accountPlan = await _accountPlan.FindAccountPlanByAccountIdAsync(request.AccountId);
-            
+
                 var contributors = list.Contributors;
 
-                foreach(var contributor in contributors)
+                foreach (var contributor in contributors)
                 {
                     var account = await _accountRepository.FindAccountByEmailAsync(contributor);
                     var contributorPlan = await _accountPlan.FindAccountPlanByAccountIdAsync(account.Id);
                     contributorPlan.DecrementListCount();
                 }
 
-                 await _listRepository.SaveChangesAsync();
+                accountLists.MoveListToTrash();
+
+                await _accountsListsRepository.SaveChangesAsync();
             }
             return;
         }

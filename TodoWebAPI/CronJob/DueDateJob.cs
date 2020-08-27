@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
@@ -40,24 +41,31 @@ namespace TodoWebAPI.CronJob
 
         public override async Task DoWork(CancellationToken cancellationToken, IServiceProvider serviceProvider)
         {
+            var accountRepository = serviceProvider.GetRequiredService<IAccountRepository>();
+            var listRepository = serviceProvider.GetRequiredService<ITodoListRepository>();
             var items = await _dapperQuery.GetItemsFromListItemsAsync();
 
             foreach (var item in items)
             {
                 if (item.DueDate?.Date == DateTime.Now.Date && item.DueDate?.Year == DateTime.Now.Year)
                 {
-                    var contributors = await _dapperQuery.GetContributorsByListIdAsync(item.ListId.GetValueOrDefault());
+                    var list = await listRepository.FindTodoListIdByIdAsync(item.ListId.GetValueOrDefault());
 
-                    foreach (var contributor in contributors)
+                    foreach (var contributor in list.Contributors)
                     {
-                        var email = new EmailMessage()
+                        var account = await accountRepository.FindAccountByEmailAsync(contributor);
+
+                        if (account.EmailDueDate == true)
                         {
-                            To = contributor,
-                            From = _configuration.GetSection("Emails")["Notifications"],
-                            Subject = $"{item.Name} is due today. | {item.DueDate}",
-                            Body = $"{item.Name} is due today. Better hurry!"
-                        };
-                        await _emailService.SendEmailAsync(email);
+                            var email = new EmailMessage()
+                            {
+                                To = contributor,
+                                From = _configuration.GetSection("Emails")["Notifications"],
+                                Subject = $"{item.Name} is due today. | {item.DueDate}",
+                                Body = $"{item.Name} is due today. Better hurry!"
+                            };
+                            await _emailService.SendEmailAsync(email);
+                        }
                     }
 
                 }

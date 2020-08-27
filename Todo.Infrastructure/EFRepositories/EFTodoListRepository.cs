@@ -53,12 +53,6 @@ namespace TodoWebAPI.Data
         {
             return await _context.TodoLists.FindAsync(listId);
         }
-        public async Task RemoveTodoListAsync(Guid listId)
-        {
-            var list = await _context.TodoLists.FindAsync(listId);
-
-            _context.Remove(list);
-        }
         public async Task<List<TodoList>> GetNumberOfTodoListsByAccountIdAsync(Guid accountId, int numberOfLists)
         {
             var todoLists = (from list in _context.TodoLists

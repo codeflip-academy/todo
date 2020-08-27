@@ -96,6 +96,12 @@ namespace Todo.Infrastructure
                 entity
                     .Property(e => e.PaymentMethodDeletedPlan);
 
+                entity
+                    .Property(e => e.EmailCompleted);
+
+                entity
+                    .Property(e => e.EmailDueDate);
+
             });
 
             modelBuilder.Entity<TodoList>(entity =>
@@ -106,6 +112,7 @@ namespace Todo.Infrastructure
 
                 entity
                     .Property(e => e.ListTitle)
+                    .HasColumnType("nvarchar(max)")
                     .IsRequired()
                     .HasMaxLength(50)
                     .IsUnicode(false);
@@ -128,12 +135,14 @@ namespace Todo.Infrastructure
 
                 entity
                     .Property(e => e.Name)
+                    .HasColumnType("nvarchar(max)")
                     .HasColumnName("Name")
                     .HasMaxLength(50)
                     .IsUnicode(false);
 
                 entity
                     .Property(e => e.Notes)
+                    .HasColumnType("nvarchar(max)")
                     .HasMaxLength(200)
                     .IsUnicode(false);
 
@@ -194,6 +203,7 @@ namespace Todo.Infrastructure
 
                 entity
                     .Property(e => e.Name)
+                    .HasColumnType("nvarchar(max)")
                     .HasColumnName("Name")
                     .HasMaxLength(50)
                     .IsUnicode(false);
