@@ -16,6 +16,7 @@ namespace Todo.Domain
         public Guid? ListId { get; set; }
         public DateTime? DueDate { get; set; }
         public bool HasSubItems { get; private set; }
+        public bool Important { get; set; }
         public void SetCompleted(List<SubItem> items)
         {
             if (items.Count == 0)

@@ -208,5 +208,48 @@ namespace TodoWebAPI.Controllers
 
             return Forbid();
         }
+
+        [HttpGet("api/lists/itemsDueToday")]
+        public async Task<IActionResult> GetItemsDueToday()
+        {
+            var accountId = User.ReadClaimAsGuidValue("urn:codefliptodo:accountid");
+            var date = DateTime.Now.Date;
+
+            return Ok(await _dapperQuery.GetItemsBasedOnCurrentDate(accountId, date));
+        }
+
+        [HttpGet("api/lists/itemsWithDate")]
+        public async Task<IActionResult> GetItemsWithDueDate()
+        {
+            var accountId = User.ReadClaimAsGuidValue("urn:codefliptodo:accountid");
+
+            return Ok(await _dapperQuery.GetItemsThatHaveDueDate(accountId));
+        }
+
+        [HttpGet("api/lists/allItems")]
+        public async Task<IActionResult> GetAllItems()
+        {
+            var accountId = User.ReadClaimAsGuidValue("urn:codefliptodo:accountid");
+
+            return Ok(await _dapperQuery.GetAllItemsUnderAccount(accountId));
+        }
+
+        [HttpPut("api/todos/{todoId}/markImportant")]
+        public async Task<IActionResult> MarkItemAsImportant([FromBody] MarkItemAsImportant markItem)
+        {
+            var accountId = User.ReadClaimAsGuidValue("urn:codefliptodo:accountid");
+
+            await _mediator.Send(markItem);
+
+            return Ok();
+        }
+
+        [HttpGet("api/lists/importantItems")]
+        public async Task<IActionResult> GetImportantItems()
+        {
+            var accountId = User.ReadClaimAsGuidValue("urn:codefliptodo:accountid");
+
+            return Ok(await _dapperQuery.GetImportantItems(accountId));
+        }
     }
 }

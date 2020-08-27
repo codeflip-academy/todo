@@ -19,5 +19,6 @@ namespace TodoWebAPI.UserStories.CreateItem
         [StringLength(50, MinimumLength = 1)]
         public string Name { get; set; }
         public DateTime? DueDate { get; set; }
+        public bool Important { get; set; }
     }
 }

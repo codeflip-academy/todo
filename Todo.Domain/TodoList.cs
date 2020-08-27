@@ -26,7 +26,7 @@ namespace Todo.Domain
         public bool Completed { get; private set; }
         public List<string> Contributors { get; private set; } = new List<string>();
 
-        public TodoListItem CreateListItem(Guid id, string name, string notes, DateTime? dueDate)
+        public TodoListItem CreateListItem(Guid id, string name, string notes, DateTime? dueDate, bool important)
         {
             var todoItem = new TodoListItem()
             {
@@ -34,7 +34,8 @@ namespace Todo.Domain
                 Id = id,
                 Name = name,
                 Notes = notes,
-                DueDate = dueDate
+                DueDate = dueDate,
+                Important = important
             };
 
             DomainEvents.Add(new TodoListItemCreated { Item = todoItem, List = this });

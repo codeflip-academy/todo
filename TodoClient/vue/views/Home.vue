@@ -15,6 +15,7 @@
       </b-col>
       <b-col>
         <div class="account-options">
+          <Invitations></Invitations>
           <a href="#" class="account-dropdown">
             <div class="profile-picture">
               <img :src="user.pictureUrl" alt />
@@ -38,6 +39,7 @@ import { mapState } from "vuex";
 import Draggable from "vuedraggable";
 import TodoLists from "../components/TodoLists";
 import TodoList from "../components/TodoList";
+import Invitations from "../components/Invitations";
 
 export default {
   name: "Home",
@@ -57,6 +59,7 @@ export default {
     TodoLists,
     TodoList,
     Draggable,
+    Invitations,
   },
 };
 </script>

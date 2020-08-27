@@ -139,6 +139,9 @@ const store = new Vuex.Store({
     },
     getTodoListById: (state) => (todoListId) => {
       return state.todoLists.find(t => t.id === todoListId);
+    },
+    invitedTodoLists(state) {
+      return state.todoLists.filter(t => t.role === 0);
     }
   }
 });

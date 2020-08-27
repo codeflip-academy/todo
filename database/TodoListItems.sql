@@ -10,9 +10,9 @@ CREATE TABLE [TodoListItems]
     [Name] NVARCHAR(50),
     [DueDate] DATETIME,
     [ListID] UNIQUEIDENTIFIER,
-    [HasSubItems] BIT NOT NULL DEFAULT(0)
-
-        FOREIGN KEY (ListID) REFERENCES TodoLists (ID) ON DELETE CASCADE
+    [HasSubItems] BIT NOT NULL DEFAULT(0),
+    [Important] BIT,
+    FOREIGN KEY (ListID) REFERENCES TodoLists (ID) ON DELETE CASCADE
 )
 
 GO

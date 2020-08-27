@@ -133,24 +133,24 @@ $red: #b71c1c;
       overflow-y: auto !important;
     }
   }
-}
 
-.form-group {
-  color: $gray;
-  margin-bottom: 0;
-  margin-bottom: 5px;
+  .form-group {
+    color: $gray;
+    margin-bottom: 0;
+    margin-bottom: 5px;
 
-  .form-control {
-    border-radius: 0;
-    border: 1px solid transparent;
+    .form-control {
+      border-radius: 0;
+      border: 1px solid transparent;
 
-    &:hover {
-      border: 1px solid #ddd;
-    }
+      &:hover {
+        border: 1px solid #ddd;
+      }
 
-    &:focus {
-      border-color: $blue;
-      box-shadow: none;
+      &:focus {
+        border-color: $blue;
+        box-shadow: none;
+      }
     }
   }
 }
