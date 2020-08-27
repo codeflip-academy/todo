@@ -234,7 +234,7 @@ namespace TodoWebAPI.Controllers
             return Ok(await _dapperQuery.GetAllItemsUnderAccount(accountId));
         }
 
-        [HttpPut("api/list{listId}/todos/{todoId}/markImportant")]
+        [HttpPut("api/todos/{todoId}/markImportant")]
         public async Task<IActionResult> MarkItemAsImportant([FromBody] MarkItemAsImportant markItem)
         {
             var accountId = User.ReadClaimAsGuidValue("urn:codefliptodo:accountid");
