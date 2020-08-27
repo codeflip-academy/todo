@@ -208,5 +208,14 @@ namespace TodoWebAPI.Controllers
 
             return Forbid();
         }
+
+        [HttpGet("api/lists/itemsDueToday")]
+        public async Task<IActionResult> GetItemsDueToday()
+        {
+            var accountId = User.ReadClaimAsGuidValue("urn:codefliptodo:accountid");
+            var date = DateTime.Now.Date;
+
+            return Ok(await _dapperQuery.GetItemsBasedOnCurrentDate(accountId, date));
+        }
     }
 }

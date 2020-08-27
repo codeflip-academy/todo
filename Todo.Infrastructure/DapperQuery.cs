@@ -112,6 +112,19 @@ namespace TodoWebAPI
             }
         }
 
+        public async Task<List<TodoListItemDto>> GetItemsBasedOnCurrentDate(Guid accountId, DateTime date)
+        {
+            using (var connection = new SqlConnection(_connectionString))
+            {
+                await connection.OpenAsync();
+                var result = await connection.QueryAsync<TodoListItemDto>(@"
+                   SELECT t.ID, t.Notes, t.Completed, t.Name, t.ListID, t.DueDate, t.HasSubItems FROM TodoListItems AS t
+                    INNER JOIN AccountsLists AS a on t.ListID = a.ListID
+                    WHERE a.AccountID = @accountId AND DueDate = @date", new { accountId = accountId, date = date });
+                return result.ToList();
+            }
+        }
+
         public async Task<TodoListLayoutDto> GetTodoListLayoutAsync(Guid listId)
         {
             using (var connection = new SqlConnection(_connectionString))
