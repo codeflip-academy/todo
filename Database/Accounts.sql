@@ -11,6 +11,7 @@ CREATE TABLE [Accounts]
     [CustomerID] VARCHAR(9) NOT NULL,
     [PaymentMethodID] VARCHAR(50),
     [SubscriptionID] VARCHAR(50),
+    [PaymentMethodDeletedPlan] VARCHAR(50),
     [EmailDueDate] BIT,
     [EmailCompleted] BIT
 )
