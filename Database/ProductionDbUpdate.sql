@@ -1,6 +1,3 @@
-USE [Todo]
-GO
-
 -- DELETE TABLES
 
 -- Downgrades.sql
@@ -115,12 +112,13 @@ GO
 CREATE TABLE [TodoListItems]
 (
     [ID] UNIQUEIDENTIFIER PRIMARY KEY,
-    [Notes] VARCHAR(200),
+    [Notes] NVARCHAR(200),
     [Completed] BIT NOT NULL DEFAULT(0),
-    [Name] VARCHAR(50),
+    [Name] NVARCHAR(50),
     [DueDate] DATETIME,
     [ListID] UNIQUEIDENTIFIER,
     [HasSubItems] BIT NOT NULL DEFAULT(0),
+    [Important] BIT,
     FOREIGN KEY (ListID) REFERENCES TodoLists (ID) ON DELETE CASCADE
 )
 GO
@@ -169,7 +167,7 @@ CREATE TABLE [Discounts]
 GO
 
 -- DiscountsData.sql
-INSERT INTO Discounts
+INSERT INTO [Discounts]
     ([ID], [Name], [Percentage], [BillingCycles])
 VALUES
     (1, 'FreeMonth', 100, 1)
