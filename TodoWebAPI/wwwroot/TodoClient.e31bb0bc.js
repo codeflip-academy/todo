@@ -38643,6 +38643,8 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.default = void 0;
 
+var _vue = _interopRequireDefault(require("vue"));
+
 var _moment = _interopRequireDefault(require("moment"));
 
 var _vuex = require("vuex");
@@ -38705,11 +38707,16 @@ var _default = {
 
   data() {
     return {
-      form: { ...this.item
-      }
+      form: Object.assign({}, this.item)
     };
   },
 
+  watch: {
+    item() {
+      this.form = Object.assign({}, this.item);
+    }
+
+  },
   methods: {
     sendSubItemCountChangedEvent({
       hasSubItems
@@ -38891,7 +38898,7 @@ render._withStripped = true
       
       }
     })();
-},{"moment":"node_modules/moment/moment.js","vuex":"node_modules/vuex/dist/vuex.esm.js","./SubItems":"vue/components/SubItems.vue","_css_loader":"node_modules/parcel-bundler/src/builtins/css-loader.js","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/components/TodoList.vue":[function(require,module,exports) {
+},{"vue":"node_modules/vue/dist/vue.runtime.esm.js","moment":"node_modules/moment/moment.js","vuex":"node_modules/vuex/dist/vuex.esm.js","./SubItems":"vue/components/SubItems.vue","_css_loader":"node_modules/parcel-bundler/src/builtins/css-loader.js","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js"}],"vue/components/TodoList.vue":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -99628,7 +99635,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "65382" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "50278" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};
