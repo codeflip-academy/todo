@@ -13,7 +13,8 @@ CREATE TABLE [Accounts]
     [SubscriptionID] VARCHAR(50),
     [EmailDueDate] BIT,
     [EmailListCompleted] BIT,
-    [EmailItemCompleted] BIT
+    [EmailItemCompleted] BIT,
+    [EmailInvitation] BIT
 )
 
 GO

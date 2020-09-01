@@ -102,6 +102,9 @@ namespace Todo.Infrastructure
                 entity
                     .Property(e => e.EmailItemCompleted);
 
+                entity
+                    .Property(e => e.EmailInvitation);
+
             });
 
             modelBuilder.Entity<TodoList>(entity =>

@@ -28,11 +28,14 @@ namespace Todo.Domain
         public bool EmailDueDate { get; set; }
         public bool EmailListCompleted { get; set; }
         public bool EmailItemCompleted { get; set; }
+        public bool EmailInvitation { get; set; }
 
-        public void FilterEmails(bool emailDueDate, bool emailCompleted)
+        public void FilterEmails(bool emailDueDate, bool emailCompleted, bool emailItemCompleted, bool emailInvitation)
         {
             this.EmailDueDate = emailDueDate;
             this.EmailListCompleted = emailCompleted;
+            this.EmailItemCompleted = emailItemCompleted;
+            this.EmailInvitation = emailInvitation;
         }
         public string SubscriptionId { get; private set; }
         public bool HasSubscription() => !string.IsNullOrEmpty(SubscriptionId);
