@@ -1,26 +1,29 @@
 <template>
   <section id="settings-page">
-    <b-tabs pills vertical nav-wrapper-class="w-25">
-      <b-tab title="Account">
-        <h2>Account</h2>
-        <SettingsAccount></SettingsAccount>
-      </b-tab>
-      <b-tab title="Billing" active>
-        <h2>Billing</h2>
-        <SettingsBilling></SettingsBilling>
-      </b-tab>
-      <b-tab title="Notifications" active>
-        <h2>Notifications</h2>
-        <h3>Emails:</h3>
-        <p class="text-muted">Send notifications when:</p>
-        <b-form class="notifications-form">
-          <strong>
-            <b-form-checkbox inline v-model="emailDueDate">List items Due Today</b-form-checkbox>
-            <b-form-checkbox inline v-model="emailCompleted">List Completed</b-form-checkbox>
-          </strong>
-        </b-form>
-      </b-tab>
-    </b-tabs>
+    <b-container>
+      <b-tabs pills vertical nav-wrapper-class="w-25">
+        <b-tab title="Account">
+          <h2>Account</h2>
+          <SettingsAccount></SettingsAccount>
+        </b-tab>
+        <b-tab title="Billing" active>
+          <h2>Billing</h2>
+          <SettingsBilling></SettingsBilling>
+        </b-tab>
+        <b-tab title="Notifications" active>
+          <h2>Notifications</h2>
+          <h3>Emails:</h3>
+          <p class="text-muted">Send notifications when:</p>
+          <b-form class="notifications-form">
+            <strong>
+              <b-form-checkbox v-model="emailDueDate">List items Due Today</b-form-checkbox>
+              <b-form-checkbox v-model="emailListCompleted">List Completed</b-form-checkbox>
+              <b-form-checkbox v-model="emailItemCompleted">Item Completed</b-form-checkbox>
+              <b-form-checkbox v-model="emailInvitation">Invitations</b-form-checkbox>
+            </strong>
+        </b-tab>
+      </b-tabs>
+    </b-container>
   </section>
 </template>
 
@@ -35,7 +38,9 @@ export default {
   data() {
     return {
       emailDueDate: false,
-      emailCompleted: false,
+      emailListCompleted: false,
+      emailItemCompleted: false,
+      emailInvitation: false
     };
   },
   async created() {
@@ -49,7 +54,9 @@ export default {
         headers: { "content-type": "application/json" },
         data: JSON.stringify({
           emailDueDate: this.emailDueDate,
-          emailCompleted: this.emailCompleted,
+          emailListCompleted: this.emailListCompleted,
+          emailItemCompleted: this.emailItemCompleted,
+          emailInvitation: this.emailInvitation
         }),
       });
     },
@@ -61,16 +68,24 @@ export default {
       });
 
       this.emailDueDate = response.data.emailDueDate;
-      this.emailCompleted = response.data.emailCompleted;
-    },
+      this.emailListCompleted = response.data.emailListCompleted;
+      this.emailItemCompleted = response.data.emailItemCompleted;
+      this.emailInvitation = response.data.emailInvitation;
+      },
   },
   watch: {
     emailDueDate() {
       this.updateSettings();
     },
-    emailCompleted() {
+    emailListCompleted() {
       this.updateSettings();
     },
+    emailItemCompleted(){
+      this.updateSettings();
+    },
+    emailInvitation(){
+      this.updateSettings();
+    }
   },
   components: {
     SettingsAccount,
