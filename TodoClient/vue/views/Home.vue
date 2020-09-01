@@ -4,42 +4,45 @@
       <b-col md="4" lg="4" xl="2">
         <div class="sidebar">
           <div class="sidebar-header mb-3">
-            <a href="#" class="sidebar-brand">
+            <b-link :to="{ name: 'Home' }" class="sidebar-brand">
               <b-icon-check-all></b-icon-check-all>Todo
-            </a>
+            </b-link>
+          </div>
+          <div class="sidebar-lists">
+            <TodoLists></TodoLists>
           </div>
           <div class="item-categories">
-            <!-- Today -->
-            <b-link href="#" class="item-category">
+            <!-- <b-link to="/all" class="item-category">
+              <div class="item-category-icon">
+                <b-icon-inbox></b-icon-inbox>
+              </div>
+              <div class="item-category-name">All</div>
+            </b-link>
+            <b-link to="/today" class="item-category">
               <div class="item-category-icon">
                 <b-icon-calendar3></b-icon-calendar3>
               </div>
               <div class="item-category-name">Today</div>
             </b-link>
-            <!-- Important -->
-            <b-link href="#" class="item-category">
+            <b-link to="/important" class="item-category">
               <div class="item-category-icon">
                 <b-icon-star></b-icon-star>
               </div>
               <div class="item-category-name">Important</div>
             </b-link>
-            <!-- Scheduled -->
-            <b-link href="#" class="item-category">
+            <b-link to="/scheduled" class="item-category">
               <div class="item-category-icon">
                 <b-icon-alarm></b-icon-alarm>
               </div>
               <div class="item-category-name">Scheduled</div>
-            </b-link>
-          </div>
-          <div class="sidebar-lists">
-            <TodoLists></TodoLists>
+            </b-link>-->
           </div>
         </div>
       </b-col>
       <b-col
         class="todo-list-bg"
         :style="{ 'background-image': 'url(' + todoListImage + ')' }"
-        :class="{ 'list-selected': $route.params.todoListId }"
+        :class="{ 'list-selected': listSelected }"
       >
         <div class="account-options">
           <Invitations></Invitations>
@@ -53,8 +56,13 @@
                 <b-icon-chevron-down></b-icon-chevron-down>
               </div>
             </template>
+            <b-dropdown-item to="/settings">
+              <b-icon-gear class="mr-2"></b-icon-gear>Settings
+            </b-dropdown-item>
             <b-dropdown-item>
-              <div @click="signOut">Sign out</div>
+              <div @click="signOut">
+                <b-icon-box-arrow-left class="mr-2"></b-icon-box-arrow-left>Sign out
+              </div>
             </b-dropdown-item>
           </b-dropdown>
         </div>
@@ -88,6 +96,9 @@ export default {
     ...mapState({
       loadingTodoLists: (state) => state.loadingTodoLists,
     }),
+    listSelected() {
+      return this.$route.name !== "Home";
+    },
   },
   components: {
     TodoLists,
@@ -118,7 +129,7 @@ $red: #b71c1c;
 
 .item-categories {
   margin-left: 30px;
-  margin-bottom: 50px;
+  margin-top: 40px;
 }
 
 .item-category {

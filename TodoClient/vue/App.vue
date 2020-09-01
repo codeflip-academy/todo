@@ -193,6 +193,7 @@ body {
   .list-header {
     padding: 20px 30px;
     border-bottom: solid 4px $blue;
+    background: #fff;
 
     .list-title {
       font-size: 18px;

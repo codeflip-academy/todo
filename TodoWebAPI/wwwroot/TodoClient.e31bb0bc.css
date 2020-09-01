@@ -1,3 +1,49 @@
+#login .title {
+  font-size: 60px;
+}
+#login .subtitle {
+  font-size: 30px;
+  font-weight: bold;
+  font-family: "Nunito", sans-serif;
+  max-width: 420px;
+  line-height: 1.2;
+}
+.account-avatar[data-v-6ce1f6] {
+  width: 100%;
+  max-width: 100px;
+  border-radius: 100px;
+}
+.form-control[data-v-6ce1f6] {
+  margin-bottom: 0;
+}
+.current-plan {
+  font-family: "Nunito", sans-serif;
+  font-weight: bold;
+  line-height: 1;
+  margin-bottom: 12px;
+}
+
+.plan-description {
+  line-height: 1.2;
+}
+.showing-overlay[data-v-1c308f] {
+  min-height: 133px;
+  margin-bottom: 16px;
+}
+#settings-page .nav-link {
+  margin-bottom: 10px;
+}
+#settings-page h2 {
+  padding-bottom: 10px;
+  margin-bottom: 20px;
+  border-bottom: solid 1px #ddd;
+}
+#settings-page .notifications-form custom-control-label {
+  font-weight: bold !important;
+}
+#settings-page .tab-content {
+  padding-left: 30px;
+}
 .b-tooltip[data-v-370f63] {
   font-family: "Poppins", sans-serif;
   font-weight: bold;
@@ -180,7 +226,7 @@ h3[data-v-3f1240] {
 }
 .item-categories {
   margin-left: 30px;
-  margin-bottom: 50px;
+  margin-top: 40px;
 }
 
 .item-category {
@@ -454,52 +500,6 @@ h3[data-v-3f1240] {
   box-shadow: 0 10px 30px rgba(76, 175, 80, 0.3) !important;
   background-color: #3d8b40 !important;
 }
-#login .title {
-  font-size: 60px;
-}
-#login .subtitle {
-  font-size: 30px;
-  font-weight: bold;
-  font-family: "Nunito", sans-serif;
-  max-width: 420px;
-  line-height: 1.2;
-}
-.account-avatar[data-v-6ce1f6] {
-  width: 100%;
-  max-width: 100px;
-  border-radius: 100px;
-}
-.form-control[data-v-6ce1f6] {
-  margin-bottom: 0;
-}
-.current-plan {
-  font-family: "Nunito", sans-serif;
-  font-weight: bold;
-  line-height: 1;
-  margin-bottom: 12px;
-}
-
-.plan-description {
-  line-height: 1.2;
-}
-.showing-overlay[data-v-1c308f] {
-  min-height: 133px;
-  margin-bottom: 16px;
-}
-#settings-page .nav-link {
-  margin-bottom: 10px;
-}
-#settings-page h2 {
-  padding-bottom: 10px;
-  margin-bottom: 20px;
-  border-bottom: solid 1px #ddd;
-}
-#settings-page .notifications-form custom-control-label {
-  font-weight: bold !important;
-}
-#settings-page .tab-content {
-  padding-left: 30px;
-}
 * {
   box-sizing: border-box;
 }
@@ -583,6 +583,7 @@ body {
 .list-wrapper .list-header {
   padding: 20px 30px;
   border-bottom: solid 4px #1e88e5;
+  background: #fff;
 }
 .list-wrapper .list-header .list-title {
   font-size: 18px;
