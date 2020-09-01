@@ -59,11 +59,9 @@
             <b-dropdown-item to="/settings">
               <b-icon-gear class="mr-2"></b-icon-gear>Settings
             </b-dropdown-item>
-            <b-dropdown-item>
-              <div @click="signOut">
-                <b-icon-box-arrow-left class="mr-2"></b-icon-box-arrow-left>Sign out
-              </div>
-            </b-dropdown-item>
+            <b-dropdown-item-button @click="signOut">
+              <b-icon-box-arrow-left class="mr-2"></b-icon-box-arrow-left>Sign out
+            </b-dropdown-item-button>
           </b-dropdown>
         </div>
         <RouterView :key="$route.fullPath" v-if="!loadingTodoLists"></RouterView>

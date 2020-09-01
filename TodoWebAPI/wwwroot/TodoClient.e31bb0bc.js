@@ -48444,8 +48444,6 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 //
 //
 //
-//
-//
 var _default = {
   name: "Home",
 
@@ -48590,19 +48588,15 @@ exports.default = _default;
                         1
                       ),
                       _vm._v(" "),
-                      _c("b-dropdown-item", [
-                        _c(
-                          "div",
-                          { on: { click: _vm.signOut } },
-                          [
-                            _c("b-icon-box-arrow-left", {
-                              staticClass: "mr-2"
-                            }),
-                            _vm._v("Sign out\n            ")
-                          ],
-                          1
-                        )
-                      ])
+                      _c(
+                        "b-dropdown-item-button",
+                        { on: { click: _vm.signOut } },
+                        [
+                          _c("b-icon-box-arrow-left", { staticClass: "mr-2" }),
+                          _vm._v("Sign out\n          ")
+                        ],
+                        1
+                      )
                     ],
                     1
                   )
