@@ -8,6 +8,29 @@
               <b-icon-check-all></b-icon-check-all>Todo
             </a>
           </div>
+          <div class="item-categories">
+            <!-- Today -->
+            <b-link href="#" class="item-category">
+              <div class="item-category-icon">
+                <b-icon-calendar3></b-icon-calendar3>
+              </div>
+              <div class="item-category-name">Today</div>
+            </b-link>
+            <!-- Important -->
+            <b-link href="#" class="item-category">
+              <div class="item-category-icon">
+                <b-icon-star></b-icon-star>
+              </div>
+              <div class="item-category-name">Important</div>
+            </b-link>
+            <!-- Scheduled -->
+            <b-link href="#" class="item-category">
+              <div class="item-category-icon">
+                <b-icon-alarm></b-icon-alarm>
+              </div>
+              <div class="item-category-name">Scheduled</div>
+            </b-link>
+          </div>
           <div class="sidebar-lists">
             <TodoLists></TodoLists>
           </div>
@@ -86,6 +109,32 @@ export default {
 </script>
 
 <style lang="scss">
+$light-gray: #f5f6f7;
+$gray: #455a64;
+$blue: #1e88e5;
+$orange: #ff7043;
+$green: #4caf50;
+$red: #b71c1c;
+
+.item-categories {
+  margin-left: 30px;
+  margin-bottom: 50px;
+}
+
+.item-category {
+  display: flex;
+  align-items: center;
+  color: $gray;
+
+  .item-category-icon {
+    margin-right: 15px;
+  }
+
+  &:not(:last-child) {
+    margin-bottom: 20px;
+  }
+}
+
 .todo-list-bg {
   background-position: center;
   background-size: 70%;

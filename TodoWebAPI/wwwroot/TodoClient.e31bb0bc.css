@@ -178,6 +178,23 @@ h3[data-v-3f1240] {
 .invitation:not(:last-child) {
   border-bottom: 1px solid #e7e9ec;
 }
+.item-categories {
+  margin-left: 30px;
+  margin-bottom: 50px;
+}
+
+.item-category {
+  display: flex;
+  align-items: center;
+  color: #455a64;
+}
+.item-category .item-category-icon {
+  margin-right: 15px;
+}
+.item-category:not(:last-child) {
+  margin-bottom: 20px;
+}
+
 .todo-list-bg {
   background-position: center;
   background-size: 70%;

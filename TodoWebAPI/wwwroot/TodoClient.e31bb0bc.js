@@ -37210,7 +37210,6 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 //
 //
 //
-//
 var _default = {
   props: ["todoListItem"],
   components: {
@@ -37476,32 +37475,23 @@ exports.default = _default;
                     expression: "subItemsLayout"
                   }
                 },
-                [
-                  _vm._l(_vm.subItemsLayout, function(subItemId) {
-                    return _c("SubItem", {
-                      key: subItemId,
-                      attrs: {
-                        subItem: _vm.subItems.find(function(s) {
-                          return s.id == subItemId
-                        }),
-                        listId: _vm.todoListItem.listId
-                      },
-                      on: {
-                        "checkbox-clicked":
-                          _vm.dispatchSetSubItemCompletedState,
-                        "update-sub-item-name": _vm.dispatchUpdateSubItemName,
-                        "delete-sub-item": _vm.dispatchDeleteSubItem
-                      }
-                    })
-                  }),
-                  _vm._v(" "),
-                  _vm.subItems.length < 1
-                    ? _c("b-list-group-item", [
-                        _vm._v("There are no sub-items.")
-                      ])
-                    : _vm._e()
-                ],
-                2
+                _vm._l(_vm.subItemsLayout, function(subItemId) {
+                  return _c("SubItem", {
+                    key: subItemId,
+                    attrs: {
+                      subItem: _vm.subItems.find(function(s) {
+                        return s.id == subItemId
+                      }),
+                      listId: _vm.todoListItem.listId
+                    },
+                    on: {
+                      "checkbox-clicked": _vm.dispatchSetSubItemCompletedState,
+                      "update-sub-item-name": _vm.dispatchUpdateSubItemName,
+                      "delete-sub-item": _vm.dispatchDeleteSubItem
+                    }
+                  })
+                }),
+                1
               )
             ],
             1
@@ -39767,6 +39757,29 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 var _default = {
   name: "Home",
 
@@ -39833,6 +39846,64 @@ exports.default = _default;
                   1
                 )
               ]),
+              _vm._v(" "),
+              _c(
+                "div",
+                { staticClass: "item-categories" },
+                [
+                  _c(
+                    "b-link",
+                    { staticClass: "item-category", attrs: { href: "#" } },
+                    [
+                      _c(
+                        "div",
+                        { staticClass: "item-category-icon" },
+                        [_c("b-icon-calendar3")],
+                        1
+                      ),
+                      _vm._v(" "),
+                      _c("div", { staticClass: "item-category-name" }, [
+                        _vm._v("Today")
+                      ])
+                    ]
+                  ),
+                  _vm._v(" "),
+                  _c(
+                    "b-link",
+                    { staticClass: "item-category", attrs: { href: "#" } },
+                    [
+                      _c(
+                        "div",
+                        { staticClass: "item-category-icon" },
+                        [_c("b-icon-star")],
+                        1
+                      ),
+                      _vm._v(" "),
+                      _c("div", { staticClass: "item-category-name" }, [
+                        _vm._v("Important")
+                      ])
+                    ]
+                  ),
+                  _vm._v(" "),
+                  _c(
+                    "b-link",
+                    { staticClass: "item-category", attrs: { href: "#" } },
+                    [
+                      _c(
+                        "div",
+                        { staticClass: "item-category-icon" },
+                        [_c("b-icon-alarm")],
+                        1
+                      ),
+                      _vm._v(" "),
+                      _c("div", { staticClass: "item-category-name" }, [
+                        _vm._v("Scheduled")
+                      ])
+                    ]
+                  )
+                ],
+                1
+              ),
               _vm._v(" "),
               _c("div", { staticClass: "sidebar-lists" }, [_c("TodoLists")], 1)
             ])
