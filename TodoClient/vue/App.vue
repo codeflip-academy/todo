@@ -1,16 +1,37 @@
 <template>
-  <RouterView></RouterView>
+  <div id="content">
+    <b-row no-gutters>
+      <b-col md="4" lg="4" xl="2">
+        <Sidebar></Sidebar>
+      </b-col>
+      <b-col
+        class="todo-list-bg"
+        :style="{ 'background-image': 'url(' + todoListImage + ')' }"
+        :class="{ 'list-selected': listSelected }"
+      >
+        <Header></Header>
+        <RouterView></RouterView>
+      </b-col>
+    </b-row>
+  </div>
 </template>
 
 <script>
 import axios from "axios";
+import Header from "./components/Header";
+import Sidebar from "./components/Sidebar";
+import todoListImage from "../images/todo-list-bg.jpg";
 
 export default {
   name: "App",
   data() {
     return {
-      test: false,
+      todoListImage: todoListImage,
     };
+  },
+  components: {
+    Header,
+    Sidebar,
   },
   async created() {
     await this.checkAuthState();
@@ -60,6 +81,11 @@ export default {
       "ContributorLeft",
       async () => await this.$store.dispatch("getTodoLists")
     );
+  },
+  computed: {
+    listSelected() {
+      return this.$route.name !== "Home";
+    },
   },
   methods: {
     async checkAuthState() {

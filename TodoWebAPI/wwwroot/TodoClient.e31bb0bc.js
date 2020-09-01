@@ -36758,8 +36758,6 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 //
 //
 //
-//
-//
 var _default = {
   name: "Settings",
 
@@ -36832,86 +36830,72 @@ exports.default = _default;
     { attrs: { id: "settings-page" } },
     [
       _c(
-        "b-container",
+        "b-tabs",
+        { attrs: { pills: "", vertical: "", "nav-wrapper-class": "w-25" } },
         [
           _c(
-            "b-tabs",
-            { attrs: { pills: "", vertical: "", "nav-wrapper-class": "w-25" } },
+            "b-tab",
+            { attrs: { title: "Account" } },
+            [_c("h2", [_vm._v("Account")]), _vm._v(" "), _c("SettingsAccount")],
+            1
+          ),
+          _vm._v(" "),
+          _c(
+            "b-tab",
+            { attrs: { title: "Billing", active: "" } },
+            [_c("h2", [_vm._v("Billing")]), _vm._v(" "), _c("SettingsBilling")],
+            1
+          ),
+          _vm._v(" "),
+          _c(
+            "b-tab",
+            { attrs: { title: "Notifications", active: "" } },
             [
-              _c(
-                "b-tab",
-                { attrs: { title: "Account" } },
-                [
-                  _c("h2", [_vm._v("Account")]),
-                  _vm._v(" "),
-                  _c("SettingsAccount")
-                ],
-                1
-              ),
+              _c("h2", [_vm._v("Notifications")]),
               _vm._v(" "),
-              _c(
-                "b-tab",
-                { attrs: { title: "Billing", active: "" } },
-                [
-                  _c("h2", [_vm._v("Billing")]),
-                  _vm._v(" "),
-                  _c("SettingsBilling")
-                ],
-                1
-              ),
+              _c("h3", [_vm._v("Emails:")]),
               _vm._v(" "),
-              _c(
-                "b-tab",
-                { attrs: { title: "Notifications", active: "" } },
-                [
-                  _c("h2", [_vm._v("Notifications")]),
-                  _vm._v(" "),
-                  _c("h3", [_vm._v("Emails:")]),
-                  _vm._v(" "),
-                  _c("p", { staticClass: "text-muted" }, [
-                    _vm._v("Send notifications when:")
-                  ]),
-                  _vm._v(" "),
-                  _c("b-form", { staticClass: "notifications-form" }, [
+              _c("p", { staticClass: "text-muted" }, [
+                _vm._v("Send notifications when:")
+              ]),
+              _vm._v(" "),
+              _c("b-form", { staticClass: "notifications-form" }, [
+                _c(
+                  "strong",
+                  [
                     _c(
-                      "strong",
-                      [
-                        _c(
-                          "b-form-checkbox",
-                          {
-                            attrs: { inline: "" },
-                            model: {
-                              value: _vm.emailDueDate,
-                              callback: function($$v) {
-                                _vm.emailDueDate = $$v
-                              },
-                              expression: "emailDueDate"
-                            }
+                      "b-form-checkbox",
+                      {
+                        attrs: { inline: "" },
+                        model: {
+                          value: _vm.emailDueDate,
+                          callback: function($$v) {
+                            _vm.emailDueDate = $$v
                           },
-                          [_vm._v("List items Due Today")]
-                        ),
-                        _vm._v(" "),
-                        _c(
-                          "b-form-checkbox",
-                          {
-                            attrs: { inline: "" },
-                            model: {
-                              value: _vm.emailCompleted,
-                              callback: function($$v) {
-                                _vm.emailCompleted = $$v
-                              },
-                              expression: "emailCompleted"
-                            }
+                          expression: "emailDueDate"
+                        }
+                      },
+                      [_vm._v("List items Due Today")]
+                    ),
+                    _vm._v(" "),
+                    _c(
+                      "b-form-checkbox",
+                      {
+                        attrs: { inline: "" },
+                        model: {
+                          value: _vm.emailCompleted,
+                          callback: function($$v) {
+                            _vm.emailCompleted = $$v
                           },
-                          [_vm._v("List Completed")]
-                        )
-                      ],
-                      1
+                          expression: "emailCompleted"
+                        }
+                      },
+                      [_vm._v("List Completed")]
                     )
-                  ])
-                ],
-                1
-              )
+                  ],
+                  1
+                )
+              ])
             ],
             1
           )
@@ -48376,74 +48360,6 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 //
 //
 //
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
 var _default = {
   name: "Home",
 
@@ -48453,35 +48369,15 @@ var _default = {
     };
   },
 
-  computed: {
-    user() {
-      return this.$store.getters.user;
-    },
-
-    ...(0, _vuex.mapState)({
+  computed: { ...(0, _vuex.mapState)({
       loadingTodoLists: state => state.loadingTodoLists
-    }),
-
-    listSelected() {
-      return this.$route.name !== "Home";
-    }
-
+    })
   },
   components: {
     TodoLists: _TodoLists.default,
     TodoList: _TodoList.default,
     Draggable: _vuedraggable.default,
     Invitations: _Invitations.default
-  },
-  methods: {
-    async signOut() {
-      await (0, _axios.default)({
-        method: "GET",
-        url: "api/accounts/logout"
-      });
-      this.$router.push("/login");
-    }
-
   }
 };
 exports.default = _default;
@@ -48497,125 +48393,9 @@ exports.default = _default;
   var _vm = this
   var _h = _vm.$createElement
   var _c = _vm._self._c || _h
-  return _c(
-    "div",
-    { attrs: { id: "content" } },
-    [
-      _c(
-        "b-row",
-        { attrs: { "no-gutters": "" } },
-        [
-          _c("b-col", { attrs: { md: "4", lg: "4", xl: "2" } }, [
-            _c("div", { staticClass: "sidebar" }, [
-              _c(
-                "div",
-                { staticClass: "sidebar-header mb-3" },
-                [
-                  _c(
-                    "b-link",
-                    {
-                      staticClass: "sidebar-brand",
-                      attrs: { to: { name: "Home" } }
-                    },
-                    [_c("b-icon-check-all"), _vm._v("Todo\n          ")],
-                    1
-                  )
-                ],
-                1
-              ),
-              _vm._v(" "),
-              _c("div", { staticClass: "sidebar-lists" }, [_c("TodoLists")], 1),
-              _vm._v(" "),
-              _c("div", { staticClass: "item-categories" })
-            ])
-          ]),
-          _vm._v(" "),
-          _c(
-            "b-col",
-            {
-              staticClass: "todo-list-bg",
-              class: { "list-selected": _vm.listSelected },
-              style: { "background-image": "url(" + _vm.todoListImage + ")" }
-            },
-            [
-              _c(
-                "div",
-                { staticClass: "account-options" },
-                [
-                  _c("Invitations"),
-                  _vm._v(" "),
-                  _c(
-                    "b-dropdown",
-                    {
-                      staticClass: "account-dropdown",
-                      attrs: { right: "" },
-                      scopedSlots: _vm._u([
-                        {
-                          key: "button-content",
-                          fn: function() {
-                            return [
-                              _c("div", { staticClass: "profile-picture" }, [
-                                _c("img", {
-                                  attrs: { src: _vm.user.pictureUrl, alt: "" }
-                                })
-                              ]),
-                              _vm._v(" "),
-                              _c("div", { staticClass: "profile-name" }, [
-                                _vm._v(_vm._s(_vm.user.fullName))
-                              ]),
-                              _vm._v(" "),
-                              _c(
-                                "div",
-                                { staticClass: "dropdown-toggler" },
-                                [_c("b-icon-chevron-down")],
-                                1
-                              )
-                            ]
-                          },
-                          proxy: true
-                        }
-                      ])
-                    },
-                    [
-                      _vm._v(" "),
-                      _c(
-                        "b-dropdown-item",
-                        { attrs: { to: "/settings" } },
-                        [
-                          _c("b-icon-gear", { staticClass: "mr-2" }),
-                          _vm._v("Settings\n          ")
-                        ],
-                        1
-                      ),
-                      _vm._v(" "),
-                      _c(
-                        "b-dropdown-item-button",
-                        { on: { click: _vm.signOut } },
-                        [
-                          _c("b-icon-box-arrow-left", { staticClass: "mr-2" }),
-                          _vm._v("Sign out\n          ")
-                        ],
-                        1
-                      )
-                    ],
-                    1
-                  )
-                ],
-                1
-              ),
-              _vm._v(" "),
-              !_vm.loadingTodoLists
-                ? _c("RouterView", { key: _vm.$route.fullPath })
-                : _vm._e()
-            ],
-            1
-          )
-        ],
-        1
-      )
-    ],
-    1
-  )
+  return !_vm.loadingTodoLists
+    ? _c("RouterView", { key: _vm.$route.fullPath })
+    : _vm._e()
 }
 var staticRenderFns = []
 render._withStripped = true
@@ -48884,7 +48664,7 @@ router.beforeEach(async (to, from, next) => {
 });
 var _default = router;
 exports.default = _default;
-},{"vue":"node_modules/vue/dist/vue.runtime.esm.js","vue-router":"node_modules/vue-router/dist/vue-router.esm.js","axios":"node_modules/axios/index.js","./store":"modules/store.js","../vue/views/Login":"vue/views/Login.vue","../vue/views/Settings":"vue/views/Settings.vue","../vue/views/Home":"vue/views/Home.vue","../vue/components/TodoList":"vue/components/TodoList.vue","../vue/components/AllItems.vue":"vue/components/AllItems.vue"}],"vue/App.vue":[function(require,module,exports) {
+},{"vue":"node_modules/vue/dist/vue.runtime.esm.js","vue-router":"node_modules/vue-router/dist/vue-router.esm.js","axios":"node_modules/axios/index.js","./store":"modules/store.js","../vue/views/Login":"vue/views/Login.vue","../vue/views/Settings":"vue/views/Settings.vue","../vue/views/Home":"vue/views/Home.vue","../vue/components/TodoList":"vue/components/TodoList.vue","../vue/components/AllItems.vue":"vue/components/AllItems.vue"}],"vue/components/Header.vue":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -48894,8 +48674,284 @@ exports.default = void 0;
 
 var _axios = _interopRequireDefault(require("axios"));
 
+var _Invitations = _interopRequireDefault(require("./Invitations"));
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+var _default = {
+  name: "Header",
+  components: {
+    Invitations: _Invitations.default
+  },
+  computed: {
+    user() {
+      return this.$store.getters.user;
+    }
+
+  },
+  methods: {
+    async signOut() {
+      await (0, _axios.default)({
+        method: "GET",
+        url: "api/accounts/logout"
+      });
+      this.$router.push("/login");
+    }
+
+  }
+};
+exports.default = _default;
+        var $f4778d = exports.default || module.exports;
+      
+      if (typeof $f4778d === 'function') {
+        $f4778d = $f4778d.options;
+      }
+    
+        /* template */
+        Object.assign($f4778d, (function () {
+          var render = function() {
+  var _vm = this
+  var _h = _vm.$createElement
+  var _c = _vm._self._c || _h
+  return _c(
+    "div",
+    { staticClass: "account-options" },
+    [
+      _c("Invitations"),
+      _vm._v(" "),
+      _c(
+        "b-dropdown",
+        {
+          staticClass: "account-dropdown",
+          attrs: { right: "" },
+          scopedSlots: _vm._u([
+            {
+              key: "button-content",
+              fn: function() {
+                return [
+                  _c("div", { staticClass: "profile-picture" }, [
+                    _c("img", { attrs: { src: _vm.user.pictureUrl, alt: "" } })
+                  ]),
+                  _vm._v(" "),
+                  _c("div", { staticClass: "profile-name" }, [
+                    _vm._v(_vm._s(_vm.user.fullName))
+                  ]),
+                  _vm._v(" "),
+                  _c(
+                    "div",
+                    { staticClass: "dropdown-toggler" },
+                    [_c("b-icon-chevron-down")],
+                    1
+                  )
+                ]
+              },
+              proxy: true
+            }
+          ])
+        },
+        [
+          _vm._v(" "),
+          _c(
+            "b-dropdown-item",
+            { attrs: { to: "/settings" } },
+            [
+              _c("b-icon-gear", { staticClass: "mr-2" }),
+              _vm._v("Settings\n    ")
+            ],
+            1
+          ),
+          _vm._v(" "),
+          _c(
+            "b-dropdown-item-button",
+            { on: { click: _vm.signOut } },
+            [
+              _c("b-icon-box-arrow-left", { staticClass: "mr-2" }),
+              _vm._v("Sign out\n    ")
+            ],
+            1
+          )
+        ],
+        1
+      )
+    ],
+    1
+  )
+}
+var staticRenderFns = []
+render._withStripped = true
+
+          return {
+            render: render,
+            staticRenderFns: staticRenderFns,
+            _compiled: true,
+            _scopeId: null,
+            functional: undefined
+          };
+        })());
+      
+    /* hot reload */
+    (function () {
+      if (module.hot) {
+        var api = require('vue-hot-reload-api');
+        api.install(require('vue'));
+        if (api.compatible) {
+          module.hot.accept();
+          if (!module.hot.data) {
+            api.createRecord('$f4778d', $f4778d);
+          } else {
+            api.reload('$f4778d', $f4778d);
+          }
+        }
+
+        
+      }
+    })();
+},{"axios":"node_modules/axios/index.js","./Invitations":"vue/components/Invitations.vue","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/components/Sidebar.vue":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = void 0;
+
+var _TodoLists = _interopRequireDefault(require("./TodoLists"));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+var _default = {
+  name: "Sidebar",
+  components: {
+    TodoLists: _TodoLists.default
+  }
+};
+exports.default = _default;
+        var $115be2 = exports.default || module.exports;
+      
+      if (typeof $115be2 === 'function') {
+        $115be2 = $115be2.options;
+      }
+    
+        /* template */
+        Object.assign($115be2, (function () {
+          var render = function() {
+  var _vm = this
+  var _h = _vm.$createElement
+  var _c = _vm._self._c || _h
+  return _c("div", { staticClass: "sidebar" }, [
+    _c(
+      "div",
+      { staticClass: "sidebar-header mb-3" },
+      [
+        _c(
+          "b-link",
+          { staticClass: "sidebar-brand", attrs: { to: { name: "Home" } } },
+          [_c("b-icon-check-all"), _vm._v("Todo\n    ")],
+          1
+        )
+      ],
+      1
+    ),
+    _vm._v(" "),
+    _c("div", { staticClass: "sidebar-lists" }, [_c("TodoLists")], 1)
+  ])
+}
+var staticRenderFns = []
+render._withStripped = true
+
+          return {
+            render: render,
+            staticRenderFns: staticRenderFns,
+            _compiled: true,
+            _scopeId: null,
+            functional: undefined
+          };
+        })());
+      
+    /* hot reload */
+    (function () {
+      if (module.hot) {
+        var api = require('vue-hot-reload-api');
+        api.install(require('vue'));
+        if (api.compatible) {
+          module.hot.accept();
+          if (!module.hot.data) {
+            api.createRecord('$115be2', $115be2);
+          } else {
+            api.reload('$115be2', $115be2);
+          }
+        }
+
+        
+      }
+    })();
+},{"./TodoLists":"vue/components/TodoLists.vue","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/App.vue":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = void 0;
+
+var _axios = _interopRequireDefault(require("axios"));
+
+var _Header = _interopRequireDefault(require("./components/Header"));
+
+var _Sidebar = _interopRequireDefault(require("./components/Sidebar"));
+
+var _todoListBg = _interopRequireDefault(require("../images/todo-list-bg.jpg"));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 //
 //
 //
@@ -48905,8 +48961,13 @@ var _default = {
 
   data() {
     return {
-      test: false
+      todoListImage: _todoListBg.default
     };
+  },
+
+  components: {
+    Header: _Header.default,
+    Sidebar: _Sidebar.default
   },
 
   async created() {
@@ -48936,6 +48997,12 @@ var _default = {
     this.$store.state.connection.on("ContributorLeft", async () => await this.$store.dispatch("getTodoLists"));
   },
 
+  computed: {
+    listSelected() {
+      return this.$route.name !== "Home";
+    }
+
+  },
   methods: {
     async checkAuthState() {
       try {
@@ -48978,7 +49045,37 @@ exports.default = _default;
   var _vm = this
   var _h = _vm.$createElement
   var _c = _vm._self._c || _h
-  return _c("RouterView")
+  return _c(
+    "div",
+    { attrs: { id: "content" } },
+    [
+      _c(
+        "b-row",
+        { attrs: { "no-gutters": "" } },
+        [
+          _c(
+            "b-col",
+            { attrs: { md: "4", lg: "4", xl: "2" } },
+            [_c("Sidebar")],
+            1
+          ),
+          _vm._v(" "),
+          _c(
+            "b-col",
+            {
+              staticClass: "todo-list-bg",
+              class: { "list-selected": _vm.listSelected },
+              style: { "background-image": "url(" + _vm.todoListImage + ")" }
+            },
+            [_c("Header"), _vm._v(" "), _c("RouterView")],
+            1
+          )
+        ],
+        1
+      )
+    ],
+    1
+  )
 }
 var staticRenderFns = []
 render._withStripped = true
@@ -49013,7 +49110,7 @@ render._withStripped = true
       
       }
     })();
-},{"axios":"node_modules/axios/index.js","_css_loader":"node_modules/parcel-bundler/src/builtins/css-loader.js","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"node_modules/bootstrap-vue/esm/utils/vue.js":[function(require,module,exports) {
+},{"axios":"node_modules/axios/index.js","./components/Header":"vue/components/Header.vue","./components/Sidebar":"vue/components/Sidebar.vue","../images/todo-list-bg.jpg":"images/todo-list-bg.jpg","_css_loader":"node_modules/parcel-bundler/src/builtins/css-loader.js","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"node_modules/bootstrap-vue/esm/utils/vue.js":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {

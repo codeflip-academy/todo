@@ -1,28 +1,26 @@
 <template>
   <section id="settings-page">
-    <b-container>
-      <b-tabs pills vertical nav-wrapper-class="w-25">
-        <b-tab title="Account">
-          <h2>Account</h2>
-          <SettingsAccount></SettingsAccount>
-        </b-tab>
-        <b-tab title="Billing" active>
-          <h2>Billing</h2>
-          <SettingsBilling></SettingsBilling>
-        </b-tab>
-        <b-tab title="Notifications" active>
-          <h2>Notifications</h2>
-          <h3>Emails:</h3>
-          <p class="text-muted">Send notifications when:</p>
-          <b-form class="notifications-form">
-            <strong>
-              <b-form-checkbox inline v-model="emailDueDate">List items Due Today</b-form-checkbox>
-              <b-form-checkbox inline v-model="emailCompleted">List Completed</b-form-checkbox>
-            </strong>
-          </b-form>
-        </b-tab>
-      </b-tabs>
-    </b-container>
+    <b-tabs pills vertical nav-wrapper-class="w-25">
+      <b-tab title="Account">
+        <h2>Account</h2>
+        <SettingsAccount></SettingsAccount>
+      </b-tab>
+      <b-tab title="Billing" active>
+        <h2>Billing</h2>
+        <SettingsBilling></SettingsBilling>
+      </b-tab>
+      <b-tab title="Notifications" active>
+        <h2>Notifications</h2>
+        <h3>Emails:</h3>
+        <p class="text-muted">Send notifications when:</p>
+        <b-form class="notifications-form">
+          <strong>
+            <b-form-checkbox inline v-model="emailDueDate">List items Due Today</b-form-checkbox>
+            <b-form-checkbox inline v-model="emailCompleted">List Completed</b-form-checkbox>
+          </strong>
+        </b-form>
+      </b-tab>
+    </b-tabs>
   </section>
 </template>
 
