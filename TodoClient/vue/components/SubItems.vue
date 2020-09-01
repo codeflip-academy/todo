@@ -17,7 +17,6 @@
           @update-sub-item-name="dispatchUpdateSubItemName"
           @delete-sub-item="dispatchDeleteSubItem"
         ></SubItem>
-        <b-list-group-item v-if="subItems.length < 1">There are no sub-items.</b-list-group-item>
       </Draggable>
     </b-list-group>
   </div>

@@ -6,11 +6,11 @@ import store from './store';
 Vue.use(VueRouter);
 
 // Views
-import Home from '.././vue/views/Home';
-import TodoList from '.././vue/components/TodoList';
-import TodoItemDetails from '.././vue/components/TodoItemDetails';
-import Login from '.././vue/views/Login';
+import Login from '../vue/views/Login';
 import Settings from '../vue/views/Settings';
+import Home from '../vue/views/Home';
+import TodoList from '../vue/components/TodoList';
+import AllItems from '../vue/components/AllItems.vue';
 
 const router = new VueRouter({
   routes: [
@@ -24,8 +24,11 @@ const router = new VueRouter({
           path: '/lists/:todoListId',
           component: TodoList,
           props: true,
-          children: [{ path: 'items/:itemId', component: TodoItemDetails }]
         },
+        { path: '/all', component: AllItems, name: 'All' },
+        { path: '/today', component: TodoList, name: 'Today' },
+        { path: '/important', component: TodoList, name: 'Important' },
+        { path: '/scheduled', component: TodoList, name: 'Scheduled' },
       ]
     },
     { path: '/settings', component: Settings },

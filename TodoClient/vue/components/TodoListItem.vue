@@ -1,11 +1,5 @@
 <template>
   <div :data-id="item.id">
-    <EditTodoItemForm
-      :todoListItem="item"
-      @item-edited="sendItemEditedEvent"
-      @sub-item-count-changed="sendSubItemCountChangedEvent"
-    ></EditTodoItemForm>
-
     <div class="item" @click="$emit('item-selected', item)">
       <div class="item-checkbox">
         <label
