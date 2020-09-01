@@ -22263,6 +22263,8 @@ if (inBrowser && window.Vue) {
 
 var _default = VueRouter;
 exports.default = _default;
+},{}],"images/todo-list-bg.jpg":[function(require,module,exports) {
+module.exports = "/todo-list-bg.e1f5c0bf.jpg";
 },{}],"node_modules/sortablejs/modular/sortable.esm.js":[function(require,module,exports) {
 "use strict";
 
@@ -38643,6 +38645,8 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.default = void 0;
 
+var _vue = _interopRequireDefault(require("vue"));
+
 var _moment = _interopRequireDefault(require("moment"));
 
 var _vuex = require("vuex");
@@ -38705,11 +38709,16 @@ var _default = {
 
   data() {
     return {
-      form: { ...this.item
-      }
+      form: Object.assign({}, this.item)
     };
   },
 
+  watch: {
+    item() {
+      this.form = Object.assign({}, this.item);
+    }
+
+  },
   methods: {
     sendSubItemCountChangedEvent({
       hasSubItems
@@ -38891,7 +38900,7 @@ render._withStripped = true
       
       }
     })();
-},{"moment":"node_modules/moment/moment.js","vuex":"node_modules/vuex/dist/vuex.esm.js","./SubItems":"vue/components/SubItems.vue","_css_loader":"node_modules/parcel-bundler/src/builtins/css-loader.js","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/components/TodoList.vue":[function(require,module,exports) {
+},{"vue":"node_modules/vue/dist/vue.runtime.esm.js","moment":"node_modules/moment/moment.js","vuex":"node_modules/vuex/dist/vuex.esm.js","./SubItems":"vue/components/SubItems.vue","_css_loader":"node_modules/parcel-bundler/src/builtins/css-loader.js","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js"}],"vue/components/TodoList.vue":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -39703,6 +39712,8 @@ var _axios = _interopRequireDefault(require("axios"));
 
 var _vuex = require("vuex");
 
+var _todoListBg = _interopRequireDefault(require("../../images/todo-list-bg.jpg"));
+
 var _vuedraggable = _interopRequireDefault(require("vuedraggable"));
 
 var _TodoLists = _interopRequireDefault(require("../components/TodoLists"));
@@ -39747,16 +39758,27 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
 var _default = {
   name: "Home",
+
+  data() {
+    return {
+      todoListImage: _todoListBg.default
+    };
+  },
+
   computed: {
     user() {
       return this.$store.getters.user;
-    },
-
-    firstName() {
-      const fullName = this.user.fullName.split(" ");
-      return fullName[0];
     },
 
     ...(0, _vuex.mapState)({
@@ -39768,6 +39790,16 @@ var _default = {
     TodoList: _TodoList.default,
     Draggable: _vuedraggable.default,
     Invitations: _Invitations.default
+  },
+  methods: {
+    async signOut() {
+      await (0, _axios.default)({
+        method: "GET",
+        url: "api/accounts/logout"
+      });
+      this.$router.push("/login");
+    }
+
   }
 };
 exports.default = _default;
@@ -39808,6 +39840,11 @@ exports.default = _default;
           _vm._v(" "),
           _c(
             "b-col",
+            {
+              staticClass: "todo-list-bg",
+              class: { "list-selected": _vm.$route.params.todoListId },
+              style: { "background-image": "url(" + _vm.todoListImage + ")" }
+            },
             [
               _c(
                 "div",
@@ -39816,26 +39853,46 @@ exports.default = _default;
                   _c("Invitations"),
                   _vm._v(" "),
                   _c(
-                    "a",
-                    { staticClass: "account-dropdown", attrs: { href: "#" } },
+                    "b-dropdown",
+                    {
+                      staticClass: "account-dropdown",
+                      attrs: { right: "" },
+                      scopedSlots: _vm._u([
+                        {
+                          key: "button-content",
+                          fn: function() {
+                            return [
+                              _c("div", { staticClass: "profile-picture" }, [
+                                _c("img", {
+                                  attrs: { src: _vm.user.pictureUrl, alt: "" }
+                                })
+                              ]),
+                              _vm._v(" "),
+                              _c("div", { staticClass: "profile-name" }, [
+                                _vm._v(_vm._s(_vm.user.fullName))
+                              ]),
+                              _vm._v(" "),
+                              _c(
+                                "div",
+                                { staticClass: "dropdown-toggler" },
+                                [_c("b-icon-chevron-down")],
+                                1
+                              )
+                            ]
+                          },
+                          proxy: true
+                        }
+                      ])
+                    },
                     [
-                      _c("div", { staticClass: "profile-picture" }, [
-                        _c("img", {
-                          attrs: { src: _vm.user.pictureUrl, alt: "" }
-                        })
-                      ]),
                       _vm._v(" "),
-                      _c("div", { staticClass: "profile-name" }, [
-                        _vm._v(_vm._s(_vm.user.fullName))
-                      ]),
-                      _vm._v(" "),
-                      _c(
-                        "div",
-                        { staticClass: "dropdown-toggler" },
-                        [_c("b-icon-chevron-down")],
-                        1
-                      )
-                    ]
+                      _c("b-dropdown-item", [
+                        _c("div", { on: { click: _vm.signOut } }, [
+                          _vm._v("Sign out")
+                        ])
+                      ])
+                    ],
+                    1
                   )
                 ],
                 1
@@ -39881,9 +39938,13 @@ render._withStripped = true
         }
 
         
+        var reloadCSS = require('_css_loader');
+        module.hot.dispose(reloadCSS);
+        module.hot.accept(reloadCSS);
+      
       }
     })();
-},{"axios":"node_modules/axios/index.js","vuex":"node_modules/vuex/dist/vuex.esm.js","vuedraggable":"node_modules/vuedraggable/dist/vuedraggable.common.js","../components/TodoLists":"vue/components/TodoLists.vue","../components/TodoList":"vue/components/TodoList.vue","../components/Invitations":"vue/components/Invitations.vue","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/views/Login.vue":[function(require,module,exports) {
+},{"axios":"node_modules/axios/index.js","vuex":"node_modules/vuex/dist/vuex.esm.js","../../images/todo-list-bg.jpg":"images/todo-list-bg.jpg","vuedraggable":"node_modules/vuedraggable/dist/vuedraggable.common.js","../components/TodoLists":"vue/components/TodoLists.vue","../components/TodoList":"vue/components/TodoList.vue","../components/Invitations":"vue/components/Invitations.vue","_css_loader":"node_modules/parcel-bundler/src/builtins/css-loader.js","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/views/Login.vue":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -99628,7 +99689,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "65382" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "61818" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};
