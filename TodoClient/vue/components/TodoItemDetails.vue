@@ -44,6 +44,7 @@
 </template>
 
 <script>
+import Vue from "vue";
 import moment from "moment";
 import { mapState } from "vuex";
 
@@ -57,10 +58,13 @@ export default {
   },
   data() {
     return {
-      form: {
-        ...this.item,
-      },
+      form: Object.assign({}, this.item),
     };
+  },
+  watch: {
+    item() {
+      this.form = Object.assign({}, this.item);
+    },
   },
   methods: {
     sendSubItemCountChangedEvent({ hasSubItems }) {
