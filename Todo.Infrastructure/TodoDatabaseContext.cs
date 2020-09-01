@@ -94,10 +94,13 @@ namespace Todo.Infrastructure
                 .HasColumnName("SubscriptionID");
 
                 entity
-                    .Property(e => e.EmailCompleted);
+                    .Property(e => e.EmailListCompleted);
 
                 entity
                     .Property(e => e.EmailDueDate);
+
+                entity
+                    .Property(e => e.EmailItemCompleted);
 
             });
 

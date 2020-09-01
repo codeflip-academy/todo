@@ -12,7 +12,8 @@ CREATE TABLE [Accounts]
     [PaymentMethodID] VARCHAR(50),
     [SubscriptionID] VARCHAR(50),
     [EmailDueDate] BIT,
-    [EmailCompleted] BIT
+    [EmailListCompleted] BIT,
+    [EmailItemCompleted] BIT
 )
 
 GO

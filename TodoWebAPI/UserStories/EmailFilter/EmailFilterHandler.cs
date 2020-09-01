@@ -18,7 +18,7 @@ namespace TodoWebAPI.UserStories.EmailFilter
         {
             var account = await _account.FindAccountByIdAsync(request.AccountId);
 
-            account.FilterEmails(request.EmailDueDate, request.EmailCompleted);
+            account.FilterEmails(request.EmailDueDate, request.EmailListCompleted);
 
             await _account.SaveChangesAsync();
         }

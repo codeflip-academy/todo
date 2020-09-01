@@ -236,7 +236,7 @@ namespace TodoWebAPI
             {
                 await connection.OpenAsync();
 
-                var result = await connection.QueryAsync<EmailFilterDto>("SELECT EmailDueDate, EmailCompleted FROM Accounts Where ID = @accountId", new { accountId = accountId });
+                var result = await connection.QueryAsync<EmailFilterDto>("SELECT EmailDueDate, EmailListCompleted, EmailItemCompleted FROM Accounts Where ID = @accountId", new { accountId = accountId });
                 return result.FirstOrDefault();
             }
         }
