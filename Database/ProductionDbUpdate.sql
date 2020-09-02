@@ -88,7 +88,6 @@ GO
 -- Account.sql
 CREATE TABLE [Accounts]
 (
-
     [ID] UNIQUEIDENTIFIER PRIMARY KEY,
     [FullName] NVARCHAR(50),
     [PictureUrl] NVARCHAR(255),
