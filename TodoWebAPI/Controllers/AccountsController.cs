@@ -137,7 +137,7 @@ namespace TodoWebAPI.Controllers
         [HttpGet("api/accounts/emailFilter")]
         public async Task<IActionResult> GetEmailFilter()
         {
-            var accountId = Guid.Parse(User.FindFirst(c => c.Type == "urn:codefliptodo:accountid").Value);
+            var accountId = User.ReadClaimAsGuidValue("urn:codefliptodo:accountid");
 
             return Ok(await _dapper.GetEmailFilterAsync(accountId));
         }
