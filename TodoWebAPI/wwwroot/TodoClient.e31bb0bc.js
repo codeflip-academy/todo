@@ -30194,6 +30194,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 //
 //
 //
+//
 const braintree = require("braintree-web/client");
 
 const hostedFields = require("braintree-web/hosted-fields");
@@ -30206,7 +30207,8 @@ var _default = {
       clientToken: "",
       brainTreeClient: null,
       hostedFieldsClient: null,
-      formReady: false
+      formReady: false,
+      errorMsg: ""
     };
   },
 
@@ -30253,8 +30255,11 @@ var _default = {
       this.formReady = false;
       await this.hostedFieldsClient.tokenize(async (err, payload) => {
         if (err) {
-          console.log(err);
+          this.displayErrorMessage(err.message);
+          this.formReady = true;
           return;
+        } else {
+          this.hideErrorMessage();
         }
 
         await (0, _axios.default)({
@@ -30270,6 +30275,14 @@ var _default = {
         this.$emit("form-submitted");
         this.formReady = true;
       });
+    },
+
+    displayErrorMessage(msg) {
+      this.errorMsg = msg;
+    },
+
+    hideErrorMessage() {
+      this.errorMsg = "";
     }
 
   },
@@ -30367,6 +30380,15 @@ exports.default = _default;
               )
             ],
             1
+          ),
+          _vm._v(" "),
+          _c(
+            "b-alert",
+            {
+              staticClass: "mt-3 mb-0",
+              attrs: { variant: "danger", show: _vm.errorMsg !== "" }
+            },
+            [_vm._v(_vm._s(_vm.errorMsg))]
           )
         ],
         1
