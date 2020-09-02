@@ -14,12 +14,7 @@
         </b-col>
       </b-row>
       <div>
-        <b-button
-          type="submit"
-          variant="success"
-          class="d-flex align-items-center"
-          :disabled="!formReady"
-        >Submit</b-button>
+        <b-button type="submit" variant="success" :disabled="!formReady">Submit</b-button>
       </div>
       <b-alert variant="danger" class="mt-3 mb-0" :show="errorMsg !== ''">{{ errorMsg }}</b-alert>
     </b-card>

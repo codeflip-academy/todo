@@ -30190,11 +30190,6 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 //
 //
 //
-//
-//
-//
-//
-//
 const braintree = require("braintree-web/client");
 
 const hostedFields = require("braintree-web/hosted-fields");
@@ -30369,7 +30364,6 @@ exports.default = _default;
               _c(
                 "b-button",
                 {
-                  staticClass: "d-flex align-items-center",
                   attrs: {
                     type: "submit",
                     variant: "success",
