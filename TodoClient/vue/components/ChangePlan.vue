@@ -18,7 +18,7 @@
           <b-button
             variant="success"
             size="sm"
-            :disabled="selectedPlan === currentPlan"
+            :disabled="selectedPlan === currentPlan || !paymentMethod"
             @click="changePlan"
           >Choose plan</b-button>
         </b-col>
@@ -49,6 +49,7 @@ import CouponForm from "./CouponForm";
 
 export default {
   name: "ChangePlan",
+  props: ["paymentMethod"],
   data() {
     return {
       plans: ["Free", "Basic", "Premium"],
