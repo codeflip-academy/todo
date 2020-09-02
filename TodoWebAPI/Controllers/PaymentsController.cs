@@ -123,6 +123,10 @@ namespace TodoWebAPI.Controllers
         public async Task<IActionResult> ChangeSubscription([FromBody] ChangeSubscription changeSubscriptionCommand)
         {
             var accountId = User.ReadClaimAsGuidValue("urn:codefliptodo:accountid");
+            var account = await _accountRepository.FindAccountByIdAsync(accountId);
+
+            if (account.PaymentMethodId == null)
+                return BadRequest();
 
             var createSubscriptionCommand = new CreateSubscription
             {

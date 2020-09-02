@@ -28,20 +28,33 @@ namespace TodoWebAPI.UserStories.DeletePaymentMethod
         {
             var account = await _account.FindAccountByIdAsync(request.AccountId);
             var gateway = _braintreeConfiguration.GetGateway();
-            var currentSubscription = await gateway.Subscription.FindAsync(account.SubscriptionId);
-            var planId = PlanTiers.ConvertPlanNameToInt(request.Plan);
 
-            if (request.Plan != "Free")
+            if (account.SubscriptionId == null)
             {
-                account.PaymentMethodDeletedPlan = request.Plan;
-                await _downgradeRepository.Add(request.AccountId, currentSubscription.BillingPeriodEndDate.GetValueOrDefault(), planId);
+                account.RemovePaymentMethodId();
+
+                gateway.PaymentMethod.Delete(request.PaymentMethodId);
+
+                await _account.SaveChangesAsync();
             }
+            else
+            {
 
-            account.RemovePaymentMethodId();
+                var currentSubscription = await gateway.Subscription.FindAsync(account.SubscriptionId);
+                var planId = PlanTiers.ConvertPlanNameToInt(request.Plan);
 
-            gateway.PaymentMethod.Delete(request.PaymentMethodId);
+                if (request.Plan != "Free")
+                {
+                    account.PaymentMethodDeletedPlan = request.Plan;
+                    await _downgradeRepository.Add(request.AccountId, currentSubscription.BillingPeriodEndDate.GetValueOrDefault(), planId);
+                }
 
-            await _account.SaveChangesAsync();
+                account.RemovePaymentMethodId();
+
+                gateway.PaymentMethod.Delete(request.PaymentMethodId);
+
+                await _account.SaveChangesAsync();
+            }
         }
     }
 }
