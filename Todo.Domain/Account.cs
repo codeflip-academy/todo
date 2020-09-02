@@ -26,12 +26,16 @@ namespace Todo.Domain
         public string CustomerId { get; set; }
         public string PaymentMethodId { get; set; }
         public bool EmailDueDate { get; set; }
-        public bool EmailCompleted { get; set; }
+        public bool EmailListCompleted { get; set; }
+        public bool EmailItemCompleted { get; set; }
+        public bool EmailInvitation { get; set; }
 
-        public void FilterEmails(bool emailDueDate, bool emailCompleted)
+        public void FilterEmails(bool emailDueDate, bool emailCompleted, bool emailItemCompleted, bool emailInvitation)
         {
             this.EmailDueDate = emailDueDate;
-            this.EmailCompleted = emailCompleted;
+            this.EmailListCompleted = emailCompleted;
+            this.EmailItemCompleted = emailItemCompleted;
+            this.EmailInvitation = emailInvitation;
         }
         public string SubscriptionId { get; private set; }
         public string PaymentMethodDeletedPlan { get; set; }

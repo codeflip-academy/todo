@@ -56,7 +56,7 @@ namespace TodoWebAPI.DomainEventHandlers
                     var account = await _account.FindAccountByEmailAsync(userEmail);
                     var accountPlan = await _accountPlan.FindAccountPlanByAccountIdAsync(account.Id);
 
-                    if (accountPlan.PlanId == PlanTiers.Basic || accountPlan.PlanId == PlanTiers.Premium && account.EmailCompleted == true)
+                    if (accountPlan.PlanId == PlanTiers.Basic || accountPlan.PlanId == PlanTiers.Premium && account.EmailListCompleted == true)
                     {
                         messages.Add(
                             new EmailMessage()

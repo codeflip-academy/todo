@@ -97,10 +97,16 @@ namespace Todo.Infrastructure
                     .Property(e => e.PaymentMethodDeletedPlan);
 
                 entity
-                    .Property(e => e.EmailCompleted);
+                    .Property(e => e.EmailListCompleted);
 
                 entity
                     .Property(e => e.EmailDueDate);
+
+                entity
+                    .Property(e => e.EmailItemCompleted);
+
+                entity
+                    .Property(e => e.EmailInvitation);
 
             });
 
