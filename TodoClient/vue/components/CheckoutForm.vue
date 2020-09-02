@@ -14,7 +14,12 @@
         </b-col>
       </b-row>
       <div>
-        <b-button type="submit" variant="success">Submit</b-button>
+        <b-button
+          type="submit"
+          variant="success"
+          class="d-flex align-items-center"
+          :disabled="!formReady"
+        >Submit</b-button>
       </div>
     </b-card>
   </b-form>
@@ -32,13 +37,14 @@ export default {
       clientToken: "",
       brainTreeClient: null,
       hostedFieldsClient: null,
+      formReady: false,
     };
   },
   async created() {
     await this.generateClientToken();
     await this.createBrainTreeClient();
     await this.createHostedFieldsClient();
-    this.$emit("form-ready");
+    this.formReady = true;
   },
   methods: {
     async generateClientToken() {
@@ -71,6 +77,8 @@ export default {
       });
     },
     async submitPaymentMethod() {
+      this.formReady = false;
+
       await this.hostedFieldsClient.tokenize(async (err, payload) => {
         if (err) {
           console.log(err);
@@ -87,6 +95,7 @@ export default {
         });
 
         this.$emit("form-submitted");
+        this.formReady = true;
       });
     },
   },

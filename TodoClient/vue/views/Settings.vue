@@ -1,6 +1,5 @@
 <template>
   <section id="settings-page">
-    <b-container>
       <b-tabs pills vertical nav-wrapper-class="w-25">
         <b-tab title="Account">
           <h2>Account</h2>
@@ -23,7 +22,6 @@
             </strong>
         </b-tab>
       </b-tabs>
-    </b-container>
   </section>
 </template>
 
@@ -96,6 +94,8 @@ export default {
 
 <style lang="scss">
 #settings-page {
+  padding: 40px 30px;
+
   .nav-link {
     margin-bottom: 10px;
   }

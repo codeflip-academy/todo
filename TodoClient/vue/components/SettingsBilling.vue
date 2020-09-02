@@ -1,16 +1,15 @@
 <template>
   <section id="settings-plan">
-    <PaymentMethod v-if="!loadingPaymentInfo" :paymentMethod="paymentMethod" class="mb-3"></PaymentMethod>
+    <PaymentMethod
+      class="mb-3"
+      :loading="loadingPaymentInfo"
+      :paymentMethod="paymentMethod"
+      @remove-payment-method="removePaymentMethod"
+    ></PaymentMethod>
 
-    <b-overlay :show="false" blur="5px" spinner-variant="primary" spinner-type="grow" spinner-small>
-      <CheckoutForm
-        @form-submitted="getPaymentMethod"
-        @form-ready="loadingCheckoutForm = false;"
-        class="mb-3"
-      ></CheckoutForm>
-    </b-overlay>
+    <CheckoutForm @form-submitted="getPaymentMethod" class="mb-3"></CheckoutForm>
 
-    <ChangePlan></ChangePlan>
+    <ChangePlan :paymentMethod="paymentMethod"></ChangePlan>
   </section>
 </template>
 
@@ -26,7 +25,7 @@ export default {
   data() {
     return {
       plan: {},
-      paymentMethod: {},
+      paymentMethod: null,
       loadingPaymentInfo: true,
       loadingCheckoutForm: true,
     };
@@ -46,6 +45,9 @@ export default {
       this.paymentMethod = response.data;
 
       this.loadingPaymentInfo = false;
+    },
+    removePaymentMethod() {
+      this.paymentMethod = null;
     },
   },
   components: {
