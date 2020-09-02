@@ -94,6 +94,9 @@ namespace Todo.Infrastructure
                 .HasColumnName("SubscriptionID");
 
                 entity
+                    .Property(e => e.PaymentMethodDeletedPlan);
+
+                entity
                     .Property(e => e.EmailListCompleted);
 
                 entity

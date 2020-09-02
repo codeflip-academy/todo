@@ -10,7 +10,7 @@
           <h2>Billing</h2>
           <SettingsBilling></SettingsBilling>
         </b-tab>
-        <b-tab title="Notifications" active>
+        <b-tab title="Notifications">
           <h2>Notifications</h2>
           <h3>Emails:</h3>
           <p class="text-muted">Send notifications when:</p>

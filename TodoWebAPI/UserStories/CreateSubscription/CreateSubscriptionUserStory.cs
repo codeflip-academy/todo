@@ -42,7 +42,7 @@ namespace TodoWebAPI.UserStories
                 Id = subscriptionId,
             };
 
-            Result<Subscription> createSubscriptionResult = gateway.Subscription.Create(createSubscriptionRequest);
+            var createSubscriptionResult = gateway.Subscription.Create(createSubscriptionRequest);
 
             if (createSubscriptionResult.IsSuccess())
             {
