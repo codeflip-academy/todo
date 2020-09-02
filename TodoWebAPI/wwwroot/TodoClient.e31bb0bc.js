@@ -36834,6 +36834,9 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 //
 //
 //
+//
+//
+//
 var _default = {
   name: "Settings",
 
@@ -36920,98 +36923,113 @@ exports.default = _default;
     { attrs: { id: "settings-page" } },
     [
       _c(
-        "b-tabs",
-        { attrs: { pills: "", vertical: "", "nav-wrapper-class": "w-25" } },
+        "b-card",
+        { attrs: { "no-body": "" } },
         [
           _c(
-            "b-tab",
-            { attrs: { title: "Account" } },
-            [_c("h2", [_vm._v("Account")]), _vm._v(" "), _c("SettingsAccount")],
-            1
-          ),
-          _vm._v(" "),
-          _c(
-            "b-tab",
-            { attrs: { title: "Billing", active: "" } },
-            [_c("h2", [_vm._v("Billing")]), _vm._v(" "), _c("SettingsBilling")],
-            1
-          ),
-          _vm._v(" "),
-          _c(
-            "b-tab",
-            { attrs: { title: "Notifications" } },
+            "b-tabs",
+            { attrs: { pills: "", card: "" } },
             [
-              _c("h2", [_vm._v("Notifications")]),
+              _c(
+                "b-tab",
+                { attrs: { title: "Account", active: "" } },
+                [
+                  _c("h2", [_vm._v("Account")]),
+                  _vm._v(" "),
+                  _c("SettingsAccount")
+                ],
+                1
+              ),
               _vm._v(" "),
-              _c("h3", [_vm._v("Emails:")]),
+              _c(
+                "b-tab",
+                { attrs: { title: "Billing" } },
+                [
+                  _c("h2", [_vm._v("Billing")]),
+                  _vm._v(" "),
+                  _c("SettingsBilling")
+                ],
+                1
+              ),
               _vm._v(" "),
-              _c("p", { staticClass: "text-muted" }, [
-                _vm._v("Send notifications when:")
-              ]),
-              _vm._v(" "),
-              _c("b-form", { staticClass: "notifications-form" }, [
-                _c(
-                  "strong",
-                  [
+              _c(
+                "b-tab",
+                { attrs: { title: "Notifications" } },
+                [
+                  _c("h2", [_vm._v("Notifications")]),
+                  _vm._v(" "),
+                  _c("h3", [_vm._v("Emails:")]),
+                  _vm._v(" "),
+                  _c("p", { staticClass: "text-muted" }, [
+                    _vm._v("Send notifications when:")
+                  ]),
+                  _vm._v(" "),
+                  _c("b-form", { staticClass: "notifications-form" }, [
                     _c(
-                      "b-form-checkbox",
-                      {
-                        model: {
-                          value: _vm.emailDueDate,
-                          callback: function($$v) {
-                            _vm.emailDueDate = $$v
+                      "strong",
+                      [
+                        _c(
+                          "b-form-checkbox",
+                          {
+                            model: {
+                              value: _vm.emailDueDate,
+                              callback: function($$v) {
+                                _vm.emailDueDate = $$v
+                              },
+                              expression: "emailDueDate"
+                            }
                           },
-                          expression: "emailDueDate"
-                        }
-                      },
-                      [_vm._v("List items Due Today")]
-                    ),
-                    _vm._v(" "),
-                    _c(
-                      "b-form-checkbox",
-                      {
-                        model: {
-                          value: _vm.emailListCompleted,
-                          callback: function($$v) {
-                            _vm.emailListCompleted = $$v
+                          [_vm._v("List items Due Today")]
+                        ),
+                        _vm._v(" "),
+                        _c(
+                          "b-form-checkbox",
+                          {
+                            model: {
+                              value: _vm.emailListCompleted,
+                              callback: function($$v) {
+                                _vm.emailListCompleted = $$v
+                              },
+                              expression: "emailListCompleted"
+                            }
                           },
-                          expression: "emailListCompleted"
-                        }
-                      },
-                      [_vm._v("List Completed")]
-                    ),
-                    _vm._v(" "),
-                    _c(
-                      "b-form-checkbox",
-                      {
-                        model: {
-                          value: _vm.emailItemCompleted,
-                          callback: function($$v) {
-                            _vm.emailItemCompleted = $$v
+                          [_vm._v("List Completed")]
+                        ),
+                        _vm._v(" "),
+                        _c(
+                          "b-form-checkbox",
+                          {
+                            model: {
+                              value: _vm.emailItemCompleted,
+                              callback: function($$v) {
+                                _vm.emailItemCompleted = $$v
+                              },
+                              expression: "emailItemCompleted"
+                            }
                           },
-                          expression: "emailItemCompleted"
-                        }
-                      },
-                      [_vm._v("Item Completed")]
-                    ),
-                    _vm._v(" "),
-                    _c(
-                      "b-form-checkbox",
-                      {
-                        model: {
-                          value: _vm.emailInvitation,
-                          callback: function($$v) {
-                            _vm.emailInvitation = $$v
+                          [_vm._v("Item Completed")]
+                        ),
+                        _vm._v(" "),
+                        _c(
+                          "b-form-checkbox",
+                          {
+                            model: {
+                              value: _vm.emailInvitation,
+                              callback: function($$v) {
+                                _vm.emailInvitation = $$v
+                              },
+                              expression: "emailInvitation"
+                            }
                           },
-                          expression: "emailInvitation"
-                        }
-                      },
-                      [_vm._v("Invitations")]
+                          [_vm._v("Invitations")]
+                        )
+                      ],
+                      1
                     )
-                  ],
-                  1
-                )
-              ])
+                  ])
+                ],
+                1
+              )
             ],
             1
           )

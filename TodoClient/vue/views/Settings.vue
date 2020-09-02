@@ -1,11 +1,12 @@
 <template>
   <section id="settings-page">
-      <b-tabs pills vertical nav-wrapper-class="w-25">
-        <b-tab title="Account">
+    <b-card no-body>
+      <b-tabs pills card>
+        <b-tab title="Account" active>
           <h2>Account</h2>
           <SettingsAccount></SettingsAccount>
         </b-tab>
-        <b-tab title="Billing" active>
+        <b-tab title="Billing">
           <h2>Billing</h2>
           <SettingsBilling></SettingsBilling>
         </b-tab>
@@ -20,8 +21,10 @@
               <b-form-checkbox v-model="emailItemCompleted">Item Completed</b-form-checkbox>
               <b-form-checkbox v-model="emailInvitation">Invitations</b-form-checkbox>
             </strong>
+          </b-form>
         </b-tab>
       </b-tabs>
+    </b-card>
   </section>
 </template>
 
@@ -38,7 +41,7 @@ export default {
       emailDueDate: false,
       emailListCompleted: false,
       emailItemCompleted: false,
-      emailInvitation: false
+      emailInvitation: false,
     };
   },
   async created() {
@@ -54,7 +57,7 @@ export default {
           emailDueDate: this.emailDueDate,
           emailListCompleted: this.emailListCompleted,
           emailItemCompleted: this.emailItemCompleted,
-          emailInvitation: this.emailInvitation
+          emailInvitation: this.emailInvitation,
         }),
       });
     },
@@ -69,7 +72,7 @@ export default {
       this.emailListCompleted = response.data.emailListCompleted;
       this.emailItemCompleted = response.data.emailItemCompleted;
       this.emailInvitation = response.data.emailInvitation;
-      },
+    },
   },
   watch: {
     emailDueDate() {
@@ -78,12 +81,12 @@ export default {
     emailListCompleted() {
       this.updateSettings();
     },
-    emailItemCompleted(){
+    emailItemCompleted() {
       this.updateSettings();
     },
-    emailInvitation(){
+    emailInvitation() {
       this.updateSettings();
-    }
+    },
   },
   components: {
     SettingsAccount,
@@ -94,11 +97,7 @@ export default {
 
 <style lang="scss">
 #settings-page {
-  padding: 40px 30px;
-
-  .nav-link {
-    margin-bottom: 10px;
-  }
+  padding: 20px;
 
   h2 {
     padding-bottom: 10px;
@@ -113,7 +112,7 @@ export default {
   }
 
   .tab-content {
-    padding-left: 30px;
+    padding: 20px 30px;
   }
 }
 </style>
