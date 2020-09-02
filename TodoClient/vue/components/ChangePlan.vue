@@ -18,7 +18,7 @@
           <b-button
             variant="success"
             size="sm"
-            :disabled="selectedPlan === currentPlan || !paymentMethod"
+            :disabled="selectedPlan === plan.name || !paymentMethod"
             @click="changePlan"
           >Choose plan</b-button>
         </b-col>
@@ -38,12 +38,21 @@
         </b-col>
       </b-row>
       <CouponForm></CouponForm>
+      <b-alert
+        variant="warning"
+        class="mt-3"
+        :show="isDowngrading(selectedPlan, plan.name) && getPlanMaxListCountByPlanName(selectedPlan) < todoLists.length"
+      >
+        <strong>Warning:</strong> You have more lists than allowed on the
+        <strong>{{ selectedPlan }}</strong> plan. Additional lists will be removed at the end of your billing cycle.
+      </b-alert>
     </b-card-text>
   </b-card>
 </template>
 
 <script>
 import axios from "axios";
+import { mapState } from "vuex";
 
 import CouponForm from "./CouponForm";
 
@@ -58,6 +67,9 @@ export default {
   },
   components: {
     CouponForm,
+  },
+  created() {
+    this.setSelectedPlan(this.plan.name);
   },
   methods: {
     async changePlan() {
@@ -75,16 +87,46 @@ export default {
     setSelectedPlan(planName) {
       this.selectedPlan = planName;
     },
+    getPlanMaxListCountByPlanName(planName) {
+      switch (planName) {
+        case "Free":
+          return 5;
+        case "Basic":
+          return 10;
+        case "Premium":
+          return -1;
+        default:
+          return 0;
+      }
+    },
+    convertPlanNameToId(planName) {
+      switch (planName) {
+        case "Free":
+          return 1;
+        case "Basic":
+          return 2;
+        case "Premium":
+          return 999999;
+        default:
+          return -1;
+      }
+    },
+    isDowngrading(selectedPlan, currentPlan) {
+      let selectedPlanId = this.convertPlanNameToId(selectedPlan);
+      let currentPlanId = this.convertPlanNameToId(currentPlan);
+
+      if (selectedPlanId < currentPlanId) {
+        return true;
+      }
+
+      return false;
+    },
   },
   computed: {
-    currentPlan() {
-      return this.$store.getters.planName;
-    },
-  },
-  watch: {
-    currentPlan() {
-      this.setSelectedPlan(this.currentPlan);
-    },
+    ...mapState({
+      plan: (state) => state.plan,
+      todoLists: (state) => state.todoLists,
+    }),
   },
 };
 </script>

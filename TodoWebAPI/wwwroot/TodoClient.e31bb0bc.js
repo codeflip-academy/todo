@@ -19154,7 +19154,8 @@ const store = new _vuex.default.Store({
     plan: {},
     todoLists: [],
     contributors: [],
-    loadingTodoLists: true
+    loadingTodoLists: true,
+    loadingPlan: true
   },
   mutations: {
     setUserData(state, data) {
@@ -19171,6 +19172,10 @@ const store = new _vuex.default.Store({
 
     setTodoListsLoadingState(state, loadingState) {
       state.loadingTodoLists = loadingState;
+    },
+
+    setPlanLoadingState(state, loadingState) {
+      state.loadingPlan = loadingState;
     },
 
     setTodoLists(state, lists) {
@@ -19232,6 +19237,8 @@ const store = new _vuex.default.Store({
     },
 
     async getPlan(context) {
+      context.commit('setPlanLoadingState', true);
+
       try {
         const response = await (0, _axios.default)({
           method: "GET",
@@ -19241,6 +19248,8 @@ const store = new _vuex.default.Store({
       } catch (error) {
         throw error;
       }
+
+      context.commit('setPlanLoadingState', false);
     },
 
     async getTodoLists(context) {
@@ -30704,10 +30713,20 @@ exports.default = void 0;
 
 var _axios = _interopRequireDefault(require("axios"));
 
+var _vuex = require("vuex");
+
 var _CouponForm = _interopRequireDefault(require("./CouponForm"));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
+//
+//
+//
+//
+//
+//
+//
+//
 //
 //
 //
@@ -30766,6 +30785,11 @@ var _default = {
   components: {
     CouponForm: _CouponForm.default
   },
+
+  created() {
+    this.setSelectedPlan(this.plan.name);
+  },
+
   methods: {
     async changePlan() {
       const response = await (0, _axios.default)({
@@ -30782,20 +30806,56 @@ var _default = {
 
     setSelectedPlan(planName) {
       this.selectedPlan = planName;
+    },
+
+    getPlanMaxListCountByPlanName(planName) {
+      switch (planName) {
+        case "Free":
+          return 5;
+
+        case "Basic":
+          return 10;
+
+        case "Premium":
+          return -1;
+
+        default:
+          return 0;
+      }
+    },
+
+    convertPlanNameToId(planName) {
+      switch (planName) {
+        case "Free":
+          return 1;
+
+        case "Basic":
+          return 2;
+
+        case "Premium":
+          return 999999;
+
+        default:
+          return -1;
+      }
+    },
+
+    isDowngrading(selectedPlan, currentPlan) {
+      let selectedPlanId = this.convertPlanNameToId(selectedPlan);
+      let currentPlanId = this.convertPlanNameToId(currentPlan);
+
+      if (selectedPlanId < currentPlanId) {
+        return true;
+      }
+
+      return false;
     }
 
   },
-  computed: {
-    currentPlan() {
-      return this.$store.getters.planName;
-    }
-
-  },
-  watch: {
-    currentPlan() {
-      this.setSelectedPlan(this.currentPlan);
-    }
-
+  computed: { ...(0, _vuex.mapState)({
+      plan: state => state.plan,
+      todoLists: state => state.todoLists
+    })
   }
 };
 exports.default = _default;
@@ -30866,7 +30926,7 @@ exports.default = _default;
                             variant: "success",
                             size: "sm",
                             disabled:
-                              _vm.selectedPlan === _vm.currentPlan ||
+                              _vm.selectedPlan === _vm.plan.name ||
                               !_vm.paymentMethod
                           },
                           on: { click: _vm.changePlan }
@@ -30930,7 +30990,29 @@ exports.default = _default;
             1
           ),
           _vm._v(" "),
-          _c("CouponForm")
+          _c("CouponForm"),
+          _vm._v(" "),
+          _c(
+            "b-alert",
+            {
+              staticClass: "mt-3",
+              attrs: {
+                variant: "warning",
+                show:
+                  _vm.isDowngrading(_vm.selectedPlan, _vm.plan.name) &&
+                  _vm.getPlanMaxListCountByPlanName(_vm.selectedPlan) <
+                    _vm.todoLists.length
+              }
+            },
+            [
+              _c("strong", [_vm._v("Warning:")]),
+              _vm._v(" You have more lists than allowed on the\n      "),
+              _c("strong", [_vm._v(_vm._s(_vm.selectedPlan))]),
+              _vm._v(
+                " plan. Additional lists will be removed at the end of your billing cycle.\n    "
+              )
+            ]
+          )
         ],
         1
       )
@@ -30971,7 +31053,7 @@ render._withStripped = true
       
       }
     })();
-},{"axios":"node_modules/axios/index.js","./CouponForm":"vue/components/CouponForm.vue","_css_loader":"node_modules/parcel-bundler/src/builtins/css-loader.js","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/components/SettingsBilling.vue":[function(require,module,exports) {
+},{"axios":"node_modules/axios/index.js","vuex":"node_modules/vuex/dist/vuex.esm.js","./CouponForm":"vue/components/CouponForm.vue","_css_loader":"node_modules/parcel-bundler/src/builtins/css-loader.js","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"vue/components/SettingsBilling.vue":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -30980,6 +31062,8 @@ Object.defineProperty(exports, "__esModule", {
 exports.default = void 0;
 
 var _axios = _interopRequireDefault(require("axios"));
+
+var _vuex = require("vuex");
 
 var _PaymentMethod = _interopRequireDefault(require("../components/PaymentMethod"));
 
@@ -31044,8 +31128,11 @@ var _default = {
   computed: {
     loading() {
       return this.loadingCheckoutForm || this.loadingPaymentInfo;
-    }
+    },
 
+    ...(0, _vuex.mapState)({
+      loadingPlan: state => state.loadingPlan
+    })
   }
 };
 exports.default = _default;
@@ -31079,7 +31166,9 @@ exports.default = _default;
         on: { "form-submitted": _vm.getPaymentMethod }
       }),
       _vm._v(" "),
-      _c("ChangePlan", { attrs: { paymentMethod: _vm.paymentMethod } })
+      !_vm.loadingPlan
+        ? _c("ChangePlan", { attrs: { paymentMethod: _vm.paymentMethod } })
+        : _vm._e()
     ],
     1
   )
@@ -31117,7 +31206,7 @@ render._withStripped = true
       
       }
     })();
-},{"axios":"node_modules/axios/index.js","../components/PaymentMethod":"vue/components/PaymentMethod.vue","../components/CheckoutForm":"vue/components/CheckoutForm.vue","../components/ChangePlan":"vue/components/ChangePlan.vue","_css_loader":"node_modules/parcel-bundler/src/builtins/css-loader.js","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"node_modules/moment/moment.js":[function(require,module,exports) {
+},{"axios":"node_modules/axios/index.js","vuex":"node_modules/vuex/dist/vuex.esm.js","../components/PaymentMethod":"vue/components/PaymentMethod.vue","../components/CheckoutForm":"vue/components/CheckoutForm.vue","../components/ChangePlan":"vue/components/ChangePlan.vue","_css_loader":"node_modules/parcel-bundler/src/builtins/css-loader.js","vue-hot-reload-api":"node_modules/vue-hot-reload-api/dist/index.js","vue":"node_modules/vue/dist/vue.runtime.esm.js"}],"node_modules/moment/moment.js":[function(require,module,exports) {
 var define;
 var global = arguments[3];
 //! moment.js
@@ -36932,7 +37021,7 @@ exports.default = _default;
             [
               _c(
                 "b-tab",
-                { attrs: { title: "Account", active: "" } },
+                { attrs: { title: "Account" } },
                 [
                   _c("h2", [_vm._v("Account")]),
                   _vm._v(" "),
@@ -36943,7 +37032,7 @@ exports.default = _default;
               _vm._v(" "),
               _c(
                 "b-tab",
-                { attrs: { title: "Billing" } },
+                { attrs: { title: "Billing", active: "" } },
                 [
                   _c("h2", [_vm._v("Billing")]),
                   _vm._v(" "),
@@ -48503,10 +48592,9 @@ var _default = {
     };
   },
 
-  computed: { ...(0, _vuex.mapState)({
-      loadingTodoLists: state => state.loadingTodoLists
-    })
-  },
+  computed: (0, _vuex.mapState)({
+    loadingTodoLists: state => state.loadingTodoLists
+  }),
   components: {
     TodoLists: _TodoLists.default,
     TodoList: _TodoList.default,

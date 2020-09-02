@@ -19,11 +19,9 @@ export default {
       todoListImage: todoListImage,
     };
   },
-  computed: {
-    ...mapState({
-      loadingTodoLists: (state) => state.loadingTodoLists,
-    }),
-  },
+  computed: mapState({
+    loadingTodoLists: (state) => state.loadingTodoLists,
+  }),
   components: {
     TodoLists,
     TodoList,

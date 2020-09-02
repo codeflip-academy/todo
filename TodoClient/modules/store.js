@@ -14,6 +14,7 @@ const store = new Vuex.Store({
     todoLists: [],
     contributors: [],
     loadingTodoLists: true,
+    loadingPlan: true,
   },
   mutations: {
     setUserData(state, data) {
@@ -27,6 +28,9 @@ const store = new Vuex.Store({
     },
     setTodoListsLoadingState(state, loadingState) {
       state.loadingTodoLists = loadingState;
+    },
+    setPlanLoadingState(state, loadingState) {
+      state.loadingPlan = loadingState;
     },
     setTodoLists(state, lists) {
       state.todoLists = lists;
@@ -69,6 +73,8 @@ const store = new Vuex.Store({
       }
     },
     async getPlan(context) {
+      context.commit('setPlanLoadingState', true);
+
       try {
         const response = await axios({
           method: "GET",
@@ -80,6 +86,8 @@ const store = new Vuex.Store({
       catch (error) {
         throw error;
       }
+
+      context.commit('setPlanLoadingState', false);
     },
     async getTodoLists(context) {
       context.commit('setTodoListsLoadingState', true);

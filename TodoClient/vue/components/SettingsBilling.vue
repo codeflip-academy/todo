@@ -9,12 +9,13 @@
 
     <CheckoutForm @form-submitted="getPaymentMethod" class="mb-3"></CheckoutForm>
 
-    <ChangePlan :paymentMethod="paymentMethod"></ChangePlan>
+    <ChangePlan :paymentMethod="paymentMethod" v-if="!loadingPlan"></ChangePlan>
   </section>
 </template>
 
 <script>
 import axios from "axios";
+import { mapState } from "vuex";
 
 import PaymentMethod from "../components/PaymentMethod";
 import CheckoutForm from "../components/CheckoutForm";
@@ -59,6 +60,9 @@ export default {
     loading() {
       return this.loadingCheckoutForm || this.loadingPaymentInfo;
     },
+    ...mapState({
+      loadingPlan: (state) => state.loadingPlan,
+    }),
   },
 };
 </script>

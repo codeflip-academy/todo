@@ -2,11 +2,11 @@
   <section id="settings-page">
     <b-card no-body>
       <b-tabs pills card>
-        <b-tab title="Account" active>
+        <b-tab title="Account">
           <h2>Account</h2>
           <SettingsAccount></SettingsAccount>
         </b-tab>
-        <b-tab title="Billing">
+        <b-tab title="Billing" active>
           <h2>Billing</h2>
           <SettingsBilling></SettingsBilling>
         </b-tab>
