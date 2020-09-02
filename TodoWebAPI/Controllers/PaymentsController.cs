@@ -65,7 +65,7 @@ namespace TodoWebAPI.Controllers
         [HttpGet]
         public async Task<IActionResult> GetPaymentMethod()
         {
-            var accountId = Guid.Parse(User.FindFirst(c => c.Type == "urn:codefliptodo:accountid").Value);
+            var accountId = User.ReadClaimAsGuidValue("urn:codefliptodo:accountid");
 
             var payment = new GetPaymentMethod
             {
@@ -83,7 +83,7 @@ namespace TodoWebAPI.Controllers
         [HttpPost]
         public async Task<IActionResult> AddOrReplacePaymentMethod([FromBody] AddPayment addPayment)
         {
-            var accountId = Guid.Parse(User.FindFirst(c => c.Type == "urn:codefliptodo:accountid").Value);
+            var accountId = User.ReadClaimAsGuidValue("urn:codefliptodo:accountid");
             var account = await _accountRepository.FindAccountByIdAsync(accountId);
             var previousPaymentMethodId = account.PaymentMethodId;
             var gateway = _braintreeConfiguration.GetGateway();
