@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Todo.Infrastructure;
+using TodoWebAPI.Extentions;
 using TodoWebAPI.UserStories.DeleteAccount;
 using TodoWebAPI.UserStories.EmailFilter;
 using TodoWebAPI.UserStories.RoleChanges;
@@ -55,7 +56,7 @@ namespace TodoWebAPI.Controllers
         [HttpGet("api/accounts")]
         public async Task<IActionResult> GetAccount()
         {
-            var accountId = Guid.Parse(User.FindFirst(c => c.Type == "urn:codefliptodo:accountid").Value);
+            var accountId = User.ReadClaimAsGuidValue("urn:codefliptodo:accountid");
 
             var dapper = new DapperQuery(_config);
 
@@ -68,7 +69,7 @@ namespace TodoWebAPI.Controllers
         [HttpGet("api/accounts/contributors")]
         public async Task<IActionResult> GetContributors()
         {
-            var accountId = Guid.Parse(User.FindFirst(c => c.Type == "urn:codefliptodo:accountid").Value);
+            var accountId = User.ReadClaimAsGuidValue("urn:codefliptodo:accountid");
             var dapper = new DapperQuery(_config);
             var contributors = await dapper.GetContributorsAsync(accountId);
 
@@ -79,7 +80,7 @@ namespace TodoWebAPI.Controllers
         [HttpDelete("api/accounts")]
         public async Task<IActionResult> DeleteAccountAsync()
         {
-            var accountId = Guid.Parse(User.FindFirst(c => c.Type == "urn:codefliptodo:accountid").Value);
+            var accountId = User.ReadClaimAsGuidValue("urn:codefliptodo:accountid");
 
             var deleteAccount = new DeleteAccount
             {
@@ -97,7 +98,7 @@ namespace TodoWebAPI.Controllers
         [HttpGet("api/accounts/plan")]
         public async Task<IActionResult> GetPlanAsync()
         {
-            var accountId = Guid.Parse(User.FindFirst(c => c.Type == "urn:codefliptodo:accountid").Value);
+            var accountId = User.ReadClaimAsGuidValue("urn:codefliptodo:accountid");
 
             var dapper = new DapperQuery(_config);
 
@@ -108,7 +109,7 @@ namespace TodoWebAPI.Controllers
         [HttpPut("api/accounts/role")]
         public async Task<IActionResult> ChangeRoleAysnc([FromBody] ChangePlan roleChanged)
         {
-            var accountId = Guid.Parse(User.FindFirst(c => c.Type == "urn:codefliptodo:accountid").Value);
+            var accountId = User.ReadClaimAsGuidValue("urn:codefliptodo:accountid");
 
             roleChanged.AccountId = accountId;
 
@@ -125,7 +126,7 @@ namespace TodoWebAPI.Controllers
         [HttpPut("api/accounts/emailFilter")]
         public async Task<IActionResult> FilterEmailAsync([FromBody] EmailFilter emailFilter)
         {
-            emailFilter.AccountId = Guid.Parse(User.FindFirst(c => c.Type == "urn:codefliptodo:accountid").Value);
+            emailFilter.AccountId = User.ReadClaimAsGuidValue("urn:codefliptodo:accountid");
 
             await _mediator.Send(emailFilter);
 
