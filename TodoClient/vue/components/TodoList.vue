@@ -7,7 +7,17 @@
         <header class="list-header">
           <b-row class="align-items-center">
             <b-col>
-              <h2 class="list-title">{{ todoList.listTitle }}</h2>
+              <h2 class="list-title" @click="showTitleEditor">
+                <span v-if="!editingTitle">{{ todoListTitle }}</span>
+                <b-form-input
+                  ref="title"
+                  v-model="todoListTitle"
+                  v-if="editingTitle"
+                  @blur="hideTitleEditor"
+                  @keydown.enter="hideTitleEditor"
+                  lazy
+                ></b-form-input>
+              </h2>
             </b-col>
             <b-col>
               <div class="contributors-wrapper">
@@ -74,6 +84,7 @@ export default {
       itemsLayout: [],
       loadingItems: true,
       selectedItem: null,
+      editingTitle: false,
     };
   },
   computed: {
@@ -82,6 +93,17 @@ export default {
     }),
     todoList() {
       return this.$store.getters.getTodoListById(this.todoListId);
+    },
+    todoListTitle: {
+      get() {
+        return this.$store.getters.getTodoListTitleById(this.todoListId);
+      },
+      set(val) {
+        this.$store.dispatch("updateTodoListTitle", {
+          todoListId: this.todoList.id,
+          listTitle: val,
+        });
+      },
     },
     uncompletedItems() {
       return this.items.filter((item) => item.completed === false).length;
@@ -99,6 +121,16 @@ export default {
     await this.dispatchGetItemsAndLayout();
   },
   methods: {
+    showTitleEditor() {
+      this.editingTitle = true;
+
+      this.$nextTick(() => {
+        this.$refs.title.focus();
+      });
+    },
+    hideTitleEditor() {
+      this.editingTitle = false;
+    },
     setTodoListCompleted() {
       this.$store.commit("setTodoListCompletedState", {
         todoListId: this.todoListId,

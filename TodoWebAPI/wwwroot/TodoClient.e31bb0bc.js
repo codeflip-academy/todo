@@ -19320,12 +19320,11 @@ const store = new _vuex.default.Store({
       return state.plan;
     },
 
-    planName(state) {
-      return state.plan.name;
-    },
-
     getTodoListById: state => todoListId => {
       return state.todoLists.find(t => t.id === todoListId);
+    },
+    getTodoListTitleById: state => todoListId => {
+      return state.todoLists.find(t => t.id === todoListId).listTitle;
     },
 
     invitedTodoLists(state) {
@@ -47838,6 +47837,16 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 var _default = {
   name: "TodoList",
   props: ["todoListId"],
@@ -47847,7 +47856,8 @@ var _default = {
       items: [],
       itemsLayout: [],
       loadingItems: true,
-      selectedItem: null
+      selectedItem: null,
+      editingTitle: false
     };
   },
 
@@ -47857,6 +47867,20 @@ var _default = {
 
     todoList() {
       return this.$store.getters.getTodoListById(this.todoListId);
+    },
+
+    todoListTitle: {
+      get() {
+        return this.$store.getters.getTodoListTitleById(this.todoListId);
+      },
+
+      set(val) {
+        this.$store.dispatch("updateTodoListTitle", {
+          todoListId: this.todoList.id,
+          listTitle: val
+        });
+      }
+
     },
 
     uncompletedItems() {
@@ -47878,6 +47902,17 @@ var _default = {
   },
 
   methods: {
+    showTitleEditor() {
+      this.editingTitle = true;
+      this.$nextTick(() => {
+        this.$refs.title.focus();
+      });
+    },
+
+    hideTitleEditor() {
+      this.editingTitle = false;
+    },
+
     setTodoListCompleted() {
       this.$store.commit("setTodoListCompletedState", {
         todoListId: this.todoListId,
@@ -48183,9 +48218,51 @@ exports.default = _default;
                   { staticClass: "align-items-center" },
                   [
                     _c("b-col", [
-                      _c("h2", { staticClass: "list-title" }, [
-                        _vm._v(_vm._s(_vm.todoList.listTitle))
-                      ])
+                      _c(
+                        "h2",
+                        {
+                          staticClass: "list-title",
+                          on: { click: _vm.showTitleEditor }
+                        },
+                        [
+                          !_vm.editingTitle
+                            ? _c("span", [_vm._v(_vm._s(_vm.todoListTitle))])
+                            : _vm._e(),
+                          _vm._v(" "),
+                          _vm.editingTitle
+                            ? _c("b-form-input", {
+                                ref: "title",
+                                attrs: { lazy: "" },
+                                on: {
+                                  blur: _vm.hideTitleEditor,
+                                  keydown: function($event) {
+                                    if (
+                                      !$event.type.indexOf("key") &&
+                                      _vm._k(
+                                        $event.keyCode,
+                                        "enter",
+                                        13,
+                                        $event.key,
+                                        "Enter"
+                                      )
+                                    ) {
+                                      return null
+                                    }
+                                    return _vm.hideTitleEditor($event)
+                                  }
+                                },
+                                model: {
+                                  value: _vm.todoListTitle,
+                                  callback: function($$v) {
+                                    _vm.todoListTitle = $$v
+                                  },
+                                  expression: "todoListTitle"
+                                }
+                              })
+                            : _vm._e()
+                        ],
+                        1
+                      )
                     ]),
                     _vm._v(" "),
                     _c("b-col", [
