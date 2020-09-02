@@ -14,8 +14,9 @@
         </b-col>
       </b-row>
       <div>
-        <b-button type="submit" variant="success">Submit</b-button>
+        <b-button type="submit" variant="success" :disabled="!formReady">Submit</b-button>
       </div>
+      <b-alert variant="danger" class="mt-3 mb-0" :show="errorMsg !== ''">{{ errorMsg }}</b-alert>
     </b-card>
   </b-form>
 </template>
@@ -32,13 +33,15 @@ export default {
       clientToken: "",
       brainTreeClient: null,
       hostedFieldsClient: null,
+      formReady: false,
+      errorMsg: "",
     };
   },
   async created() {
     await this.generateClientToken();
     await this.createBrainTreeClient();
     await this.createHostedFieldsClient();
-    this.$emit("form-ready");
+    this.formReady = true;
   },
   methods: {
     async generateClientToken() {
@@ -71,10 +74,15 @@ export default {
       });
     },
     async submitPaymentMethod() {
+      this.formReady = false;
+
       await this.hostedFieldsClient.tokenize(async (err, payload) => {
         if (err) {
-          console.log(err);
+          this.displayErrorMessage(err.message);
+          this.formReady = true;
           return;
+        } else {
+          this.hideErrorMessage();
         }
 
         await axios({
@@ -87,7 +95,14 @@ export default {
         });
 
         this.$emit("form-submitted");
+        this.formReady = true;
       });
+    },
+    displayErrorMessage(msg) {
+      this.errorMsg = msg;
+    },
+    hideErrorMessage() {
+      this.errorMsg = "";
     },
   },
   computed: {

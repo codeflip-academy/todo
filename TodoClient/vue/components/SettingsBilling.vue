@@ -1,21 +1,21 @@
 <template>
   <section id="settings-plan">
-    <PaymentMethod v-if="!loadingPaymentInfo" :paymentMethod="paymentMethod" class="mb-3"></PaymentMethod>
+    <PaymentMethod
+      class="mb-3"
+      :loading="loadingPaymentInfo"
+      :paymentMethod="paymentMethod"
+      @remove-payment-method="removePaymentMethod"
+    ></PaymentMethod>
 
-    <b-overlay :show="false" blur="5px" spinner-variant="primary" spinner-type="grow" spinner-small>
-      <CheckoutForm
-        @form-submitted="getPaymentMethod"
-        @form-ready="loadingCheckoutForm = false;"
-        class="mb-3"
-      ></CheckoutForm>
-    </b-overlay>
+    <CheckoutForm @form-submitted="getPaymentMethod" class="mb-3"></CheckoutForm>
 
-    <ChangePlan></ChangePlan>
+    <ChangePlan :paymentMethod="paymentMethod" v-if="!loadingPlan"></ChangePlan>
   </section>
 </template>
 
 <script>
 import axios from "axios";
+import { mapState } from "vuex";
 
 import PaymentMethod from "../components/PaymentMethod";
 import CheckoutForm from "../components/CheckoutForm";
@@ -26,7 +26,7 @@ export default {
   data() {
     return {
       plan: {},
-      paymentMethod: {},
+      paymentMethod: null,
       loadingPaymentInfo: true,
       loadingCheckoutForm: true,
     };
@@ -47,6 +47,9 @@ export default {
 
       this.loadingPaymentInfo = false;
     },
+    removePaymentMethod() {
+      this.paymentMethod = null;
+    },
   },
   components: {
     PaymentMethod,
@@ -57,6 +60,9 @@ export default {
     loading() {
       return this.loadingCheckoutForm || this.loadingPaymentInfo;
     },
+    ...mapState({
+      loadingPlan: (state) => state.loadingPlan,
+    }),
   },
 };
 </script>
