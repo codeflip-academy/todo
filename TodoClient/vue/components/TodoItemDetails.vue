@@ -4,10 +4,12 @@
       <b-form-group class="mb-0">
         <b-input
           type="text"
+          maxlength="50"
           class="item-name item-name-input"
           v-model="form.name"
           @keyup.enter="$event.target.blur()"
           @change="sendItemEditedEvent"
+          :state="itemNameValid"
         ></b-input>
       </b-form-group>
 
@@ -24,8 +26,10 @@
       <b-form-group class="item-notes">
         <b-form-textarea
           id="item-notes"
+          :state="itemNotesValid"
+          maxlength="200"
           v-model="form.notes"
-          @input="sendItemEditedEvent"
+          @change="sendItemEditedEvent"
           placeholder="Add notes here..."
           rows="1"
           max-rows="12"
@@ -62,7 +66,7 @@ export default {
     };
   },
   watch: {
-    item() {
+    item: function () {
       this.form = Object.assign({}, this.item);
     },
   },
@@ -74,7 +78,9 @@ export default {
       });
     },
     sendItemEditedEvent() {
-      this.$emit("item-edited", this.form);
+      if (this.itemNameValid === null && this.itemNotesValid === null) {
+        this.$emit("item-edited", JSON.stringify(this.form));
+      }
     },
     sendSubItemsCompletedEvent() {
       this.$emit("sub-items-completed", {
@@ -89,9 +95,19 @@ export default {
       });
     },
   },
-  computed: mapState({
-    plan: (state) => state.plan,
-  }),
+  computed: {
+    ...mapState({
+      plan: (state) => state.plan,
+    }),
+    itemNameValid() {
+      return this.form.name.length > 0 && this.form.name.length <= 50
+        ? null
+        : false;
+    },
+    itemNotesValid() {
+      return !this.form.notes || this.form.notes.length <= 200 ? null : false;
+    },
+  },
 };
 </script>
 

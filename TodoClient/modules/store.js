@@ -142,11 +142,11 @@ const store = new Vuex.Store({
     plan(state) {
       return state.plan;
     },
-    planName(state) {
-      return state.plan.name;
-    },
     getTodoListById: (state) => (todoListId) => {
       return state.todoLists.find(t => t.id === todoListId);
+    },
+    getTodoListTitleById: (state) => (todoListId) => {
+      return state.todoLists.find(t => t.id === todoListId).listTitle;
     },
     invitedTodoLists(state) {
       return state.todoLists.filter(t => t.role === 0);

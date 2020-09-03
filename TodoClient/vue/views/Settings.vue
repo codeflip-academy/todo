@@ -2,11 +2,11 @@
   <section id="settings-page">
     <b-card no-body>
       <b-tabs pills card>
-        <b-tab title="Account">
+        <b-tab title="Account" active>
           <h2>Account</h2>
           <SettingsAccount></SettingsAccount>
         </b-tab>
-        <b-tab title="Billing" active>
+        <b-tab title="Billing">
           <h2>Billing</h2>
           <SettingsBilling></SettingsBilling>
         </b-tab>
@@ -16,10 +16,10 @@
           <p class="text-muted">Send notifications when:</p>
           <b-form class="notifications-form">
             <strong>
-              <b-form-checkbox v-model="emailDueDate">List items Due Today</b-form-checkbox>
-              <b-form-checkbox v-model="emailListCompleted">List Completed</b-form-checkbox>
-              <b-form-checkbox v-model="emailItemCompleted">Item Completed</b-form-checkbox>
-              <b-form-checkbox v-model="emailInvitation">Invitations</b-form-checkbox>
+              <b-form-checkbox v-model="emailDueDate" switch>List items Due Today</b-form-checkbox>
+              <b-form-checkbox v-model="emailListCompleted" switch>List Completed</b-form-checkbox>
+              <b-form-checkbox v-model="emailItemCompleted" switch>Item Completed</b-form-checkbox>
+              <b-form-checkbox v-model="emailInvitation" switch>Invitations</b-form-checkbox>
             </strong>
           </b-form>
         </b-tab>
