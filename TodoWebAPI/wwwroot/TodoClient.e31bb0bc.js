@@ -47593,6 +47593,8 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 //
 //
 //
+//
+//
 var _default = {
   name: "TodoItemDetails",
   props: ["item"],
@@ -47680,7 +47682,11 @@ exports.default = _default;
           [
             _c("b-input", {
               staticClass: "item-name item-name-input",
-              attrs: { type: "text", state: _vm.itemNameValid },
+              attrs: {
+                type: "text",
+                maxlength: "50",
+                state: _vm.itemNameValid
+              },
               on: {
                 keyup: function($event) {
                   if (
@@ -47741,6 +47747,7 @@ exports.default = _default;
               attrs: {
                 id: "item-notes",
                 state: _vm.itemNotesValid,
+                maxlength: "200",
                 placeholder: "Add notes here...",
                 rows: "1",
                 "max-rows": "12"

@@ -4,6 +4,7 @@
       <b-form-group class="mb-0">
         <b-input
           type="text"
+          maxlength="50"
           class="item-name item-name-input"
           v-model="form.name"
           @keyup.enter="$event.target.blur()"
@@ -26,6 +27,7 @@
         <b-form-textarea
           id="item-notes"
           :state="itemNotesValid"
+          maxlength="200"
           v-model="form.notes"
           @change="sendItemEditedEvent"
           placeholder="Add notes here..."
