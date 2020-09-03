@@ -31106,12 +31106,16 @@ var _default = {
   methods: {
     async getPaymentMethod() {
       this.loadingPaymentInfo = true;
-      const response = await (0, _axios.default)({
-        method: "GET",
-        url: "api/payments"
-      });
-      this.paymentMethod = response.data;
-      this.loadingPaymentInfo = false;
+
+      try {
+        const response = await (0, _axios.default)({
+          method: "GET",
+          url: "api/payments"
+        });
+        this.paymentMethod = response.data;
+      } finally {
+        this.loadingPaymentInfo = false;
+      }
     },
 
     removePaymentMethod() {
@@ -100265,7 +100269,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "60800" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "58479" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};

@@ -38,14 +38,16 @@ export default {
     async getPaymentMethod() {
       this.loadingPaymentInfo = true;
 
-      const response = await axios({
-        method: "GET",
-        url: "api/payments",
-      });
+      try {
+        const response = await axios({
+          method: "GET",
+          url: "api/payments",
+        });
 
-      this.paymentMethod = response.data;
-
-      this.loadingPaymentInfo = false;
+        this.paymentMethod = response.data;
+      } finally {
+        this.loadingPaymentInfo = false;
+      }
     },
     removePaymentMethod() {
       this.paymentMethod = null;
