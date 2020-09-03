@@ -85,6 +85,11 @@ namespace TodoWebAPI
             services.AddSingleton<IServiceBusConsumer, ServiceBusConsumer>();
             services.AddSingleton<IEmailQueue, AzureServiceBusEmailQueue>();
 
+            services.Configure<CookiePolicyOptions>(options =>
+            {
+                options.MinimumSameSitePolicy = SameSiteMode.Strict;
+            });
+
             services.AddCronJob<DueDateJob>(c =>
             {
                 c.TimeZoneInfo = TimeZoneInfo.Local;
@@ -186,6 +191,8 @@ namespace TodoWebAPI
             app.UseStaticFiles();
 
             app.UseFileServer();
+
+            app.UseCookiePolicy();
 
             app.UseAuthentication();
 
