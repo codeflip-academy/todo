@@ -30770,6 +30770,8 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 //
 //
 //
+//
+//
 var _default = {
   name: "ChangePlan",
   props: ["paymentMethod"],
@@ -30777,7 +30779,8 @@ var _default = {
   data() {
     return {
       plans: ["Free", "Basic", "Premium"],
-      selectedPlan: "Free"
+      selectedPlan: "Free",
+      changingPlan: false
     };
   },
 
@@ -30791,16 +30794,34 @@ var _default = {
 
   methods: {
     async changePlan() {
-      const response = await (0, _axios.default)({
-        method: "POST",
-        url: "api/payments/subscription/change",
-        data: JSON.stringify({
-          plan: this.selectedPlan
-        }),
-        headers: {
-          "content-type": "application/json"
-        }
-      });
+      try {
+        this.changingPlan = true;
+        const response = await (0, _axios.default)({
+          method: "POST",
+          url: "api/payments/subscription/change",
+          data: JSON.stringify({
+            plan: this.selectedPlan
+          }),
+          headers: {
+            "content-type": "application/json"
+          }
+        });
+        this.$bvToast.toast("You have successfully updated your plan.", {
+          title: "Plan was changed",
+          variant: "success",
+          autoHideDelay: 5000,
+          appendToast: true
+        });
+      } catch (err) {
+        this.$bvToast.toast("We are unable to update your plan at this time. Please try again later.", {
+          title: "Error updating your plan.",
+          variant: "danger",
+          autoHideDelay: 5000,
+          appendToast: true
+        });
+      } finally {
+        this.changingPlan = false;
+      }
     },
 
     setSelectedPlan(planName) {
@@ -30816,7 +30837,7 @@ var _default = {
           return 10;
 
         case "Premium":
-          return -1;
+          return 9999999;
 
         default:
           return 0;
@@ -30832,7 +30853,7 @@ var _default = {
           return 2;
 
         case "Premium":
-          return 999999;
+          return 3;
 
         default:
           return -1;
@@ -30871,146 +30892,154 @@ exports.default = _default;
   var _h = _vm.$createElement
   var _c = _vm._self._c || _h
   return _c(
-    "b-card",
-    {
-      scopedSlots: _vm._u([
+    "b-overlay",
+    { attrs: { show: _vm.changingPlan, rounded: "sm" } },
+    [
+      _c(
+        "b-card",
         {
-          key: "header",
-          fn: function() {
-            return [
-              _c(
-                "b-row",
-                { staticClass: "align-items-center" },
-                [
-                  _c("b-col", [
-                    _c("h6", { staticClass: "mb-0 current-plan" }, [
-                      _vm._v("Todo " + _vm._s(_vm.selectedPlan))
-                    ]),
-                    _vm._v(" "),
-                    _c(
-                      "p",
-                      { staticClass: "text-muted mb-0 plan-description" },
-                      [
-                        _vm.selectedPlan === "Free"
-                          ? _c("small", [_vm._v("Maximum of 10 lists.")])
-                          : _vm._e(),
-                        _vm._v(" "),
-                        _vm.selectedPlan === "Basic"
-                          ? _c("small", [
-                              _vm._v(
-                                "Maximum of 5 lists and contributors, due dates, and notifications."
-                              )
-                            ])
-                          : _vm._e(),
-                        _vm._v(" "),
-                        _vm.selectedPlan === "Premium"
-                          ? _c("small", [
-                              _vm._v(
-                                "Unlimited lists and contributors, due dates, and notifications."
-                              )
-                            ])
-                          : _vm._e()
-                      ]
-                    )
-                  ]),
-                  _vm._v(" "),
+          scopedSlots: _vm._u([
+            {
+              key: "header",
+              fn: function() {
+                return [
                   _c(
-                    "b-col",
-                    { staticClass: "text-right" },
+                    "b-row",
+                    { staticClass: "align-items-center" },
                     [
+                      _c("b-col", [
+                        _c("h6", { staticClass: "mb-0 current-plan" }, [
+                          _vm._v("Todo " + _vm._s(_vm.selectedPlan))
+                        ]),
+                        _vm._v(" "),
+                        _c(
+                          "p",
+                          { staticClass: "text-muted mb-0 plan-description" },
+                          [
+                            _vm.selectedPlan === "Free"
+                              ? _c("small", [_vm._v("Maximum of 10 lists.")])
+                              : _vm._e(),
+                            _vm._v(" "),
+                            _vm.selectedPlan === "Basic"
+                              ? _c("small", [
+                                  _vm._v(
+                                    "Maximum of 5 lists and contributors, due dates, and notifications."
+                                  )
+                                ])
+                              : _vm._e(),
+                            _vm._v(" "),
+                            _vm.selectedPlan === "Premium"
+                              ? _c("small", [
+                                  _vm._v(
+                                    "Unlimited lists and contributors, due dates, and notifications."
+                                  )
+                                ])
+                              : _vm._e()
+                          ]
+                        )
+                      ]),
+                      _vm._v(" "),
                       _c(
-                        "b-button",
-                        {
-                          attrs: {
-                            variant: "success",
-                            size: "sm",
-                            disabled:
-                              _vm.selectedPlan === _vm.plan.name ||
-                              !_vm.paymentMethod
-                          },
-                          on: { click: _vm.changePlan }
-                        },
-                        [_vm._v("Choose plan")]
+                        "b-col",
+                        { staticClass: "text-right" },
+                        [
+                          _c(
+                            "b-button",
+                            {
+                              attrs: {
+                                variant: "success",
+                                size: "sm",
+                                disabled:
+                                  _vm.selectedPlan === _vm.plan.name ||
+                                  !_vm.paymentMethod ||
+                                  _vm.changingPlan
+                              },
+                              on: { click: _vm.changePlan }
+                            },
+                            [_vm._v("Choose plan")]
+                          )
+                        ],
+                        1
                       )
                     ],
                     1
                   )
+                ]
+              },
+              proxy: true
+            }
+          ])
+        },
+        [
+          _vm._v(" "),
+          _c(
+            "b-card-text",
+            [
+              _c(
+                "b-row",
+                { staticClass: "align-items-center mb-1" },
+                [
+                  _c("b-col", [
+                    _c(
+                      "div",
+                      [
+                        _c("b-form-select", {
+                          attrs: { options: _vm.plans },
+                          model: {
+                            value: _vm.selectedPlan,
+                            callback: function($$v) {
+                              _vm.selectedPlan = $$v
+                            },
+                            expression: "selectedPlan"
+                          }
+                        })
+                      ],
+                      1
+                    )
+                  ]),
+                  _vm._v(" "),
+                  _c("b-col", { staticClass: "text-right" }, [
+                    _vm.selectedPlan === "Free"
+                      ? _c("strong", [_vm._v("$0.00")])
+                      : _vm._e(),
+                    _vm._v(" "),
+                    _vm.selectedPlan === "Basic"
+                      ? _c("strong", [_vm._v("$5.00 / month")])
+                      : _vm._e(),
+                    _vm._v(" "),
+                    _vm.selectedPlan === "Premium"
+                      ? _c("strong", [_vm._v("$10.00 / month")])
+                      : _vm._e()
+                  ])
                 ],
                 1
-              )
-            ]
-          },
-          proxy: true
-        }
-      ])
-    },
-    [
-      _vm._v(" "),
-      _c(
-        "b-card-text",
-        [
-          _c(
-            "b-row",
-            { staticClass: "align-items-center mb-1" },
-            [
-              _c("b-col", [
-                _c(
-                  "div",
-                  [
-                    _c("b-form-select", {
-                      attrs: { options: _vm.plans },
-                      model: {
-                        value: _vm.selectedPlan,
-                        callback: function($$v) {
-                          _vm.selectedPlan = $$v
-                        },
-                        expression: "selectedPlan"
-                      }
-                    })
-                  ],
-                  1
-                )
-              ]),
+              ),
               _vm._v(" "),
-              _c("b-col", { staticClass: "text-right" }, [
-                _vm.selectedPlan === "Free"
-                  ? _c("strong", [_vm._v("$0.00")])
-                  : _vm._e(),
-                _vm._v(" "),
-                _vm.selectedPlan === "Basic"
-                  ? _c("strong", [_vm._v("$5.00 / month")])
-                  : _vm._e(),
-                _vm._v(" "),
-                _vm.selectedPlan === "Premium"
-                  ? _c("strong", [_vm._v("$10.00 / month")])
-                  : _vm._e()
-              ])
+              _c("CouponForm"),
+              _vm._v(" "),
+              _c(
+                "b-alert",
+                {
+                  staticClass: "mt-3",
+                  attrs: {
+                    variant: "warning",
+                    show:
+                      _vm.isDowngrading(_vm.selectedPlan, _vm.plan.name) &&
+                      _vm.getPlanMaxListCountByPlanName(_vm.selectedPlan) <
+                        _vm.todoLists.length
+                  }
+                },
+                [
+                  _c("strong", [_vm._v("Warning:")]),
+                  _vm._v(" You have more lists than allowed on the\n        "),
+                  _c("strong", [_vm._v(_vm._s(_vm.selectedPlan))]),
+                  _vm._v(
+                    " plan. Additional lists will be removed at the end of your billing cycle.\n      "
+                  )
+                ]
+              )
             ],
             1
-          ),
-          _vm._v(" "),
-          _c("CouponForm"),
-          _vm._v(" "),
-          _c(
-            "b-alert",
-            {
-              staticClass: "mt-3",
-              attrs: {
-                variant: "warning",
-                show:
-                  _vm.isDowngrading(_vm.selectedPlan, _vm.plan.name) &&
-                  _vm.getPlanMaxListCountByPlanName(_vm.selectedPlan) <
-                    _vm.todoLists.length
-              }
-            },
-            [
-              _c("strong", [_vm._v("Warning:")]),
-              _vm._v(" You have more lists than allowed on the\n      "),
-              _c("strong", [_vm._v(_vm._s(_vm.selectedPlan))]),
-              _vm._v(
-                " plan. Additional lists will be removed at the end of your billing cycle.\n    "
-              )
-            ]
           )
         ],
         1
