@@ -49330,6 +49330,14 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
 var _default = {
   name: "App",
 
@@ -49441,7 +49449,38 @@ exports.default = _default;
               class: { "list-selected": _vm.listSelected },
               style: { "background-image": "url(" + _vm.todoListImage + ")" }
             },
-            [_c("Header"), _vm._v(" "), _c("RouterView")],
+            [
+              _c("Header"),
+              _vm._v(" "),
+              _c("RouterView"),
+              _vm._v(" "),
+              !_vm.listSelected
+                ? _c("div", { staticClass: "list-bg-img text-center" }, [
+                    _c("div", [
+                      _c("img", {
+                        staticClass: "img-fluid",
+                        attrs: { src: _vm.todoListImage }
+                      }),
+                      _vm._v(" "),
+                      _c(
+                        "a",
+                        {
+                          staticClass: "text-muted",
+                          attrs: {
+                            href: "http://www.freepik.com",
+                            target: "_blank"
+                          }
+                        },
+                        [
+                          _c("small", [
+                            _vm._v("Designed by pch.vector / Freepik")
+                          ])
+                        ]
+                      )
+                    ])
+                  ])
+                : _vm._e()
+            ],
             1
           )
         ],

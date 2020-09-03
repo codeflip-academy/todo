@@ -11,6 +11,14 @@
       >
         <Header></Header>
         <RouterView></RouterView>
+        <div v-if="!listSelected" class="list-bg-img text-center">
+          <div>
+            <img class="img-fluid" :src="todoListImage" />
+            <a href="http://www.freepik.com" class="text-muted" target="_blank">
+              <small>Designed by pch.vector / Freepik</small>
+            </a>
+          </div>
+        </div>
       </b-col>
     </b-row>
   </div>
@@ -131,6 +139,15 @@ body {
   font-family: "Poppins", sans-serif !important;
   font-weight: 300;
   font-size: 16px;
+}
+
+.list-bg-img {
+  max-width: 64%;
+  margin: 0 auto;
+  height: calc(100vh - 150px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .account-options {

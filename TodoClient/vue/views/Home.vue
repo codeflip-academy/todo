@@ -58,16 +58,6 @@ $red: #b71c1c;
   }
 }
 
-.todo-list-bg {
-  background-position: center;
-  background-size: 70%;
-  background-repeat: no-repeat;
-
-  &.list-selected {
-    background-image: none !important;
-  }
-}
-
 .account-dropdown {
   .btn {
     display: flex;
