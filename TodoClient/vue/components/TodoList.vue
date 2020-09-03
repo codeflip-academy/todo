@@ -15,7 +15,7 @@
                   v-if="editingTitle"
                   @blur="hideTitleEditor"
                   @keydown.enter="hideTitleEditor"
-                  lazy
+                  :state="validFormInput"
                 ></b-form-input>
               </h2>
             </b-col>
@@ -99,14 +99,23 @@ export default {
         return this.$store.getters.getTodoListTitleById(this.todoListId);
       },
       set(val) {
-        this.$store.dispatch("updateTodoListTitle", {
-          todoListId: this.todoList.id,
-          listTitle: val,
-        });
+        if (this.validFormInput) {
+          this.$store.dispatch("updateTodoListTitle", {
+            todoListId: this.todoList.id,
+            listTitle: val,
+          });
+        }
       },
     },
     uncompletedItems() {
       return this.items.filter((item) => item.completed === false).length;
+    },
+    validFormInput() {
+      if (this.todoListTitle.length > 0 && this.todoListTitle.length <= 50) {
+        return null;
+      } else {
+        return false;
+      }
     },
   },
   components: {
@@ -201,7 +210,9 @@ export default {
         },
       });
     },
-    async dispatchUpdateItem(item) {
+    async dispatchUpdateItem(itemJsonString) {
+      let item = JSON.parse(itemJsonString);
+
       this.commitUpdateItem(item);
 
       await axios({

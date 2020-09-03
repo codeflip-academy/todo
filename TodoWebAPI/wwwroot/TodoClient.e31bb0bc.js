@@ -47591,6 +47591,8 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 //
 //
 //
+//
+//
 var _default = {
   name: "TodoItemDetails",
   props: ["item"],
@@ -47605,10 +47607,9 @@ var _default = {
   },
 
   watch: {
-    item() {
+    item: function () {
       this.form = Object.assign({}, this.item);
     }
-
   },
   methods: {
     sendSubItemCountChangedEvent({
@@ -47621,7 +47622,9 @@ var _default = {
     },
 
     sendItemEditedEvent() {
-      this.$emit("item-edited", this.form);
+      if (this.itemNameValid === null && this.itemNotesValid === null) {
+        this.$emit("item-edited", JSON.stringify(this.form));
+      }
     },
 
     sendSubItemsCompletedEvent() {
@@ -47639,9 +47642,19 @@ var _default = {
     }
 
   },
-  computed: (0, _vuex.mapState)({
-    plan: state => state.plan
-  })
+  computed: { ...(0, _vuex.mapState)({
+      plan: state => state.plan
+    }),
+
+    itemNameValid() {
+      return this.form.name.length > 0 && this.form.name.length <= 50 ? null : false;
+    },
+
+    itemNotesValid() {
+      return !this.form.notes || this.form.notes.length <= 200 ? null : false;
+    }
+
+  }
 };
 exports.default = _default;
         var $a03f24 = exports.default || module.exports;
@@ -47667,7 +47680,7 @@ exports.default = _default;
           [
             _c("b-input", {
               staticClass: "item-name item-name-input",
-              attrs: { type: "text" },
+              attrs: { type: "text", state: _vm.itemNameValid },
               on: {
                 keyup: function($event) {
                   if (
@@ -47727,11 +47740,12 @@ exports.default = _default;
             _c("b-form-textarea", {
               attrs: {
                 id: "item-notes",
+                state: _vm.itemNotesValid,
                 placeholder: "Add notes here...",
                 rows: "1",
                 "max-rows": "12"
               },
-              on: { input: _vm.sendItemEditedEvent },
+              on: { change: _vm.sendItemEditedEvent },
               model: {
                 value: _vm.form.notes,
                 callback: function($$v) {
@@ -47912,16 +47926,26 @@ var _default = {
       },
 
       set(val) {
-        this.$store.dispatch("updateTodoListTitle", {
-          todoListId: this.todoList.id,
-          listTitle: val
-        });
+        if (this.validFormInput) {
+          this.$store.dispatch("updateTodoListTitle", {
+            todoListId: this.todoList.id,
+            listTitle: val
+          });
+        }
       }
 
     },
 
     uncompletedItems() {
       return this.items.filter(item => item.completed === false).length;
+    },
+
+    validFormInput() {
+      if (this.todoListTitle.length > 0 && this.todoListTitle.length <= 50) {
+        return null;
+      } else {
+        return false;
+      }
     }
 
   },
@@ -48027,7 +48051,8 @@ var _default = {
       });
     },
 
-    async dispatchUpdateItem(item) {
+    async dispatchUpdateItem(itemJsonString) {
+      let item = JSON.parse(itemJsonString);
       this.commitUpdateItem(item);
       await (0, _axios.default)({
         method: "PUT",
@@ -48269,7 +48294,7 @@ exports.default = _default;
                           _vm.editingTitle
                             ? _c("b-form-input", {
                                 ref: "title",
-                                attrs: { lazy: "" },
+                                attrs: { state: _vm.validFormInput },
                                 on: {
                                   blur: _vm.hideTitleEditor,
                                   keydown: function($event) {
