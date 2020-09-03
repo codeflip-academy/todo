@@ -87,7 +87,7 @@ namespace TodoWebAPI
 
             services.Configure<CookiePolicyOptions>(options =>
             {
-                options.MinimumSameSitePolicy = SameSiteMode.Strict;
+                options.MinimumSameSitePolicy = SameSiteMode.Lax;
             });
 
             services.AddCronJob<DueDateJob>(c =>
