@@ -42,8 +42,10 @@ namespace TodoWebAPI.UserStories
                 foreach (var contributor in contributors)
                 {
                     var account = await _accountRepository.FindAccountByEmailAsync(contributor);
+                    var contributorAccountsLists = await _accountsListsRepository.FindAccountsListsByAccountIdAndListIdAsync(account.Id, request.ListId);
                     var contributorPlan = await _accountPlan.FindAccountPlanByAccountIdAsync(account.Id);
                     contributorPlan.DecrementListCount();
+                    contributorAccountsLists.MoveListToTrash();
                 }
 
                 accountLists.MoveListToTrash();
