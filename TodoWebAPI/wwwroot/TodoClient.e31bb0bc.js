@@ -47905,6 +47905,8 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 //
 //
 //
+//
+//
 var _default = {
   name: "TodoList",
   props: ["todoListId"],
@@ -47933,7 +47935,7 @@ var _default = {
       },
 
       set(val) {
-        if (this.validFormInput) {
+        if (val.length > 0) {
           this.$store.dispatch("updateTodoListTitle", {
             todoListId: this.todoList.id,
             listTitle: val
@@ -47948,7 +47950,7 @@ var _default = {
     },
 
     validFormInput() {
-      if (this.todoListTitle.length > 0 && this.todoListTitle.length <= 50) {
+      if (this.todoListTitle.length > 0) {
         return null;
       } else {
         return false;
@@ -48301,7 +48303,11 @@ exports.default = _default;
                           _vm.editingTitle
                             ? _c("b-form-input", {
                                 ref: "title",
-                                attrs: { state: _vm.validFormInput },
+                                attrs: {
+                                  maxlength: "50",
+                                  state: _vm.validFormInput,
+                                  lazy: ""
+                                },
                                 on: {
                                   blur: _vm.hideTitleEditor,
                                   keydown: function($event) {

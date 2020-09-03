@@ -15,7 +15,9 @@
                   v-if="editingTitle"
                   @blur="hideTitleEditor"
                   @keydown.enter="hideTitleEditor"
+                  maxlength="50"
                   :state="validFormInput"
+                  lazy
                 ></b-form-input>
               </h2>
             </b-col>
@@ -99,7 +101,7 @@ export default {
         return this.$store.getters.getTodoListTitleById(this.todoListId);
       },
       set(val) {
-        if (this.validFormInput) {
+        if (val.length > 0) {
           this.$store.dispatch("updateTodoListTitle", {
             todoListId: this.todoList.id,
             listTitle: val,
@@ -111,7 +113,7 @@ export default {
       return this.items.filter((item) => item.completed === false).length;
     },
     validFormInput() {
-      if (this.todoListTitle.length > 0 && this.todoListTitle.length <= 50) {
+      if (this.todoListTitle.length > 0) {
         return null;
       } else {
         return false;
