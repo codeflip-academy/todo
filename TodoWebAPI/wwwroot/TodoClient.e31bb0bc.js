@@ -37053,7 +37053,7 @@ exports.default = _default;
             [
               _c(
                 "b-tab",
-                { attrs: { title: "Account" } },
+                { attrs: { title: "Account", active: "" } },
                 [
                   _c("h2", [_vm._v("Account")]),
                   _vm._v(" "),
@@ -37064,7 +37064,7 @@ exports.default = _default;
               _vm._v(" "),
               _c(
                 "b-tab",
-                { attrs: { title: "Billing", active: "" } },
+                { attrs: { title: "Billing" } },
                 [
                   _c("h2", [_vm._v("Billing")]),
                   _vm._v(" "),
@@ -37092,6 +37092,7 @@ exports.default = _default;
                         _c(
                           "b-form-checkbox",
                           {
+                            attrs: { switch: "" },
                             model: {
                               value: _vm.emailDueDate,
                               callback: function($$v) {
@@ -37106,6 +37107,7 @@ exports.default = _default;
                         _c(
                           "b-form-checkbox",
                           {
+                            attrs: { switch: "" },
                             model: {
                               value: _vm.emailListCompleted,
                               callback: function($$v) {
@@ -37120,6 +37122,7 @@ exports.default = _default;
                         _c(
                           "b-form-checkbox",
                           {
+                            attrs: { switch: "" },
                             model: {
                               value: _vm.emailItemCompleted,
                               callback: function($$v) {
@@ -37134,6 +37137,7 @@ exports.default = _default;
                         _c(
                           "b-form-checkbox",
                           {
+                            attrs: { switch: "" },
                             model: {
                               value: _vm.emailInvitation,
                               callback: function($$v) {
