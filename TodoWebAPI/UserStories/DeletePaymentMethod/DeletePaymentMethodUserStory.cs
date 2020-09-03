@@ -31,8 +31,6 @@ namespace TodoWebAPI.UserStories.DeletePaymentMethod
 
             if (account.SubscriptionId == null)
             {
-                account.RemovePaymentMethodId();
-
                 gateway.PaymentMethod.Delete(request.PaymentMethodId);
 
                 await _account.SaveChangesAsync();
