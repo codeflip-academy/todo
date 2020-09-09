@@ -3,11 +3,7 @@
     <AddSubItemForm :todoListItem="todoListItem" @add-sub-item="dispatchAddSubItem"></AddSubItemForm>
 
     <b-list-group v-if="!loadingSubItems">
-      <Draggable
-        handle=".sub-item-handle"
-        v-model="subItemsLayout"
-        @end="dispatchUpdateSubItemPosition"
-      >
+      <Draggable v-model="subItemsLayout" delay="100" @end="dispatchUpdateSubItemPosition">
         <SubItem
           v-for="subItemId in subItemsLayout"
           :key="subItemId"

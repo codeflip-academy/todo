@@ -433,35 +433,41 @@ h3[data-v-3f1240] {
   opacity: 1;
 }
 .sub-item[data-v-7b87e9] {
-  transition: background-color 0.3s ease;
-}
-.sub-item.list-group-item[data-v-7b87e9] {
   display: flex;
   align-items: center;
-  padding: 0;
+  color: #728f9d;
 }
-.sub-item[data-v-7b87e9]:hover {
-  cursor: pointer;
-  background-color: #eff1f4 !important;
+.sub-item.completed .sub-item-name[data-v-7b87e9] {
+  text-decoration: line-through;
 }
-.sub-item[data-v-7b87e9]:active {
-  background-color: #e9ecef !important;
+.sub-item[data-v-7b87e9]:not(:last-child) {
+  margin-bottom: 5px;
 }
-.sub-item .sub-item-handle[data-v-7b87e9] {
-  padding: 12px 0px 12px 20px;
+.sub-item .sub-item-checkbox[data-v-7b87e9] {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 16px;
+  background-color: transparent;
+  border: solid 1px #728f9d;
+  margin-right: 10px;
+  margin-bottom: 0;
+  transition: background-color 0.3s ease;
 }
-.sub-item .sub-item-handle[data-v-7b87e9]:hover {
-  cursor: move;
+.sub-item .sub-item-checkbox svg[data-v-7b87e9] {
+  opacity: 0;
 }
-.sub-item .sub-item-name[data-v-7b87e9] {
-  font-family: "Nunito", sans-serif;
-  font-weight: bold;
-  flex: 1 0 auto;
-  padding: 12px 0;
+.sub-item .sub-item-checkbox svg[data-v-7b87e9]:hover {
+  opacity: 1;
 }
-.edit-sub-item-form[data-v-7b87e9] {
-  padding: 12px;
-  width: 100%;
+.sub-item .sub-item-checkbox.selected[data-v-7b87e9] {
+  background-color: #728f9d;
+}
+.sub-item .sub-item-checkbox.selected svg[data-v-7b87e9] {
+  opacity: 1;
+  color: white;
 }
 .add-sub-item-btn .add-item-btn-icon[data-v-efb0d1] {
   color: #455a64;
