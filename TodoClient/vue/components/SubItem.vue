@@ -1,16 +1,22 @@
 <template>
-  <b-list-group-item class="sub-item bg-light" :data-id="subItem.id">
-    <div class="sub-item-handle mr-2" v-if="!editingSubItem">
-      <b-icon-list></b-icon-list>
-    </div>
-
-    <div class="sub-item-checkbox-wrapper" v-if="!editingSubItem">
-      <b-form-checkbox v-model="subItemCompletedState"></b-form-checkbox>
-    </div>
+  <div class="sub-item" :class="{ 'completed': subItemCompletedState }" :data-id="subItem.id">
+    <label
+      :for="subItem.id + '-checkbox'"
+      v-if="!editingSubItem"
+      class="sub-item-checkbox"
+      :class="{ 'selected': subItemCompletedState }"
+    >
+      <b-icon-check></b-icon-check>
+      <b-form-checkbox
+        :id="subItem.id + '-checkbox'"
+        v-model="subItemCompletedState"
+        class="sr-only"
+      ></b-form-checkbox>
+    </label>
 
     <div class="sub-item-name" @click="focusForm" v-if="!editingSubItem">{{ subItem.name }}</div>
 
-    <div class="sub-item-controls pr-3" v-if="!editingSubItem">
+    <div class="sub-item-controls ml-auto pr-3" v-if="!editingSubItem">
       <b-button size="sm" variant="danger" @click="sendDeleteSubItemEvent">Delete</b-button>
     </div>
 
@@ -40,7 +46,7 @@
         >Cancel</b-button>
       </div>
     </b-form>
-  </b-list-group-item>
+  </div>
 </template>
 
 <script>
@@ -94,42 +100,57 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-.sub-item {
-  transition: background-color 0.3s ease;
+$light-gray: #f5f6f7;
+$gray: #455a64;
+$blue: #1e88e5;
+$orange: #ff7043;
+$green: #4caf50;
+$red: #b71c1c;
 
-  &.list-group-item {
+.sub-item {
+  display: flex;
+  align-items: center;
+  color: lighten($gray, 20);
+
+  &.completed {
+    .sub-item-name {
+      text-decoration: line-through;
+    }
+  }
+
+  &:not(:last-child) {
+    margin-bottom: 5px;
+  }
+
+  .sub-item-checkbox {
     display: flex;
     align-items: center;
-    padding: 0;
-  }
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    border-radius: 16px;
+    background-color: transparent;
+    border: solid 1px lighten($gray, 20);
+    margin-right: 10px;
+    margin-bottom: 0;
+    transition: background-color 0.3s ease;
 
-  &:hover {
-    cursor: pointer;
-    background-color: darken(#f8f9fa, 3) !important;
-  }
+    svg {
+      opacity: 0;
 
-  &:active {
-    background-color: darken(#f8f9fa, 5) !important;
-  }
-
-  .sub-item-handle {
-    &:hover {
-      cursor: move;
+      &:hover {
+        opacity: 1;
+      }
     }
 
-    padding: 12px 0px 12px 20px;
-  }
+    &.selected {
+      background-color: lighten($gray, 20);
 
-  .sub-item-name {
-    font-family: "Nunito", sans-serif;
-    font-weight: bold;
-    flex: 1 0 auto;
-    padding: 12px 0;
+      svg {
+        opacity: 1;
+        color: white;
+      }
+    }
   }
-}
-
-.edit-sub-item-form {
-  padding: 12px;
-  width: 100%;
 }
 </style>

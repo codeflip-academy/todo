@@ -45677,6 +45677,12 @@ exports.default = void 0;
 //
 //
 //
+//
+//
+//
+//
+//
+//
 var _default = {
   props: ["listId", "subItem"],
 
@@ -45744,24 +45750,27 @@ exports.default = _default;
   var _h = _vm.$createElement
   var _c = _vm._self._c || _h
   return _c(
-    "b-list-group-item",
-    { staticClass: "sub-item bg-light", attrs: { "data-id": _vm.subItem.id } },
+    "div",
+    {
+      staticClass: "sub-item",
+      class: { completed: _vm.subItemCompletedState },
+      attrs: { "data-id": _vm.subItem.id }
+    },
     [
       !_vm.editingSubItem
         ? _c(
-            "div",
-            { staticClass: "sub-item-handle mr-2" },
-            [_c("b-icon-list")],
-            1
-          )
-        : _vm._e(),
-      _vm._v(" "),
-      !_vm.editingSubItem
-        ? _c(
-            "div",
-            { staticClass: "sub-item-checkbox-wrapper" },
+            "label",
+            {
+              staticClass: "sub-item-checkbox",
+              class: { selected: _vm.subItemCompletedState },
+              attrs: { for: _vm.subItem.id + "-checkbox" }
+            },
             [
+              _c("b-icon-check"),
+              _vm._v(" "),
               _c("b-form-checkbox", {
+                staticClass: "sr-only",
+                attrs: { id: _vm.subItem.id + "-checkbox" },
                 model: {
                   value: _vm.subItemCompletedState,
                   callback: function($$v) {
@@ -45786,7 +45795,7 @@ exports.default = _default;
       !_vm.editingSubItem
         ? _c(
             "div",
-            { staticClass: "sub-item-controls pr-3" },
+            { staticClass: "sub-item-controls ml-auto pr-3" },
             [
               _c(
                 "b-button",
@@ -46127,10 +46136,6 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 //
 //
 //
-//
-//
-//
-//
 var _default = {
   props: ["todoListItem"],
   components: {
@@ -46386,7 +46391,7 @@ exports.default = _default;
               _c(
                 "Draggable",
                 {
-                  attrs: { handle: ".sub-item-handle" },
+                  attrs: { delay: "100" },
                   on: { end: _vm.dispatchUpdateSubItemPosition },
                   model: {
                     value: _vm.subItemsLayout,
@@ -100379,7 +100384,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "58479" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "53042" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};
