@@ -16,9 +16,9 @@
 
     <div class="sub-item-name" @click="focusForm" v-if="!editingSubItem">{{ subItem.name }}</div>
 
-    <!-- <div class="sub-item-controls pr-3" v-if="!editingSubItem">
+    <div class="sub-item-controls ml-auto pr-3" v-if="!editingSubItem">
       <b-button size="sm" variant="danger" @click="sendDeleteSubItemEvent">Delete</b-button>
-    </div>-->
+    </div>
 
     <b-form
       @submit.prevent="sendUpdateSubItemNameEvent"

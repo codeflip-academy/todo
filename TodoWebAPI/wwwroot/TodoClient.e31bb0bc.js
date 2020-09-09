@@ -45792,6 +45792,24 @@ exports.default = _default;
           )
         : _vm._e(),
       _vm._v(" "),
+      !_vm.editingSubItem
+        ? _c(
+            "div",
+            { staticClass: "sub-item-controls ml-auto pr-3" },
+            [
+              _c(
+                "b-button",
+                {
+                  attrs: { size: "sm", variant: "danger" },
+                  on: { click: _vm.sendDeleteSubItemEvent }
+                },
+                [_vm._v("Delete")]
+              )
+            ],
+            1
+          )
+        : _vm._e(),
+      _vm._v(" "),
       _vm.editingSubItem
         ? _c(
             "b-form",
